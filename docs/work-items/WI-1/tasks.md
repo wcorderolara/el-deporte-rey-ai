@@ -19,7 +19,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | ID | Title | Kind | Agent | Depends on | Status | Attempts | Commit(s) | Evidence |
 |----|-------|------|-------|------------|--------|----------|-----------|----------|
 | T00 | Intake of the Product Owner launch text | IMPL | Orchestrator | - | IN_PROGRESS | 1 | - | - |
-| T01 | Normalized requirements | IMPL | product-manager | T00 | PENDING | 0 | - | - |
+| T01 | Normalized requirements | IMPL | product-manager | T00 | IN_PROGRESS | 1 | - | - |
 | T02 | Requirements verification | VERIFY | Orchestrator | T00, T01 | PENDING | 0 | - | - |
 
 ## Tasks
@@ -73,6 +73,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T15:26:26Z | T00 | Task added; status IN_PROGRESS (attempt 1) | intake scan exit 0: SP-1, 1 analyzed, 0 excluded, 0 instruction candidates |
 | 2026-10-27T15:26:26Z | T01 | Task added; status PENDING | stage 1 plan per intake workflow |
 | 2026-10-27T15:26:26Z | T02 | Task added; status PENDING | stage 1 plan per intake workflow |
+| 2026-10-27T15:26:44Z | T01 | Status IN_PROGRESS (attempt 1); task worktree WI-1-T01 at base 1176f8c; agent orchestrate:product-manager launched | worktree prepare exit 0 |
 
 ## Recovery log
 
