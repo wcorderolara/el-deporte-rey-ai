@@ -36,13 +36,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11 | Architecture verification | VERIFY | Orchestrator | T09, T10, T11D | DONE | 1 | 53e02a7 | `docs/work-items/WI-1/evidence/T11-plan-check.txt` |
 | T11E | Intake of the provider and data-mode change (S-003) | IMPL | Orchestrator | T11 | DONE | 1 | 4757d4e, 19bfba9 | T11I |
 | T11F | Requirements update for PD-12, PD-13 and PD-14 | IMPL | product-manager | T11E | DONE | 1 | 1715e21 | T11I |
-| T11G | Architecture delta and plan reconciliation for PD-12, PD-13 and PD-14 | IMPL | architect | T11F | IN_PROGRESS | 2 | - | - |
+| T11G | Architecture delta and plan reconciliation for PD-12, PD-13 and PD-14 | IMPL | architect | T11F | IN_PROGRESS | 3 | - | - |
 | T11H | Security design review of the provider and data-mode change | IMPL | security-reviewer | T11G | IN_PROGRESS | 2 | - | - |
 | T11I | Change requirements verification | VERIFY | Orchestrator | T11E, T11F | DONE | 1 | 3a2f8c9 | `docs/work-items/WI-1/evidence/T11I-requirements-check.txt` |
 | T11K | Intake of the change-batch Product Owner decisions (S-005) | IMPL | Orchestrator | T11I | IN_PROGRESS | 1 | - | - |
-| T11L | Record PD-15 to PD-20 in the requirements | IMPL | product-manager | T11K | PENDING | 0 | - | - |
-| T11M | Record PD-15 to PD-20 in the source-of-truth decision register | IMPL | architect | T11K | PENDING | 0 | - | - |
-| T11N | Change-batch decisions verification | VERIFY | Orchestrator | T11K, T11L, T11M | PENDING | 0 | - | - |
+| T11L | Record PD-15 to PD-20 in the requirements | IMPL | product-manager | T11K | IN_PROGRESS | 1 | - | - |
+| T11N | Change-batch decisions verification | VERIFY | Orchestrator | T11K, T11L | PENDING | 0 | - | - |
 | T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I, T11N | PENDING | 0 | - | - |
 | T12 | Source of truth: stack, architecture summary, interface conventions, architecture decisions | IMPL | architect | T11J | PENDING | 0 | - | - |
 | T13 | Collect public provider documentation for the PD-01 research | IMPL | Orchestrator | T11J | PENDING | 0 | - | - |
@@ -366,7 +365,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Agent: architect
 - Depends on: T11F
 - Files owned: `docs/work-items/WI-1/architecture/**`, `.orchestrate/source-of-truth.md`
-- Scope: update the architecture delta, contracts and data model for the football-data.org adapter and the three data acquisition modes; reconcile task-plan.md (preserve T12 to T48 IDs, add tasks only where needed); add PD-12 and PD-13 to the source-of-truth decision register.
+- Scope: attempt 3 (re-plan MED-05, replacing the removed task T11M): add PD-15 to PD-20 to the source-of-truth decision register, confirm BR-10 superseded (PD-20), add the business rules and security constraints PD-15 to PD-18 establish, and mark E-13 and E-14 decided in delta section 11. Attempts 1 and 2: update the architecture delta, contracts and data model for the football-data.org adapter and the three data acquisition modes; reconcile task-plan.md (preserve T12 to T48 IDs, add tasks only where needed); add PD-12 and PD-13 to the source-of-truth decision register.
 - Acceptance criteria: plan check exit 0 (existing-ID warnings expected); every active acceptance criterion named by a task.
 - Verification: `orch plan check --plan '<worktree>/docs/work-items/WI-1/architecture/task-plan.md' --tracker '<worktree>/docs/work-items/WI-1/tasks.md' --requirements '<worktree>/docs/work-items/WI-1/requirements.json' --at .` -> exit 0
 - Agent result: PASS (files only; agent has no shell), base d862cb9.
@@ -426,19 +425,10 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Acceptance criteria: no open REQUIRES_PRODUCT_OWNER question; decisions traced to S-005; `orch requirements check` passes.
 - Verification: `orch requirements check --work-item 'WI-1' --at .` -> exit 0
 
-### T11M: Record PD-15 to PD-20 in the source-of-truth decision register
-- Kind: IMPL
-- Agent: architect
-- Depends on: T11K
-- Files owned: `.orchestrate/source-of-truth.md`
-- Scope: add PD-15 to PD-20 to section 3; confirm BR-10 superseded by PD-14 (PD-20); add the business rules and security constraints the decisions establish to sections 4 and 5.
-- Acceptance criteria: six HIGH rows citing WI-1 S-005; only sections 3 to 5 changed.
-- Verification: independently verified by T11N.
-
 ### T11N: Change-batch decisions verification
 - Kind: VERIFY
 - Agent: Orchestrator
-- Depends on: T11K, T11L, T11M
+- Depends on: T11K, T11L
 - Files owned: `docs/work-items/WI-1/evidence/T11N-validate.txt`
 - Scope: run `orch validate` at the integration HEAD and record the evidence.
 - Acceptance criteria: evidence `RESULT: PASS`.
@@ -1082,6 +1072,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T20:54:50Z | T11M | Task added; status PENDING | change-batch PO decisions follow-up |
 | 2026-10-27T20:54:50Z | T11N | Task added; status PENDING | change-batch PO decisions follow-up |
 | 2026-10-27T20:54:50Z | T11J | Dependency T11N added | change-batch PO decisions follow-up |
+| 2026-10-27T20:55:14Z | - | Re-plan (MED-05): T11M removed before start because its owned file overlaps the IN_PROGRESS task T11G; its scope becomes T11G attempt 3; T11N no longer depends on T11M | worktree prepare refused T11M (overlap with T11G) |
+| 2026-10-27T20:55:14Z | T11G | Attempt 3 (source-of-truth PD-15 to PD-20, delta pending items decided) requested | S-005; re-plan replacing T11M |
+| 2026-10-27T20:55:26Z | T11L | Status IN_PROGRESS (attempt 1); agent launched | worktree prepare exit 0 at base 7bc11e2 |
 
 ## Recovery log
 
