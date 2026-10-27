@@ -1,0 +1,277 @@
+{
+  "schema": "orchestrate/config@1",
+  "framework": {
+    "version": "3.0.0"
+  },
+  "project": {
+    "name": "el-deporte-rey-ai",
+    "language": "en"
+  },
+  "defaultBranch": "main",
+  "idPolicy": {
+    "workItemPattern": null,
+    "generatedPrefix": "WI"
+  },
+  "paths": {
+    "workItemDir": "docs/work-items/{id}",
+    "tracker": "{workItemDir}/tasks.md",
+    "evidenceDir": "{workItemDir}/evidence",
+    "intakeDir": "{workItemDir}/intake",
+    "requirements": "{workItemDir}/requirements.md",
+    "requirementsRecords": "{workItemDir}/requirements.json",
+    "architectureDir": "{workItemDir}/architecture",
+    "securityDir": "{workItemDir}/security",
+    "reportsDir": "{workItemDir}/reports",
+    "sourceOfTruth": ".orchestrate/source-of-truth.md",
+    "metricsComparison": null,
+    "closures": ".orchestrate/closures.json",
+    "worktreesRoot": ".claude/worktrees"
+  },
+  "branches": {
+    "workItem": "work/{id}",
+    "task": "task/{id}/{taskId}"
+  },
+  "worktreeNames": {
+    "integration": "{id}-integration",
+    "task": "{id}-{taskId}",
+    "verify": "{id}-verify",
+    "demo": "{id}-demo"
+  },
+  "precedence": [
+    {
+      "level": 1,
+      "name": "Product Owner decisions.",
+      "sources": []
+    },
+    {
+      "level": 2,
+      "name": "Approved current API contract.",
+      "sources": []
+    },
+    {
+      "level": 3,
+      "name": "Approved architecture decisions.",
+      "sources": [
+        "docs/work-items/{id}/architecture"
+      ]
+    },
+    {
+      "level": 4,
+      "name": "Project Source of Truth.",
+      "sources": [
+        ".orchestrate/source-of-truth.md"
+      ]
+    },
+    {
+      "level": 5,
+      "name": "Story requirements.",
+      "sources": [
+        "docs/work-items/{id}/requirements.md"
+      ]
+    },
+    {
+      "level": 6,
+      "name": "Existing code as implementation evidence.",
+      "sources": [
+        "<repository code>"
+      ]
+    }
+  ],
+  "contracts": [],
+  "agents": [
+    {
+      "name": "product-manager",
+      "role": "product-manager",
+      "enabled": true,
+      "reason": "core role",
+      "responsibilities": [],
+      "ownedPaths": [],
+      "read": [],
+      "gateDuties": []
+    },
+    {
+      "name": "architect",
+      "role": "architect",
+      "enabled": true,
+      "reason": "core role",
+      "responsibilities": [],
+      "ownedPaths": [],
+      "read": [],
+      "gateDuties": []
+    },
+    {
+      "name": "backend-developer",
+      "role": "backend-developer",
+      "enabled": true,
+      "reason": "implementation role; stack undetermined",
+      "responsibilities": [],
+      "ownedPaths": [],
+      "read": [],
+      "gateDuties": []
+    },
+    {
+      "name": "frontend-developer",
+      "role": "frontend-developer",
+      "enabled": false,
+      "reason": "no user interface detected",
+      "responsibilities": [],
+      "ownedPaths": [],
+      "read": [],
+      "gateDuties": []
+    },
+    {
+      "name": "qa-engineer",
+      "role": "qa-engineer",
+      "enabled": true,
+      "reason": "core role",
+      "responsibilities": [],
+      "ownedPaths": [],
+      "read": [],
+      "gateDuties": []
+    },
+    {
+      "name": "security-reviewer",
+      "role": "security-reviewer",
+      "enabled": true,
+      "reason": "core role",
+      "responsibilities": [],
+      "ownedPaths": [],
+      "read": [],
+      "gateDuties": []
+    }
+  ],
+  "gates": [
+    {
+      "id": "FW-TRACKER",
+      "category": "framework",
+      "kind": "builtin",
+      "command": null,
+      "builtin": "tracker",
+      "procedure": null,
+      "reason": "Framework-mandatory gate FW-TRACKER.",
+      "origin": {
+        "kind": "framework",
+        "evidence": []
+      },
+      "required": true,
+      "when": [
+        "affected",
+        "final"
+      ],
+      "paths": [],
+      "status": "configured",
+      "decision": null,
+      "decisionLevel": null,
+      "countsPattern": null,
+      "timeoutSeconds": 120
+    },
+    {
+      "id": "FW-CONFIG",
+      "category": "framework",
+      "kind": "builtin",
+      "command": null,
+      "builtin": "config",
+      "procedure": null,
+      "reason": "Framework-mandatory gate FW-CONFIG.",
+      "origin": {
+        "kind": "framework",
+        "evidence": []
+      },
+      "required": true,
+      "when": [
+        "affected",
+        "final"
+      ],
+      "paths": [],
+      "status": "configured",
+      "decision": null,
+      "decisionLevel": null,
+      "countsPattern": null,
+      "timeoutSeconds": 120
+    },
+    {
+      "id": "FW-SECURITY",
+      "category": "framework",
+      "kind": "builtin",
+      "command": null,
+      "builtin": "security-verdict",
+      "procedure": null,
+      "reason": "Framework-mandatory gate FW-SECURITY.",
+      "origin": {
+        "kind": "framework",
+        "evidence": []
+      },
+      "required": true,
+      "when": [
+        "final"
+      ],
+      "paths": [],
+      "status": "configured",
+      "decision": null,
+      "decisionLevel": null,
+      "countsPattern": null,
+      "timeoutSeconds": 120
+    },
+    {
+      "id": "FW-AC",
+      "category": "framework",
+      "kind": "builtin",
+      "command": null,
+      "builtin": "ac-coverage",
+      "procedure": null,
+      "reason": "Framework-mandatory gate FW-AC.",
+      "origin": {
+        "kind": "framework",
+        "evidence": []
+      },
+      "required": true,
+      "when": [
+        "final"
+      ],
+      "paths": [],
+      "status": "configured",
+      "decision": null,
+      "decisionLevel": null,
+      "countsPattern": null,
+      "timeoutSeconds": 120
+    }
+  ],
+  "riskProfile": {
+    "level": "standard",
+    "personalData": "unknown",
+    "realDataDecision": null,
+    "sensitiveDataCategories": [],
+    "notes": []
+  },
+  "policy": {
+    "additionalHigh": [],
+    "levelOverrides": {},
+    "contractSafetyConditions": [
+      "CS-1",
+      "CS-2",
+      "CS-3",
+      "CS-4",
+      "CS-5"
+    ],
+    "authorizations": {
+      "mergeDefaultBranch": false,
+      "push": false,
+      "deploy": false
+    },
+    "concurrencyDecision": null
+  },
+  "concurrency": 5,
+  "localEnvironment": {
+    "notes": [],
+    "verificationPorts": {},
+    "demoPorts": {}
+  },
+  "intake": {
+    "additionalExclusions": [],
+    "additionalSecretPatterns": [],
+    "additionalTextExtensions": []
+  },
+  "scan": {
+    "additionalModelNamePatterns": []
+  }
+}
