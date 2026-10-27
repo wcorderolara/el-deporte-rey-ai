@@ -3,15 +3,13 @@ info:
   title: El Deporte Rey GT content platform - local HTTP API
   version: 1.0.0
   description: |
-    Proposed contract of WI-1 (architect task WI-1-T09, corrected for the security design review T10:
-    T10-F03 request constraints, T10-F17 closed responses and declared problem responses, T10-F10 closed failure codes;
-    revised by architect task WI-1-T11G for PD-12, PD-13 and PD-14: provider-neutral catalogue with lazy seasons and
-    stages, selection by competition, data source, season, stage and optional matchday, data modes, verification
-    statuses VERIFIED, UNVERIFIED and MANUALLY_APPROVED, manual import, demonstration labels, and 403 declared on
-    every operation (T10-A1-01)); corrected by architect task WI-1-T11G attempt 2 for the security design review
-    T11H: file imports carry the exact file bytes as base64 (T11H-F01), decomposed file names accepted (T11H-F20),
-    server-generated attachment file names for originals (T11H-F11), provider-neutral attribution references
-    that are never URLs (T11H-F14). Not promoted and not declared; see architecture-delta.md sections 11.2 and 11.12.
+    HTTP contract v1 of the local El Deporte Rey GT API, version 1.0.0 (contract ID http-api). Promoted by WI-1-T20
+    from the proposal accepted by the Orchestrator (OD-23; 1.0.0-proposed.2 as designed in WI-1-T09 and WI-1-T11G and
+    corrected for the security design reviews T10 and T11H), with the visual-QA warning check capitalized_tokens added
+    by OD-26. The OpenAPI document is authoritative; packages/contracts mirrors it with Zod schemas and the contract
+    tests check the parity (AD-04).
+    Contract evolution (PD-11): within v1 only additive changes are allowed. A breaking change needs a new major path
+    and a Product Owner decision. Every change follows the contract-change process with a Contract Safety assessment.
     Conventions (architecture-delta.md section 2.1):
     - Base path /api/v1; JSON bodies in camelCase; times ISO-8601 UTC strings.
     - Server-generated IDs are lowercase UUIDs (schema Uuid); catalogue, season, stage and template IDs are slugs
@@ -36,9 +34,9 @@ info:
     - There is no publication operation of any kind (BR-11, R-042, R-219).
     - No operation sets a fact to verified (R-412). The only status an operator action sets is manually_approved,
       on eligible MANUAL_DATA facts only, and it is never verification (PD-13, R-071).
-    - Compatibility: additive changes only within v1 (new optional request fields, new response fields,
+    - Compatibility (PD-11): additive changes only within v1 (new optional request fields, new response fields,
       new operations, new error codes). Removing or changing the meaning of anything, or narrowing a request input,
-      is a breaking change.
+      is a breaking change and needs a new major path and a Product Owner decision.
 servers:
   - url: http://127.0.0.1:4300/api/v1
 tags:
