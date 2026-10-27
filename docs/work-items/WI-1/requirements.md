@@ -3,12 +3,12 @@
 | Field | Value |
 |-------|-------|
 | Work item | WI-1 |
-| Mode | full |
-| Starting point | SP-4 (several documents: the inline launch text S-000 and the Product Owner decision record S-001); override: none |
+| Mode | incremental (as in the current intake record; the document keeps the full structure written at T01) |
+| Starting point | SP-4 (several documents: the inline launch text S-000 and the Product Owner decision records S-001 and S-002); override: none |
 | Records file | `docs/work-items/WI-1/requirements.json` |
 | Intake record | `docs/work-items/WI-1/intake/intake-record.json` |
 | Language | en |
-| Revision | T04 (2026-10-27): Product Owner decisions PD-01 to PD-09 (S-001) applied as an incremental update of the T01 requirements; record IDs of T01 are unchanged |
+| Revision | T04 (2026-10-27): Product Owner decisions PD-01 to PD-09 (S-001) applied as an incremental update of the T01 requirements. T11B (2026-10-27): Product Owner decisions PD-10 and PD-11 (S-002) recorded as an incremental update. Record IDs of T01 and T04 are unchanged |
 
 ## Sources
 
@@ -16,32 +16,38 @@
 |-----------|------|------|------------------|------|
 | S-000 | `docs/work-items/WI-1/intake/sources/inline-001.md` | frd (inline record of the Product Owner launch text) | 1 | `b55dc299ab338c57d3555a183ccd11336c6f97bd79708a1f2737e7bdd6251aa2` |
 | S-001 | `docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27.md` | decision-record (Product Owner decisions of 2026-10-27) | 1 | `de838ea30275c967d31e8e6886da138ca4a5c18f876f991f239c6df39cd952d9` |
+| S-002 | `docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-stage2.md` | decision-record (Product Owner stage-2 decisions of 2026-10-27, answering escalations E-07 and E-08) | 1 | `99d18619acb2134b7c2c01e9569863fa4d425762fc3059a05fe5ad1693066512` |
 
-Records cite S-000 by heading and line range, and S-001 by line range (S-001 has no headings). Neither source has identifiers of its own for requirements (S-001 refers to the R-4nn question IDs of this document), so every record has `originalId: null`. The project has no code, no contracts, no architecture and an empty source of truth.
+The intake record lists three inputs (SP-4) and sets mode `incremental`. Records cite S-000 by heading and line range, and S-001 and S-002 by line range (they have no headings). No source has identifiers of its own for requirements (S-001 refers to the R-4nn question IDs of this document; S-002 refers to the escalation IDs E-07 and E-08 of the tracker), so every record has `originalId: null`. At T04 the project had no code, no contracts, no architecture and an empty source of truth; since then the architecture proposal (`docs/work-items/WI-1/architecture/`), its security design review (`docs/work-items/WI-1/security/design-review.md`) and the source-of-truth decision register (PD-01 to PD-09, BR-01 to BR-11, SC-01 to SC-04) exist. They are not intake sources; this document cites them only in basis text.
 
-Product Owner decision IDs (tracker Decisions table) and their lines in S-001:
+Product Owner decision IDs (tracker Decisions table) and their source lines:
 
-| Decision | S-001 lines | Applies to |
-|----------|-------------|------------|
-| PD-01 | 3-11 | R-410 (option c): R-045, R-046, R-110, R-111, R-400, R-401 |
-| PD-02 | 13-19 | R-411 (option a): R-025, R-047, R-048, R-423, R-424 |
-| PD-03 | 21-23 | R-413 (option c): R-034, R-049, R-050, R-309 |
-| PD-04 | 25-27 | R-414 (option a): R-112, R-308 |
-| PD-05 | 29-31 | R-415 (option a): R-113, R-114, R-300 |
-| PD-06 | 33-35 | R-416 (language c, names i): R-035, R-051, R-052, R-425, R-426 |
-| PD-07 | 39 | Default branch `main`: a project fact, not a product requirement; no record |
-| PD-08 | 40-42 | Frontend required: confirms R-020; enabling the frontend-developer role is a configuration task (section 12) |
-| PD-09 | 43-46 | Confirms R-408 (1080 x 1350), R-405 (per slide and caption plus final approval), R-417 (league phase only) and R-042 (no automatic publication) |
+| Decision | Source and lines | Applies to |
+|----------|------------------|------------|
+| PD-01 | S-001 3-11 | R-410 (option c): R-045, R-046, R-110, R-111, R-400, R-401 |
+| PD-02 | S-001 13-19 | R-411 (option a): R-025, R-047, R-048, R-423, R-424 |
+| PD-03 | S-001 21-23 | R-413 (option c): R-034, R-049, R-050, R-309 |
+| PD-04 | S-001 25-27 | R-414 (option a): R-112, R-308 |
+| PD-05 | S-001 29-31 | R-415 (option a): R-113, R-114, R-300 |
+| PD-06 | S-001 33-35 | R-416 (language c, names i): R-035, R-051, R-052, R-425, R-426 |
+| PD-07 | S-001 39 | Default branch `main`: a project fact, not a product requirement; no record |
+| PD-08 | S-001 40-42 | Frontend required: confirms R-020; enabling the frontend-developer role is a configuration task (section 12) |
+| PD-09 | S-001 43-46 | Confirms R-408 (1080 x 1350), R-405 (per slide and caption plus final approval), R-417 (league phase only) and R-042 (no automatic publication) |
+| PD-10 | S-002 1 ("E-07 A") | R-427 (option A, escalation E-07, architecture issue U-03): R-115, R-116 |
+| PD-11 | S-002 1 ("E-08 approve as written with your recommendations") | R-428 (escalation E-08, architecture issue U-04): R-117 |
 
 Reading notes:
 - The "Research Agent", "Fact-Checking Agent", "Content Agent", "Graphic Design Agent" and "Visual QA Agent" of S-000 are **product features** (stages inside the product), not framework roles (R-302).
 - The "Orchestration" section of S-000 (lines 127-147) and the "Execution" list and closing lines of S-001 (lines 41-42, 48-61) are process directions to the framework, not product requirements. They are listed in section 12.
 - Where a source says the same thing more than once (for example reusable templates in S-000 lines 59, 79 and 119), the statements are merged into one record that cites every location. No source reference was dropped.
 - When S-001 chooses an option of a question by letter ("Option C"), the option text written in the question record is part of what was decided, together with the S-001 wording. Where the S-001 wording adds to the option text (R-411), S-001 wins.
+- S-002 is a one-line answer that chooses by reference: "E-07 A" adopts option A of the options presented for escalation E-07 (security design review section 5, "Q2 and U-03", options table), and "E-08 approve as written with your recommendations" approves the contract-evolution policy of `architecture-delta.md` section 2.1 ("Versioning and compatibility") as recommended (section 8, U-04). As for S-001, the option and policy texts presented to the Product Owner are part of what was decided; they are written into the question records R-427 and R-428.
 
 ## 1. Business context
 
-El Deporte Rey GT (social handle @ElDeporteReyGT, mascot KETSI) publishes sports content on social media. The Product Owner wants an AI-assisted platform that researches sports events, verifies the facts, prepares social media content and generates professional visual assets for publication (S-000 lines 5-10, 67-71). The first use case is UEFA Champions League matchday coverage (line 12), delivered as a local-first MVP that produces Instagram carousels for manual publication (lines 99-105). The Product Owner has set the data sources, the verification rule, the use of marks, the data scope, the user model and the content language (S-001, PD-01 to PD-06).
+El Deporte Rey GT (social handle @ElDeporteReyGT, mascot KETSI) publishes sports content on social media. The Product Owner wants an AI-assisted platform that researches sports events, verifies the facts, prepares social media content and generates professional visual assets for publication (S-000 lines 5-10, 67-71). The first use case is UEFA Champions League matchday coverage (line 12), delivered as a local-first MVP that produces Instagram carousels for manual publication (lines 99-105). The Product Owner has set the data sources, the verification rule, the use of marks, the data scope, the user model and the content language (S-001, PD-01 to PD-06), and, at stage 2, the handling of untrusted input and the evolution policy of the HTTP API contract (S-002, PD-10 and PD-11).
+
+T11B scope (incremental): two Product Owner decisions are recorded. PD-10 accepts in-process processing of untrusted input for WI-1's scope with compensating controls (R-115) and makes a new security review and Product Owner decision a precondition for real sports-data adapters, hosted AI providers and new input types (R-116). PD-11 sets the contract-evolution policy of the HTTP API contract (R-117). Nothing else changes.
 
 ## 2. Problem statement
 
@@ -73,7 +79,7 @@ User stories are stored as functional records with the prefix "User story US-nn"
 
 ## 5. Functional requirements and business rules
 
-Changed in T04: R-020, R-022, R-025, R-034, R-035, R-042, R-045 (added S-001 references; R-025, R-035 and R-045 statements now point to the decided rules). New in T04: R-046 to R-052.
+Changed in T04: R-020, R-022, R-025, R-034, R-035, R-042, R-045 (added S-001 references; R-025, R-035 and R-045 statements now point to the decided rules). New in T04: R-046 to R-052. No change in T11B.
 
 | Record ID | Original ID | Type | Statement | Sources (heading, lines) | Relationships |
 |-----------|-------------|------|-----------|--------------------------|---------------|
@@ -102,7 +108,7 @@ Changed in T04: R-020, R-022, R-025, R-034, R-035, R-042, R-045 (added S-001 ref
 | R-043 | - | functional | History of generated content: past projects with their slides, captions, approval state and exports can be listed and reopened. | S-000 Functional Requirements 63 | refines R-009; references R-419 |
 | R-044 | - | functional | Traceability from source data to exported slides: for every exported slide, its facts, their verification status and their sources can be retrieved. | S-000 Quality Requirements 93; Functional Requirements 57 | refines R-009; depends-on R-024, R-025 |
 | R-045 | - | business-rule | Facts are taken only from trustworthy, attributable data sources; the accepted sources are those of PD-01 (R-046): a licensed sports-data API as preferred primary source and an independent official source for verification. | S-000 Quality Requirements 87; Primary Workflow 25-26; S-001 3-5 | refines R-003; references R-410, R-411, R-046 |
-| R-046 | - | business-rule | **New (PD-01).** Accepted data sources: research uses a licensed sports-data API as the preferred primary source, and fact-checking uses an independent official source for verification. Only accepted sources can make a fact verified. Providers are selected under R-400 and not purchased or subscribed to without authorization (R-111). | S-001 3-5; S-000 Quality Requirements 87; Primary Workflow 25-26 | refines R-045; references R-410, R-400, R-111 |
+| R-046 | - | business-rule | **New (PD-01).** Accepted data sources: research uses a licensed sports-data API as preferred primary source, and fact-checking uses an independent official source for verification. Only accepted sources can make a fact verified. Providers are selected under R-400 and not purchased or subscribed to without authorization (R-111). | S-001 3-5; S-000 Quality Requirements 87; Primary Workflow 25-26 | refines R-045; references R-410, R-400, R-111 |
 | R-047 | - | business-rule | **New (PD-02).** A score, a match date or a standings value is verified only when two independent accepted sources (R-046) agree on it. A value reported by only one accepted source is not verified. | S-001 13-15; S-000 Primary Workflow 25-26 | refines R-025; references R-411, R-046 |
 | R-048 | - | business-rule | **New (PD-02).** When accepted sources disagree on a fact, the fact is marked disputed and is not verified; the official competition publication is consulted (R-311); the fact is not marked verified until the discrepancy is resolved (R-423). Content using a disputed fact stays blocked (R-026); the user cannot mark it verified manually (R-412). | S-001 17-19; S-000 Quality Requirements 89-90 | refines R-025; depends-on R-047; references R-411, R-423, R-311, R-026, R-412 |
 | R-049 | - | business-rule | **New (PD-03).** Team names and the competition name appear in content as text. Slides use only existing brand assets that are authorized (R-309); no unauthorized logo, club badge or competition mark is used. | S-001 21-23; S-000 Branding 81-82 | refines R-010; references R-413, R-034, R-309 |
@@ -112,7 +118,7 @@ Changed in T04: R-020, R-022, R-025, R-034, R-035, R-042, R-045 (added S-001 ref
 
 ## 6. Non-functional requirements and constraints
 
-New in T04: R-110 to R-114.
+New in T04: R-110 to R-114. New in T11B: R-115 to R-117.
 
 | Record ID | Original ID | Type | Statement | Sources (heading, lines) | Relationships |
 |-----------|-------------|------|-----------|--------------------------|---------------|
@@ -132,12 +138,15 @@ New in T04: R-110 to R-114.
 | R-112 | - | constraint | **New (PD-04).** The MVP is limited to team-level and competition-level data. No player-level information (for example player names, goal scorers, line-ups or player statistics) is collected, stored, generated or shown, and no personal data of users is kept (R-113). | S-001 25-27; S-000 Primary Workflow 18-23 | references R-414, R-308, R-113 |
 | R-113 | - | constraint | **New (PD-05).** The MVP has a single local operator and no login: no user accounts, no sign-in step and no user management. | S-001 29-30; S-000 Initial Scope 99 | references R-415, R-300, R-114 |
 | R-114 | - | constraint | **New (PD-05), security.** Development services are bound to localhost only: the web interface and every other network service the platform starts listen only on the loopback interface and accept no connection from another machine (the web interface in MVP use as well, R-415 option (a)). | S-001 29-31; S-000 Initial Scope 99 | references R-415, R-113, R-100 |
+| R-115 | - | constraint | **New in T11B (PD-10), security.** Untrusted input processed in process: within WI-1's scope (sports data from synthetic fixtures (R-110), the stub or a local AI provider, operator-supplied PNG or JPEG brand files (R-033)), provider data, AI output and brand files may be parsed and decoded inside the platform process without thread or process isolation, provided these compensating controls are in place: allow-list schemas for provider data and AI output (R-105); size, dimension and timeout caps; file-signature checks on brand files; SVG files refused; no HTML parsing; inputs to slide rendering supplied as data URIs only; an egress lint rule that confines network access. The acceptance is limited to this scope (R-116). | S-002 1; S-000 Technical Direction 117 | references R-427, R-116, R-105, R-110, R-033, R-401 |
+| R-116 | - | constraint | **New in T11B (PD-10 condition), security.** Before the first real sports-data adapter, any hosted AI provider, or any new input type (for example SVG, HTML or web scraping, or archives) is introduced, a new security review is carried out and the Product Owner takes a new decision on the isolation of untrusted-input processing; until then R-115 does not cover them. Within WI-1 the condition holds when WI-1 delivers no real sports-data adapter, no hosted AI provider and no new input type; the security validation checks this (security design review control V-30). | S-002 1 | references R-427, R-115, R-111, R-400, R-401, R-110 |
+| R-117 | - | constraint | **New in T11B (PD-11).** Contract-evolution policy of the http-api contract: within version v1 only additive changes are made (new optional request fields, new response fields, new operations, new problem codes). Removing an operation, a field or a problem code, or changing its meaning, is a breaking change; a breaking change needs a new major version path and a Product Owner decision. A new required request field or header is not an additive change. | S-002 1 | references R-428, R-020 |
 
-S-000 and S-001 set no performance, availability, scale or accessibility targets; these are not invented here (see R-307 and section 18). The security constraints set by the Product Owner are R-113 and R-114.
+S-000, S-001 and S-002 set no performance, availability, scale or accessibility targets; these are not invented here (see R-307 and section 18). The security constraints set by the Product Owner are R-113 and R-114 (PD-05) and R-115 and R-116 (PD-10).
 
 ## 7. Acceptance criteria
 
-Proportional: one or two testable criteria per requirement. There is no existing behaviour, so there are no regression criteria. Changed in T04: R-205, R-219, R-227 (S-001 references; R-205 and R-227 wording aligned with PD-01 and PD-02). New in T04: R-229 to R-242.
+Proportional: one or two testable criteria per requirement. There is no existing behaviour, so there are no regression criteria. Changed in T04: R-205, R-219, R-227 (S-001 references; R-205 and R-227 wording aligned with PD-01 and PD-02). New in T04: R-229 to R-242. T11B adds no acceptance-criterion record (see the note after the table).
 
 | Record ID | Criterion (testable) | Requirement(s) | Sources |
 |-----------|----------------------|----------------|---------|
@@ -187,7 +196,12 @@ Proportional: one or two testable criteria per requirement. There is no existing
 
 R-103 (stack proposed by the Architect) and R-109 (no unnecessary infrastructure) are checked in the architecture review rather than by a test.
 
-Coverage of the Product Owner decisions that state behaviour: PD-01 by R-227, R-229, R-241, R-242; PD-02 by R-229, R-230, R-205; PD-03 by R-231, R-212; PD-04 by R-232, R-233; PD-05 by R-234, R-235; PD-06 by R-236, R-237; PD-09 by R-238, R-239, R-240, R-219.
+T11B records (no new acceptance-criterion record, so the plan's acceptance criteria R-200 to R-242 are unchanged):
+- R-115: the compensating controls are security controls already assigned to plan tasks and validated by the security validation against the controls of the security design review (section 9); the data-validation part is covered by R-224 and the fixture-only part by R-241.
+- R-116: within WI-1 the condition is "no real sports-data adapter, no hosted AI provider, no new input type". The security validation checks it (design review control V-30: the U-03 decision ID is recorded and its conditions hold). Its future part (a new review and decision before such a change) is a process gate, not product behaviour that a WI-1 test can show.
+- R-117: WI-1 creates the http-api contract at its first version and makes no later change to it, so the policy has no behaviour to test in WI-1. Later changes are assessed against it by the Contract Safety assessment of the framework's planning process.
+
+Coverage of the Product Owner decisions that state behaviour: PD-01 by R-227, R-229, R-241, R-242; PD-02 by R-229, R-230, R-205; PD-03 by R-231, R-212; PD-04 by R-232, R-233; PD-05 by R-234, R-235; PD-06 by R-236, R-237; PD-09 by R-238, R-239, R-240, R-219. PD-10 and PD-11 set constraints verified as described above, without acceptance-criterion records.
 
 ## 8. Edge cases
 
@@ -206,6 +220,8 @@ Coverage of the Product Owner decisions that state behaviour: PD-01 by R-227, R-
 | Teams level on points in the standings | Order and values exactly as verified; no recomputed or invented order | R-035, R-047 |
 | No brand assets provided; badge slot with no authorized badge | Complete slides without assets or placeholders; badge slots stay empty | R-034, R-050, R-212, R-231, R-301 |
 | A badge or logo file is supplied without authorization | Not used on slides | R-049, R-309 |
+| Operator supplies a brand file that is an SVG, or whose content is not a PNG or JPEG, or that exceeds the size or dimension caps | Refused; in-process processing is accepted only for PNG and JPEG files within the caps | R-115 |
+| A real sports-data adapter, a hosted AI provider or a new input type (HTML or web scraping, archives) is proposed | Not covered by PD-10; needs a new security review and a new Product Owner decision on isolation first (and R-111 authorization for any paid service) | R-116, R-111 |
 | Project content language changed after content was drafted | Changed content needs QA and approval again | R-051, R-406 |
 | Slide regenerated, or research re-run, after approval | Approval lost; QA and approval again | R-406, R-217 |
 | AI-generated caption or headline contains a number not in the verified data, or a non-official team-name form | Flagged; cannot be approved | R-027, R-207, R-422, R-426, R-237 |
@@ -222,6 +238,7 @@ External:
 | Sports-data providers per PD-01: a licensed sports-data API (preferred primary) and an independent official source (verification); provider research by the Architect (pricing, coverage, reliability, redistribution/licensing); Product Owner authorization before any purchase or subscription | Research, verification | R-022, R-046, R-110, R-111, R-400, R-410 |
 | Official competition publication (consulted on disagreement) | Dispute resolution | R-048, R-311, R-423 |
 | AI provider(s): selection by the Architect; any paid account authorized by the Product Owner | Content drafting and other AI-based stages | R-029, R-111, R-401 |
+| New security review and Product Owner decision on isolation of untrusted-input processing (PD-10 condition) | The first real sports-data adapter, any hosted AI provider, any new input type | R-116, R-427 |
 | Instagram carousel format (1080 x 1350 confirmed by PD-09; maximum slides), checked against Instagram's published specifications at implementation time | Design, Visual QA, export | R-407, R-408, R-238, R-303 |
 | Brand values and authorized assets from the Product Owner (official colour values, fonts, logo, KETSI images) | Templates | R-301, R-309, R-418, R-033 |
 | Architecture stage (stack, rendering, storage, team identity matching) | All implementation | R-103, R-402, R-403, R-426 |
@@ -234,7 +251,7 @@ Configuration note (not a requirement change): PD-08 confirms that a frontend is
 
 ## 10. Decisions (with classification and source)
 
-Every question of this work item is classified and resolved. ORCHESTRATOR_DECISION items are recommended reversible defaults for the Orchestrator to record; RESOLVED_BY_EXISTING_SOURCE items cite the deciding source, which for R-405, R-408, R-410 to R-411, R-413 to R-417 and R-423 is the Product Owner decision record S-001.
+Every question of this work item is classified and resolved. ORCHESTRATOR_DECISION items are recommended reversible defaults for the Orchestrator to record; RESOLVED_BY_EXISTING_SOURCE items cite the deciding source, which for R-405, R-408, R-410 to R-411, R-413 to R-417 and R-423 is the Product Owner decision record S-001, and for R-427 and R-428 the Product Owner decision record S-002.
 
 | Record ID | Question | Classification | Resolution or recommendation | Source / basis |
 |-----------|----------|----------------|------------------------------|----------------|
@@ -265,20 +282,27 @@ Every question of this work item is classified and resolved. ORCHESTRATOR_DECISI
 | R-424 | **New.** Which verification rule applies to facts other than scores, match dates and standings? | ORCHESTRATOR_DECISION | Recommended reversible default: the PD-02 rule applies to every fact used in content (strictest reading of S-000 lines 25-26); commentary stating no fact is not verified. | S-001 lines 13-15; S-000 lines 25-26; MED-04 |
 | R-425 | **New.** Which content languages are selectable? | ORCHESTRATOR_DECISION | Recommended reversible default: Spanish (default) and English, held as configuration. | S-001 line 34; R-416 options; MED-04 |
 | R-426 | **New.** Which name is the "verified official name", how are name forms matched, and how is the rule enforced? | ORCHESTRATOR_DECISION | Recommended reversible default: official name from the independent official source (R-046); team identity matched across accepted sources (Architect), unmatched teams not verified; exact name in every language, with Visual QA failure on slides and flagging (not approvable) of headlines, descriptions and captions using another form; hashtags may use a hashtag-safe form. If the Orchestrator judges points (1) or (4) to be business-rule semantics, confirm with the PO in the next status report. | S-001 lines 4-5, 35; S-000 lines 43, 92; MED-04 |
+| R-427 | **New in T11B.** May untrusted input (provider data, AI output, operator brand image files) be processed in the platform process without isolation (E-07, U-03)? Options: (A) accept for WI-1's scope with compensating controls and a re-review condition; (B) worker-thread isolation; (C) separate-process isolation. | RESOLVED_BY_EXISTING_SOURCE | **PD-10, option (A).** In-process processing accepted for WI-1's scope (synthetic fixtures, stub or local AI, operator PNG or JPEG brand files) with the compensating controls (R-115); the first real sports-data adapter, any hosted AI provider or any new input type (SVG, HTML or web scraping, archives) needs a new security review and a new PO decision on isolation (R-116). Options (B) and (C) not adopted. | S-002 line 1 ("E-07 A"); option texts: `security/design-review.md` section 5 "Q2 and U-03"; HIGH-03 |
+| R-428 | **New in T11B.** Which contract-evolution policy governs the http-api contract (E-08, U-04)? | RESOLVED_BY_EXISTING_SOURCE | **PD-11.** Policy approved as written (R-117): within v1 only additive changes (new optional request fields, new response fields, new operations, new problem codes); removing or changing the meaning of an operation, field or code is a breaking change that needs a new major path and a PO decision. | S-002 line 1 ("E-08 approve as written with your recommendations"); policy text: `architecture/architecture-delta.md` section 2.1 "Versioning and compatibility"; HIGH-06 |
 
-LOW decisions taken in this task (inside the owned files only):
+LOW decisions taken in T04 (inside the owned files only):
 - LOW-1: Product Owner-decided questions (R-410, R-411, R-413 to R-416) and PO-confirmed defaults (R-405, R-408, R-417) are reclassified as RESOLVED_BY_EXISTING_SOURCE, citing S-001, with the earlier recommendation kept in the `recommendation` field for history where one existed.
 - LOW-2: gaps left by the decisions are recorded as three assumptions (R-309 to R-311) and four classified questions (R-423 to R-426), rather than written into requirements.
 - LOW-3: S-001 is cited by line range with a null heading, because it has no headings.
 - LOW-4: new records numbered in the existing ranges (R-046 to R-052, R-110 to R-114, R-229 to R-242, R-309 to R-311, R-423 to R-426); no existing ID changed or removed.
 
+LOW decisions taken in T11B (inside the owned files only):
+- LOW-5: the two escalations answered by S-002 are recorded as question records R-427 and R-428 (RESOLVED_BY_EXISTING_SOURCE, citing S-002 line 1 with a null heading), following the pattern of R-410 to R-416, so that each decision has a record and an entry in this table; the option and policy texts presented to the Product Owner are written into the question statements.
+- LOW-6: PD-10 is recorded as two constraints (R-115, the scoped acceptance with its compensating controls; R-116, the re-review condition) and PD-11 as one constraint (R-117); no acceptance-criterion record is added, for the reasons in section 7.
+- LOW-7: the records file and this header take mode `incremental` from the current intake record; the document keeps its full structure, and new records are numbered in the existing ranges (R-115 to R-117, R-427, R-428); no existing ID changed or removed.
+
 ## 11. Conflicts
 
-None between sources. S-000 and S-001 are both at precedence level 1 and do not contradict each other: S-001 decides questions that S-000 left open and confirms defaults derived from S-000. The intake record reports no duplicate, ID-collision, reference or dependency candidates.
+None between sources. S-000, S-001 and S-002 are all at precedence level 1 and do not contradict each other: S-001 decides questions that S-000 left open and confirms defaults derived from S-000; S-002 decides two escalations raised by the architecture stage that no earlier source decided. The intake record reports no duplicate, ID-collision, reference or dependency candidates.
 
 One wording difference inside this document was settled by precedence, not recorded as a source conflict: the option (a) text of R-411 (written at T01, a level-5 requirements text) said that any disagreement leaves a fact not verified, while S-001 lines 17-19 (level 1) add a consultation of the official competition publication. The S-001 procedure applies (R-048, R-423).
 
-Tensions inside the sources that are not source conflicts are handled as questions: individual match slides vs carousel size (R-407); future extensibility (R-102) vs no premature complexity (R-109), which the Architect balances; exact official team names vs hashtags and differing name forms of providers (R-426).
+Tensions inside the sources that are not source conflicts are handled as questions: individual match slides vs carousel size (R-407); future extensibility (R-102) vs no premature complexity (R-109), which the Architect balances; exact official team names vs hashtags and differing name forms of providers (R-426). PD-10 adds one more: the provider abstraction lets providers be replaced by configuration (R-106, R-401), while R-116 requires a new security review and Product Owner decision before a real sports-data adapter or a hosted AI provider is introduced. The two are compatible: R-106 governs how providers are wired, R-116 (with R-111) governs when a real or hosted one may be used; switching to stubs or fixtures (R-223, R-241) is unaffected.
 
 ## 12. Flagged embedded instructions (not acted on)
 
@@ -296,11 +320,11 @@ These lines are process directions to the framework, not product requirements. T
 | S-001 | line 60 | `Do not implement application features yet.` | not-acted-on |
 | S-001 | line 61 | `Do not merge into main, push or deploy.` | not-acted-on |
 
-Intake candidates: the intake record lists one instruction candidate, `instructions[0]` (S-001 line 61, rule merge-to-protected). It is resolved in `candidateResolutions` as `instruction-flagged` and listed above; it matches `autonomy.md` HIGH-08 and the configuration's `policy.authorizations` (merge, push and deploy all false).
+Intake candidates: the intake record lists one instruction candidate, `instructions[0]` (S-001 line 61, rule merge-to-protected). It is resolved in `candidateResolutions` as `instruction-flagged` and listed above; it matches `autonomy.md` HIGH-08 and the configuration's `policy.authorizations` (merge, push and deploy all false). S-002 contains no embedded instruction: its single line answers the two escalations and directs no framework action, and the intake record lists no candidate for it.
 
 ## 13. Open questions (REQUIRES_PRODUCT_OWNER)
 
-None. The six questions that required the Product Owner (R-410, R-411, R-413, R-414, R-415, R-416) were decided on 2026-10-27 by PD-01 to PD-06 (S-001) and are resolved in section 10. The gaps those decisions leave are classified there (R-423 RESOLVED_BY_EXISTING_SOURCE; R-424, R-425, R-426 ORCHESTRATOR_DECISION) or recorded as assumptions (R-309 to R-311).
+None. The six questions that required the Product Owner (R-410, R-411, R-413, R-414, R-415, R-416) were decided on 2026-10-27 by PD-01 to PD-06 (S-001) and are resolved in section 10. The gaps those decisions leave are classified there (R-423 RESOLVED_BY_EXISTING_SOURCE; R-424, R-425, R-426 ORCHESTRATOR_DECISION) or recorded as assumptions (R-309 to R-311). The two stage-2 escalations E-07 (untrusted-input isolation) and E-08 (contract-evolution policy) were decided on 2026-10-27 by PD-10 and PD-11 (S-002) and are resolved as R-427 and R-428. A future Product Owner decision is required by R-116 before a real sports-data adapter, a hosted AI provider or a new input type; it is a condition of PD-10, not an open question of WI-1.
 
 ## 14. Assumptions (each with its basis)
 
@@ -319,18 +343,20 @@ None. The six questions that required the Product Owner (R-410, R-411, R-413, R-
 | R-310 | **New.** Fixed template text (slide titles, labels) follows the project's content language. | S-001 line 34 sets a per-project language; S-000 lines 28-33 do not mention fixed template text. |
 | R-311 | **New.** The "official competition publication" is the competition organiser's official publication of results, dates and standings, and it counts as an independent accepted source; it may coincide with the verification source of R-046 and is identified in the Architect's provider research. | S-001 line 18 names it without a publisher; S-001 lines 4-5 accept an independent official source; R-410 options. |
 
+T11B adds no assumption: S-002, read with the option and policy texts it refers to, decides both escalations completely.
+
 ## 15. Proposed work items (MVP delivery phases)
 
-The phases follow the "Initial Scope" priorities of S-000 (lines 101-105). They are proposals for the Orchestrator's planning, not approved work items. Records added in T04 are assigned to the phase that delivers them.
+The phases follow the "Initial Scope" priorities of S-000 (lines 101-105). They are proposals for the Orchestrator's planning, not approved work items. Records added in T04 and T11B are assigned to the phase that delivers them.
 
 | Work-item ID | Title | Records |
 |--------------|-------|---------|
-| MVP-P1 | Phase 1: Foundation: local web interface for a single operator without login and bound to localhost, content projects and UEFA Champions League league-phase selection, provider abstraction with synthetic fixture and stub providers, runtime validation, automated test harness (priority 1) | R-001, R-020, R-021, R-100, R-101, R-102, R-103, R-104, R-105, R-106, R-107, R-108, R-109, R-110, R-111, R-113, R-114, R-200, R-201, R-222, R-223, R-224, R-225, R-226, R-234, R-235, R-239, R-241, R-242, R-300, R-306, R-307, R-400, R-401, R-403, R-415, R-417 |
+| MVP-P1 | Phase 1: Foundation: local web interface for a single operator without login and bound to localhost, content projects and UEFA Champions League league-phase selection, provider abstraction with synthetic fixture and stub providers, runtime validation, automated test harness (priority 1) | R-001, R-020, R-021, R-100, R-101, R-102, R-103, R-104, R-105, R-106, R-107, R-108, R-109, R-110, R-111, R-113, R-114, R-115, R-116, R-117, R-200, R-201, R-222, R-223, R-224, R-225, R-226, R-234, R-235, R-239, R-241, R-242, R-300, R-306, R-307, R-400, R-401, R-403, R-415, R-417, R-427, R-428 |
 | MVP-P2 | Phase 2: Verified matchday results and standings: research, source attribution, two-source fact-checking with the dispute procedure, team- and competition-level data only (priority 2) | R-002, R-003, R-022, R-023, R-024, R-025, R-045, R-046, R-047, R-048, R-112, R-202, R-203, R-204, R-205, R-227, R-229, R-230, R-232, R-233, R-305, R-308, R-311, R-409, R-410, R-411, R-412, R-414, R-423, R-424, R-426 |
 | MVP-P3 | Phase 3: Instagram carousel generation: content drafting in the project language, branded templates with badge slots and authorized assets, deterministic slide rendering at 1080 x 1350, visual QA (priority 3) | R-004, R-005, R-006, R-010, R-027, R-028, R-029, R-030, R-031, R-032, R-033, R-034, R-035, R-036, R-037, R-049, R-050, R-051, R-052, R-207, R-208, R-209, R-210, R-211, R-212, R-213, R-214, R-228, R-231, R-236, R-237, R-238, R-301, R-302, R-303, R-309, R-310, R-402, R-404, R-407, R-408, R-413, R-416, R-418, R-420, R-422, R-425 |
 | MVP-P4 | Phase 4: Review, per-slide and caption approval with final approval, manual export, history and traceability (priority 4) | R-007, R-008, R-009, R-026, R-038, R-039, R-040, R-041, R-042, R-043, R-044, R-206, R-215, R-216, R-217, R-218, R-219, R-220, R-221, R-240, R-304, R-405, R-406, R-419, R-421 |
 
-Blocking Product Owner questions by phase: none. The six earlier blocking questions were decided by PD-01 to PD-06 on 2026-10-27. Remaining prerequisites, none of which blocks fixture-based work: MVP-P2 integration with real providers needs the Architect's provider research (R-400, R-242) and, for any paid service, the Product Owner's authorization (R-111); until then MVP-P2 runs on synthetic fixtures (R-110). MVP-P3 final templates use official brand values and authorized assets when the Product Owner supplies them (R-418, R-301, R-309); provisional values are used meanwhile.
+Blocking Product Owner questions by phase: none. The six earlier blocking questions were decided by PD-01 to PD-06 on 2026-10-27, and the stage-2 escalations by PD-10 and PD-11. Remaining prerequisites, none of which blocks fixture-based work: MVP-P2 integration with real providers needs the Architect's provider research (R-400, R-242), for any paid service the Product Owner's authorization (R-111), and a new security review and Product Owner decision on isolation (R-116); until then MVP-P2 runs on synthetic fixtures (R-110). A hosted AI provider has the same prerequisites (R-111, R-116). MVP-P3 final templates use official brand values and authorized assets when the Product Owner supplies them (R-418, R-301, R-309); provisional values are used meanwhile.
 
 ## 16. Out of scope (MVP)
 
@@ -340,6 +366,8 @@ Blocking Product Owner questions by phase: none. The six earlier blocking questi
 - Login, user accounts, several operators, hosting and remote access to the platform (R-113, R-114, PD-05).
 - Club badges, competition logos or marks and any unauthorized logo (R-049, R-050, PD-03), until a Product Owner decision allows badges (R-413 option (b)).
 - Purchase of, or subscription to, any service without the Product Owner's authorization (R-111, PD-01).
+- Real sports-data adapters, hosted AI providers and new input types (SVG, HTML or web scraping, archives) without a new security review and Product Owner decision on isolation (R-116, PD-10).
+- Breaking changes to v1 of the http-api contract (R-117, PD-11); they need a new major path and a Product Owner decision.
 - Manual override of unverified or disputed facts (R-412, R-048); deletion of history (R-419).
 - Alerts when a source corrects data after export.
 
@@ -354,7 +382,7 @@ Blocking Product Owner questions by phase: none. The six earlier blocking questi
 | RK-05 | Use of club badges or competition marks on public content. | PD-03: names as text, only authorized brand assets, badge slots empty, no unauthorized logos; badges only after a later PO decision. No legal assessment of trademark use is given here. | R-413, R-034, R-049, R-050, R-309 |
 | RK-06 | Instagram format or limits change. | Dimensions (1080 x 1350, PD-09) and slide limit held as configuration. | R-407, R-408, R-238 |
 | RK-07 | AI or data provider cost, rate limits and outages. | Provider abstraction, retries shown in the interface, cost raised to the PO with the architecture; no purchase without authorization. | R-106, R-401, R-023, R-111 |
-| RK-08 | Text from providers or web pages may contain instructions aimed at the AI stages (prompt injection), which could alter content. | Treat all fetched content as data; validation; security review of the architecture. | R-105, R-302 |
+| RK-08 | Text from providers or web pages may contain instructions aimed at the AI stages (prompt injection), which could alter content. | Treat all fetched content as data; validation; security review of the architecture; PD-10 compensating controls and the re-review before real or hosted providers or new input types. | R-105, R-302, R-115, R-116 |
 | RK-09 | Content produced before all matches of a matchday are final. | Result slides only for verified final results; "as of" standings. | R-409 |
 | RK-10 | Pressure toward extensibility adds premature complexity. | Extension points as configuration only; review against R-109. | R-102, R-109, R-226 |
 | RK-11 | The roster has no front-end role enabled although a web interface is required. | PD-08 confirms the frontend; the Orchestrator enables the role in a configuration task (T06). Closed when that task is verified. | R-020 |
@@ -372,7 +400,7 @@ These are considerations, not decisions. The stack is proposed by the Architect 
 - AC-04 Some "agents" may be better as deterministic code, for example Visual QA data checks; recomputing standings from verified results can be an extra check but does not replace the two-source rule (R-302, R-047).
 - AC-05 Provider adapters with synthetic fixture and stub implementations, selected by configuration, including fixtures for the primary source, the verification source and the official competition publication (R-106, R-110, R-223, R-241).
 - AC-06 Versioned content so that approval binds to an exact version and history and traceability are preserved (R-406, R-043, R-044).
-- AC-07 Treat provider and web content as untrusted input to the AI stages; keep instructions and data apart (RK-08).
+- AC-07 Treat provider and web content as untrusted input to the AI stages; keep instructions and data apart (RK-08). Per PD-10, in-process processing with the compensating controls is accepted for WI-1's scope only (R-115, R-116).
 - AC-08 Credentials supplied through local configuration that is never committed (R-401).
 - AC-09 Local-first storage without separately hosted infrastructure (R-100, R-109, R-403).
 - AC-10 Competition, platform format and publication mode as configuration points, for future extension without redesign (R-102, R-226).
@@ -380,3 +408,4 @@ These are considerations, not decisions. The stack is proposed by the Architect 
 - AC-12 Provider research deliverable per PD-01: for each candidate, pricing, coverage of the UEFA Champions League league phase, reliability and redistribution/licensing conditions, with a proposed primary and verification source and the official competition publication (R-400, R-311, R-242).
 - AC-13 Team identity matching across sources and the official-name source (R-426); the data model holds no player-level or user-account data (R-112, R-113, R-233).
 - AC-14 Content language as a project attribute passed to the content stage, with fixed template text per selectable language (R-051, R-310, R-425); badge slots in templates that render complete slides when empty (R-050).
+- AC-15 The http-api contract evolves under the PD-11 policy (R-117): additive-only within v1; breaking changes need a new major path and a Product Owner decision.

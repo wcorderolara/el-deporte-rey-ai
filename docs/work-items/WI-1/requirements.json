@@ -2,7 +2,7 @@
   "schema": "orchestrate/requirements@1",
   "workItem": "WI-1",
   "startingPoint": { "id": "SP-4", "override": null },
-  "mode": "full",
+  "mode": "incremental",
   "language": "en",
   "sources": [
     {
@@ -20,6 +20,15 @@
       "origin": "repo",
       "originalPath": null,
       "sha256": "de838ea30275c967d31e8e6886da138ca4a5c18f876f991f239c6df39cd952d9",
+      "type": "decision-record",
+      "precedenceLevel": 1
+    },
+    {
+      "sourceId": "S-002",
+      "path": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-stage2.md",
+      "origin": "repo",
+      "originalPath": null,
+      "sha256": "99d18619acb2134b7c2c01e9569863fa4d425762fc3059a05fe5ad1693066512",
       "type": "decision-record",
       "precedenceLevel": 1
     }
@@ -670,6 +679,51 @@
       ],
       "precedenceLevel": 1,
       "relationships": [ { "type": "references", "target": "R-415" }, { "type": "references", "target": "R-113" }, { "type": "references", "target": "R-100" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-115", "originalId": null, "type": "constraint",
+      "statement": "Processing of untrusted input inside the platform process (Product Owner decision PD-10). Within WI-1's scope (sports data from synthetic fixtures (R-110), the stub or a local AI provider, and operator-supplied PNG or JPEG brand files (R-033)), provider data, AI output and brand files may be parsed and decoded inside the platform process without thread or process isolation, provided these compensating controls are in place: allow-list schemas for provider data and AI output (R-105); size, dimension and timeout caps; file-signature checks on brand files; SVG files refused; no HTML parsing; inputs to slide rendering supplied as data URIs only; and an egress lint rule that confines network access. The acceptance is limited to this scope (R-116).",
+      "sources": [
+        { "sourceId": "S-002", "location": { "heading": null, "lines": "1-1", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "117-117", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [
+        { "type": "references", "target": "R-427" },
+        { "type": "references", "target": "R-116" },
+        { "type": "references", "target": "R-105" },
+        { "type": "references", "target": "R-110" },
+        { "type": "references", "target": "R-033" },
+        { "type": "references", "target": "R-401" }
+      ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-116", "originalId": null, "type": "constraint",
+      "statement": "Condition of Product Owner decision PD-10: before the first real sports-data adapter, any hosted AI provider, or any new input type (for example SVG, HTML or web scraping, or archives) is introduced, a new security review is carried out and the Product Owner takes a new decision on the isolation of untrusted-input processing. Until then, R-115 does not cover them. Within WI-1 the condition holds when WI-1 delivers no real sports-data adapter, no hosted AI provider and no new input type; the security validation checks this (security design review control V-30).",
+      "sources": [
+        { "sourceId": "S-002", "location": { "heading": null, "lines": "1-1", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [
+        { "type": "references", "target": "R-427" },
+        { "type": "references", "target": "R-115" },
+        { "type": "references", "target": "R-111" },
+        { "type": "references", "target": "R-400" },
+        { "type": "references", "target": "R-401" },
+        { "type": "references", "target": "R-110" }
+      ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-117", "originalId": null, "type": "constraint",
+      "statement": "Contract-evolution policy of the http-api contract (Product Owner decision PD-11). Within version v1 only additive changes are made: new optional request fields, new response fields, new operations and new problem codes. Removing an operation, a field or a problem code, or changing its meaning, is a breaking change; a breaking change needs a new major version path and a Product Owner decision. A new required request field or header is not an additive change.",
+      "sources": [
+        { "sourceId": "S-002", "location": { "heading": null, "lines": "1-1", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-428" }, { "type": "references", "target": "R-020" } ],
       "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
     },
 
@@ -1527,6 +1581,32 @@
       "resolution": "Recommended reversible default: (1) the official name is the team name as given by the independent official source of R-046; (2) the team identity (which team a name refers to) is verified under R-424 by matching the team across the accepted sources, a data-matching design task for the Architect; a team that cannot be matched stays not verified and blocks the content that uses it (R-026); (3) the official name is shown exactly in every content language (R-052): a slide with another form fails the Visual QA team-name check (R-420), and a generated headline, slide description or caption with another form is flagged and cannot be approved until corrected or regenerated, as for invented values (R-027); (4) hashtags are not name displays and may use a hashtag-safe form of the official name (without spaces or punctuation).",
       "recommendation": "Adopt the default as an Orchestrator decision; if the Orchestrator judges point (1) or (4) to be business-rule semantics, confirm them with the Product Owner in the next status report.",
       "basis": "S-001 line 35 (preserve verified official names) and lines 4-5 (independent official source) do not say which source supplies the official name, how name forms of different sources are matched, or how a violation is handled; S-000 lines 43 and 92; consistent with R-027 and R-420; reversible (autonomy.md MED-04)."
+    },
+    {
+      "id": "R-427", "originalId": null, "type": "question",
+      "statement": "May untrusted input (provider data, AI output and operator-supplied brand image files) be parsed and decoded inside the platform process without isolation, or must its processing be isolated (escalation E-07, architecture issue U-03)? Options: (A) accept in-process processing for WI-1's scope (synthetic fixtures, stub or local AI, operator-supplied PNG or JPEG brand files) with compensating controls, on the condition that the first real sports-data adapter, any hosted AI provider or any new input type needs a new security review and a new Product Owner decision on isolation; (B) isolate image decoding and AI-response parsing in a worker thread with resource limits and a deadline; (C) isolate them in a separate process with file-system access limited to the input.",
+      "sources": [
+        { "sourceId": "S-002", "location": { "heading": null, "lines": "1-1", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-115" }, { "type": "references", "target": "R-116" }, { "type": "references", "target": "R-105" } ],
+      "status": "resolved-question", "classification": "RESOLVED_BY_EXISTING_SOURCE",
+      "resolution": "Decided by the Product Owner: PD-10, option (A) (S-002 line 1, 'E-07 A'). In-process processing of untrusted input is accepted for WI-1's scope with the compensating controls of option (A) (R-115). The first real sports-data adapter, any hosted AI provider or any new input type (SVG, HTML or web scraping, archives) needs a new security review and a new Product Owner decision on isolation (R-116). Options (B) and (C) are not adopted.",
+      "recommendation": "Option (A) had been recommended by the architect and the security reviewer; the decision adopts it.",
+      "basis": "Product Owner decision record S-002 line 1 (precedence level 1), decision ID PD-10, answering escalation E-07. The option texts are those presented to the Product Owner in docs/work-items/WI-1/security/design-review.md section 5 'Q2 and U-03' (options table), which classifies the question under autonomy.md HIGH-03 (isolation of untrusted-input processing); see also docs/work-items/WI-1/architecture/architecture-delta.md section 8, U-03."
+    },
+    {
+      "id": "R-428", "originalId": null, "type": "question",
+      "statement": "Which contract-evolution policy governs the http-api contract (escalation E-08, architecture issue U-04)? Proposed policy: within v1 only additive changes (new optional request fields, new response fields, new operations, new problem codes); removing or changing the meaning of an operation, field or code is a breaking change that needs a new major version path and a Product Owner decision.",
+      "sources": [
+        { "sourceId": "S-002", "location": { "heading": null, "lines": "1-1", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-117" } ],
+      "status": "resolved-question", "classification": "RESOLVED_BY_EXISTING_SOURCE",
+      "resolution": "Decided by the Product Owner: PD-11 (S-002 line 1, 'E-08 approve as written with your recommendations'). The policy is approved as written (R-117). That every change to the declared contract also gets a Contract Safety assessment is framework process, not a product requirement.",
+      "recommendation": "The policy as written had been recommended by the architect and found without security objection by the security reviewer; the decision adopts it.",
+      "basis": "Product Owner decision record S-002 line 1 (precedence level 1), decision ID PD-11, answering escalation E-08 (raised under autonomy.md HIGH-06, contract-evolution policy). The policy text is that of docs/work-items/WI-1/architecture/architecture-delta.md section 2.1, 'Versioning and compatibility' (recommendation in section 8, U-04); docs/work-items/WI-1/security/design-review.md section 6 (no security objection) and section 5 Q1 (a newly required header is not additive under this policy)."
     }
   ],
   "conflicts": [],
@@ -1599,7 +1679,7 @@
     {
       "id": "MVP-P1",
       "title": "Phase 1: Foundation - local web interface for a single operator without login and bound to localhost, content projects and UEFA Champions League league-phase selection, provider abstraction with synthetic fixture and stub providers, runtime validation, automated test harness (Initial Scope priority 1)",
-      "records": ["R-001", "R-020", "R-021", "R-100", "R-101", "R-102", "R-103", "R-104", "R-105", "R-106", "R-107", "R-108", "R-109", "R-110", "R-111", "R-113", "R-114", "R-200", "R-201", "R-222", "R-223", "R-224", "R-225", "R-226", "R-234", "R-235", "R-239", "R-241", "R-242", "R-300", "R-306", "R-307", "R-400", "R-401", "R-403", "R-415", "R-417"]
+      "records": ["R-001", "R-020", "R-021", "R-100", "R-101", "R-102", "R-103", "R-104", "R-105", "R-106", "R-107", "R-108", "R-109", "R-110", "R-111", "R-113", "R-114", "R-115", "R-116", "R-117", "R-200", "R-201", "R-222", "R-223", "R-224", "R-225", "R-226", "R-234", "R-235", "R-239", "R-241", "R-242", "R-300", "R-306", "R-307", "R-400", "R-401", "R-403", "R-415", "R-417", "R-427", "R-428"]
     },
     {
       "id": "MVP-P2",
