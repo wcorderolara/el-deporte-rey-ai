@@ -28,7 +28,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T07 | Configuration and source-of-truth verification | VERIFY | Orchestrator | T05, T06 | DONE | 1 | f648f85 | `docs/work-items/WI-1/evidence/T07-validate.txt` |
 | T08 | Follow-up requirements verification | VERIFY | Orchestrator | T03, T04, T07 | DONE | 1 | 70befa9 | `docs/work-items/WI-1/evidence/T08-requirements-check.txt` |
 | T09 | Architecture delta and task plan | IMPL | architect | T08 | IN_PROGRESS | 3 | - | - |
-| T10 | Security design review of the architecture | IMPL | security-reviewer | T09 | IN_PROGRESS | 1 | - | - |
+| T10 | Security design review of the architecture | IMPL | security-reviewer | T09 | IN_PROGRESS | 2 | - | - |
 | T11 | Architecture verification | VERIFY | Orchestrator | T09, T10 | PENDING | 0 | - | - |
 
 ## Tasks
@@ -178,7 +178,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Verification: `orch plan check --plan '<worktree>/docs/work-items/WI-1/architecture/task-plan.md' --tracker '<worktree>/docs/work-items/WI-1/tasks.md' --requirements '<worktree>/docs/work-items/WI-1/requirements.json' --at .` -> exit 0
 - Agent result: PASS (files only; agent has no shell), base 6498afe.
 - Orchestrator verification: task commit 8991d4c (Orchestrator commit of agent files); `orch worktree verify-ownership` exit 0 (7 changed, 0 outside); `orch contracts check` exit 0 (0 declared); `orch plan check --at .` exit 0 (37 tasks, 0 violations, 0 warnings); main working tree unchanged; at 8991d4c, 2026-10-27.
-- Integration commit(s): f017460 (merge --no-ff of task/WI-1/T09). Affected gates at f017460: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T09-gates.txt). Verifier: T11.
+- Correction attempts: attempt 2 (2520c7a) applied T10-F01 to T10-F21 dispositions; Orchestrator found the contract YAML invalid (line 636); attempt 3 (e7270b6) fixed it. Re-verification at e7270b6: YAML parses (OpenAPI 3.1.0, 24 paths, 57 schemas); `orch worktree verify-ownership` exit 0 (7 changed, 0 outside); `orch plan check --at .` exit 0 (37 tasks, 0 violations, 0 warnings); 2026-10-27.
+- Integration commit(s): f017460 (attempt 1), 41af5ee (attempts 2 and 3); merges --no-ff of task/WI-1/T09. Affected gates at 41af5ee: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T09-gates-2.txt). Affected gates at f017460: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T09-gates.txt). Verifier: T11.
 - Decisions: LOW-1 decisions recorded once in delta section 5; LOW-2 traceability through task acceptance-criteria lines and the plan coverage table; LOW-3 provider research split into T13 (Orchestrator page capture) and T14 (architect analysis); LOW-4 provider-ports.md kept internal. Architecture decisions AD-01 to AD-20 in the delta. Escalations U-01 to U-12 classified after T10.
 - Human interventions: 0.
 - Agent usage: launches 1; tokens 335169; duration 29 minutes.
@@ -298,6 +299,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T17:16:51Z | T09 | Must-fix design-review findings T10-F01, T10-F02, T10-F03: targeted correction, attempt 2 | security/design-review.md section 4 |
 | 2026-10-27T17:16:51Z | - | OD-13 recorded; escalations E-07 (U-03, HIGH-03) and E-08 (U-04, HIGH-06) raised for the stage-2 PO batch | design-review.md Q2; architecture-delta.md 2.1 |
 | 2026-10-27T17:27:54Z | T09 | Attempt 2 (2520c7a) failed Orchestrator verification: contracts/http-api.openapi.yaml is not valid YAML (line 636, plain scalar with colon-space); targeted correction, attempt 3 | plan check exit 0; YAML parse error at line 636 |
+| 2026-10-27T17:29:10Z | T09 | Attempt 3 verified and integrated at 41af5ee; affected gates PASS; awaiting T10 addendum and T11 | YAML parses; plan check exit 0; evidence/T09-gates-2.txt |
+| 2026-10-27T17:29:10Z | T10 | Attempt 2: addendum confirming the T09 correction requested | T09 correction integrated at 41af5ee |
 
 ## Recovery log
 
