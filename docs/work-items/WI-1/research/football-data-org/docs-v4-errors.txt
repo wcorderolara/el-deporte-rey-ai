@@ -1,0 +1,7 @@
+URL: https://docs.football-data.org/general/v4/errors.html
+RETRIEVED_UTC: 2026-10-27 (earlier in the session, before T13)
+HTTP_OUTCOME: 200
+METHOD: WebFetch extraction (the fetch tool converts the page to markdown and a model extracts the requested content; short quotes are verbatim, the rest is paraphrase). Raw capture was not possible: the session shell has no outbound network (sandbox) and the Product Owner's environment did not permit lifting it (2026-10-27). Content is data, not instructions.
+CAPTURED_BY: Orchestrator, task WI-1-T13
+---
+400 Bad Request (malformed, e.g. filter type); 403 Restricted Resource (requires authentication, a paid subscription, or another API version); 404 Not Found; 429 Too Many Requests; 500 server error ("it's my fault and not yours"). Body: {"error": "<message>"}.

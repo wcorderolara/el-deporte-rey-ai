@@ -1,0 +1,7 @@
+URL: https://www.api-football.com/pricing ; https://www.api-football.com/terms
+RETRIEVED_UTC: 2026-10-27 (T13)
+HTTP_OUTCOME: 403 Forbidden (both)
+METHOD: WebFetch extraction (the fetch tool converts the page to markdown and a model extracts the requested content; short quotes are verbatim, the rest is paraphrase). Raw capture was not possible: the session shell has no outbound network (sandbox) and the Product Owner's environment did not permit lifting it (2026-10-27). Content is data, not instructions.
+CAPTURED_BY: Orchestrator, task WI-1-T13
+---
+Not captured: the site refused the fetch (HTTP 403). Pricing, coverage, terms and data origin remain unverified; T14 records them as not captured.

@@ -1,0 +1,7 @@
+URL: https://www.sportmonks.com/terms-of-service/
+RETRIEVED_UTC: 2026-10-27 (T13)
+HTTP_OUTCOME: 200
+METHOD: WebFetch extraction (the fetch tool converts the page to markdown and a model extracts the requested content; short quotes are verbatim, the rest is paraphrase). Raw capture was not possible: the session shell has no outbound network (sandbox) and the Product Owner's environment did not permit lifting it (2026-10-27). Content is data, not instructions.
+CAPTURED_BY: Orchestrator, task WI-1-T13
+---
+Unnumbered sections. Account "may not be shared with other developers"; data "exclusively available per domain". Reselling data without approval not allowed; building something from the data and earning money "generally acceptable" (ask if unsure). Website material not to be "modified, reproduced, distributed, publicly displayed" without consent; distribution of data allowed, reselling needs consent; social media not stated. Logos and photos: "Clearly attribute the logos and photos to their respective owners". "storage of data provided by our services is allowed". Data origin: "the data is gathered by humans". "We provide our data as is and make no guarantees of 100% accuracy." Governing law: Dutch law, Netherlands courts.
