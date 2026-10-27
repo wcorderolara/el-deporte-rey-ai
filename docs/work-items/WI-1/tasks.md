@@ -41,7 +41,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11I | Change requirements verification | VERIFY | Orchestrator | T11E, T11F | DONE | 1 | 3a2f8c9 | `docs/work-items/WI-1/evidence/T11I-requirements-check.txt` |
 | T11K | Intake of the change-batch Product Owner decisions (S-005) | IMPL | Orchestrator | T11I | IN_PROGRESS | 1 | - | - |
 | T11L | Record PD-15 to PD-20 in the requirements | IMPL | product-manager | T11K | IN_PROGRESS | 1 | - | - |
-| T11N | Change-batch decisions verification | VERIFY | Orchestrator | T11K, T11L | PENDING | 0 | - | - |
+| T11N | Change-batch decisions verification | VERIFY | Orchestrator | T11K, T11L | IN_PROGRESS | 1 | - | - |
 | T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I, T11N | PENDING | 0 | - | - |
 | T12 | Source of truth: stack, architecture summary, interface conventions, architecture decisions | IMPL | architect | T11J | PENDING | 0 | - | - |
 | T13 | Collect public provider documentation for the PD-01 research | IMPL | Orchestrator | T11J | PENDING | 0 | - | - |
@@ -425,6 +425,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: resolve R-429 (PD-17) and R-430 (PD-18), record PD-15 (SC-05 isolation option A), PD-16 (credential identity option A), PD-19 (C-1 confirmed) and PD-20 (C-3 confirmed) with the records they establish, citing S-005; close conflicts C-1 to C-3.
 - Acceptance criteria: no open REQUIRES_PRODUCT_OWNER question; decisions traced to S-005; `orch requirements check` passes.
 - Verification: `orch requirements check --work-item 'WI-1' --at .` -> exit 0
+- Agent result: PASS (files only; agent has no shell), base 7bc11e2.
+- Orchestrator verification: task commit 417f02d (Orchestrator commit of agent files); `orch worktree verify-ownership` exit 0 (2 changed, 0 outside); `orch requirements check --at .` exit 0 (15 rules, 0 failed); record diff: 267 before, 271 after, none removed; added R-078, R-142, R-143, R-320; 21 records amended; no new acceptance criterion; 0 open questions; conflicts C-1 to C-3 resolved; main working tree unchanged; at 417f02d, 2026-10-27.
+- Integration commit(s): 966a599 (merge --no-ff of task/WI-1/T11L). Affected gates: evidence/T11L-gates.txt. Verifier: T11N.
+- Decisions: LOW-15 to LOW-20 (PD-17 into R-071 and R-026; PD-15, PD-16 as R-142, R-143; PD-18 as R-078; no new acceptance criterion, R-271 and R-272 extended; R-320 assumption on label placement consistent with OD-28; S-005 cited). OD-29 concerns this task.
+- Human interventions: PD-15 to PD-20 (S-005).
+- Agent usage: launches 1; tokens 378705; duration 22 minutes.
 
 ### T11N: Change-batch decisions verification
 - Kind: VERIFY
@@ -902,6 +908,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-26 | MEDIUM | U-28: a deterministic visual-QA warning check on every AI draft flags capitalized tokens that are not verified team or competition names (possible person names, T11H-F17 residual triggered by PD-17); the existing QA acknowledgement applies; one new closed value for the QA check name is added to the http-api proposal at promotion by T20 as an additive pre-release revision under OD-23; T35, T39 and T43 carry it through their briefs (plan precondition 6 satisfied) | no check; blocking check | low (warning only, configurable) | MED-04, MED-01 (additive closed enum value; CS-1 to CS-5 hold), MED-05; PO notified |
 | OD-27 | MEDIUM | AD-38 confirmed: manual approval in competitions marked noAcceptedPublicSource requires pinned team identities (unpinned or changed names give team_identity_unmatched); the configuration refuses the options the PO did not choose (allowed_labelled, any_supporting_source); such links bind MANUAL_DATA sources only | eligibility on any manual fact | low (stricter; configurable) | MED-04; consistent with PD-06, PD-17, PD-18; PO notified |
 | OD-28 | MEDIUM | U-29: PD-17 operator-attested labelling applies in the review UI, the trace and the export manifest (operatorAttested true when any used fact is MANUALLY_APPROVED); no visible label on the slide images, consistent with OD-01; the PO may require a visible label | visible label on slides | low (template or configuration change) | MED-04; PO notified in the stage report and may override |
+| OD-29 | MEDIUM | U-30: T11L added no acceptance-criterion IDs; the extended statements of R-271 (both republishing-permission states, R-078) and R-272 (PD-17 eligibility, R-026) are carried as test expectations in the briefs of the tasks that name them (T30, T31, T32, T37, T39, T42, T44, T52); approval tests using the test-live double cover both permission states | re-open T11G for a fourth attempt | low | MED-05; requirements.md AC-23; PO notified |
 
 ## Conflicts
 
@@ -1081,6 +1088,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T20:55:26Z | T11L | Status IN_PROGRESS (attempt 1); agent launched | worktree prepare exit 0 at base 7bc11e2 |
 | 2026-10-27T21:10:09Z | T11G | Attempt 3 verified and integrated at b468d07; affected gates PASS; awaiting T11J | plan check exit 0; source-of-truth diff sections 3 to 5; evidence/T11G-gates-3.txt |
 | 2026-10-27T21:10:09Z | - | OD-26 (U-28 QA warning check), OD-27 (AD-38 confirmed), OD-28 (U-29 label scope) recorded | architecture-delta.md section 11.13 |
+| 2026-10-27T21:18:38Z | T11L | Agent report PASS; verified and integrated at 966a599; affected gates PASS; awaiting T11N | requirements check exit 0; evidence/T11L-gates.txt |
+| 2026-10-27T21:18:38Z | - | OD-29 recorded (R-271, R-272 extended statements routed to task briefs) | T11L report |
+| 2026-10-27T21:18:38Z | T11N | Status IN_PROGRESS (attempt 1) | T11K, T11L integrated |
 
 ## Recovery log
 
