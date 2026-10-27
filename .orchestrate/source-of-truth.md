@@ -37,6 +37,8 @@ Versions, install policy and runtime prerequisites:
 | PD-07 | The main branch is `main`. | HIGH | 2026-10-27 | WI-1 S-001 |
 | PD-08 | A frontend is required, and the frontend-developer role is enabled in the project configuration through the authorized configuration workflow. | HIGH | 2026-10-27 | WI-1 S-001; R-020 |
 | PD-09 | Confirms the 1080 x 1350 carousel format, individual slide/caption approval plus final approval, and league-phase-only scope for the initial MVP; no automatic publication. | HIGH | 2026-10-27 | WI-1 S-001; R-408, R-405, R-417, R-042 |
+| PD-10 | Option A (U-03, HIGH-03): in-process processing of untrusted input is accepted for WI-1's scope (synthetic fixtures, stub or local AI, operator PNG or JPEG brand files) with the compensating controls of Q2 option A, under condition SC-05. | HIGH | 2026-10-27 | WI-1 S-002; security/design-review.md Q2 |
+| PD-11 | The http-api contract-evolution policy (U-04, HIGH-06) is approved as written: additive-only changes within v1, and a breaking change needs a new major path and a Product Owner decision. | HIGH | 2026-10-27 | WI-1 S-002; architecture-delta.md 2.1 |
 
 Product Owner decisions (HIGH) and architecture decisions are listed here. Orchestrator decisions (MEDIUM) are added at work-item close.
 
@@ -64,6 +66,7 @@ Product Owner decisions (HIGH) and architecture decisions are listed here. Orche
 | SC-02 | Development services are bound to localhost only. | PD-05 (WI-1 S-001; R-415) |
 | SC-03 | No service is purchased or subscribed to without authorization. | PD-01 (WI-1 S-001; R-410) |
 | SC-04 | Synthetic fixtures are used during development. | PD-01 (WI-1 S-001; R-410) |
+| SC-05 | The first real sports-data adapter, any hosted AI provider, or any new input type (SVG, HTML or web scraping, archives) requires a new security review and a new Product Owner decision on isolation of untrusted-input processing before it is introduced. | PD-10 (WI-1 S-002; security/design-review.md Q2) |
 
 The risk profile and the sensitive-data categories are recorded in the project configuration (`riskProfile`).
 
