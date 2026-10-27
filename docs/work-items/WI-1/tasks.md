@@ -30,8 +30,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T09 | Architecture delta and task plan | IMPL | architect | T08 | IN_PROGRESS | 3 | - | - |
 | T10 | Security design review of the architecture | IMPL | security-reviewer | T09 | IN_PROGRESS | 2 | - | - |
 | T11A | Intake of the stage-2 Product Owner decisions | IMPL | Orchestrator | T08 | IN_PROGRESS | 1 | - | - |
-| T11B | Record PD-10 and PD-11 in the requirements | IMPL | product-manager | T11A | PENDING | 0 | - | - |
-| T11C | Record PD-10 and PD-11 in the source-of-truth decision register | IMPL | architect | T11A | PENDING | 0 | - | - |
+| T11B | Record PD-10 and PD-11 in the requirements | IMPL | product-manager | T11A | IN_PROGRESS | 1 | - | - |
+| T11C | Record PD-10 and PD-11 in the source-of-truth decision register | IMPL | architect | T11A | IN_PROGRESS | 1 | - | - |
 | T11D | Stage-2 decisions verification | VERIFY | Orchestrator | T11A, T11B, T11C | PENDING | 0 | - | - |
 | T11 | Architecture verification | VERIFY | Orchestrator | T09, T10, T11D | PENDING | 0 | - | - |
 
@@ -349,6 +349,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T17:30:39Z | T11C | Task added; status PENDING | stage-2 PO decisions follow-up |
 | 2026-10-27T17:30:39Z | T11D | Task added; status PENDING | stage-2 PO decisions follow-up |
 | 2026-10-27T17:30:39Z | T11 | Dependency T11D added | stage-2 PO decisions follow-up |
+| 2026-10-27T17:30:47Z | T11B | Status IN_PROGRESS (attempt 1); agent launched | worktree prepare exit 0 at base 266b29d |
+| 2026-10-27T17:30:47Z | T11C | Status IN_PROGRESS (attempt 1); agent launched | worktree prepare exit 0 at base 266b29d |
 
 ## Recovery log
 
