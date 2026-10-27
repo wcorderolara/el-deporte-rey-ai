@@ -1,0 +1,32 @@
+{
+  "schema": "orchestrate/inventory@1",
+  "workItem": "WI-1",
+  "roots": [
+    {
+      "input": "(inline record)",
+      "kind": "inline",
+      "path": "docs/work-items/WI-1/intake/sources/inline-001.md",
+      "insideRepository": true
+    }
+  ],
+  "counts": {
+    "analyzed": 1,
+    "unsupported": 0,
+    "excluded": 0
+  },
+  "files": [
+    {
+      "path": "docs/work-items/WI-1/intake/sources/inline-001.md",
+      "status": "analyzed",
+      "reason": "inline record",
+      "sourceId": "S-000",
+      "reader": "text",
+      "format": "md",
+      "sha256": "b55dc299ab338c57d3555a183ccd11336c6f97bd79708a1f2737e7bdd6251aa2",
+      "bytes": 3708,
+      "originalPath": null,
+      "typeCandidate": "frd",
+      "idsFound": []
+    }
+  ]
+}

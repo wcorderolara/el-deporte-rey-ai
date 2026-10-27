@@ -1,0 +1,34 @@
+{
+  "schema": "orchestrate/intake@1",
+  "workItem": "WI-1",
+  "startingPoint": {
+    "id": "SP-1",
+    "basis": "inline text only"
+  },
+  "mode": "full",
+  "inputs": [
+    {
+      "input": "(inline record)",
+      "kind": "inline",
+      "resolvedPath": "docs/work-items/WI-1/intake/sources/inline-001.md",
+      "insideRepository": true
+    }
+  ],
+  "precedenceAssignment": [
+    {
+      "sourceId": "S-000",
+      "level": 1,
+      "basis": "inline launch instruction of the Product Owner"
+    }
+  ],
+  "candidates": {
+    "exactDuplicates": [],
+    "paragraphDuplicates": [],
+    "idCollisions": [],
+    "references": [],
+    "dependencies": [],
+    "instructions": []
+  },
+  "asBuilt": null,
+  "inventory": "docs/work-items/WI-1/intake/inventory.json"
+}
