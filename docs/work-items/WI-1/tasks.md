@@ -50,10 +50,10 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T16 | Web application skeleton | IMPL | frontend-developer | T15 | DONE | 1 | cf0716e | `docs/work-items/WI-1/evidence/T16-gates.txt` |
 | T17 | Configuration, catalog, display formatting and egress client | IMPL | backend-developer | T15 | DONE | 1 | b0b58d2 | `docs/work-items/WI-1/evidence/T17-gates.txt` |
 | T18 | Persistence: SQLite access, migration runner and initial schema | IMPL | backend-developer | T15 | DONE | 1 | 20d92b2 | `docs/work-items/WI-1/evidence/T18-gates.txt` |
-| T19 | HTTP platform, composition root and local-origin protections | IMPL | backend-developer | T17, T18 | PENDING | 0 | - | - |
+| T19 | HTTP platform, composition root and local-origin protections | IMPL | backend-developer | T17, T18 | IN_PROGRESS | 1 | - | - |
 | T20 | HTTP contract promotion and shared API schemas | IMPL | backend-developer | T15 | IN_PROGRESS | 1 | - | - |
 | T21 | Sports-data provider port, payload validation and fixture adapter | IMPL | backend-developer | T17, T20 | PENDING | 0 | - | - |
-| T22 | AI provider port, stub adapter and OpenAI-compatible adapter | IMPL | backend-developer | T17 | PENDING | 0 | - | - |
+| T22 | AI provider port, stub adapter and OpenAI-compatible adapter | IMPL | backend-developer | T17 | IN_PROGRESS | 1 | - | - |
 | T23 | Synthetic fixture scenarios | IMPL | qa-engineer | T21, T22 | PENDING | 0 | - | - |
 | T24 | End-to-end and accessibility test harness | IMPL | qa-engineer | T16, T19 | PENDING | 0 | - | - |
 | T25 | Project gates, local-environment settings and contract declaration | IMPL | Orchestrator | T15, T16, T19, T20, T24 | PENDING | 0 | - | - |
@@ -1183,6 +1183,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T22:17:51Z | - | OD-37 recorded (T19 owns root package.json for the dev:api configuration) | T17 file request |
 | 2026-10-27T22:17:51Z | T19 | Files owned extended by OD-37 (package.json) | OD-37 |
 | 2026-10-27T22:17:53Z | T17 | Status DONE | integration commit b0b58d2; evidence/T17-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-27T22:18:05Z | T19 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-27T22:18:05Z | T22 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 
 ## Recovery log
 
