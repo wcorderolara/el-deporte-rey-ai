@@ -198,7 +198,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Verification: independently verified by T11.
 - Agent result: PASS (report delivered; design verdict FAIL, correctable: must-fix T10-F01, T10-F02, T10-F03; no HIGH or CRITICAL finding), base 8dc35d5.
 - Orchestrator verification: task commit eae1f6a (Orchestrator commit of agent file); `orch worktree verify-ownership` exit 0 (1 changed, 0 outside); main working tree unchanged; at eae1f6a, 2026-10-27.
-- Integration commit(s): 3ac5b85 (merge --no-ff of task/WI-1/T10). Affected gates at 3ac5b85: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T10-gates.txt). Verifier: T11. An addendum confirming the T09 correction follows (attempt 2).
+- Attempt 2 (addendum): agent result PASS, updated design verdict PASS (T10-F01 to T10-F03 resolved; F04, F09, F17, F19, F21 applied; new LOW observations T10-A1-01 to T10-A1-06, non-blocking); task commit 7d52520; `orch worktree verify-ownership` exit 0 (1 changed, 0 outside); 2026-10-27. Agent usage attempt 2: tokens 290709 (cumulative); duration 3 minutes.
+- Integration commit(s): 3ac5b85 (attempt 1), c1c0e2c (attempt 2 addendum); merges --no-ff of task/WI-1/T10. Affected gates at c1c0e2c: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T10-gates-2.txt). Affected gates at 3ac5b85: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T10-gates.txt). Verifier: T11. An addendum confirming the T09 correction follows (attempt 2).
 - Decisions: LOW-1 findings T10-F01 to T10-F21 with disposition and role class; LOW-2 library behaviours recorded as NV-1 to NV-6 for T47. Escalations: U-03 HIGH-03 (E-07); U-04 HIGH-06 reading (E-08); Q5 residual within PD-05 (no decision needed).
 - Human interventions: 0.
 - Agent usage: launches 1; tokens 199373; duration 13 minutes.
@@ -282,6 +283,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-11 | MEDIUM | R-425: selectable content languages are Spanish (default) and English, held as configuration | Spanish only; open list | low (configuration) | MED-04, S-001 line 37; PO notified in stage-1 report |
 | OD-12 | MEDIUM | R-426: the verified official team name comes from the independent official source; team identity is matched across sources and an unmatched team is not verified; any other name form fails Visual QA and is not approvable; hashtags may use a hashtag-safe form of the name | name from the primary API; allow display aliases | low (rule configurable before content exists) | MED-04, S-001 lines 4-5, 38; PO notified in stage-1 report, may override |
 | OD-13 | MEDIUM | U-06: carousel templates are versioned code with a registry, list and preview in the UI; no template editing in the UI for the MVP (R-010) | in-UI template editor | low (additive later) | MED-04, architecture-delta section 8; PO notified in stage-2 report |
+| OD-14 | MEDIUM | U-05: the corrected http-api proposal (contracts/http-api.openapi.yaml at 41af5ee; 29 operations, 24 paths) is accepted as an additive new contract; promotion by T20, declaration in the configuration by T25, hash in the source of truth by T26 | reject or defer the contract | low (additive; not yet declared) | MED-01; Contract Safety CS-1 to CS-5 hold per T10 addendum; PD-11 policy; PO notified in stage-2 report |
+| OD-15 | MEDIUM | T10 addendum observations T10-A1-01 to T10-A1-06 (LOW, non-blocking) are carried as extra constraints in the briefs of the named tasks (A1-01 T20 and T43: declare 403 on GET operations, additive; A1-02 and A1-03 T41 and T46: hygiene subcommand, positive-control test, scripts in lint scope; A1-04 T19 brief wording; A1-05 T32 allowed character exceptions; A1-06 T30 and T43 slug conformance) instead of a fourth architecture attempt | re-open T09 | low | MED-05; design-review.md Addendum 1; PO notified in stage-2 report |
 
 ## Conflicts
 
@@ -358,6 +361,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T17:30:47Z | T11B | Status IN_PROGRESS (attempt 1); agent launched | worktree prepare exit 0 at base 266b29d |
 | 2026-10-27T17:30:47Z | T11C | Status IN_PROGRESS (attempt 1); agent launched | worktree prepare exit 0 at base 266b29d |
 | 2026-10-27T17:32:07Z | T11C | Agent report PASS; verified and integrated at 16013be; affected gates PASS; awaiting T11D | verify-ownership exit 0; evidence/T11C-gates.txt |
+| 2026-10-27T17:32:50Z | T10 | Attempt 2 addendum PASS; integrated at c1c0e2c; design verdict PASS; awaiting T11 | design-review.md Addendum 1; evidence/T10-gates-2.txt |
+| 2026-10-27T17:32:50Z | - | OD-14 (http-api accepted, MED-01) and OD-15 (A1 observations routed to task briefs) recorded | T10 addendum Contract Safety |
 
 ## Recovery log
 
