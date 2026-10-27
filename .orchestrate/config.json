@@ -112,8 +112,8 @@
     {
       "name": "frontend-developer",
       "role": "frontend-developer",
-      "enabled": false,
-      "reason": "no user interface detected",
+      "enabled": true,
+      "reason": "Product Owner decision PD-08 (WI-1): frontend required",
       "responsibilities": [],
       "ownedPaths": [],
       "read": [],
@@ -238,10 +238,12 @@
   ],
   "riskProfile": {
     "level": "standard",
-    "personalData": "unknown",
+    "personalData": "none",
     "realDataDecision": null,
     "sensitiveDataCategories": [],
-    "notes": []
+    "notes": [
+      "Product Owner decision PD-04 (WI-1): MVP limited to team-level and competition-level data; no player-level information."
+    ]
   },
   "policy": {
     "additionalHigh": [],
