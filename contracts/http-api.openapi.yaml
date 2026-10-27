@@ -1,0 +1,2295 @@
+openapi: 3.1.0
+info:
+  title: El Deporte Rey GT content platform - local HTTP API
+  version: 1.0.0
+  description: |
+    Proposed contract of WI-1 (architect task WI-1-T09, corrected for the security design review T10:
+    T10-F03 request constraints, T10-F17 closed responses and declared problem responses, T10-F10 closed failure codes;
+    revised by architect task WI-1-T11G for PD-12, PD-13 and PD-14: provider-neutral catalogue with lazy seasons and
+    stages, selection by competition, data source, season, stage and optional matchday, data modes, verification
+    statuses VERIFIED, UNVERIFIED and MANUALLY_APPROVED, manual import, demonstration labels, and 403 declared on
+    every operation (T10-A1-01)); corrected by architect task WI-1-T11G attempt 2 for the security design review
+    T11H: file imports carry the exact file bytes as base64 (T11H-F01), decomposed file names accepted (T11H-F20),
+    server-generated attachment file names for originals (T11H-F11), provider-neutral attribution references
+    that are never URLs (T11H-F14). Not promoted and not declared; see architecture-delta.md sections 11.2 and 11.12.
+    Conventions (architecture-delta.md section 2.1):
+    - Base path /api/v1; JSON bodies in camelCase; times ISO-8601 UTC strings.
+    - Server-generated IDs are lowercase UUIDs (schema Uuid); catalogue, season, stage and template IDs are slugs
+      (schema Slug); source IDs use schema SourceId. Every request string has a pattern or a maxLength. The server
+      applies the same patterns before any file-system use, including IDs read back from the database (T10-F13).
+    - Patterns are ECMA-262 regular expressions evaluated with the Unicode flag (\p{...} classes).
+    - Provider neutrality (R-140, R-288): no schema, field or enum carries a provider-specific name, code or
+      identifier. Provider references are opaque server-side values and never appear in this contract.
+    - Errors use application/problem+json (schema Problem) with a stable machine-readable `code`; `detail` is built
+      from fixed text and sanitized parameters only, never from provider bodies, exception messages, credentials or
+      file paths.
+    - Every request whose Host header is not in the configured exact host:port allow-list gets 421 MISDIRECTED_HOST
+      (declared on every operation). Every method other than GET and HEAD must carry `X-EDR-Client: web`; a present
+      Origin must be in the configured origin allow-list (`null` is refused); a request body requires
+      `Content-Type: application/json` (brand upload: image/png or image/jpeg only); refusals are 403 FORBIDDEN_ORIGIN
+      or 415 UNSUPPORTED_MEDIA_TYPE before the body is parsed. API requests whose Sec-Fetch-Site is cross-site or
+      same-site are refused with 403 FORBIDDEN_ORIGIN (declared on every operation).
+    - GET and HEAD operations have no persistent side effects. Catalogue GET operations may use the in-memory
+      provider request budget and fill the in-memory projection cache; neither is persistent state.
+    - No authentication: single local operator without login (PD-05). The server listens on 127.0.0.1 only.
+    - No credential, provider base URL or provider token is ever part of a request or response.
+    - There is no publication operation of any kind (BR-11, R-042, R-219).
+    - No operation sets a fact to verified (R-412). The only status an operator action sets is manually_approved,
+      on eligible MANUAL_DATA facts only, and it is never verification (PD-13, R-071).
+    - Compatibility: additive changes only within v1 (new optional request fields, new response fields,
+      new operations, new error codes). Removing or changing the meaning of anything, or narrowing a request input,
+      is a breaking change.
+servers:
+  - url: http://127.0.0.1:4300/api/v1
+tags:
+  - name: catalog
+  - name: projects
+  - name: runs
+  - name: facts
+  - name: drafts
+  - name: review
+  - name: exports
+  - name: imports
+  - name: brand
+  - name: templates
+  - name: system
+paths:
+  /health:
+    get:
+      tags: [system]
+      operationId: getHealth
+      responses:
+        '200':
+          description: Server is running.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                additionalProperties: false
+                properties:
+                  status: { type: string, const: ok }
+        '403': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /settings:
+    get:
+      tags: [system]
+      operationId: getSettings
+      description: Non-secret settings the UI needs (R-226). Never contains credentials, tokens or base URLs.
+      responses:
+        '200':
+          description: Settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Settings' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /catalog/competitions:
+    get:
+      tags: [catalog]
+      operationId: listCompetitions
+      description: |
+        Dynamic competition catalogue (R-073, R-243, R-282): the competitions of every enabled data source (LIVE_DATA
+        discovery, MANUAL_DATA imports, DEMO_DATA fixtures), merged by the configured competition links, each with its
+        data sources and their availability (R-075, R-286). Seasons and stages are not included; they are listed on
+        selection (R-141). Uses at most one provider request per LIVE_DATA source, from the cache when valid; when the
+        request budget is exhausted the last cached listing is returned with its retrieval time (R-291).
+      responses:
+        '200':
+          description: Catalogue.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Catalogue' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /catalog/competitions/{competitionId}/sources/{sourceId}/seasons:
+    parameters:
+      - $ref: '#/components/parameters/CompetitionId'
+      - $ref: '#/components/parameters/SourceIdParam'
+    get:
+      tags: [catalog]
+      operationId: listSeasons
+      description: |
+        Seasons that the chosen data source reports for the competition (R-074, R-243, R-244). A competition or season
+        that the source refuses (for example a subscription restriction) is returned with availability false and a
+        reason (R-286). 503 PROVIDER_RATE_LIMITED (with retryAfterSeconds) when the request budget is exhausted and no
+        cached listing exists (R-291). A competitionId or sourceId that is not in the current catalogue listing, or a
+        seasonId that is not in the source's seasons listing, answers 404 without any provider request for that ID
+        (T11H-F06).
+      responses:
+        '200':
+          description: Seasons.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SeasonList' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+        '502': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /catalog/competitions/{competitionId}/sources/{sourceId}/seasons/{seasonId}/stages:
+    parameters:
+      - $ref: '#/components/parameters/CompetitionId'
+      - $ref: '#/components/parameters/SourceIdParam'
+      - $ref: '#/components/parameters/SeasonId'
+    get:
+      tags: [catalog]
+      operationId: listStages
+      description: |
+        Stages of the season, by the names the source gives them, each with its matchday numbers when the source
+        numbers them, and whether standings are expected (R-074, R-077, R-283, R-284). Different tournament
+        structures use the same shape. Same budget, cache and availability rules as listSeasons.
+      responses:
+        '200':
+          description: Stages.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StageList' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+        '502': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /projects:
+    get:
+      tags: [projects]
+      operationId: listProjects
+      description: Project list and history (R-043, R-200, R-220), newest first, with data mode, source and demonstration label (R-269).
+      responses:
+        '200':
+          description: Projects.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [projects]
+                additionalProperties: false
+                properties:
+                  projects:
+                    type: array
+                    items: { $ref: '#/components/schemas/ProjectSummary' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [projects]
+      operationId: createProject
+      description: |
+        Create a project from a catalogue selection: competition, data source, season, stage and matchday (null when
+        the stage is selected as a whole) (R-072, R-243, R-284). The selection is resolved through the catalogue;
+        an unknown or unavailable selection is refused with SELECTION_UNAVAILABLE. The data source and its data mode
+        are recorded on the project (R-056, R-076, R-287).
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectCreate' }
+      responses:
+        '201':
+          description: Project created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+        '502': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /projects/{projectId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [projects]
+      operationId: getProject
+      responses:
+        '200':
+          description: Project.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [projects]
+      operationId: updateProject
+      description: Change the content language (R-051). The active draft, if any, is superseded; a redraft is needed.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectUpdate' }
+      responses:
+        '200':
+          description: Project updated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /projects/{projectId}/runs:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [runs]
+      operationId: listRuns
+      responses:
+        '200':
+          description: Runs of the project, newest first.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [runs]
+                additionalProperties: false
+                properties:
+                  runs:
+                    type: array
+                    items: { $ref: '#/components/schemas/Run' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [runs]
+      operationId: startRun
+      description: |
+        Start a workflow run (R-023). kind=full runs research, verification, content, rendering, visual QA.
+        kind=redraft reuses the facts of the latest completed verification and runs content, rendering, visual QA
+        (after a language change, a change of excluded matches or a manual approval). Re-running verification is a new
+        full run (R-423). A full run of a MANUAL_DATA project reads the current import version of its selection (R-278).
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RunStart' }
+      responses:
+        '202':
+          description: Run accepted and started.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Run' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /projects/{projectId}/runs/{runId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/RunId'
+    get:
+      tags: [runs]
+      operationId: getRun
+      description: Run with per-stage status and failure (R-203). Polled by the UI.
+      responses:
+        '200':
+          description: Run.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Run' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /projects/{projectId}/runs/{runId}/facts:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/RunId'
+    get:
+      tags: [facts]
+      operationId: listFacts
+      description: |
+        Facts of a run with verification status (VERIFIED, UNVERIFIED with reason, MANUALLY_APPROVED), evidence per
+        source with data mode, and dispute records (R-204, R-205, R-227, R-230, R-270, R-287); whether standings are
+        available for the selection (R-254, R-284).
+      responses:
+        '200':
+          description: Facts.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [dataMode, facts, leftOutMatches, standings]
+                additionalProperties: false
+                properties:
+                  dataMode: { $ref: '#/components/schemas/DataMode' }
+                  facts:
+                    type: array
+                    items: { $ref: '#/components/schemas/Fact' }
+                  leftOutMatches:
+                    type: array
+                    items: { $ref: '#/components/schemas/LeftOutMatch' }
+                  standings: { $ref: '#/components/schemas/StandingsAvailability' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /projects/{projectId}/runs/{runId}/facts/{factId}/manual-approval:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/RunId'
+      - $ref: '#/components/parameters/FactId'
+    put:
+      tags: [facts]
+      operationId: approveFactManually
+      description: |
+        Manually approve one MANUAL_DATA fact of the project's latest completed full run (PD-13, R-071, R-272). The
+        fact becomes MANUALLY_APPROVED, which is never verification and never counts toward the two-source rule.
+        Refused with MANUAL_APPROVAL_REFUSED (refusalReason) for a fact that is verified, disputed, has an unmatched
+        team, is not from a MANUAL_DATA project, is contradicted by an accepted source, or is not of the latest run
+        (R-412). Whether content using MANUALLY_APPROVED facts can be approved for publication is decided by PD-17
+        (R-429) as applied by AD-38: only for a competition configured as having no accepted public source, under the
+        default policy allowed_without_accepted_source, and always labelled operator-attested; otherwise such content is
+        not approvable. Guard and write are atomic and the action is recorded for audit. No request body.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '200':
+          description: Fact manually approved.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Fact' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [facts]
+      operationId: revokeManualFactApproval
+      description: Revoke a manual approval (recorded for audit); content approvals that relied on it are invalidated. No request body.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '200':
+          description: Manual approval revoked.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Fact' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /projects/{projectId}/draft:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [drafts]
+      operationId: getActiveDraft
+      description: Active draft with carousels, elements, current versions, review states, QA results, provenance and demonstration label (R-208, R-215, R-269).
+      responses:
+        '200':
+          description: Active draft.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Draft' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /projects/{projectId}/draft/exclusions:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    put:
+      tags: [drafts]
+      operationId: setExcludedMatches
+      description: Set the matches to leave out (OD-03). Starts a redraft run; the active draft is superseded and approvals do not carry over.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [excludedMatchKeys]
+              additionalProperties: false
+              properties:
+                excludedMatchKeys:
+                  type: array
+                  maxItems: 64
+                  uniqueItems: true
+                  items: { $ref: '#/components/schemas/MatchKey' }
+      responses:
+        '202':
+          description: Redraft run started.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Run' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /element-versions/{versionId}/image:
+    parameters:
+      - $ref: '#/components/parameters/VersionId'
+    get:
+      tags: [review]
+      operationId: getSlideImage
+      responses:
+        '200':
+          description: PNG of the slide version.
+          content:
+            image/png:
+              schema: { type: string, contentMediaType: image/png }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /carousels/{carouselId}/elements/{elementId}/regenerate:
+    parameters:
+      - $ref: '#/components/parameters/CarouselId'
+      - $ref: '#/components/parameters/ElementId'
+    post:
+      tags: [review]
+      operationId: regenerateElement
+      description: |
+        Create a new version of one element only (R-040, R-217): new AI text for that slide (or caption), new render,
+        new visual QA. Other elements keep their versions and approvals. The carousel's final approval becomes invalid.
+        No request body.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '201':
+          description: New element version.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Element' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+        '502': { $ref: '#/components/responses/Problem' }
+  /carousels/{carouselId}/elements/{elementId}/approval:
+    parameters:
+      - $ref: '#/components/parameters/CarouselId'
+      - $ref: '#/components/parameters/ElementId'
+    put:
+      tags: [review]
+      operationId: approveElement
+      description: |
+        Approve the exact current version (R-039, R-405, R-406). Refused with APPROVAL_BLOCKED when a referenced fact is
+        not publishable (the problem lists the facts with blockReason; R-026, R-206, R-271, R-272): not verified,
+        manually approved while the configured policy does not allow it (R-429), or verified from a LIVE_DATA source whose
+        publication permission is not confirmed (R-430). Also CONTENT_FLAGGED (R-027, R-207), QA_FAILED,
+        QA_ACK_REQUIRED, or VERSION_CONFLICT when versionId is not current. Guard and write are atomic.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VersionRef' }
+      responses:
+        '200':
+          description: Approved.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Element' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [review]
+      operationId: withdrawElementApproval
+      description: Withdraw the approval of the current version; invalidates the carousel's final approval. No request body.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '200':
+          description: Approval withdrawn.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Element' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /carousels/{carouselId}/elements/{elementId}/qa-acknowledgements:
+    parameters:
+      - $ref: '#/components/parameters/CarouselId'
+      - $ref: '#/components/parameters/ElementId'
+    post:
+      tags: [review]
+      operationId: acknowledgeQaWarnings
+      description: Acknowledge the warnings of the current version (OD-09), style_consistency and capitalized_tokens (OD-26). Blocking failures cannot be acknowledged.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [versionId, checks]
+              additionalProperties: false
+              properties:
+                versionId: { $ref: '#/components/schemas/Uuid' }
+                checks:
+                  type: array
+                  minItems: 1
+                  maxItems: 1
+                  uniqueItems: true
+                  items: { type: string, enum: [style_consistency, capitalized_tokens] }
+      responses:
+        '200':
+          description: Acknowledged.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Element' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /carousels/{carouselId}/final-approval:
+    parameters:
+      - $ref: '#/components/parameters/CarouselId'
+    put:
+      tags: [review]
+      operationId: approveCarousel
+      description: |
+        Final approval (R-240). Refused with FINAL_APPROVAL_REFUSED while any element is not approved or is blocked
+        (blocked includes facts that are not publishable, as for approveElement). Guard and write are atomic.
+        No request body.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '200':
+          description: Final approval recorded.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FinalApproval' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /carousels/{carouselId}/exports:
+    parameters:
+      - $ref: '#/components/parameters/CarouselId'
+    post:
+      tags: [exports]
+      operationId: exportCarousel
+      description: |
+        Write the approved images and caption to local files (R-041, R-218, R-421). Refused with FINAL_APPROVAL_REQUIRED
+        without a valid final approval (R-216, R-240). Exports exactly the version set recorded by the final approval.
+        Demonstration content is labelled in the manifest and on the slides (R-269, OD-21). Sends nothing to any
+        external service (R-219). No request body.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '201':
+          description: Export written.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Export' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /projects/{projectId}/exports:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [exports]
+      operationId: listProjectExports
+      responses:
+        '200':
+          description: Exports of the project, newest first (R-220).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [exports]
+                additionalProperties: false
+                properties:
+                  exports:
+                    type: array
+                    items: { $ref: '#/components/schemas/Export' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /exports/{exportId}:
+    parameters:
+      - $ref: '#/components/parameters/ExportId'
+    get:
+      tags: [exports]
+      operationId: getExport
+      description: Reopen an export with the exact exported slides and caption (R-220).
+      responses:
+        '200':
+          description: Export with its elements.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExportDetail' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /exports/{exportId}/slides/{position}/trace:
+    parameters:
+      - $ref: '#/components/parameters/ExportId'
+      - $ref: '#/components/parameters/Position'
+    get:
+      tags: [exports]
+      operationId: traceExportedSlide
+      description: Facts of an exported slide with verification status, sources and data modes (R-044, R-221, R-287).
+      responses:
+        '200':
+          description: Trace.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SlideTrace' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /imports:
+    get:
+      tags: [imports]
+      operationId: listImports
+      description: Applied MANUAL_DATA imports, newest first (R-067, R-277). Rejected imports are not stored (R-066).
+      responses:
+        '200':
+          description: Imports.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [imports]
+                additionalProperties: false
+                properties:
+                  imports:
+                    type: array
+                    items: { $ref: '#/components/schemas/ImportSummary' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [imports]
+      operationId: createImport
+      description: |
+        Import MANUAL_DATA from a JSON file, a CSV file (the exact file bytes sent base64-encoded in contentBase64
+        inside the JSON body) or web-form entry (R-057, R-060 to R-069, R-119). Every channel is converted to one
+        ManualImportDocument and validated by the same schema. The import is applied as a whole: any invalid record
+        rejects it, with every error reported together (IMPORT_REJECTED with importErrors; R-273, R-274); nothing of
+        a rejected import is stored. Duplicate matches are refused (R-275); person-level fields are refused naming the
+        field (R-280); finished matches need a score and nothing is derived (R-279). Each selection in an applied
+        import becomes a new version; earlier versions stay retrievable (R-278).
+        File channels: the server decodes contentBase64 strictly (invalid base64 is encoding_invalid), checks at most
+        512 KiB of decoded bytes (too_large), decodes the bytes as UTF-8 with invalid sequences refused
+        (encoding_invalid; a leading byte-order mark is ignored for parsing only), and preserves exactly the received
+        bytes as the original; originalSha256 is the SHA-256 of those bytes, so it equals the hash of the operator's
+        file (R-277, T11H-F01). Form channel: the original is the submitted document serialized once as canonical
+        UTF-8 JSON, at most 512 KiB (too_large), checked before anything is written. Error messages and fields never
+        contain imported values (T11H-F12). Route body limit 1.5 MiB.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ImportCreate' }
+      responses:
+        '201':
+          description: Import applied.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportSummary' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /imports/{importId}:
+    parameters:
+      - $ref: '#/components/parameters/ImportId'
+    get:
+      tags: [imports]
+      operationId: getImport
+      description: Import record with channel, file name, declared source, receipt time, original hash and the selection versions it created (R-067, R-277).
+      responses:
+        '200':
+          description: Import.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportSummary' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /imports/{importId}/original:
+    parameters:
+      - $ref: '#/components/parameters/ImportId'
+    get:
+      tags: [imports]
+      operationId: getImportOriginal
+      description: |
+        The original imported content, unchanged (same SHA-256, R-277). Served as an attachment with
+        `Content-Type: application/octet-stream`, `nosniff`, `Content-Security-Policy: default-src 'none'; sandbox`
+        and `Cross-Origin-Resource-Policy: same-origin`. The `Content-Disposition` file name is generated by the
+        server in ASCII, never taken from the stored file name: `original-<importId>.json`, `original-<importId>.csv`
+        or `original-<importId>.form.json` (T11H-F11).
+      responses:
+        '200':
+          description: The original content.
+          content:
+            application/octet-stream:
+              schema: { type: string, contentMediaType: application/octet-stream }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /manual-data/selections:
+    get:
+      tags: [imports]
+      operationId: listManualSelections
+      description: Version history of every MANUAL_DATA selection of a competition season (R-068, R-278).
+      parameters:
+        - name: competitionId
+          in: query
+          required: true
+          schema: { $ref: '#/components/schemas/Slug' }
+        - name: seasonId
+          in: query
+          required: true
+          schema: { $ref: '#/components/schemas/Slug' }
+      responses:
+        '200':
+          description: Selections with their versions.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ManualSelectionHistory' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /manual-data/versions/{versionId}:
+    parameters:
+      - $ref: '#/components/parameters/ManualVersionId'
+    get:
+      tags: [imports]
+      operationId: getManualVersion
+      description: One version of a MANUAL_DATA selection in its normalized form, current or superseded (R-068, R-278).
+      responses:
+        '200':
+          description: Version.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ManualVersion' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /brand/assets:
+    get:
+      tags: [brand]
+      operationId: listBrandAssets
+      responses:
+        '200':
+          description: Registered brand assets (R-033, R-228).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [assets]
+                additionalProperties: false
+                properties:
+                  assets:
+                    type: array
+                    items: { $ref: '#/components/schemas/BrandAsset' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [brand]
+      operationId: registerBrandAsset
+      description: |
+        Register an authorized El Deporte Rey GT brand asset (R-309). The body is the raw image (PNG or JPEG, at most
+        5 MiB, at most 4096 x 4096 pixels). The declared Content-Type must match the detected file signature (415
+        otherwise); dimensions are read from the header before any decode; the file is decoded once at registration.
+        Club badges and competition marks cannot be registered (PD-03, R-049, R-050).
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+        - name: kind
+          in: query
+          required: true
+          schema: { $ref: '#/components/schemas/BrandAssetKind' }
+        - name: label
+          in: query
+          required: true
+          schema: { $ref: '#/components/schemas/Label' }
+      requestBody:
+        required: true
+        content:
+          image/png:
+            schema: { type: string, contentMediaType: image/png }
+          image/jpeg:
+            schema: { type: string, contentMediaType: image/jpeg }
+      responses:
+        '201':
+          description: Registered.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrandAsset' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /brand/assets/{assetId}:
+    parameters:
+      - $ref: '#/components/parameters/AssetId'
+    patch:
+      tags: [brand]
+      operationId: updateBrandAsset
+      description: Activate or deactivate an asset for future renders (no deletion, OD-08).
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [active]
+              additionalProperties: false
+              properties:
+                active: { type: boolean }
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrandAsset' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /brand/assets/{assetId}/file:
+    parameters:
+      - $ref: '#/components/parameters/AssetId'
+    get:
+      tags: [brand]
+      operationId: getBrandAssetFile
+      description: |
+        Served with the stored MIME type, `nosniff`, `Content-Security-Policy: default-src 'none'; sandbox` and `Cross-Origin-Resource-Policy: same-origin`.
+      responses:
+        '200':
+          description: The registered file.
+          content:
+            image/png:
+              schema: { type: string, contentMediaType: image/png }
+            image/jpeg:
+              schema: { type: string, contentMediaType: image/jpeg }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /templates:
+    get:
+      tags: [templates]
+      operationId: listTemplates
+      description: Carousel templates with versions and badge slots (R-031, R-050).
+      responses:
+        '200':
+          description: Templates.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [templates]
+                additionalProperties: false
+                properties:
+                  templates:
+                    type: array
+                    items: { $ref: '#/components/schemas/Template' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /templates/{templateId}/preview:
+    parameters:
+      - $ref: '#/components/parameters/TemplateId'
+      - name: language
+        in: query
+        required: false
+        schema: { $ref: '#/components/schemas/Language' }
+    get:
+      tags: [templates]
+      operationId: previewTemplate
+      description: |
+        PNG preview rendered from built-in synthetic sample data, with the current brand settings and assets.
+        Cached by template version, active brand-asset hashes and language (bounded work per request, T10-F04).
+      responses:
+        '200':
+          description: Preview.
+          content:
+            image/png:
+              schema: { type: string, contentMediaType: image/png }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+components:
+  parameters:
+    ClientHeader:
+      name: X-EDR-Client
+      in: header
+      required: true
+      description: Required on every request whose method is not GET or HEAD (local cross-origin request protection, RK-13).
+      schema: { type: string, const: web }
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    RunId:
+      name: runId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    FactId:
+      name: factId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    CarouselId:
+      name: carouselId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    ElementId:
+      name: elementId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    VersionId:
+      name: versionId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    ExportId:
+      name: exportId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    AssetId:
+      name: assetId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    ImportId:
+      name: importId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    ManualVersionId:
+      name: versionId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    CompetitionId:
+      name: competitionId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Slug' }
+    SourceIdParam:
+      name: sourceId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/SourceId' }
+    SeasonId:
+      name: seasonId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Slug' }
+    TemplateId:
+      name: templateId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Slug' }
+    Position:
+      name: position
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1, maximum: 99 }
+  responses:
+    Problem:
+      description: Error.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    Uuid:
+      description: Server-generated identifier (crypto.randomUUID), lowercase.
+      type: string
+      format: uuid
+      minLength: 36
+      maxLength: 36
+      pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    Slug:
+      description: Catalogue, season, stage, team-key or template identifier.
+      type: string
+      minLength: 1
+      maxLength: 64
+      pattern: '^[a-z0-9][a-z0-9-]{0,63}$'
+    SourceId:
+      type: string
+      minLength: 2
+      maxLength: 41
+      pattern: '^[a-z0-9][a-z0-9-]{1,40}$'
+    MatchKey:
+      description: Canonical match key assigned by the verification stage.
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^[a-z0-9][a-z0-9:_-]{0,127}$'
+    Label:
+      description: Printable text; control and format characters (\p{Cc}, \p{Cf}) are refused.
+      type: string
+      minLength: 1
+      maxLength: 80
+      pattern: '^[^\p{Cc}\p{Cf}]{1,80}$'
+    DisplayName:
+      description: Competition, area or season name; letters, marks, digits, spaces and . ' & ( ) / - only.
+      type: string
+      minLength: 1
+      maxLength: 80
+      pattern: '^[\p{L}\p{M}\p{N} .''&()/-]{1,80}$'
+    StageName:
+      description: Stage name as the source gives it; letters, marks, digits, spaces and . ' & ( ) / _ - only.
+      type: string
+      minLength: 1
+      maxLength: 80
+      pattern: '^[\p{L}\p{M}\p{N} .''&()/_-]{1,80}$'
+    TeamName:
+      description: Team name; letters, marks, digits, spaces and . ' & ( ) - only (T10-F06 rule).
+      type: string
+      minLength: 1
+      maxLength: 64
+      pattern: '^[\p{L}\p{M}\p{N} .''&()-]{1,64}$'
+    FileName:
+      description: 'Name of an imported file, without any path; extension .json or .csv. Metadata only, never used as a path. Combining marks are accepted so that decomposed (NFD) names are not refused; the UI sends names normalized to NFC (T11H-F20).'
+      type: string
+      minLength: 6
+      maxLength: 120
+      pattern: '^[\p{L}\p{M}\p{N} ._()-]{1,115}\.(json|csv)$'
+    DataMode:
+      description: Data acquisition mode (PD-13).
+      type: string
+      enum: [LIVE_DATA, MANUAL_DATA, DEMO_DATA]
+    MatchStatus:
+      description: Provider-neutral match status; every source status is mapped to one of these by its adapter.
+      type: string
+      enum: [scheduled, in_play, finished, postponed, suspended, cancelled, abandoned, awarded]
+    Problem:
+      type: object
+      required: [type, title, status, code]
+      additionalProperties: false
+      properties:
+        type: { type: string, maxLength: 200, description: '"about:blank" or "urn:edr:problem:<code>"' }
+        title: { type: string, maxLength: 200 }
+        status: { type: integer }
+        code:
+          type: string
+          enum:
+            - VALIDATION_FAILED
+            - NOT_FOUND
+            - FORBIDDEN_ORIGIN
+            - MISDIRECTED_HOST
+            - UNSUPPORTED_MEDIA_TYPE
+            - PAYLOAD_TOO_LARGE
+            - RUN_IN_PROGRESS
+            - NO_VERIFIED_RUN
+            - VERSION_CONFLICT
+            - APPROVAL_BLOCKED
+            - CONTENT_FLAGGED
+            - QA_FAILED
+            - QA_ACK_REQUIRED
+            - FINAL_APPROVAL_REFUSED
+            - FINAL_APPROVAL_REQUIRED
+            - DUPLICATE_ASSET
+            - PROVIDER_FAILED
+            - PROVIDER_RATE_LIMITED
+            - SELECTION_UNAVAILABLE
+            - IMPORT_REJECTED
+            - MANUAL_APPROVAL_REFUSED
+            - INTERNAL
+        detail: { type: string, maxLength: 500, description: 'Fixed text plus sanitized parameters only (T10-F10)' }
+        errors:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required: [path, message]
+            additionalProperties: false
+            properties:
+              path: { type: string, maxLength: 200 }
+              message: { type: string, maxLength: 200 }
+        facts:
+          description: Facts that block an approval (APPROVAL_BLOCKED), each named with its block reason (R-206, R-271, R-272).
+          type: array
+          items: { $ref: '#/components/schemas/FactRef' }
+        items:
+          description: Elements that prevent a final approval (FINAL_APPROVAL_REFUSED).
+          type: array
+          items:
+            type: object
+            required: [elementId, reason]
+            additionalProperties: false
+            properties:
+              elementId: { $ref: '#/components/schemas/Uuid' }
+              reason: { type: string, enum: [not_approved, blocked, flagged, qa_failed, qa_ack_required] }
+        importErrors:
+          description: Every error of a rejected import, reported together (IMPORT_REJECTED, R-274).
+          type: array
+          maxItems: 500
+          items: { $ref: '#/components/schemas/ImportError' }
+        retryAfterSeconds:
+          description: Seconds until the provider request budget allows a new request (PROVIDER_RATE_LIMITED, R-291).
+          type: [integer, 'null']
+          minimum: 0
+        refusalReason:
+          description: Reason of a MANUAL_APPROVAL_REFUSED or SELECTION_UNAVAILABLE problem.
+          type: [string, 'null']
+          enum: [not_manual_data, verified, disputed, team_identity_unmatched, accepted_source_disagrees, not_latest_run, already_approved, not_approved, competition_unavailable, season_unavailable, stage_unavailable, source_not_selectable, null]
+    Failure:
+      description: Stage or run failure built from a closed code and sanitized parameters only (T10-F10).
+      type: object
+      required: [code, sourceId, path, httpStatus]
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          enum: [unavailable, rate_limited, timeout, no_data, invalid, access_refused, not_available, bad_request, ai_response_invalid, interrupted, stage_not_available, run_superseded, internal]
+        sourceId:
+          oneOf:
+            - $ref: '#/components/schemas/SourceId'
+            - type: 'null'
+        path: { type: [string, 'null'], maxLength: 200, description: 'Validation path inside a payload, never a file path' }
+        httpStatus: { type: [integer, 'null'] }
+    Language:
+      type: string
+      enum: [es, en]
+    Settings:
+      type: object
+      required: [languages, defaultLanguage, format, publicationMode, dataModes, verificationPolicy, providers]
+      additionalProperties: false
+      properties:
+        languages:
+          type: array
+          items:
+            type: object
+            required: [code, label]
+            additionalProperties: false
+            properties:
+              code: { $ref: '#/components/schemas/Language' }
+              label: { type: string }
+        defaultLanguage: { $ref: '#/components/schemas/Language' }
+        format:
+          type: object
+          required: [width, height, maxSlidesPerCarousel]
+          additionalProperties: false
+          properties:
+            width: { type: integer }
+            height: { type: integer }
+            maxSlidesPerCarousel: { type: integer }
+        publicationMode: { type: string, enum: [manual] }
+        dataModes:
+          description: Data acquisition modes with at least one enabled source.
+          type: array
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/DataMode' }
+        verificationPolicy:
+          description: 'Configured publication policies as decided by PD-17 (R-429) and PD-18 (R-430) and applied by AD-38. The configuration accepts only manuallyApprovedPublication blocked or allowed_without_accepted_source (default) and livePublicationPermissionRule every_supporting_source (default), so the server emits only those values.'
+          type: object
+          required: [manuallyApprovedPublication, livePublicationPermissionRule]
+          additionalProperties: false
+          properties:
+            manuallyApprovedPublication: { type: string, enum: [blocked, allowed_labelled, allowed_without_accepted_source] }
+            livePublicationPermissionRule: { type: string, enum: [every_supporting_source, any_supporting_source] }
+        providers:
+          description: Adapter IDs, modes and source roles only; never credentials, tokens or base URLs.
+          type: object
+          required: [sources, ai]
+          additionalProperties: false
+          properties:
+            sources:
+              type: array
+              items: { $ref: '#/components/schemas/SourceInfo' }
+            ai: { type: string }
+    SourceInfo:
+      type: object
+      required: [id, name, mode, role, officialPublication, accepted, enabled, publicationPermission]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/SourceId' }
+        name: { type: string, maxLength: 80 }
+        mode: { $ref: '#/components/schemas/DataMode' }
+        role: { type: string, enum: [primary, verification] }
+        officialPublication: { type: boolean }
+        accepted: { type: boolean }
+        enabled: { type: boolean }
+        publicationPermission: { type: string, enum: [confirmed, unconfirmed, not_applicable] }
+    Availability:
+      description: Whether a source offers a competition, season or stage, and why not (R-075, R-286).
+      type: object
+      required: [available, reason]
+      additionalProperties: false
+      properties:
+        available: { type: boolean }
+        reason:
+          type: [string, 'null']
+          enum: [subscription_restricted, not_found, access_refused, not_provided, source_unavailable, rate_limited, null]
+    ListingMeta:
+      description: Provenance of a catalogue listing (R-141, R-291).
+      type: object
+      required: [retrievedAt, fromCache, stale, retryAfterSeconds]
+      additionalProperties: false
+      properties:
+        retrievedAt: { type: [string, 'null'], format: date-time }
+        fromCache: { type: boolean }
+        stale: { type: boolean, description: 'True when a cached listing past its validity is shown because the request budget is exhausted' }
+        retryAfterSeconds: { type: [integer, 'null'], minimum: 0 }
+    SourceListing:
+      type: object
+      required: [sourceId, sourceName, mode, availability, listing]
+      additionalProperties: false
+      properties:
+        sourceId: { $ref: '#/components/schemas/SourceId' }
+        sourceName: { type: string, maxLength: 80 }
+        mode: { $ref: '#/components/schemas/DataMode' }
+        availability: { $ref: '#/components/schemas/Availability' }
+        listing: { $ref: '#/components/schemas/ListingMeta' }
+    CompetitionSource:
+      type: object
+      required: [sourceId, sourceName, mode, selectable, availability]
+      additionalProperties: false
+      properties:
+        sourceId: { $ref: '#/components/schemas/SourceId' }
+        sourceName: { type: string, maxLength: 80 }
+        mode: { $ref: '#/components/schemas/DataMode' }
+        selectable: { type: boolean, description: 'True for enabled primary-role sources the operator can choose (R-431)' }
+        availability: { $ref: '#/components/schemas/Availability' }
+    CatalogueCompetition:
+      type: object
+      required: [id, name, areaName, reference, sources]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Slug' }
+        name: { $ref: '#/components/schemas/DisplayName' }
+        areaName:
+          oneOf:
+            - $ref: '#/components/schemas/DisplayName'
+            - type: 'null'
+        reference: { type: boolean, description: 'Marked by configuration as an initial reference scenario; listed first; no other effect' }
+        sources:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/CompetitionSource' }
+    Catalogue:
+      type: object
+      required: [competitions, sources]
+      additionalProperties: false
+      properties:
+        competitions:
+          type: array
+          maxItems: 1000
+          items: { $ref: '#/components/schemas/CatalogueCompetition' }
+        sources:
+          type: array
+          items: { $ref: '#/components/schemas/SourceListing' }
+    Season:
+      type: object
+      required: [id, label, current, startDate, endDate]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Slug' }
+        label: { $ref: '#/components/schemas/DisplayName' }
+        current: { type: boolean }
+        startDate: { type: [string, 'null'], format: date }
+        endDate: { type: [string, 'null'], format: date }
+    SeasonList:
+      type: object
+      required: [competitionId, sourceId, availability, listing, seasons]
+      additionalProperties: false
+      properties:
+        competitionId: { $ref: '#/components/schemas/Slug' }
+        sourceId: { $ref: '#/components/schemas/SourceId' }
+        availability: { $ref: '#/components/schemas/Availability' }
+        listing: { $ref: '#/components/schemas/ListingMeta' }
+        seasons:
+          type: array
+          maxItems: 200
+          items: { $ref: '#/components/schemas/Season' }
+    Stage:
+      description: A stage of a season by the source's name; matchdays lists its numbered rounds, empty when the source does not number them (R-074, R-283).
+      type: object
+      required: [id, name, order, standings, selectableAsWhole, matchdays, availability]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Slug' }
+        name: { $ref: '#/components/schemas/StageName' }
+        order: { type: integer, minimum: 1 }
+        standings: { type: string, enum: [expected, not_expected, unknown], description: 'Whether the source is expected to provide standings for selections of this stage' }
+        selectableAsWhole: { type: boolean, description: 'True when the stage is selected without a matchday number' }
+        matchdays:
+          type: array
+          maxItems: 99
+          uniqueItems: true
+          items: { type: integer, minimum: 1, maximum: 999 }
+        availability: { $ref: '#/components/schemas/Availability' }
+    StageList:
+      type: object
+      required: [competitionId, sourceId, seasonId, availability, listing, stages]
+      additionalProperties: false
+      properties:
+        competitionId: { $ref: '#/components/schemas/Slug' }
+        sourceId: { $ref: '#/components/schemas/SourceId' }
+        seasonId: { $ref: '#/components/schemas/Slug' }
+        availability: { $ref: '#/components/schemas/Availability' }
+        listing: { $ref: '#/components/schemas/ListingMeta' }
+        stages:
+          type: array
+          maxItems: 64
+          items: { $ref: '#/components/schemas/Stage' }
+    ProjectCreate:
+      type: object
+      required: [competitionId, sourceId, seasonId, stageId, matchday]
+      additionalProperties: false
+      properties:
+        competitionId: { $ref: '#/components/schemas/Slug' }
+        sourceId: { $ref: '#/components/schemas/SourceId' }
+        seasonId: { $ref: '#/components/schemas/Slug' }
+        stageId: { $ref: '#/components/schemas/Slug' }
+        matchday: { type: [integer, 'null'], minimum: 1, maximum: 999, description: 'Null when the stage is selected as a whole' }
+        language: { $ref: '#/components/schemas/Language' }
+    ProjectUpdate:
+      type: object
+      required: [language]
+      additionalProperties: false
+      properties:
+        language: { $ref: '#/components/schemas/Language' }
+    ProjectSummary:
+      allOf:
+        - $ref: '#/components/schemas/ProjectSummaryFields'
+      unevaluatedProperties: false
+    ProjectSummaryFields:
+      description: Open base object; closed by the schemas that use it (unevaluatedProperties).
+      type: object
+      required: [id, title, competitionName, seasonLabel, stageLabel, matchday, sourceName, dataMode, demonstration, language, createdAt, approvalState, lastExportAt]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        title: { type: string, maxLength: 200 }
+        competitionName: { $ref: '#/components/schemas/DisplayName' }
+        seasonLabel: { $ref: '#/components/schemas/DisplayName' }
+        stageLabel: { $ref: '#/components/schemas/StageName' }
+        matchday: { type: [integer, 'null'] }
+        sourceName: { type: string, maxLength: 80 }
+        dataMode: { $ref: '#/components/schemas/DataMode' }
+        demonstration: { type: boolean, description: 'True for DEMO_DATA projects (OD-21, R-269)' }
+        language: { $ref: '#/components/schemas/Language' }
+        createdAt: { type: string, format: date-time }
+        approvalState: { type: string, enum: [no_draft, in_review, final_approved, exported] }
+        lastExportAt: { type: [string, 'null'], format: date-time }
+    Project:
+      unevaluatedProperties: false
+      allOf:
+        - $ref: '#/components/schemas/ProjectSummaryFields'
+        - type: object
+          required: [competitionId, sourceId, seasonId, stageId, latestRun, activeDraftId]
+          properties:
+            competitionId: { $ref: '#/components/schemas/Slug' }
+            sourceId: { $ref: '#/components/schemas/SourceId' }
+            seasonId: { $ref: '#/components/schemas/Slug' }
+            stageId: { $ref: '#/components/schemas/Slug' }
+            latestRun:
+              oneOf:
+                - $ref: '#/components/schemas/Run'
+                - type: 'null'
+            activeDraftId:
+              oneOf:
+                - $ref: '#/components/schemas/Uuid'
+                - type: 'null'
+    RunStart:
+      type: object
+      required: [kind]
+      additionalProperties: false
+      properties:
+        kind: { type: string, enum: [full, redraft] }
+    Run:
+      type: object
+      required: [id, projectId, runNumber, kind, status, startedAt, finishedAt, failure, stages]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        projectId: { $ref: '#/components/schemas/Uuid' }
+        runNumber: { type: integer }
+        kind: { type: string, enum: [full, redraft] }
+        status: { $ref: '#/components/schemas/RunStatus' }
+        startedAt: { type: [string, 'null'], format: date-time }
+        finishedAt: { type: [string, 'null'], format: date-time }
+        failure:
+          oneOf:
+            - $ref: '#/components/schemas/Failure'
+            - type: 'null'
+        stages:
+          type: array
+          items: { $ref: '#/components/schemas/StageStatus' }
+    RunStatus:
+      type: string
+      enum: [pending, running, completed, failed]
+    StageStatus:
+      type: object
+      required: [stage, status, startedAt, finishedAt, failure]
+      additionalProperties: false
+      properties:
+        stage: { type: string, enum: [research, verification, content, rendering, visual_qa] }
+        status: { type: string, enum: [pending, running, completed, failed, skipped] }
+        startedAt: { type: [string, 'null'], format: date-time }
+        finishedAt: { type: [string, 'null'], format: date-time }
+        failure:
+          oneOf:
+            - $ref: '#/components/schemas/Failure'
+            - type: 'null'
+    FactStatus:
+      description: 'verified: two independent accepted sources agree (BR-01). unverified: every other fact, with unverifiedReason. manually_approved: operator-attested MANUAL_DATA fact, never verification (OD-17, R-070, R-071, R-433).'
+      type: string
+      enum: [verified, unverified, manually_approved]
+    UnverifiedReason:
+      description: Reason of an unverified fact (OD-17); null unless the status is unverified.
+      type: [string, 'null']
+      enum: [awaiting_independent_verification, disputed, no_accepted_source, team_identity_unmatched, null]
+    BlockReason:
+      description: Why a fact makes content not approvable for publication.
+      type: string
+      enum: [not_verified, manually_approved_not_publishable, publication_permission_unconfirmed]
+    FactKind:
+      type: string
+      enum: [match_teams, match_kickoff, match_status, match_score, standing_row, matchday_info, context_item, team_official_name]
+    FactRef:
+      allOf:
+        - $ref: '#/components/schemas/FactRefFields'
+      unevaluatedProperties: false
+    FactRefFields:
+      description: Open base object; closed by the schemas that use it (unevaluatedProperties).
+      type: object
+      required: [factId, factKey, kind, status, unverifiedReason, reason, display]
+      properties:
+        factId: { $ref: '#/components/schemas/Uuid' }
+        factKey: { type: string, maxLength: 200 }
+        kind: { $ref: '#/components/schemas/FactKind' }
+        status: { $ref: '#/components/schemas/FactStatus' }
+        unverifiedReason: { $ref: '#/components/schemas/UnverifiedReason' }
+        reason: { type: [string, 'null'], maxLength: 300, description: 'Built from fixed text and sanitized parameters' }
+        display: { type: [string, 'null'], description: 'Deterministic display form of the verified value, or of the candidate value when one exists' }
+        blockReason: { $ref: '#/components/schemas/BlockReason' }
+    FactSubject:
+      type: object
+      additionalProperties: false
+      properties:
+        matchKey: { $ref: '#/components/schemas/MatchKey' }
+        teamId: { $ref: '#/components/schemas/Slug' }
+        contextIndex: { type: integer, minimum: 0 }
+    MatchTeamsValue:
+      type: object
+      required: [homeTeamId, awayTeamId]
+      additionalProperties: false
+      properties:
+        homeTeamId: { $ref: '#/components/schemas/Slug' }
+        awayTeamId: { $ref: '#/components/schemas/Slug' }
+    MatchKickoffValue:
+      type: object
+      required: [kickoff]
+      additionalProperties: false
+      properties:
+        kickoff: { type: string, format: date-time }
+    MatchStatusValue:
+      type: object
+      required: [matchStatus]
+      additionalProperties: false
+      properties:
+        matchStatus: { $ref: '#/components/schemas/MatchStatus' }
+    MatchScoreValue:
+      type: object
+      required: [home, away]
+      additionalProperties: false
+      properties:
+        home: { type: integer, minimum: 0 }
+        away: { type: integer, minimum: 0 }
+    StandingRowValue:
+      type: object
+      required: [position, teamId, played, won, drawn, lost, goalsFor, goalsAgainst, goalDifference, points]
+      additionalProperties: false
+      properties:
+        position: { type: integer, minimum: 1 }
+        teamId: { $ref: '#/components/schemas/Slug' }
+        played: { type: integer, minimum: 0 }
+        won: { type: integer, minimum: 0 }
+        drawn: { type: integer, minimum: 0 }
+        lost: { type: integer, minimum: 0 }
+        goalsFor: { type: integer, minimum: 0 }
+        goalsAgainst: { type: integer, minimum: 0 }
+        goalDifference: { type: integer }
+        points: { type: integer }
+    MatchdayInfoValue:
+      type: object
+      required: [stageLabel, matchdayNumber, totalMatchdays]
+      additionalProperties: false
+      properties:
+        stageLabel: { $ref: '#/components/schemas/StageName' }
+        matchdayNumber: { type: [integer, 'null'], minimum: 1 }
+        totalMatchdays: { type: [integer, 'null'], minimum: 1 }
+    ContextItemValue:
+      oneOf:
+        - type: object
+          required: [type, matchday, totalMatchdays]
+          additionalProperties: false
+          properties:
+            type: { const: matchday_of_total }
+            matchday: { type: integer, minimum: 1 }
+            totalMatchdays: { type: integer, minimum: 1 }
+        - type: object
+          required: [type, count]
+          additionalProperties: false
+          properties:
+            type: { const: teams_in_table }
+            count: { type: integer, minimum: 1 }
+        - type: object
+          required: [type, count]
+          additionalProperties: false
+          properties:
+            type: { const: matches_in_selection }
+            count: { type: integer, minimum: 0 }
+    TeamOfficialNameValue:
+      type: object
+      required: [teamId, officialName]
+      additionalProperties: false
+      properties:
+        teamId: { $ref: '#/components/schemas/Slug' }
+        officialName: { $ref: '#/components/schemas/TeamName' }
+    FactValue:
+      description: Any closed fact value (used where the kind is given by the enclosing fact).
+      oneOf:
+        - $ref: '#/components/schemas/MatchTeamsValue'
+        - $ref: '#/components/schemas/MatchKickoffValue'
+        - $ref: '#/components/schemas/MatchStatusValue'
+        - $ref: '#/components/schemas/MatchScoreValue'
+        - $ref: '#/components/schemas/StandingRowValue'
+        - $ref: '#/components/schemas/MatchdayInfoValue'
+        - $ref: '#/components/schemas/ContextItemValue'
+        - $ref: '#/components/schemas/TeamOfficialNameValue'
+    FactKindValue:
+      description: |
+        The value schemas selected by the fact kind. value is set only when the fact is verified. candidateValue is the
+        single consistent value of an unverified or manually approved fact (one accepted independence group, or MANUAL_DATA),
+        null otherwise; content that uses a candidate value is not approvable unless the fact is publishable.
+      oneOf:
+        - { type: object, required: [kind, value, candidateValue], properties: { kind: { const: match_teams }, value: { oneOf: [ { $ref: '#/components/schemas/MatchTeamsValue' }, { type: 'null' } ] }, candidateValue: { oneOf: [ { $ref: '#/components/schemas/MatchTeamsValue' }, { type: 'null' } ] } } }
+        - { type: object, required: [kind, value, candidateValue], properties: { kind: { const: match_kickoff }, value: { oneOf: [ { $ref: '#/components/schemas/MatchKickoffValue' }, { type: 'null' } ] }, candidateValue: { oneOf: [ { $ref: '#/components/schemas/MatchKickoffValue' }, { type: 'null' } ] } } }
+        - { type: object, required: [kind, value, candidateValue], properties: { kind: { const: match_status }, value: { oneOf: [ { $ref: '#/components/schemas/MatchStatusValue' }, { type: 'null' } ] }, candidateValue: { oneOf: [ { $ref: '#/components/schemas/MatchStatusValue' }, { type: 'null' } ] } } }
+        - { type: object, required: [kind, value, candidateValue], properties: { kind: { const: match_score }, value: { oneOf: [ { $ref: '#/components/schemas/MatchScoreValue' }, { type: 'null' } ] }, candidateValue: { oneOf: [ { $ref: '#/components/schemas/MatchScoreValue' }, { type: 'null' } ] } } }
+        - { type: object, required: [kind, value, candidateValue], properties: { kind: { const: standing_row }, value: { oneOf: [ { $ref: '#/components/schemas/StandingRowValue' }, { type: 'null' } ] }, candidateValue: { oneOf: [ { $ref: '#/components/schemas/StandingRowValue' }, { type: 'null' } ] } } }
+        - { type: object, required: [kind, value, candidateValue], properties: { kind: { const: matchday_info }, value: { oneOf: [ { $ref: '#/components/schemas/MatchdayInfoValue' }, { type: 'null' } ] }, candidateValue: { oneOf: [ { $ref: '#/components/schemas/MatchdayInfoValue' }, { type: 'null' } ] } } }
+        - { type: object, required: [kind, value, candidateValue], properties: { kind: { const: context_item }, value: { oneOf: [ { $ref: '#/components/schemas/ContextItemValue' }, { type: 'null' } ] }, candidateValue: { oneOf: [ { $ref: '#/components/schemas/ContextItemValue' }, { type: 'null' } ] } } }
+        - { type: object, required: [kind, value, candidateValue], properties: { kind: { const: team_official_name }, value: { oneOf: [ { $ref: '#/components/schemas/TeamOfficialNameValue' }, { type: 'null' } ] }, candidateValue: { oneOf: [ { $ref: '#/components/schemas/TeamOfficialNameValue' }, { type: 'null' } ] } } }
+    ManualApproval:
+      description: Audit view of the manual approval of a MANUAL_DATA fact (R-071, R-272).
+      type: object
+      required: [approvedAt, carriedOverFromFactId]
+      additionalProperties: false
+      properties:
+        approvedAt: { type: string, format: date-time }
+        carriedOverFromFactId:
+          description: Set when an unchanged fact keeps the approval of the same fact of the previous run (R-068).
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+    Fact:
+      unevaluatedProperties: false
+      allOf:
+        - $ref: '#/components/schemas/FactRefFields'
+        - $ref: '#/components/schemas/FactKindValue'
+        - type: object
+          required: [subject, evidence, dispute, manualApproval]
+          properties:
+            subject: { $ref: '#/components/schemas/FactSubject' }
+            evidence:
+              type: array
+              items: { $ref: '#/components/schemas/Evidence' }
+            dispute:
+              oneOf:
+                - $ref: '#/components/schemas/Dispute'
+                - type: 'null'
+            manualApproval:
+              oneOf:
+                - $ref: '#/components/schemas/ManualApproval'
+                - type: 'null'
+    Evidence:
+      type: object
+      required: [sourceId, sourceName, dataMode, role, accepted, officialPublication, relation, value, sourceRef, retrievedAt, importVersionId]
+      additionalProperties: false
+      properties:
+        sourceId: { $ref: '#/components/schemas/SourceId' }
+        sourceName: { type: string, maxLength: 80 }
+        dataMode: { $ref: '#/components/schemas/DataMode' }
+        role: { type: string, enum: [primary, verification] }
+        accepted: { type: boolean }
+        officialPublication: { type: boolean }
+        relation: { type: string, enum: [supports, disagrees, consulted] }
+        value: { $ref: '#/components/schemas/FactValue' }
+        sourceRef: { type: string, maxLength: 512, description: 'Provider-neutral attribution reference, for example source:<sourceId>/<resourceKind>@<retrievedAt>, fixture:<scenario>/<file> or import:<importId>/v<n>; never a URL, never a provider identifier or base URL, never a credential; shown as text only (T10-F16, T11H-F14)' }
+        retrievedAt: { type: string, format: date-time }
+        importVersionId:
+          description: MANUAL_DATA version the value comes from (R-067, R-277); null for other modes.
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+    Dispute:
+      type: object
+      required: [sourceValues, consultedSourceId, consultedAt, outcome, resolvedValue]
+      additionalProperties: false
+      properties:
+        sourceValues:
+          type: array
+          items:
+            type: object
+            required: [sourceId, independenceGroup, value]
+            additionalProperties: false
+            properties:
+              sourceId: { $ref: '#/components/schemas/SourceId' }
+              independenceGroup: { type: string, maxLength: 64 }
+              value: { $ref: '#/components/schemas/FactValue' }
+        consultedSourceId:
+          oneOf:
+            - $ref: '#/components/schemas/SourceId'
+            - type: 'null'
+        consultedAt: { type: [string, 'null'], format: date-time }
+        outcome: { type: string, enum: [resolved, unavailable, same_source, no_match] }
+        resolvedValue:
+          oneOf:
+            - $ref: '#/components/schemas/FactValue'
+            - type: 'null'
+    StandingsAvailability:
+      description: Whether the selection has standings (R-077, R-254, R-284); never derived when missing.
+      type: object
+      required: [available, reason]
+      additionalProperties: false
+      properties:
+        available: { type: boolean }
+        reason:
+          type: [string, 'null']
+          enum: [not_provided_for_stage, not_provided_by_source, not_available_with_subscription, null]
+    LeftOutMatch:
+      type: object
+      required: [matchKey, label, status, reason]
+      additionalProperties: false
+      properties:
+        matchKey: { $ref: '#/components/schemas/MatchKey' }
+        label: { type: string, maxLength: 200 }
+        status:
+          oneOf:
+            - $ref: '#/components/schemas/MatchStatus'
+            - type: 'null'
+        reason: { type: string, enum: [not_finished, not_verified, excluded_by_operator] }
+    Draft:
+      type: object
+      required: [id, projectId, runId, factsRunId, language, dataMode, demonstration, standingsIncluded, createdAt, excludedMatchKeys, leftOutMatches, carousels]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        projectId: { $ref: '#/components/schemas/Uuid' }
+        runId: { $ref: '#/components/schemas/Uuid' }
+        factsRunId: { $ref: '#/components/schemas/Uuid' }
+        language: { $ref: '#/components/schemas/Language' }
+        dataMode: { $ref: '#/components/schemas/DataMode' }
+        demonstration: { type: boolean }
+        standingsIncluded: { type: boolean, description: 'False when the selection has no standings; the carousel then has no standings slide (R-285)' }
+        createdAt: { type: string, format: date-time }
+        excludedMatchKeys:
+          type: array
+          items: { $ref: '#/components/schemas/MatchKey' }
+        leftOutMatches:
+          type: array
+          items: { $ref: '#/components/schemas/LeftOutMatch' }
+        carousels:
+          type: array
+          items: { $ref: '#/components/schemas/Carousel' }
+    Carousel:
+      type: object
+      required: [id, sequence, total, elements, readyForFinalApproval, finalApproval]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        sequence: { type: integer }
+        total: { type: integer }
+        elements:
+          type: array
+          items: { $ref: '#/components/schemas/Element' }
+        readyForFinalApproval: { type: boolean }
+        finalApproval:
+          oneOf:
+            - $ref: '#/components/schemas/FinalApproval'
+            - type: 'null'
+    Element:
+      type: object
+      required: [id, carouselId, kind, position, slideType, currentVersion]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        carouselId: { $ref: '#/components/schemas/Uuid' }
+        kind: { type: string, enum: [slide, caption] }
+        position: { type: integer }
+        slideType: { type: [string, 'null'], enum: [cover, match_result, standings, closing, null] }
+        currentVersion: { $ref: '#/components/schemas/ElementVersion' }
+    ElementVersion:
+      type: object
+      required: [id, versionNumber, createdAt, state, blocked, blockingFacts, contentFlags, qa, fields, imageUrl, width, height]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        versionNumber: { type: integer }
+        createdAt: { type: string, format: date-time }
+        state: { type: string, enum: [pending_qa, qa_failed, ready, approved, superseded] }
+        blocked: { type: boolean, description: 'True when a referenced fact is not publishable (R-026, R-271, R-272)' }
+        blockingFacts:
+          type: array
+          items: { $ref: '#/components/schemas/FactRef' }
+        contentFlags:
+          type: array
+          items: { $ref: '#/components/schemas/ContentFlag' }
+        qa:
+          type: array
+          items: { $ref: '#/components/schemas/QaResult' }
+        fields:
+          type: array
+          items: { $ref: '#/components/schemas/TextField' }
+        imageUrl: { type: [string, 'null'], maxLength: 200, description: 'Relative API path of the slide image' }
+        width: { type: [integer, 'null'] }
+        height: { type: [integer, 'null'] }
+    TextField:
+      type: object
+      required: [field, segments]
+      additionalProperties: false
+      properties:
+        field: { type: string, enum: [headline, description, caption, hashtags, title, score, team_home, team_away, kickoff, standings, footer, demo_label] }
+        segments:
+          type: array
+          items:
+            type: object
+            required: [provenance, text, factId, factStatus]
+            additionalProperties: false
+            properties:
+              provenance: { type: string, enum: [fact, commentary, template_text], description: 'OD-01, R-028, R-208; a fact segment shows the current status of its fact' }
+              text: { type: string, maxLength: 2200 }
+              factId:
+                oneOf:
+                  - $ref: '#/components/schemas/Uuid'
+                  - type: 'null'
+              factStatus:
+                oneOf:
+                  - $ref: '#/components/schemas/FactStatus'
+                  - type: 'null'
+    ContentFlag:
+      type: object
+      required: [code, field, excerpt]
+      additionalProperties: false
+      properties:
+        code: { type: string, enum: [UNKNOWN_FACT_REFERENCE, UNVERIFIED_NUMBER, NON_OFFICIAL_TEAM_NAME, FORBIDDEN_CONTENT] }
+        field: { type: string, maxLength: 40 }
+        excerpt: { type: string, maxLength: 120 }
+    QaResult:
+      description: One QA check result; details are closed per check (T10-F17).
+      oneOf:
+        - type: object
+          required: [check, outcome, severity, details, acknowledgedAt]
+          additionalProperties: false
+          properties:
+            check: { const: data_match }
+            outcome: { $ref: '#/components/schemas/QaOutcome' }
+            severity: { const: blocking }
+            details:
+              type: object
+              required: [mismatches]
+              additionalProperties: false
+              properties:
+                mismatches:
+                  type: array
+                  items: { $ref: '#/components/schemas/QaMismatch' }
+            acknowledgedAt: { type: 'null' }
+        - type: object
+          required: [check, outcome, severity, details, acknowledgedAt]
+          additionalProperties: false
+          properties:
+            check: { const: team_names }
+            outcome: { $ref: '#/components/schemas/QaOutcome' }
+            severity: { const: blocking }
+            details:
+              type: object
+              required: [mismatches]
+              additionalProperties: false
+              properties:
+                mismatches:
+                  type: array
+                  items: { $ref: '#/components/schemas/QaMismatch' }
+            acknowledgedAt: { type: 'null' }
+        - type: object
+          required: [check, outcome, severity, details, acknowledgedAt]
+          additionalProperties: false
+          properties:
+            check: { const: text_fit }
+            outcome: { $ref: '#/components/schemas/QaOutcome' }
+            severity: { const: blocking }
+            details:
+              type: object
+              required: [overflowingElements]
+              additionalProperties: false
+              properties:
+                overflowingElements:
+                  type: array
+                  items: { type: string, maxLength: 64 }
+            acknowledgedAt: { type: 'null' }
+        - type: object
+          required: [check, outcome, severity, details, acknowledgedAt]
+          additionalProperties: false
+          properties:
+            check: { const: style_consistency }
+            outcome: { $ref: '#/components/schemas/QaOutcome' }
+            severity: { const: warning }
+            details:
+              type: object
+              required: [colorsOutsidePalette, fontsOutsideSet, templateVersions]
+              additionalProperties: false
+              properties:
+                colorsOutsidePalette:
+                  type: array
+                  items: { type: string, pattern: '^#[0-9a-f]{6}$' }
+                fontsOutsideSet:
+                  type: array
+                  items: { type: string, maxLength: 64 }
+                templateVersions:
+                  type: array
+                  items: { type: string, maxLength: 64 }
+            acknowledgedAt: { type: [string, 'null'], format: date-time }
+        - type: object
+          required: [check, outcome, severity, details, acknowledgedAt]
+          additionalProperties: false
+          properties:
+            check: { const: dimensions }
+            outcome: { $ref: '#/components/schemas/QaOutcome' }
+            severity: { const: blocking }
+            details:
+              type: object
+              required: [expectedWidth, expectedHeight, actualWidth, actualHeight]
+              additionalProperties: false
+              properties:
+                expectedWidth: { type: integer }
+                expectedHeight: { type: integer }
+                actualWidth: { type: integer }
+                actualHeight: { type: integer }
+            acknowledgedAt: { type: 'null' }
+        - description: Capitalized tokens in the AI-written text that are not verified team or competition names, the language word list or the brand terms, for example possible person names (OD-26, T11H-F17). Warning, acknowledged like style_consistency.
+          type: object
+          required: [check, outcome, severity, details, acknowledgedAt]
+          additionalProperties: false
+          properties:
+            check: { const: capitalized_tokens }
+            outcome: { $ref: '#/components/schemas/QaOutcome' }
+            severity: { const: warning }
+            details:
+              type: object
+              required: [tokens]
+              additionalProperties: false
+              properties:
+                tokens:
+                  type: array
+                  items: { type: string, maxLength: 64 }
+            acknowledgedAt: { type: [string, 'null'], format: date-time }
+    QaOutcome:
+      type: string
+      enum: [pass, fail]
+    QaMismatch:
+      type: object
+      required: [elementId, factId, expected, actual]
+      additionalProperties: false
+      properties:
+        elementId: { type: string, maxLength: 64 }
+        factId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        expected: { type: string, maxLength: 200 }
+        actual: { type: string, maxLength: 200 }
+    VersionRef:
+      type: object
+      required: [versionId]
+      additionalProperties: false
+      properties:
+        versionId: { $ref: '#/components/schemas/Uuid' }
+    FinalApproval:
+      type: object
+      required: [id, carouselId, approvedAt, versionSetSha256, valid]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        carouselId: { $ref: '#/components/schemas/Uuid' }
+        approvedAt: { type: string, format: date-time }
+        versionSetSha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        valid: { type: boolean }
+    Export:
+      allOf:
+        - $ref: '#/components/schemas/ExportFields'
+      unevaluatedProperties: false
+    ExportFields:
+      description: Open base object; closed by the schemas that use it (unevaluatedProperties).
+      type: object
+      required: [id, projectId, carouselId, finalApprovalId, exportedAt, directory, dataMode, demonstration, files]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        projectId: { $ref: '#/components/schemas/Uuid' }
+        carouselId: { $ref: '#/components/schemas/Uuid' }
+        finalApprovalId: { $ref: '#/components/schemas/Uuid' }
+        exportedAt: { type: string, format: date-time }
+        directory: { type: string, maxLength: 200, description: 'Path relative to the data directory' }
+        dataMode: { $ref: '#/components/schemas/DataMode' }
+        demonstration: { type: boolean, description: 'True for DEMO_DATA content; also stated in manifest.json and on the slides (OD-21)' }
+        files:
+          type: array
+          items:
+            type: object
+            required: [position, fileName, kind, sha256, elementVersionId]
+            additionalProperties: false
+            properties:
+              position: { type: integer }
+              fileName: { type: string, pattern: '^([0-9]{2}\.png|caption\.txt|manifest\.json)$' }
+              kind: { type: string, enum: [slide_image, caption_text, manifest] }
+              sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+              elementVersionId:
+                oneOf:
+                  - $ref: '#/components/schemas/Uuid'
+                  - type: 'null'
+    ExportDetail:
+      unevaluatedProperties: false
+      allOf:
+        - $ref: '#/components/schemas/ExportFields'
+        - type: object
+          required: [elements]
+          properties:
+            elements:
+              description: The exact element versions that were exported, in carousel order.
+              type: array
+              items:
+                type: object
+                required: [position, kind, version]
+                additionalProperties: false
+                properties:
+                  position: { type: integer }
+                  kind: { type: string, enum: [slide, caption] }
+                  version: { $ref: '#/components/schemas/ElementVersion' }
+    SlideTrace:
+      type: object
+      required: [exportId, position, elementVersionId, dataMode, facts]
+      additionalProperties: false
+      properties:
+        exportId: { $ref: '#/components/schemas/Uuid' }
+        position: { type: integer }
+        elementVersionId: { $ref: '#/components/schemas/Uuid' }
+        dataMode: { $ref: '#/components/schemas/DataMode' }
+        facts:
+          type: array
+          items: { $ref: '#/components/schemas/Fact' }
+    ImportCreate:
+      description: 'One import request; channel json_file or csv_file sends the exact file bytes base64-encoded (T11H-F01), channel form sends the document built by the web form (R-057, R-319).'
+      oneOf:
+        - $ref: '#/components/schemas/ImportFileCreate'
+        - $ref: '#/components/schemas/ImportFormCreate'
+    ImportFileCreate:
+      type: object
+      required: [channel, fileName, declaredSource, contentBase64]
+      additionalProperties: false
+      properties:
+        channel: { type: string, enum: [json_file, csv_file] }
+        fileName: { $ref: '#/components/schemas/FileName' }
+        declaredSource:
+          oneOf:
+            - $ref: '#/components/schemas/Label'
+            - type: 'null'
+        contentBase64:
+          description: 'The exact bytes of the file, standard base64 (RFC 4648 section 4, padded, no line breaks). At most 512 KiB of decoded bytes (699052 base64 characters). The server decodes it strictly, refuses invalid UTF-8 as encoding_invalid, and preserves and hashes the received bytes unchanged (T11H-F01).'
+          type: string
+          contentEncoding: base64
+          minLength: 4
+          maxLength: 699052
+          pattern: '^[A-Za-z0-9+/]*={0,2}$'
+    ImportFormCreate:
+      type: object
+      required: [channel, declaredSource, document]
+      additionalProperties: false
+      properties:
+        channel: { type: string, const: form }
+        declaredSource:
+          oneOf:
+            - $ref: '#/components/schemas/Label'
+            - type: 'null'
+        document: { $ref: '#/components/schemas/ManualImportDocument' }
+    ManualImportDocument:
+      description: The one normalized import format of every MANUAL_DATA channel (R-060, R-064, R-065, R-434). Person-level fields do not exist and are refused (R-119).
+      type: object
+      required: [format, competition, season, selections]
+      additionalProperties: false
+      properties:
+        format: { type: string, const: edr-manual-import/1 }
+        competition:
+          type: object
+          required: [id, name, areaName]
+          additionalProperties: false
+          properties:
+            id: { $ref: '#/components/schemas/Slug' }
+            name: { $ref: '#/components/schemas/DisplayName' }
+            areaName:
+              oneOf:
+                - $ref: '#/components/schemas/DisplayName'
+                - type: 'null'
+        season:
+          type: object
+          required: [id, label]
+          additionalProperties: false
+          properties:
+            id: { $ref: '#/components/schemas/Slug' }
+            label: { $ref: '#/components/schemas/DisplayName' }
+        selections:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: '#/components/schemas/ManualSelection' }
+    ManualSelection:
+      type: object
+      required: [stage, matchday, teams, matches, standings]
+      additionalProperties: false
+      properties:
+        stage:
+          type: object
+          required: [id, name, order]
+          additionalProperties: false
+          properties:
+            id: { $ref: '#/components/schemas/Slug' }
+            name: { $ref: '#/components/schemas/StageName' }
+            order: { type: integer, minimum: 1, maximum: 99 }
+        matchday: { type: [integer, 'null'], minimum: 1, maximum: 999 }
+        teams:
+          type: array
+          minItems: 2
+          maxItems: 64
+          items:
+            type: object
+            required: [key, name]
+            additionalProperties: false
+            properties:
+              key: { $ref: '#/components/schemas/Slug' }
+              name: { $ref: '#/components/schemas/TeamName' }
+        matches:
+          type: array
+          minItems: 1
+          maxItems: 64
+          items:
+            type: object
+            required: [home, away, kickoff, status, score]
+            additionalProperties: false
+            properties:
+              home: { $ref: '#/components/schemas/Slug' }
+              away: { $ref: '#/components/schemas/Slug' }
+              kickoff: { type: string, format: date-time, maxLength: 40 }
+              status: { $ref: '#/components/schemas/MatchStatus' }
+              score:
+                oneOf:
+                  - type: object
+                    required: [home, away]
+                    additionalProperties: false
+                    properties:
+                      home: { type: integer, minimum: 0, maximum: 99 }
+                      away: { type: integer, minimum: 0, maximum: 99 }
+                  - type: 'null'
+        standings:
+          oneOf:
+            - type: object
+              required: [asOf, rows]
+              additionalProperties: false
+              properties:
+                asOf: { type: string, format: date-time, maxLength: 40 }
+                rows:
+                  type: array
+                  minItems: 1
+                  maxItems: 64
+                  items:
+                    type: object
+                    required: [position, team, played, won, drawn, lost, goalsFor, goalsAgainst, goalDifference, points]
+                    additionalProperties: false
+                    properties:
+                      position: { type: integer, minimum: 1, maximum: 64 }
+                      team: { $ref: '#/components/schemas/Slug' }
+                      played: { type: integer, minimum: 0, maximum: 999 }
+                      won: { type: integer, minimum: 0, maximum: 999 }
+                      drawn: { type: integer, minimum: 0, maximum: 999 }
+                      lost: { type: integer, minimum: 0, maximum: 999 }
+                      goalsFor: { type: integer, minimum: 0, maximum: 999 }
+                      goalsAgainst: { type: integer, minimum: 0, maximum: 999 }
+                      goalDifference: { type: integer, minimum: -999, maximum: 999 }
+                      points: { type: integer, minimum: -999, maximum: 999 }
+            - type: 'null'
+    ImportError:
+      type: object
+      required: [location, record, field, problem, message]
+      additionalProperties: false
+      properties:
+        location: { type: string, enum: [file, form] }
+        record: { type: string, maxLength: 120, description: 'Row number (CSV), JSON pointer (JSON, form) or "file"' }
+        field: { type: [string, 'null'], maxLength: 80, description: 'Column or field name, sanitized; for a refused person-level column its header name' }
+        problem:
+          type: string
+          enum: [parse_error, encoding_invalid, too_large, too_many_rows, header_invalid, column_unknown, person_field, required_missing, type_invalid, value_out_of_range, value_inconsistent, duplicate_match, unknown_team, metadata_missing, metadata_conflict, finished_without_score, score_not_allowed]
+        message: { type: string, maxLength: 200, description: 'Fixed text plus sanitized parameters only' }
+    ImportSummary:
+      type: object
+      required: [id, channel, fileName, declaredSource, receivedAt, competitionId, competitionName, seasonId, seasonLabel, originalSha256, selections]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        channel: { type: string, enum: [json_file, csv_file, form] }
+        fileName:
+          oneOf:
+            - $ref: '#/components/schemas/FileName'
+            - type: 'null'
+        declaredSource:
+          oneOf:
+            - $ref: '#/components/schemas/Label'
+            - type: 'null'
+        receivedAt: { type: string, format: date-time }
+        competitionId: { $ref: '#/components/schemas/Slug' }
+        competitionName: { $ref: '#/components/schemas/DisplayName' }
+        seasonId: { $ref: '#/components/schemas/Slug' }
+        seasonLabel: { $ref: '#/components/schemas/DisplayName' }
+        originalSha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        selections:
+          type: array
+          items:
+            type: object
+            required: [stageId, stageName, matchday, versionId, versionNumber]
+            additionalProperties: false
+            properties:
+              stageId: { $ref: '#/components/schemas/Slug' }
+              stageName: { $ref: '#/components/schemas/StageName' }
+              matchday: { type: [integer, 'null'] }
+              versionId: { $ref: '#/components/schemas/Uuid' }
+              versionNumber: { type: integer, minimum: 1 }
+    ManualSelectionHistory:
+      type: object
+      required: [competitionId, seasonId, selections]
+      additionalProperties: false
+      properties:
+        competitionId: { $ref: '#/components/schemas/Slug' }
+        seasonId: { $ref: '#/components/schemas/Slug' }
+        selections:
+          type: array
+          items:
+            type: object
+            required: [stageId, stageName, matchday, versions]
+            additionalProperties: false
+            properties:
+              stageId: { $ref: '#/components/schemas/Slug' }
+              stageName: { $ref: '#/components/schemas/StageName' }
+              matchday: { type: [integer, 'null'] }
+              versions:
+                type: array
+                items:
+                  type: object
+                  required: [versionId, versionNumber, importId, createdAt, current]
+                  additionalProperties: false
+                  properties:
+                    versionId: { $ref: '#/components/schemas/Uuid' }
+                    versionNumber: { type: integer, minimum: 1 }
+                    importId: { $ref: '#/components/schemas/Uuid' }
+                    createdAt: { type: string, format: date-time }
+                    current: { type: boolean }
+    ManualVersion:
+      type: object
+      required: [id, versionNumber, importId, createdAt, supersededAt, competitionId, seasonId, selection]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        versionNumber: { type: integer, minimum: 1 }
+        importId: { $ref: '#/components/schemas/Uuid' }
+        createdAt: { type: string, format: date-time }
+        supersededAt: { type: [string, 'null'], format: date-time }
+        competitionId: { $ref: '#/components/schemas/Slug' }
+        seasonId: { $ref: '#/components/schemas/Slug' }
+        selection: { $ref: '#/components/schemas/ManualSelection' }
+    BrandAssetKind:
+      type: string
+      enum: [brand_logo, mascot, decoration]
+    BrandAsset:
+      type: object
+      required: [id, kind, label, mime, width, height, sha256, active, registeredAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        kind: { $ref: '#/components/schemas/BrandAssetKind' }
+        label: { $ref: '#/components/schemas/Label' }
+        mime: { type: string, enum: [image/png, image/jpeg] }
+        width: { type: integer }
+        height: { type: integer }
+        sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        active: { type: boolean }
+        registeredAt: { type: string, format: date-time }
+    Template:
+      type: object
+      required: [id, version, slideType, label, badgeSlots, imageSlots]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Slug' }
+        version: { type: string, maxLength: 32 }
+        slideType: { type: string, enum: [cover, match_result, standings, closing] }
+        label: { type: string }
+        badgeSlots: { type: integer, description: 'Reserved badge slots; empty while no authorized badge exists (R-050)' }
+        imageSlots:
+          type: array
+          items: { $ref: '#/components/schemas/BrandAssetKind' }
