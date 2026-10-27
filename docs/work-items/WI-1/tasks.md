@@ -27,13 +27,13 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T06 | Configuration update: frontend-developer role and personal-data profile | IMPL | Orchestrator | T03 | DONE | 1 | 32d60da | T07 |
 | T07 | Configuration and source-of-truth verification | VERIFY | Orchestrator | T05, T06 | DONE | 1 | f648f85 | `docs/work-items/WI-1/evidence/T07-validate.txt` |
 | T08 | Follow-up requirements verification | VERIFY | Orchestrator | T03, T04, T07 | DONE | 1 | 70befa9 | `docs/work-items/WI-1/evidence/T08-requirements-check.txt` |
-| T09 | Architecture delta and task plan | IMPL | architect | T08 | IN_PROGRESS | 3 | - | - |
-| T10 | Security design review of the architecture | IMPL | security-reviewer | T09 | IN_PROGRESS | 2 | - | - |
+| T09 | Architecture delta and task plan | IMPL | architect | T08 | DONE | 3 | f017460, 41af5ee | T11 |
+| T10 | Security design review of the architecture | IMPL | security-reviewer | T09 | DONE | 2 | 3ac5b85, c1c0e2c | T11 |
 | T11A | Intake of the stage-2 Product Owner decisions | IMPL | Orchestrator | T08 | DONE | 1 | 266b29d | T11D |
 | T11B | Record PD-10 and PD-11 in the requirements | IMPL | product-manager | T11A | DONE | 1 | 380780f | T11D |
 | T11C | Record PD-10 and PD-11 in the source-of-truth decision register | IMPL | architect | T11A | DONE | 1 | 16013be | T11D |
 | T11D | Stage-2 decisions verification | VERIFY | Orchestrator | T11A, T11B, T11C | DONE | 1 | d98a135 | `docs/work-items/WI-1/evidence/T11D-validate.txt` |
-| T11 | Architecture verification | VERIFY | Orchestrator | T09, T10, T11D | IN_PROGRESS | 1 | - | - |
+| T11 | Architecture verification | VERIFY | Orchestrator | T09, T10, T11D | DONE | 1 | 53e02a7 | `docs/work-items/WI-1/evidence/T11-plan-check.txt` |
 
 ## Tasks
 
@@ -272,6 +272,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: run the plan check at the integration HEAD and record the evidence.
 - Acceptance criteria: evidence `RESULT: PASS` with `VALIDATED_HEAD` at the integration HEAD.
 - Verification: `orch plan check --plan ... --tracker ... --requirements ... --at '<integration worktree>'` -> exit 0
+- Agent result: n/a (Orchestrator task).
+- Orchestrator verification: `orch evidence capture -- plan check` exit 0 (37 tasks, 0 violations, 0 warnings) at a05778d, 2026-10-27.
+- Evidence: docs/work-items/WI-1/evidence/T11-plan-check.txt; evidence commit 53e02a7; VALIDATED_HEAD a05778d34c62d54948d339e9dbab6babdef04a81.
+- Decisions: OD-14, OD-15.
+- Human interventions: PD-10, PD-11 (S-002).
+- Agent usage: NOT RECORDED (Orchestrator task).
 
 ## Decisions
 
@@ -388,6 +394,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T17:43:10Z | T11B | Status DONE | integration commit 380780f; independently verified by T11D |
 | 2026-10-27T17:43:10Z | T11C | Status DONE | integration commit 16013be; independently verified by T11D |
 | 2026-10-27T17:43:10Z | T11 | Status IN_PROGRESS (attempt 1) | T09, T10 integrated (design verdict PASS); T11D DONE |
+| 2026-10-27T17:43:23Z | T11 | Status DONE | evidence/T11-plan-check.txt RESULT PASS; evidence commit 53e02a7; VALIDATED_HEAD a05778d |
+| 2026-10-27T17:43:23Z | T09 | Status DONE | integration commits f017460, 41af5ee; independently verified by T11 |
+| 2026-10-27T17:43:23Z | T10 | Status DONE | integration commits 3ac5b85, c1c0e2c; independently verified by T11 |
 
 ## Recovery log
 
