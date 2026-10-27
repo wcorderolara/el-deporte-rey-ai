@@ -53,7 +53,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T19 | HTTP platform, composition root and local-origin protections | IMPL | backend-developer | T17, T18 | IN_PROGRESS | 1 | - | - |
 | T20 | HTTP contract promotion and shared API schemas | IMPL | backend-developer | T15 | DONE | 2 | 6911bed | `docs/work-items/WI-1/evidence/T20-gates.txt` |
 | T21 | Sports-data provider port, payload validation and fixture adapter | IMPL | backend-developer | T17, T20 | IN_PROGRESS | 1 | - | - |
-| T22 | AI provider port, stub adapter and OpenAI-compatible adapter | IMPL | backend-developer | T17 | IN_PROGRESS | 1 | - | - |
+| T22 | AI provider port, stub adapter and OpenAI-compatible adapter | IMPL | backend-developer | T17 | DONE | 1 | 89fa98d | `docs/work-items/WI-1/evidence/T22-gates.txt` |
 | T23 | Synthetic fixture scenarios | IMPL | qa-engineer | T21, T22 | PENDING | 0 | - | - |
 | T24 | End-to-end and accessibility test harness | IMPL | qa-engineer | T16, T19 | PENDING | 0 | - | - |
 | T25 | Project gates, local-environment settings and contract declaration | IMPL | Orchestrator | T15, T16, T19, T20, T24 | PENDING | 0 | - | - |
@@ -608,6 +608,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: `contracts/provider-ports.md` section 2 and `architecture.md` section 5.3: `AiTextProvider`, `DraftRequest` and `DraftResponse` schemas, fixed versioned system instruction, data block framing, response validation; stub adapter (fixture files under `fixtures/ai/` or deterministic placeholder-only draft; records the last request); OpenAI-compatible adapter through the egress client (base URL, model identifier, temperature and timeout from configuration, key from `EDR_AI_API_KEY`, no tool calling, errors without key or body echo). Unit tests use the stub and a loopback HTTP test server only; no real provider is called. Security design review items: fixed instruction forbids person names, venues and outcomes not in the data (T10-F06); response cap 256 KiB through the egress client (T10-F07); errors mapped to closed failure codes with the HTTP status only, and a test with a loopback stub server whose error body echoes the `Authorization` header asserts that the dummy key reaches neither the returned failure nor the log output (T10-F10). T11H item (T11H-F16, V-13a): `DraftRequest` is validated with a strict schema (unknown keys rejected) before any adapter sends it, with a test that a request carrying an extra field such as `sourceRef` or `fileName` is refused.
 - Acceptance criteria: R-223
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0
+- Agent result: PASS at 16776da (npm ci 0; typecheck 0; lint 0; test:unit 0, 488 tests, 122 new AI tests; npm audit --audit-level=high 0, 2 moderate per OD-33).
+- Orchestrator verification: `orch worktree verify-ownership` exit 0 (14 changed, 0 outside); re-run in the task worktree at 16776da: npm ci --offline 0, typecheck 0, lint 0, test:unit 0 (22 files, 488 tests), test:integration 0 (4 files, 60 tests); main working tree unchanged; 2026-10-27.
+- Decisions: LOW-1 to LOW-8 (invalid request code; egress-to-AI failure mapping; stub scenario default; stub fixture lookup and same response parsing; every slide answered once, code-point limits, content checks left to T32; fact display values cannot imitate placeholders; adapters log nothing, leak test captures stdout, stderr and console; non-header-safe key fails as unavailable). No new dependency. Notes for T19 (createAiProvider wiring), T23 (parseAiStubFixture), T27 (store AiProviderError.toJSON(), not stack).
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 191034; duration 12 minutes.
+- Integration commit(s): 89fa98d (merge --no-ff of task/WI-1/T22). Affected gates at 89fa98d: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T22-gates.txt, the evidence file of this task).
 
 ### T23: Synthetic fixture scenarios
 - Kind: IMPL
@@ -1200,6 +1206,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T22:23:33Z | T21 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-27T22:23:33Z | T28 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-27T22:23:33Z | T31 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-27T22:31:13Z | T22 | Status DONE | integration commit 89fa98d; evidence/T22-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
