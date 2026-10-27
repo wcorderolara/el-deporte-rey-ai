@@ -1,0 +1,18 @@
+{
+  "name": "El Deporte Rey GT",
+  "handle": "@ElDeporteReyGT",
+  "mascotName": "KETSI",
+  "provisional": true,
+  "palette": {
+    "primary": "#5B2A86",
+    "primaryDark": "#2E1145",
+    "accent": "#D4AF37",
+    "secondary": "#1F4FB8",
+    "light": "#FFFFFF"
+  },
+  "fonts": {
+    "heading": { "family": "Montserrat", "weight": 800 },
+    "body": { "family": "Inter", "weight": 400 },
+    "numeric": { "family": "Inter", "weight": 700 }
+  }
+}
