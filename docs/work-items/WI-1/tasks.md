@@ -23,10 +23,10 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T02 | Requirements verification | VERIFY | Orchestrator | T00, T01 | DONE | 1 | c68b058 | `docs/work-items/WI-1/evidence/T02-requirements-check.txt` |
 | T03 | Intake of the Product Owner decisions | IMPL | Orchestrator | T02 | IN_PROGRESS | 1 | - | - |
 | T04 | Apply Product Owner decisions to the requirements | IMPL | product-manager | T03 | IN_PROGRESS | 1 | - | - |
-| T05 | Record Product Owner decisions in the source-of-truth decision register | IMPL | architect | T03 | IN_PROGRESS | 1 | - | - |
-| T06 | Configuration update: frontend-developer role and personal-data profile | IMPL | Orchestrator | T03 | IN_PROGRESS | 1 | - | - |
-| T07 | Configuration and source-of-truth verification | VERIFY | Orchestrator | T05, T06 | IN_PROGRESS | 1 | - | - |
-| T08 | Follow-up requirements verification | VERIFY | Orchestrator | T03, T04, T07 | PENDING | 0 | - | - |
+| T05 | Record Product Owner decisions in the source-of-truth decision register | IMPL | architect | T03 | DONE | 1 | d93cbb1 | T07 |
+| T06 | Configuration update: frontend-developer role and personal-data profile | IMPL | Orchestrator | T03 | DONE | 1 | 32d60da | T07 |
+| T07 | Configuration and source-of-truth verification | VERIFY | Orchestrator | T05, T06 | DONE | 1 | f648f85 | `docs/work-items/WI-1/evidence/T07-validate.txt` |
+| T08 | Follow-up requirements verification | VERIFY | Orchestrator | T03, T04, T07 | IN_PROGRESS | 1 | - | - |
 
 ## Tasks
 
@@ -137,6 +137,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: run `orch validate` at the integration HEAD after T05 and T06 are integrated and record the evidence.
 - Acceptance criteria: evidence `RESULT: PASS` with `VALIDATED_HEAD` at the integration HEAD.
 - Verification: `orch validate --work-item 'WI-1' --at '<integration worktree>'` -> exit 0
+- Agent result: n/a (Orchestrator task).
+- Orchestrator verification: `orch evidence capture -- validate --work-item 'WI-1'` exit 0 (all sections PASS, 0 violations) at e1459cb, 2026-10-27.
+- Evidence: docs/work-items/WI-1/evidence/T07-validate.txt; evidence commit f648f85; VALIDATED_HEAD e1459cb72dd597e170f345b3b1b293a2e47b37f4.
+- Decisions: none.
+- Human interventions: 0.
+- Agent usage: NOT RECORDED (Orchestrator task).
 
 ### T08: Follow-up requirements verification
 - Kind: VERIFY
@@ -218,6 +224,10 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T16:19:08Z | T04 | Agent report PASS; verified and integrated at 01a71a7; affected gates PASS; awaiting T08 | requirements check exit 0; evidence/T04-gates.txt |
 | 2026-10-27T16:19:08Z | - | Orchestrator decisions OD-10 to OD-12 recorded (R-424, R-425, R-426) | T04 agent report |
 | 2026-10-27T16:19:08Z | T07 | Status IN_PROGRESS (attempt 1) | T05 and T06 integrated |
+| 2026-10-27T16:19:22Z | T07 | Status DONE | evidence/T07-validate.txt RESULT PASS; evidence commit f648f85; VALIDATED_HEAD e1459cb |
+| 2026-10-27T16:19:22Z | T05 | Status DONE | integration commit d93cbb1; independently verified by T07 |
+| 2026-10-27T16:19:22Z | T06 | Status DONE | integration commit 32d60da; independently verified by T07 |
+| 2026-10-27T16:19:22Z | T08 | Status IN_PROGRESS (attempt 1) | T03, T04 integrated; T07 DONE |
 
 ## Recovery log
 
