@@ -21,12 +21,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T00 | Intake of the Product Owner launch text | IMPL | Orchestrator | - | DONE | 1 | 1176f8c | T02 |
 | T01 | Normalized requirements | IMPL | product-manager | T00 | DONE | 1 | dd9499e | T02 |
 | T02 | Requirements verification | VERIFY | Orchestrator | T00, T01 | DONE | 1 | c68b058 | `docs/work-items/WI-1/evidence/T02-requirements-check.txt` |
-| T03 | Intake of the Product Owner decisions | IMPL | Orchestrator | T02 | IN_PROGRESS | 1 | - | - |
-| T04 | Apply Product Owner decisions to the requirements | IMPL | product-manager | T03 | IN_PROGRESS | 1 | - | - |
+| T03 | Intake of the Product Owner decisions | IMPL | Orchestrator | T02 | DONE | 1 | f4ccb0c | T08 |
+| T04 | Apply Product Owner decisions to the requirements | IMPL | product-manager | T03 | DONE | 1 | 01a71a7 | T08 |
 | T05 | Record Product Owner decisions in the source-of-truth decision register | IMPL | architect | T03 | DONE | 1 | d93cbb1 | T07 |
 | T06 | Configuration update: frontend-developer role and personal-data profile | IMPL | Orchestrator | T03 | DONE | 1 | 32d60da | T07 |
 | T07 | Configuration and source-of-truth verification | VERIFY | Orchestrator | T05, T06 | DONE | 1 | f648f85 | `docs/work-items/WI-1/evidence/T07-validate.txt` |
-| T08 | Follow-up requirements verification | VERIFY | Orchestrator | T03, T04, T07 | IN_PROGRESS | 1 | - | - |
+| T08 | Follow-up requirements verification | VERIFY | Orchestrator | T03, T04, T07 | DONE | 1 | 70befa9 | `docs/work-items/WI-1/evidence/T08-requirements-check.txt` |
 
 ## Tasks
 
@@ -83,6 +83,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: record the Product Owner decision message of 2026-10-27 verbatim as source S-001 (decision record, precedence level 1, stated by the PO in the session) and rescan the intake.
 - Acceptance criteria: S-001 analyzed at level 1; intake record and inventory checked by RQ-02, RQ-08, RQ-09, RQ-11 and RQ-13 in T08.
 - Verification: independently verified by T08 (`orch requirements check --work-item 'WI-1'` at the integration HEAD).
+- Agent result: n/a (Orchestrator task).
+- Orchestrator verification: `orch intake scan --rescan` exit 0 (SP-4, 2 analyzed, 0 excluded, 1 instruction candidate resolved by T04); `orch tracker check` exit 0 at f4ccb0c, 2026-10-27.
+- Integration commit(s): f4ccb0c (committed directly on work/WI-1). Verifier: T08.
+- Decisions: PD-01 to PD-09 recorded (Product Owner).
+- Human interventions: Product Owner decision message of 2026-10-27 (S-001).
+- Agent usage: NOT RECORDED (Orchestrator task).
 
 ### T04: Apply Product Owner decisions to the requirements
 - Kind: IMPL
@@ -152,6 +158,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: run the requirements check at the integration HEAD and record the evidence; last VERIFY task of stage 1.
 - Acceptance criteria: evidence `RESULT: PASS` with `VALIDATED_HEAD` at the integration HEAD.
 - Verification: `orch requirements check --work-item 'WI-1' --at '<integration worktree>'` -> exit 0
+- Agent result: n/a (Orchestrator task).
+- Orchestrator verification: `orch evidence capture -- requirements check` exit 0 (15 rules, 0 failed) at 5ec665d, 2026-10-27. Note: tracker commit 5ec665d recorded T05 and T06 DONE before T03; corrected in the following commit that marks T03 DONE.
+- Evidence: docs/work-items/WI-1/evidence/T08-requirements-check.txt; evidence commit 70befa9; VALIDATED_HEAD 5ec665d78e68188c126ed66ff579f1f592db8837.
+- Decisions: none.
+- Human interventions: 0.
+- Agent usage: NOT RECORDED (Orchestrator task).
 
 ## Decisions
 
@@ -228,6 +240,10 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T16:19:22Z | T05 | Status DONE | integration commit d93cbb1; independently verified by T07 |
 | 2026-10-27T16:19:22Z | T06 | Status DONE | integration commit 32d60da; independently verified by T07 |
 | 2026-10-27T16:19:22Z | T08 | Status IN_PROGRESS (attempt 1) | T03, T04 integrated; T07 DONE |
+| 2026-10-27T16:19:42Z | T08 | Status DONE | evidence/T08-requirements-check.txt RESULT PASS; evidence commit 70befa9; VALIDATED_HEAD 5ec665d |
+| 2026-10-27T16:19:42Z | T03 | Status DONE | integration commit f4ccb0c; independently verified by T08 |
+| 2026-10-27T16:19:42Z | T04 | Status DONE | integration commit 01a71a7; independently verified by T08 |
+| 2026-10-27T16:19:42Z | - | Ordering correction: T05 and T06 were recorded DONE at 5ec665d before their dependency T03; T03 now DONE | tracker check at 5ec665d reported CT-03 for T05, T06 |
 
 ## Recovery log
 
