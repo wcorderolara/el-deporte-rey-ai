@@ -67,7 +67,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T33 | Brand asset registry | IMPL | backend-developer | T27 | PENDING | 0 | - | - |
 | T34 | Rendering stage and carousel templates | IMPL | backend-developer | T27, T33 | PENDING | 0 | - | - |
 | T35 | Visual QA stage | IMPL | backend-developer | T30, T34 | PENDING | 0 | - | - |
-| T36 | Brand assets and templates UI | IMPL | frontend-developer | T16, T20 | PENDING | 0 | - | - |
+| T36 | Brand assets and templates UI | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
 | T37 | Review module: approval state machine, regeneration, final approval | IMPL | backend-developer | T32, T35 | PENDING | 0 | - | - |
 | T38 | Export, history and traceability module | IMPL | backend-developer | T37 | PENDING | 0 | - | - |
 | T39 | Review UI: preview, per-item approval, regeneration, final approval | IMPL | frontend-developer | T16, T20 | PENDING | 0 | - | - |
@@ -1207,6 +1207,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T22:23:33Z | T28 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-27T22:23:33Z | T31 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-27T22:31:13Z | T22 | Status DONE | integration commit 89fa98d; evidence/T22-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-27T22:31:22Z | T36 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 
 ## Recovery log
 
