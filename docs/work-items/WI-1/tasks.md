@@ -27,7 +27,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T06 | Configuration update: frontend-developer role and personal-data profile | IMPL | Orchestrator | T03 | DONE | 1 | 32d60da | T07 |
 | T07 | Configuration and source-of-truth verification | VERIFY | Orchestrator | T05, T06 | DONE | 1 | f648f85 | `docs/work-items/WI-1/evidence/T07-validate.txt` |
 | T08 | Follow-up requirements verification | VERIFY | Orchestrator | T03, T04, T07 | DONE | 1 | 70befa9 | `docs/work-items/WI-1/evidence/T08-requirements-check.txt` |
-| T09 | Architecture delta and task plan | IMPL | architect | T08 | IN_PROGRESS | 2 | - | - |
+| T09 | Architecture delta and task plan | IMPL | architect | T08 | IN_PROGRESS | 3 | - | - |
 | T10 | Security design review of the architecture | IMPL | security-reviewer | T09 | IN_PROGRESS | 1 | - | - |
 | T11 | Architecture verification | VERIFY | Orchestrator | T09, T10 | PENDING | 0 | - | - |
 
@@ -297,6 +297,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T17:16:51Z | T10 | Agent report PASS; integrated at 3ac5b85; design verdict FAIL correctable (T10-F01..F03 must-fix); addendum pending after T09 correction | design-review.md; verify-ownership exit 0; evidence/T10-gates.txt |
 | 2026-10-27T17:16:51Z | T09 | Must-fix design-review findings T10-F01, T10-F02, T10-F03: targeted correction, attempt 2 | security/design-review.md section 4 |
 | 2026-10-27T17:16:51Z | - | OD-13 recorded; escalations E-07 (U-03, HIGH-03) and E-08 (U-04, HIGH-06) raised for the stage-2 PO batch | design-review.md Q2; architecture-delta.md 2.1 |
+| 2026-10-27T17:27:54Z | T09 | Attempt 2 (2520c7a) failed Orchestrator verification: contracts/http-api.openapi.yaml is not valid YAML (line 636, plain scalar with colon-space); targeted correction, attempt 3 | plan check exit 0; YAML parse error at line 636 |
 
 ## Recovery log
 
