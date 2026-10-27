@@ -10,7 +10,7 @@
 | Authorization | Product Owner request of 2026-10-27 via orchestrate analyze: requirements analysis only, no implementation. No merge, push or deploy is authorized. |
 | Config sha256 | `6614e48a55c0252c3962656d71eeec2dd29d537309bb39828a6df78b01824354` |
 | Last gate run | none yet |
-| Work-item status | PLANNED |
+| Work-item status | EXECUTING |
 
 Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orchestrate/workflows/task-tracking.md. Only the Orchestrator edits this file.
 
@@ -43,10 +43,10 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11L | Record PD-15 to PD-20 in the requirements | IMPL | product-manager | T11K | DONE | 1 | 966a599 | T11N |
 | T11N | Change-batch decisions verification | VERIFY | Orchestrator | T11K, T11L | DONE | 1 | 18491cd | `docs/work-items/WI-1/evidence/T11N-validate.txt` |
 | T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I, T11N | DONE | 1 | 91e93b4 | `docs/work-items/WI-1/evidence/T11J-plan-check.txt` |
-| T12 | Source of truth: stack, architecture summary, interface conventions, architecture decisions | IMPL | architect | T11J | PENDING | 0 | - | - |
-| T13 | Collect public provider documentation for the PD-01 research | IMPL | Orchestrator | T11J | PENDING | 0 | - | - |
+| T12 | Source of truth: stack, architecture summary, interface conventions, architecture decisions | IMPL | architect | T11J | IN_PROGRESS | 1 | - | - |
+| T13 | Collect public provider documentation for the PD-01 research | IMPL | Orchestrator | T11J | IN_PROGRESS | 1 | - | - |
 | T14 | Provider research analysis and recommendation | IMPL | architect | T13, T53 | PENDING | 0 | - | - |
-| T15 | Workspace scaffolding, tooling and server skeleton | IMPL | backend-developer | T11J | PENDING | 0 | - | - |
+| T15 | Workspace scaffolding, tooling and server skeleton | IMPL | backend-developer | T11J | IN_PROGRESS | 1 | - | - |
 | T16 | Web application skeleton | IMPL | frontend-developer | T15 | PENDING | 0 | - | - |
 | T17 | Configuration, catalog, display formatting and egress client | IMPL | backend-developer | T15 | PENDING | 0 | - | - |
 | T18 | Persistence: SQLite access, migration runner and initial schema | IMPL | backend-developer | T15 | PENDING | 0 | - | - |
@@ -927,6 +927,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-27 | MEDIUM | AD-38 confirmed: manual approval in competitions marked noAcceptedPublicSource requires pinned team identities (unpinned or changed names give team_identity_unmatched); the configuration refuses the options the PO did not choose (allowed_labelled, any_supporting_source); such links bind MANUAL_DATA sources only | eligibility on any manual fact | low (stricter; configurable) | MED-04; consistent with PD-06, PD-17, PD-18; PO notified |
 | OD-28 | MEDIUM | U-29: PD-17 operator-attested labelling applies in the review UI, the trace and the export manifest (operatorAttested true when any used fact is MANUALLY_APPROVED); no visible label on the slide images, consistent with OD-01; the PO may require a visible label | visible label on slides | low (template or configuration change) | MED-04; PO notified in the stage report and may override |
 | OD-29 | MEDIUM | U-30: T11L added no acceptance-criterion IDs; the extended statements of R-271 (both republishing-permission states, R-078) and R-272 (PD-17 eligibility, R-026) are carried as test expectations in the briefs of the tasks that name them (T30, T31, T32, T37, T39, T42, T44, T52); approval tests using the test-live double cover both permission states | re-open T11G for a fourth attempt | low | MED-05; requirements.md AC-23; PO notified |
+| OD-30 | MEDIUM | U-10 resolved: the host has Node.js 22.22.2 (LTS 'Jod', maintained until 2027-04) and no 24 line; `node:sqlite` and `--env-file-if-exists` work on it (verified 2026-10-27; SQLite prints an ExperimentalWarning, silenced in scripts with `--disable-warning=ExperimentalWarning`). AD-01 is amended: pin Node.js 22.22.2 in `.nvmrc` and `engines` instead of 24 or later; nothing is installed on the host | escalate for a host installation of Node 24 | low (one-line pin change to move to 24 later) | MED-03, MED-04; local-environment.md (no host installation); PO notified |
+| OD-31 | MEDIUM | Architecture decisions AD-01 to AD-38 of architecture-delta.md sections 5, 11.5, 11.12 and 11.13 are accepted as reviewed by T10 and T11H (design verdicts PASS), with AD-01 amended by OD-30; T12 records them in the source of truth | accept a subset | low | planning stage exit (T11, T11J); PO notified |
 
 ## Conflicts
 
@@ -1117,6 +1119,10 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T21:19:19Z | T11G | Status DONE | integration commits bf7dd40, 58e906a, b468d07; independently verified by T11J |
 | 2026-10-27T21:19:19Z | T11H | Status DONE | integration commits 89c721d, 1f65fda; independently verified by T11J |
 | 2026-10-27T21:19:19Z | - | Change PD-12 to PD-20 planned; work item ready for execution | T11J evidence |
+| 2026-10-27T21:31:35Z | - | Stage 4 started: work-item status EXECUTING; OD-30 (Node.js 22.22.2 LTS) and OD-31 (AD-01 to AD-38 accepted) recorded | orch next: SELECT T12, T13, T15 |
+| 2026-10-27T21:31:35Z | T12 | Status IN_PROGRESS (attempt 1); agent orchestrate:architect launched | orch next SELECT |
+| 2026-10-27T21:31:35Z | T13 | Status IN_PROGRESS (attempt 1); Orchestrator working | orch next SELECT |
+| 2026-10-27T21:31:35Z | T15 | Status IN_PROGRESS (attempt 1); agent orchestrate:backend-developer launched | orch next SELECT |
 
 ## Recovery log
 
