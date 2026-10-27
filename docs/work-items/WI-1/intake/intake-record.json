@@ -2,8 +2,8 @@
   "schema": "orchestrate/intake@1",
   "workItem": "WI-1",
   "startingPoint": {
-    "id": "SP-1",
-    "basis": "inline text only"
+    "id": "SP-4",
+    "basis": "2 inputs (inline text counts as one)"
   },
   "mode": "full",
   "inputs": [
@@ -12,6 +12,12 @@
       "kind": "inline",
       "resolvedPath": "docs/work-items/WI-1/intake/sources/inline-001.md",
       "insideRepository": true
+    },
+    {
+      "input": "/Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27.md",
+      "kind": "file",
+      "resolvedPath": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27.md",
+      "insideRepository": true
     }
   ],
   "precedenceAssignment": [
@@ -19,6 +25,11 @@
       "sourceId": "S-000",
       "level": 1,
       "basis": "inline launch instruction of the Product Owner"
+    },
+    {
+      "sourceId": "S-001",
+      "level": 1,
+      "basis": "Product Owner decision named with --precedence"
     }
   ],
   "candidates": {
@@ -27,7 +38,22 @@
     "idCollisions": [],
     "references": [],
     "dependencies": [],
-    "instructions": []
+    "instructions": [
+      {
+        "id": "instructions[0]",
+        "refs": [
+          {
+            "sourceId": "S-001",
+            "location": {
+              "heading": null,
+              "lines": "61-61",
+              "page": null
+            }
+          }
+        ],
+        "detail": "rule merge-to-protected: Do not merge into main, push or deploy."
+      }
+    ]
   },
   "asBuilt": null,
   "inventory": "docs/work-items/WI-1/intake/inventory.json"

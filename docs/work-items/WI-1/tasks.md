@@ -21,6 +21,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T00 | Intake of the Product Owner launch text | IMPL | Orchestrator | - | DONE | 1 | 1176f8c | T02 |
 | T01 | Normalized requirements | IMPL | product-manager | T00 | DONE | 1 | dd9499e | T02 |
 | T02 | Requirements verification | VERIFY | Orchestrator | T00, T01 | DONE | 1 | c68b058 | `docs/work-items/WI-1/evidence/T02-requirements-check.txt` |
+| T03 | Intake of the Product Owner decisions | IMPL | Orchestrator | T02 | IN_PROGRESS | 1 | - | - |
+| T04 | Apply Product Owner decisions to the requirements | IMPL | product-manager | T03 | PENDING | 0 | - | - |
+| T05 | Record Product Owner decisions in the source-of-truth decision register | IMPL | architect | T03 | PENDING | 0 | - | - |
+| T06 | Configuration update: frontend-developer role and personal-data profile | IMPL | Orchestrator | T03 | PENDING | 0 | - | - |
+| T07 | Configuration and source-of-truth verification | VERIFY | Orchestrator | T05, T06 | PENDING | 0 | - | - |
+| T08 | Follow-up requirements verification | VERIFY | Orchestrator | T03, T04, T07 | PENDING | 0 | - | - |
 
 ## Tasks
 
@@ -69,6 +75,60 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Human interventions: 0.
 - Agent usage: NOT RECORDED (Orchestrator task).
 
+### T03: Intake of the Product Owner decisions
+- Kind: IMPL
+- Agent: Orchestrator
+- Depends on: T02
+- Files owned: `docs/work-items/WI-1/intake/**`
+- Scope: record the Product Owner decision message of 2026-10-27 verbatim as source S-001 (decision record, precedence level 1, stated by the PO in the session) and rescan the intake.
+- Acceptance criteria: S-001 analyzed at level 1; intake record and inventory checked by RQ-02, RQ-08, RQ-09, RQ-11 and RQ-13 in T08.
+- Verification: independently verified by T08 (`orch requirements check --work-item 'WI-1'` at the integration HEAD).
+
+### T04: Apply Product Owner decisions to the requirements
+- Kind: IMPL
+- Agent: product-manager
+- Depends on: T03
+- Files owned: `docs/work-items/WI-1/requirements.md`, `docs/work-items/WI-1/requirements.json`
+- Scope: resolve R-410, R-411, R-413, R-414, R-415 and R-416 with PO decisions PD-01 to PD-06; apply PD-07 to PD-09; add the requirements, business rules, constraints and acceptance criteria the decisions state; flag the S-001 instruction candidate.
+- Acceptance criteria: no open REQUIRES_PRODUCT_OWNER question; every changed record traces to S-001 with the sources-table hash; `orch requirements check` passes.
+- Verification: `orch requirements check --work-item 'WI-1' --at .` -> exit 0
+
+### T05: Record Product Owner decisions in the source-of-truth decision register
+- Kind: IMPL
+- Agent: architect
+- Depends on: T03
+- Files owned: `.orchestrate/source-of-truth.md`
+- Scope: add PD-01 to PD-09 to section 3 (decision register), and the business rules and security constraints the decisions establish to sections 4 and 5, each referencing S-001 and the requirement records.
+- Acceptance criteria: nine HIGH rows in the decision register; no other section changed beyond sections 4 and 5.
+- Verification: `orch validate --work-item 'WI-1' --at .` -> exit 0
+
+### T06: Configuration update: frontend-developer role and personal-data profile
+- Kind: IMPL
+- Agent: Orchestrator
+- Depends on: T03
+- Files owned: `.orchestrate/config.json`
+- Scope: enable the frontend-developer roster entry (PD-08) and set riskProfile.personalData to none (PD-04); no other key changes.
+- Acceptance criteria: `orch validate` passes with no policy-floor violation; `orch agents list` shows frontend-developer enabled.
+- Verification: `orch validate --work-item 'WI-1' --at .` -> exit 0 ; `orch agents list --at .` -> frontend-developer enabled=yes
+
+### T07: Configuration and source-of-truth verification
+- Kind: VERIFY
+- Agent: Orchestrator
+- Depends on: T05, T06
+- Files owned: `docs/work-items/WI-1/evidence/T07-validate.txt`
+- Scope: run `orch validate` at the integration HEAD after T05 and T06 are integrated and record the evidence.
+- Acceptance criteria: evidence `RESULT: PASS` with `VALIDATED_HEAD` at the integration HEAD.
+- Verification: `orch validate --work-item 'WI-1' --at '<integration worktree>'` -> exit 0
+
+### T08: Follow-up requirements verification
+- Kind: VERIFY
+- Agent: Orchestrator
+- Depends on: T03, T04, T07
+- Files owned: `docs/work-items/WI-1/evidence/T08-requirements-check.txt`
+- Scope: run the requirements check at the integration HEAD and record the evidence; last VERIFY task of stage 1.
+- Acceptance criteria: evidence `RESULT: PASS` with `VALIDATED_HEAD` at the integration HEAD.
+- Verification: `orch requirements check --work-item 'WI-1' --at '<integration worktree>'` -> exit 0
+
 ## Decisions
 
 | ID | Level | Decision | Alternatives | Reversal cost | Source / PO notified |
@@ -82,6 +142,15 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-07 | MEDIUM | R-418: provisional configurable colour and font values until the PO supplies official ones; no substitute logo or mascot | block templates until official values arrive | low (configuration) | MED-04, S-000 lines 73-82; PO notified in stage-1 report |
 | OD-08 | MEDIUM | R-419: history kept locally with no automatic expiry and no deletion function in the MVP | deletion function (would be HIGH-02 for user data) | low (additive later) | MED-04, S-000 line 63; PO notified in stage-1 report |
 | OD-09 | MEDIUM | R-420: data, text-fit and dimension failures block the slide until a regenerated version passes; visual-consistency findings are warnings the user acknowledges | treat all findings as blocking | low | MED-04, S-000 lines 41-46, 89-92; PO notified in stage-1 report |
+| PD-01 | HIGH | PO decision PD-01 (R-410 option c): licensed sports-data API as preferred primary source, independent official source for verification; Architect researches providers, pricing, coverage, reliability and redistribution/licensing; synthetic fixtures in development; no purchase or subscription without authorization | options a, b | PO decision | S-001; Product Owner 2026-10-27 |
+| PD-02 | HIGH | PO decision PD-02 (R-411 option a): scores, match dates and standings verified only when two independent accepted sources agree; on disagreement consult the official competition publication; disputed facts stay unverified until resolved | options b, c | PO decision | S-001; Product Owner 2026-10-27 |
+| PD-03 | HIGH | PO decision PD-03 (R-413 option c): team names as text, existing authorized brand assets only, optional badge slots reserved, no unauthorized logos | options a, b | PO decision | S-001; Product Owner 2026-10-27 |
+| PD-04 | HIGH | PO decision PD-04 (R-414 option a): MVP limited to team-level and competition-level data; no player-level information | options b, c | PO decision | S-001; Product Owner 2026-10-27 |
+| PD-05 | HIGH | PO decision PD-05 (R-415 option a): single local operator without login; development services bound to localhost only | options b, c | PO decision | S-001; Product Owner 2026-10-27 |
+| PD-06 | HIGH | PO decision PD-06 (R-416): content language configurable per project, Spanish by default; team names preserved as verified official names | other language and name options | PO decision | S-001; Product Owner 2026-10-27 |
+| PD-07 | HIGH | PO decision PD-07: default branch is main (confirms the assumed basis of init) | - | PO decision | S-001; Product Owner 2026-10-27 |
+| PD-08 | HIGH | PO decision PD-08: a frontend is required; enable the frontend-developer role in the project configuration (T06) | keep role disabled | PO decision | S-001; Product Owner 2026-10-27 |
+| PD-09 | HIGH | PO decision PD-09: confirms OD-04 (1080 x 1350 carousel format), OD-02 (per slide and caption approval plus final approval) and OD-06 (league-phase-only MVP scope); no automatic publication | - | PO decision | S-001; Product Owner 2026-10-27 |
 
 ## Conflicts
 
@@ -92,12 +161,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 
 | ID | Task | Reason | Raised | Resolved |
 |----|------|--------|--------|----------|
-| E-01 | T01 | HIGH decision: R-410 accepted sports-data sources and their terms (HIGH-05, HIGH-07) | 2026-10-27 | open |
-| E-02 | T01 | HIGH decision: R-411 rule for a verified fact (HIGH-07) | 2026-10-27 | open |
-| E-03 | T01 | HIGH decision: R-413 use of club badges and competition marks (HIGH-05, HIGH-07) | 2026-10-27 | open |
-| E-04 | T01 | HIGH decision: R-414 personal or player-level data (HIGH-04, HIGH-07) | 2026-10-27 | open |
-| E-05 | T01 | HIGH decision: R-415 user and authentication model (HIGH-03) | 2026-10-27 | open |
-| E-06 | T01 | HIGH decision: R-416 content language and team-name display (HIGH-07) | 2026-10-27 | open |
+| E-01 | T01 | HIGH decision: R-410 accepted sports-data sources and their terms (HIGH-05, HIGH-07) | 2026-10-27 | 2026-10-27 (PD-01) |
+| E-02 | T01 | HIGH decision: R-411 rule for a verified fact (HIGH-07) | 2026-10-27 | 2026-10-27 (PD-02) |
+| E-03 | T01 | HIGH decision: R-413 use of club badges and competition marks (HIGH-05, HIGH-07) | 2026-10-27 | 2026-10-27 (PD-03) |
+| E-04 | T01 | HIGH decision: R-414 personal or player-level data (HIGH-04, HIGH-07) | 2026-10-27 | 2026-10-27 (PD-04) |
+| E-05 | T01 | HIGH decision: R-415 user and authentication model (HIGH-03) | 2026-10-27 | 2026-10-27 (PD-05) |
+| E-06 | T01 | HIGH decision: R-416 content language and team-name display (HIGH-07) | 2026-10-27 | 2026-10-27 (PD-06) |
 
 ## Event log (append-only)
 
@@ -113,6 +182,13 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T15:42:31Z | T00 | Status DONE | integration commit 1176f8c; independently verified by T02 |
 | 2026-10-27T15:42:31Z | T01 | Status DONE | integration commit dd9499e; independently verified by T02 |
 | 2026-10-27T15:42:50Z | T02 | Evidence cell path formatted as code span so the tracker check reads it | tracker check CT-08 on da8700e |
+| 2026-10-27T16:03:17Z | T03 | Task added; status IN_PROGRESS (attempt 1) | PO decision message 2026-10-27 recorded as S-001; intake rescan exit 0: SP-4, 2 analyzed, 1 instruction candidate |
+| 2026-10-27T16:03:17Z | - | PO decisions PD-01 to PD-09 recorded; escalations E-01 to E-06 resolved | S-001 |
+| 2026-10-27T16:03:17Z | T04 | Task added; status PENDING | follow-up requirements and configuration tasks per PO decisions of 2026-10-27 |
+| 2026-10-27T16:03:17Z | T05 | Task added; status PENDING | follow-up requirements and configuration tasks per PO decisions of 2026-10-27 |
+| 2026-10-27T16:03:17Z | T06 | Task added; status PENDING | follow-up requirements and configuration tasks per PO decisions of 2026-10-27 |
+| 2026-10-27T16:03:17Z | T07 | Task added; status PENDING | follow-up requirements and configuration tasks per PO decisions of 2026-10-27 |
+| 2026-10-27T16:03:17Z | T08 | Task added; status PENDING | follow-up requirements and configuration tasks per PO decisions of 2026-10-27 |
 
 ## Recovery log
 

@@ -7,10 +7,16 @@
       "kind": "inline",
       "path": "docs/work-items/WI-1/intake/sources/inline-001.md",
       "insideRepository": true
+    },
+    {
+      "input": "/Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27.md",
+      "kind": "file",
+      "path": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27.md",
+      "insideRepository": true
     }
   ],
   "counts": {
-    "analyzed": 1,
+    "analyzed": 2,
     "unsupported": 0,
     "excluded": 0
   },
@@ -27,6 +33,27 @@
       "originalPath": null,
       "typeCandidate": "frd",
       "idsFound": []
+    },
+    {
+      "path": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27.md",
+      "status": "analyzed",
+      "reason": "text format",
+      "sourceId": "S-001",
+      "reader": "text",
+      "format": "md",
+      "sha256": "de838ea30275c967d31e8e6886da138ca4a5c18f876f991f239c6df39cd952d9",
+      "bytes": 2083,
+      "originalPath": null,
+      "typeCandidate": "frd",
+      "idsFound": [
+        "R-410",
+        "R-411",
+        "R-413",
+        "R-414",
+        "R-415",
+        "R-416",
+        "WI-1"
+      ]
     }
   ]
 }
