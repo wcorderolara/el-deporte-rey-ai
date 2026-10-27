@@ -36,7 +36,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11 | Architecture verification | VERIFY | Orchestrator | T09, T10, T11D | DONE | 1 | 53e02a7 | `docs/work-items/WI-1/evidence/T11-plan-check.txt` |
 | T11E | Intake of the provider and data-mode change (S-003) | IMPL | Orchestrator | T11 | DONE | 1 | 4757d4e, 19bfba9 | T11I |
 | T11F | Requirements update for PD-12, PD-13 and PD-14 | IMPL | product-manager | T11E | DONE | 1 | 1715e21 | T11I |
-| T11G | Architecture delta and plan reconciliation for PD-12, PD-13 and PD-14 | IMPL | architect | T11F | IN_PROGRESS | 1 | - | - |
+| T11G | Architecture delta and plan reconciliation for PD-12, PD-13 and PD-14 | IMPL | architect | T11F | IN_PROGRESS | 2 | - | - |
 | T11H | Security design review of the provider and data-mode change | IMPL | security-reviewer | T11G | IN_PROGRESS | 1 | - | - |
 | T11I | Change requirements verification | VERIFY | Orchestrator | T11E, T11F | DONE | 1 | 3a2f8c9 | `docs/work-items/WI-1/evidence/T11I-requirements-check.txt` |
 | T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I | PENDING | 0 | - | - |
@@ -375,6 +375,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: delta design review required by SC-05 (first real sports-data adapter; new input types CSV, JSON and form entry) and by the credential handling of PD-12; isolation recommendation for the PO.
 - Acceptance criteria: review addendum with verdict; no open must-fix finding.
 - Verification: independently verified by T11J.
+- Agent result: PASS (report delivered; design verdict FAIL, correctable: must-fix T11H-F01 (import encoding, before contract re-acceptance) and T11H-F02 (real-token evidence); no HIGH or CRITICAL finding), base cdb4e81.
+- Orchestrator verification: task commit dcbfeea (Orchestrator commit of agent file); `orch worktree verify-ownership` exit 0 (1 changed, 0 outside); main working tree unchanged; at dcbfeea, 2026-10-27.
+- Integration commit(s): 89c721d (merge --no-ff of task/WI-1/T11H). Affected gates: evidence/T11H-gates.txt. Verifier: T11J. An addendum confirming the T11G correction follows (attempt 2).
+- Decisions: LOW-1 numbering T11H-F01 to F20, V-31 to V-55, NV-7 to NV-12; LOW-2 session transcript and probe console count as logs (R-124). Escalations: SC-05 isolation (E-13), real-credential identity re-raise (E-14); contract revision MED-01 (OD-23 after F01); F13 classified MEDIUM (OD-24).
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 309292; duration 14 minutes.
 
 ### T11I: Change requirements verification
 - Kind: VERIFY
@@ -792,6 +798,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-20 | MEDIUM | R-436: with LIVE_DATA enabled, a missing or empty FOOTBALL_DATA_API_TOKEN stops startup with an error naming the variable and never its value; without LIVE_DATA the token is not required; invalid data-mode settings stop startup | warn and continue | low | MED-04, S-003 credential rule 7; PO notified |
 | OD-21 | MEDIUM | R-438: DEMO_DATA projects are labelled as demonstration content in the project list, review view and export | no label | low | MED-04, S-003, S-004; PO notified |
 | OD-22 | MEDIUM | R-440: MVP demonstration set: LIVE_DATA Champions League plus one domestic league whose coverage the capability probe confirms for the PO token, chosen from the catalogue at execution time, never fixed in code; MANUAL_DATA Liga Nacional de Guatemala; DEMO_DATA a fixture competition; fewer than two confirmed LIVE competitions is reported to the PO | fixed list in code | low | MED-04, S-004 lines 103-112; PO notified |
+| OD-23 | MEDIUM | The revision of the never-declared http-api proposal (1.0.0-proposed.2, as corrected for T11H-F01) is a pre-release revision and is re-accepted (supersedes the acceptance scope of OD-14); PD-11 applies from promotion (T20) and declaration (T25) onward; this acceptance does not decide C-1, C-3, R-429 or R-430 | treat as HIGH-06 | low (not declared, no consumer) | MED-01; Contract Safety CS-1 to CS-5 hold per T11H section 9 (CS-1 conditional on F01); effective after the T11H addendum confirms F01; PO notified |
+| OD-24 | MEDIUM | T11H-F13: DEMO_DATA (synthetic) sources never count as accepted or independent confirmation of LIVE_DATA or MANUAL_DATA facts, and sources that share an upstream belong to one independence group, so their agreement is one source | count every configured source separately | low | application of PD-02 independence (BR-01); MED-04; PO notified |
 
 ## Conflicts
 
@@ -817,6 +825,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | E-10 | T11F | HIGH decision: R-430 confirmation of republishing permission for football-data.org content (HIGH-05, HIGH-07) | 2026-10-27 | open |
 | E-11 | T11F | HIGH decision: confirm conflict C-1 resolution (multi-competition supersedes single competition) (precedence.md: level 1 conflict) | 2026-10-27 | open |
 | E-12 | T11F | HIGH decision: confirm conflict C-3 resolution (generic stages supersede league-phase-only, PD-09) (precedence.md: level 1 conflict) | 2026-10-27 | open |
+| E-13 | T11H | HIGH decision: SC-05 isolation of untrusted-input processing for FootballDataProvider responses and for the JSON, CSV and form imports (HIGH-03; reviewer recommends option A for both, with conditions) | 2026-10-27 | open |
+| E-14 | T11H | HIGH decision: identity-model re-raise for the real credential (T10-F19, Q5): any local process can spend the token request budget through the login-less API (HIGH-03; reviewer recommends option A) | 2026-10-27 | open |
 
 ## Event log (append-only)
 
@@ -944,6 +954,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T19:16:28Z | T11F | Status DONE | integration commit 1715e21; independently verified by T11I |
 | 2026-10-27T20:00:36Z | T11G | Agent report PASS; verified and integrated at bf7dd40; affected gates run; awaiting T11H and T11J | plan check exit 0 (42 tasks); YAML parses; evidence/T11G-gates.txt |
 | 2026-10-27T20:00:36Z | T11H | Status IN_PROGRESS (attempt 1); agent orchestrate:security-reviewer launched (SC-05 delta review) | T11G integrated at bf7dd40 |
+| 2026-10-27T20:15:31Z | T11H | Agent report PASS; integrated at 89c721d; design verdict FAIL correctable (T11H-F01, F02 must-fix); addendum pending after T11G correction | design-review-change-1.md; verify-ownership exit 0; evidence/T11H-gates.txt |
+| 2026-10-27T20:15:31Z | T11G | Must-fix findings T11H-F01, T11H-F02 and should-fix F03 to F20: targeted correction, attempt 2 | security/design-review-change-1.md section 4 |
+| 2026-10-27T20:15:31Z | - | OD-23 (contract pre-release revision, MED-01) and OD-24 (demo and shared-upstream sources are not independent) recorded; escalations E-13 (SC-05 isolation) and E-14 (credential identity re-raise) raised | design-review-change-1.md sections 6, 7, 9 |
 
 ## Recovery log
 
