@@ -3,18 +3,28 @@ info:
   title: El Deporte Rey GT content platform - local HTTP API
   version: 1.0.0-proposed
   description: |
-    Proposed contract of WI-1 (architect task WI-1-T09). Interface between the web UI and the local server.
+    Proposed contract of WI-1 (architect task WI-1-T09, corrected for the security design review T10:
+    T10-F03 request constraints, T10-F17 closed responses and declared problem responses, T10-F10 closed failure codes).
     Conventions (architecture-delta.md section 2.1):
-    - Base path /api/v1; JSON bodies in camelCase; times ISO-8601 UTC strings; IDs are opaque strings.
-    - Errors use application/problem+json (schema Problem) with a stable machine-readable `code`.
-    - Every POST, PUT, PATCH and DELETE request must carry the header `X-EDR-Client: web` and, when the
-      browser sends an Origin header, the Origin must be the application's own origin; otherwise 403
-      FORBIDDEN_ORIGIN. Requests whose Host header is not an allowed loopback host and port get 421
-      MISDIRECTED_HOST. JSON request bodies require `Content-Type: application/json`.
+    - Base path /api/v1; JSON bodies in camelCase; times ISO-8601 UTC strings.
+    - Server-generated IDs are lowercase UUIDs (schema Uuid); catalog and template IDs are slugs (schema Slug).
+      Every request string has a pattern or a maxLength. The server applies the same patterns before any
+      file-system use, including IDs read back from the database (T10-F13).
+    - Patterns are ECMA-262 regular expressions evaluated with the Unicode flag (\p{...} classes).
+    - Errors use application/problem+json (schema Problem) with a stable machine-readable `code`; `detail` is built
+      from fixed text and sanitized parameters only, never from provider bodies, exception messages or file paths.
+    - Every request whose Host header is not in the configured exact host:port allow-list gets 421 MISDIRECTED_HOST
+      (declared on every operation). Every method other than GET and HEAD must carry `X-EDR-Client: web`; a present
+      Origin must be in the configured origin allow-list (`null` is refused); a request body requires
+      `Content-Type: application/json` (brand upload: image/png or image/jpeg only); refusals are 403 FORBIDDEN_ORIGIN
+      or 415 UNSUPPORTED_MEDIA_TYPE before the body is parsed. API requests whose Sec-Fetch-Site is cross-site or
+      same-site are refused with 403 FORBIDDEN_ORIGIN.
+    - GET and HEAD operations have no persistent side effects.
     - No authentication: single local operator without login (PD-05). The server listens on 127.0.0.1 only.
     - There is no publication operation of any kind (BR-11, R-042, R-219).
     - Compatibility: additive changes only within v1 (new optional request fields, new response fields,
-      new operations, new error codes). Removing or changing the meaning of anything is a breaking change.
+      new operations, new error codes). Removing or changing the meaning of anything, or narrowing a request input,
+      is a breaking change.
 servers:
   - url: http://127.0.0.1:4300/api/v1
 tags:
@@ -44,17 +54,19 @@ paths:
                 additionalProperties: false
                 properties:
                   status: { type: string, const: ok }
+        '421': { $ref: '#/components/responses/Problem' }
   /settings:
     get:
       tags: [system]
       operationId: getSettings
-      description: Non-secret settings the UI needs (R-226). Never contains credentials.
+      description: Non-secret settings the UI needs (R-226). Never contains credentials or base URLs.
       responses:
         '200':
           description: Settings.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Settings' }
+        '421': { $ref: '#/components/responses/Problem' }
   /catalog/competitions:
     get:
       tags: [catalog]
@@ -73,6 +85,7 @@ paths:
                   competitions:
                     type: array
                     items: { $ref: '#/components/schemas/Competition' }
+        '421': { $ref: '#/components/responses/Problem' }
   /projects:
     get:
       tags: [projects]
@@ -91,6 +104,7 @@ paths:
                   projects:
                     type: array
                     items: { $ref: '#/components/schemas/ProjectSummary' }
+        '421': { $ref: '#/components/responses/Problem' }
     post:
       tags: [projects]
       operationId: createProject
@@ -109,6 +123,8 @@ paths:
               schema: { $ref: '#/components/schemas/Project' }
         '400': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
   /projects/{projectId}:
     parameters:
@@ -122,7 +138,9 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Project' }
+        '400': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
     patch:
       tags: [projects]
       operationId: updateProject
@@ -144,6 +162,9 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /projects/{projectId}/runs:
     parameters:
       - $ref: '#/components/parameters/ProjectId'
@@ -163,7 +184,9 @@ paths:
                   runs:
                     type: array
                     items: { $ref: '#/components/schemas/Run' }
+        '400': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
     post:
       tags: [runs]
       operationId: startRun
@@ -188,6 +211,9 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /projects/{projectId}/runs/{runId}:
     parameters:
       - $ref: '#/components/parameters/ProjectId'
@@ -195,14 +221,16 @@ paths:
     get:
       tags: [runs]
       operationId: getRun
-      description: Run with per-stage status and failure reason (R-203). Polled by the UI.
+      description: Run with per-stage status and failure (R-203). Polled by the UI.
       responses:
         '200':
           description: Run.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Run' }
+        '400': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /projects/{projectId}/runs/{runId}/facts:
     parameters:
       - $ref: '#/components/parameters/ProjectId'
@@ -227,7 +255,9 @@ paths:
                   leftOutMatches:
                     type: array
                     items: { $ref: '#/components/schemas/LeftOutMatch' }
+        '400': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /projects/{projectId}/draft:
     parameters:
       - $ref: '#/components/parameters/ProjectId'
@@ -241,7 +271,9 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Draft' }
+        '400': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /projects/{projectId}/draft/exclusions:
     parameters:
       - $ref: '#/components/parameters/ProjectId'
@@ -263,7 +295,8 @@ paths:
                 excludedMatchKeys:
                   type: array
                   maxItems: 64
-                  items: { type: string, maxLength: 128 }
+                  uniqueItems: true
+                  items: { $ref: '#/components/schemas/MatchKey' }
       responses:
         '202':
           description: Redraft run started.
@@ -274,6 +307,9 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /element-versions/{versionId}/image:
     parameters:
       - $ref: '#/components/parameters/VersionId'
@@ -286,7 +322,9 @@ paths:
           content:
             image/png:
               schema: { type: string, contentMediaType: image/png }
+        '400': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /carousels/{carouselId}/elements/{elementId}/regenerate:
     parameters:
       - $ref: '#/components/parameters/CarouselId'
@@ -297,6 +335,7 @@ paths:
       description: |
         Create a new version of one element only (R-040, R-217): new AI text for that slide (or caption), new render,
         new visual QA. Other elements keep their versions and approvals. The carousel's final approval becomes invalid.
+        No request body.
       parameters:
         - $ref: '#/components/parameters/ClientHeader'
       responses:
@@ -305,9 +344,12 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Element' }
+        '400': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
         '502': { $ref: '#/components/responses/Problem' }
   /carousels/{carouselId}/elements/{elementId}/approval:
     parameters:
@@ -319,7 +361,7 @@ paths:
       description: |
         Approve the exact current version (R-039, R-405, R-406). Refused with APPROVAL_BLOCKED when a referenced fact is
         not verified (the problem lists the facts, R-026, R-206), CONTENT_FLAGGED (R-027, R-207), QA_FAILED,
-        QA_ACK_REQUIRED, or VERSION_CONFLICT when versionId is not current.
+        QA_ACK_REQUIRED, or VERSION_CONFLICT when versionId is not current. Guard and write are atomic.
       parameters:
         - $ref: '#/components/parameters/ClientHeader'
       requestBody:
@@ -333,13 +375,17 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Element' }
+        '400': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
     delete:
       tags: [review]
       operationId: withdrawElementApproval
-      description: Withdraw the approval of the current version; invalidates the carousel's final approval.
+      description: Withdraw the approval of the current version; invalidates the carousel's final approval. No request body.
       parameters:
         - $ref: '#/components/parameters/ClientHeader'
       responses:
@@ -348,9 +394,12 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Element' }
+        '400': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /carousels/{carouselId}/elements/{elementId}/qa-acknowledgements:
     parameters:
       - $ref: '#/components/parameters/CarouselId'
@@ -370,10 +419,12 @@ paths:
               required: [versionId, checks]
               additionalProperties: false
               properties:
-                versionId: { type: string }
+                versionId: { $ref: '#/components/schemas/Uuid' }
                 checks:
                   type: array
                   minItems: 1
+                  maxItems: 1
+                  uniqueItems: true
                   items: { type: string, enum: [style_consistency] }
       responses:
         '200':
@@ -385,13 +436,18 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /carousels/{carouselId}/final-approval:
     parameters:
       - $ref: '#/components/parameters/CarouselId'
     put:
       tags: [review]
       operationId: approveCarousel
-      description: Final approval (R-240). Refused with FINAL_APPROVAL_REFUSED while any element is not approved or is blocked.
+      description: |
+        Final approval (R-240). Refused with FINAL_APPROVAL_REFUSED while any element is not approved or is blocked.
+        Guard and write are atomic. No request body.
       parameters:
         - $ref: '#/components/parameters/ClientHeader'
       responses:
@@ -400,9 +456,12 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/FinalApproval' }
+        '400': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /carousels/{carouselId}/exports:
     parameters:
       - $ref: '#/components/parameters/CarouselId'
@@ -411,7 +470,8 @@ paths:
       operationId: exportCarousel
       description: |
         Write the approved images and caption to local files (R-041, R-218, R-421). Refused with FINAL_APPROVAL_REQUIRED
-        without a valid final approval (R-216, R-240). Sends nothing to any external service (R-219).
+        without a valid final approval (R-216, R-240). Exports exactly the version set recorded by the final approval.
+        Sends nothing to any external service (R-219). No request body.
       parameters:
         - $ref: '#/components/parameters/ClientHeader'
       responses:
@@ -420,9 +480,12 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Export' }
+        '400': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /projects/{projectId}/exports:
     parameters:
       - $ref: '#/components/parameters/ProjectId'
@@ -442,7 +505,9 @@ paths:
                   exports:
                     type: array
                     items: { $ref: '#/components/schemas/Export' }
+        '400': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /exports/{exportId}:
     parameters:
       - $ref: '#/components/parameters/ExportId'
@@ -456,14 +521,13 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ExportDetail' }
+        '400': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /exports/{exportId}/slides/{position}/trace:
     parameters:
       - $ref: '#/components/parameters/ExportId'
-      - name: position
-        in: path
-        required: true
-        schema: { type: integer, minimum: 1 }
+      - $ref: '#/components/parameters/Position'
     get:
       tags: [exports]
       operationId: traceExportedSlide
@@ -474,7 +538,9 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/SlideTrace' }
+        '400': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /brand/assets:
     get:
       tags: [brand]
@@ -492,13 +558,15 @@ paths:
                   assets:
                     type: array
                     items: { $ref: '#/components/schemas/BrandAsset' }
+        '421': { $ref: '#/components/responses/Problem' }
     post:
       tags: [brand]
       operationId: registerBrandAsset
       description: |
         Register an authorized El Deporte Rey GT brand asset (R-309). The body is the raw image (PNG or JPEG, at most
-        5 MiB, at most 4096 x 4096 pixels; content checked by signature). Club badges and competition marks cannot be
-        registered (PD-03, R-049, R-050).
+        5 MiB, at most 4096 x 4096 pixels). The declared Content-Type must match the detected file signature (415
+        otherwise); dimensions are read from the header before any decode; the file is decoded once at registration.
+        Club badges and competition marks cannot be registered (PD-03, R-049, R-050).
       parameters:
         - $ref: '#/components/parameters/ClientHeader'
         - name: kind
@@ -508,7 +576,7 @@ paths:
         - name: label
           in: query
           required: true
-          schema: { type: string, minLength: 1, maxLength: 80 }
+          schema: { $ref: '#/components/schemas/Label' }
       requestBody:
         required: true
         content:
@@ -527,12 +595,10 @@ paths:
         '409': { $ref: '#/components/responses/Problem' }
         '413': { $ref: '#/components/responses/Problem' }
         '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /brand/assets/{assetId}:
     parameters:
-      - name: assetId
-        in: path
-        required: true
-        schema: { type: string }
+      - $ref: '#/components/parameters/AssetId'
     patch:
       tags: [brand]
       operationId: updateBrandAsset
@@ -555,17 +621,20 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/BrandAsset' }
+        '400': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /brand/assets/{assetId}/file:
     parameters:
-      - name: assetId
-        in: path
-        required: true
-        schema: { type: string }
+      - $ref: '#/components/parameters/AssetId'
     get:
       tags: [brand]
       operationId: getBrandAssetFile
+      description: |
+        Served with the stored MIME type, `nosniff`, `Content-Security-Policy: default-src 'none'; sandbox` and `Cross-Origin-Resource-Policy: same-origin`.
       responses:
         '200':
           description: The registered file.
@@ -574,7 +643,9 @@ paths:
               schema: { type: string, contentMediaType: image/png }
             image/jpeg:
               schema: { type: string, contentMediaType: image/jpeg }
+        '400': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /templates:
     get:
       tags: [templates]
@@ -593,12 +664,10 @@ paths:
                   templates:
                     type: array
                     items: { $ref: '#/components/schemas/Template' }
+        '421': { $ref: '#/components/responses/Problem' }
   /templates/{templateId}/preview:
     parameters:
-      - name: templateId
-        in: path
-        required: true
-        schema: { type: string }
+      - $ref: '#/components/parameters/TemplateId'
       - name: language
         in: query
         required: false
@@ -606,52 +675,71 @@ paths:
     get:
       tags: [templates]
       operationId: previewTemplate
-      description: PNG preview rendered from built-in synthetic sample data, with the current brand settings and assets.
+      description: |
+        PNG preview rendered from built-in synthetic sample data, with the current brand settings and assets.
+        Cached by template version, active brand-asset hashes and language (bounded work per request, T10-F04).
       responses:
         '200':
           description: Preview.
           content:
             image/png:
               schema: { type: string, contentMediaType: image/png }
+        '400': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
 components:
   parameters:
     ClientHeader:
       name: X-EDR-Client
       in: header
       required: true
-      description: Required on every mutating request (local cross-origin request protection, RK-13).
+      description: Required on every request whose method is not GET or HEAD (local cross-origin request protection, RK-13).
       schema: { type: string, const: web }
     ProjectId:
       name: projectId
       in: path
       required: true
-      schema: { type: string }
+      schema: { $ref: '#/components/schemas/Uuid' }
     RunId:
       name: runId
       in: path
       required: true
-      schema: { type: string }
+      schema: { $ref: '#/components/schemas/Uuid' }
     CarouselId:
       name: carouselId
       in: path
       required: true
-      schema: { type: string }
+      schema: { $ref: '#/components/schemas/Uuid' }
     ElementId:
       name: elementId
       in: path
       required: true
-      schema: { type: string }
+      schema: { $ref: '#/components/schemas/Uuid' }
     VersionId:
       name: versionId
       in: path
       required: true
-      schema: { type: string }
+      schema: { $ref: '#/components/schemas/Uuid' }
     ExportId:
       name: exportId
       in: path
       required: true
-      schema: { type: string }
+      schema: { $ref: '#/components/schemas/Uuid' }
+    AssetId:
+      name: assetId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    TemplateId:
+      name: templateId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Slug' }
+    Position:
+      name: position
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1, maximum: 99 }
   responses:
     Problem:
       description: Error.
@@ -659,13 +747,43 @@ components:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
   schemas:
+    Uuid:
+      description: Server-generated identifier (crypto.randomUUID), lowercase.
+      type: string
+      format: uuid
+      minLength: 36
+      maxLength: 36
+      pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    Slug:
+      description: Catalog or template identifier.
+      type: string
+      minLength: 1
+      maxLength: 64
+      pattern: '^[a-z0-9][a-z0-9-]{0,63}$'
+    SourceId:
+      type: string
+      minLength: 2
+      maxLength: 41
+      pattern: '^[a-z0-9][a-z0-9-]{1,40}$'
+    MatchKey:
+      description: Canonical match key assigned by the verification stage.
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^[a-z0-9][a-z0-9:_-]{0,127}$'
+    Label:
+      description: Printable text; control and format characters (\p{Cc}, \p{Cf}) are refused.
+      type: string
+      minLength: 1
+      maxLength: 80
+      pattern: '^[^\p{Cc}\p{Cf}]{1,80}$'
     Problem:
       type: object
       required: [type, title, status, code]
       additionalProperties: false
       properties:
-        type: { type: string, description: 'URI reference, "about:blank" or "urn:edr:problem:<code>"' }
-        title: { type: string }
+        type: { type: string, maxLength: 200, description: '"about:blank" or "urn:edr:problem:<code>"' }
+        title: { type: string, maxLength: 200 }
         status: { type: integer }
         code:
           type: string
@@ -688,16 +806,17 @@ components:
             - DUPLICATE_ASSET
             - PROVIDER_FAILED
             - INTERNAL
-        detail: { type: string }
+        detail: { type: string, maxLength: 500, description: 'Fixed text plus sanitized parameters only (T10-F10)' }
         errors:
           type: array
+          maxItems: 50
           items:
             type: object
             required: [path, message]
             additionalProperties: false
             properties:
-              path: { type: string }
-              message: { type: string }
+              path: { type: string, maxLength: 200 }
+              message: { type: string, maxLength: 200 }
         facts:
           description: Facts that block an approval (APPROVAL_BLOCKED), each named (R-206).
           type: array
@@ -710,8 +829,23 @@ components:
             required: [elementId, reason]
             additionalProperties: false
             properties:
-              elementId: { type: string }
+              elementId: { $ref: '#/components/schemas/Uuid' }
               reason: { type: string, enum: [not_approved, blocked, flagged, qa_failed, qa_ack_required] }
+    Failure:
+      description: Stage or run failure built from a closed code and sanitized parameters only (T10-F10).
+      type: object
+      required: [code, sourceId, path, httpStatus]
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          enum: [unavailable, rate_limited, timeout, no_data, invalid, ai_response_invalid, interrupted, stage_not_available, run_superseded, internal]
+        sourceId:
+          oneOf:
+            - $ref: '#/components/schemas/SourceId'
+            - type: 'null'
+        path: { type: [string, 'null'], maxLength: 200, description: 'Validation path inside a payload, never a file path' }
+        httpStatus: { type: [integer, 'null'] }
     Language:
       type: string
       enum: [es, en]
@@ -740,7 +874,7 @@ components:
             maxSlidesPerCarousel: { type: integer }
         publicationMode: { type: string, enum: [manual] }
         providers:
-          description: Adapter IDs and source roles only; never credentials.
+          description: Adapter IDs and source roles only; never credentials or base URLs.
           type: object
           required: [sources, ai]
           additionalProperties: false
@@ -754,7 +888,7 @@ components:
       required: [id, name, role, officialPublication, accepted]
       additionalProperties: false
       properties:
-        id: { type: string }
+        id: { $ref: '#/components/schemas/SourceId' }
         name: { type: string }
         role: { type: string, enum: [primary, verification] }
         officialPublication: { type: boolean }
@@ -764,7 +898,7 @@ components:
       required: [id, name, seasons]
       additionalProperties: false
       properties:
-        id: { type: string }
+        id: { $ref: '#/components/schemas/Slug' }
         name: { type: string }
         seasons:
           type: array
@@ -773,7 +907,7 @@ components:
             required: [id, label, phases]
             additionalProperties: false
             properties:
-              id: { type: string }
+              id: { $ref: '#/components/schemas/Slug' }
               label: { type: string }
               phases:
                 description: Only the league phase is offered in the MVP (BR-10).
@@ -792,7 +926,7 @@ components:
                         required: [id, number, label]
                         additionalProperties: false
                         properties:
-                          id: { type: string }
+                          id: { $ref: '#/components/schemas/Slug' }
                           number: { type: integer, minimum: 1 }
                           label: { type: string }
     ProjectCreate:
@@ -800,9 +934,9 @@ components:
       required: [competitionId, seasonId, matchdayId]
       additionalProperties: false
       properties:
-        competitionId: { type: string }
-        seasonId: { type: string }
-        matchdayId: { type: string }
+        competitionId: { $ref: '#/components/schemas/Slug' }
+        seasonId: { $ref: '#/components/schemas/Slug' }
+        matchdayId: { $ref: '#/components/schemas/Slug' }
         language: { $ref: '#/components/schemas/Language' }
     ProjectUpdate:
       type: object
@@ -819,7 +953,7 @@ components:
       type: object
       required: [id, title, competitionName, seasonLabel, matchdayNumber, language, createdAt, approvalState, lastExportAt]
       properties:
-        id: { type: string }
+        id: { $ref: '#/components/schemas/Uuid' }
         title: { type: string }
         competitionName: { type: string }
         seasonLabel: { type: string }
@@ -835,14 +969,17 @@ components:
         - type: object
           required: [competitionId, seasonId, matchdayId, latestRun, activeDraftId]
           properties:
-            competitionId: { type: string }
-            seasonId: { type: string }
-            matchdayId: { type: string }
+            competitionId: { $ref: '#/components/schemas/Slug' }
+            seasonId: { $ref: '#/components/schemas/Slug' }
+            matchdayId: { $ref: '#/components/schemas/Slug' }
             latestRun:
               oneOf:
                 - $ref: '#/components/schemas/Run'
                 - type: 'null'
-            activeDraftId: { type: [string, 'null'] }
+            activeDraftId:
+              oneOf:
+                - $ref: '#/components/schemas/Uuid'
+                - type: 'null'
     RunStart:
       type: object
       required: [kind]
@@ -851,17 +988,20 @@ components:
         kind: { type: string, enum: [full, redraft] }
     Run:
       type: object
-      required: [id, projectId, runNumber, kind, status, startedAt, finishedAt, failureReason, stages]
+      required: [id, projectId, runNumber, kind, status, startedAt, finishedAt, failure, stages]
       additionalProperties: false
       properties:
-        id: { type: string }
-        projectId: { type: string }
+        id: { $ref: '#/components/schemas/Uuid' }
+        projectId: { $ref: '#/components/schemas/Uuid' }
         runNumber: { type: integer }
         kind: { type: string, enum: [full, redraft] }
         status: { $ref: '#/components/schemas/RunStatus' }
         startedAt: { type: [string, 'null'], format: date-time }
         finishedAt: { type: [string, 'null'], format: date-time }
-        failureReason: { type: [string, 'null'] }
+        failure:
+          oneOf:
+            - $ref: '#/components/schemas/Failure'
+            - type: 'null'
         stages:
           type: array
           items: { $ref: '#/components/schemas/StageStatus' }
@@ -870,17 +1010,23 @@ components:
       enum: [pending, running, completed, failed]
     StageStatus:
       type: object
-      required: [stage, status, startedAt, finishedAt, failureReason]
+      required: [stage, status, startedAt, finishedAt, failure]
       additionalProperties: false
       properties:
         stage: { type: string, enum: [research, verification, content, rendering, visual_qa] }
         status: { type: string, enum: [pending, running, completed, failed, skipped] }
         startedAt: { type: [string, 'null'], format: date-time }
         finishedAt: { type: [string, 'null'], format: date-time }
-        failureReason: { type: [string, 'null'] }
+        failure:
+          oneOf:
+            - $ref: '#/components/schemas/Failure'
+            - type: 'null'
     FactStatus:
       type: string
       enum: [verified, unverified, disputed]
+    FactKind:
+      type: string
+      enum: [match_teams, match_kickoff, match_status, match_score, standing_row, matchday_info, context_item, team_official_name]
     FactRef:
       allOf:
         - $ref: '#/components/schemas/FactRefFields'
@@ -890,24 +1036,128 @@ components:
       type: object
       required: [factId, factKey, kind, status, reason, display]
       properties:
-        factId: { type: string }
-        factKey: { type: string }
+        factId: { $ref: '#/components/schemas/Uuid' }
+        factKey: { type: string, maxLength: 200 }
         kind: { $ref: '#/components/schemas/FactKind' }
         status: { $ref: '#/components/schemas/FactStatus' }
-        reason: { type: [string, 'null'] }
+        reason: { type: [string, 'null'], maxLength: 300, description: 'Built from fixed text and sanitized parameters' }
         display: { type: [string, 'null'], description: 'Deterministic display form of the value when one exists' }
-    FactKind:
-      type: string
-      enum: [match_teams, match_kickoff, match_status, match_score, standing_row, matchday_info, context_item, team_official_name]
+    FactSubject:
+      type: object
+      additionalProperties: false
+      properties:
+        matchKey: { $ref: '#/components/schemas/MatchKey' }
+        teamId: { $ref: '#/components/schemas/Slug' }
+        contextIndex: { type: integer, minimum: 0 }
+    MatchTeamsValue:
+      type: object
+      required: [homeTeamId, awayTeamId]
+      additionalProperties: false
+      properties:
+        homeTeamId: { $ref: '#/components/schemas/Slug' }
+        awayTeamId: { $ref: '#/components/schemas/Slug' }
+    MatchKickoffValue:
+      type: object
+      required: [kickoff]
+      additionalProperties: false
+      properties:
+        kickoff: { type: string, format: date-time }
+    MatchStatusValue:
+      type: object
+      required: [matchStatus]
+      additionalProperties: false
+      properties:
+        matchStatus: { type: string, enum: [scheduled, in_play, finished, postponed, abandoned] }
+    MatchScoreValue:
+      type: object
+      required: [home, away]
+      additionalProperties: false
+      properties:
+        home: { type: integer, minimum: 0 }
+        away: { type: integer, minimum: 0 }
+    StandingRowValue:
+      type: object
+      required: [position, teamId, played, won, drawn, lost, goalsFor, goalsAgainst, goalDifference, points]
+      additionalProperties: false
+      properties:
+        position: { type: integer, minimum: 1 }
+        teamId: { $ref: '#/components/schemas/Slug' }
+        played: { type: integer, minimum: 0 }
+        won: { type: integer, minimum: 0 }
+        drawn: { type: integer, minimum: 0 }
+        lost: { type: integer, minimum: 0 }
+        goalsFor: { type: integer, minimum: 0 }
+        goalsAgainst: { type: integer, minimum: 0 }
+        goalDifference: { type: integer }
+        points: { type: integer, minimum: 0 }
+    MatchdayInfoValue:
+      type: object
+      required: [matchdayNumber, totalMatchdays]
+      additionalProperties: false
+      properties:
+        matchdayNumber: { type: integer, minimum: 1 }
+        totalMatchdays: { type: integer, minimum: 1 }
+    ContextItemValue:
+      oneOf:
+        - type: object
+          required: [type, matchday, totalMatchdays]
+          additionalProperties: false
+          properties:
+            type: { const: matchday_of_total }
+            matchday: { type: integer, minimum: 1 }
+            totalMatchdays: { type: integer, minimum: 1 }
+        - type: object
+          required: [type, fromPosition, toPosition, outcome]
+          additionalProperties: false
+          properties:
+            type: { const: qualification_zone }
+            fromPosition: { type: integer, minimum: 1 }
+            toPosition: { type: integer, minimum: 1 }
+            outcome: { type: string, enum: [round_of_16, knockout_playoff, eliminated] }
+        - type: object
+          required: [type, count]
+          additionalProperties: false
+          properties:
+            type: { const: teams_in_league }
+            count: { type: integer, minimum: 1 }
+    TeamOfficialNameValue:
+      type: object
+      required: [teamId, officialName]
+      additionalProperties: false
+      properties:
+        teamId: { $ref: '#/components/schemas/Slug' }
+        officialName: { type: string, maxLength: 64 }
+    FactValue:
+      description: Any closed fact value (used where the kind is given by the enclosing fact).
+      oneOf:
+        - $ref: '#/components/schemas/MatchTeamsValue'
+        - $ref: '#/components/schemas/MatchKickoffValue'
+        - $ref: '#/components/schemas/MatchStatusValue'
+        - $ref: '#/components/schemas/MatchScoreValue'
+        - $ref: '#/components/schemas/StandingRowValue'
+        - $ref: '#/components/schemas/MatchdayInfoValue'
+        - $ref: '#/components/schemas/ContextItemValue'
+        - $ref: '#/components/schemas/TeamOfficialNameValue'
+    FactKindValue:
+      description: The value schema selected by the fact kind (discriminated by kind; value is null unless verified).
+      oneOf:
+        - { type: object, required: [kind, value], properties: { kind: { const: match_teams }, value: { oneOf: [ { $ref: '#/components/schemas/MatchTeamsValue' }, { type: 'null' } ] } } }
+        - { type: object, required: [kind, value], properties: { kind: { const: match_kickoff }, value: { oneOf: [ { $ref: '#/components/schemas/MatchKickoffValue' }, { type: 'null' } ] } } }
+        - { type: object, required: [kind, value], properties: { kind: { const: match_status }, value: { oneOf: [ { $ref: '#/components/schemas/MatchStatusValue' }, { type: 'null' } ] } } }
+        - { type: object, required: [kind, value], properties: { kind: { const: match_score }, value: { oneOf: [ { $ref: '#/components/schemas/MatchScoreValue' }, { type: 'null' } ] } } }
+        - { type: object, required: [kind, value], properties: { kind: { const: standing_row }, value: { oneOf: [ { $ref: '#/components/schemas/StandingRowValue' }, { type: 'null' } ] } } }
+        - { type: object, required: [kind, value], properties: { kind: { const: matchday_info }, value: { oneOf: [ { $ref: '#/components/schemas/MatchdayInfoValue' }, { type: 'null' } ] } } }
+        - { type: object, required: [kind, value], properties: { kind: { const: context_item }, value: { oneOf: [ { $ref: '#/components/schemas/ContextItemValue' }, { type: 'null' } ] } } }
+        - { type: object, required: [kind, value], properties: { kind: { const: team_official_name }, value: { oneOf: [ { $ref: '#/components/schemas/TeamOfficialNameValue' }, { type: 'null' } ] } } }
     Fact:
       unevaluatedProperties: false
       allOf:
         - $ref: '#/components/schemas/FactRefFields'
+        - $ref: '#/components/schemas/FactKindValue'
         - type: object
-          required: [subject, value, evidence, dispute]
+          required: [subject, evidence, dispute]
           properties:
-            subject: { type: object }
-            value: { description: 'Verified value; null unless status is verified' }
+            subject: { $ref: '#/components/schemas/FactSubject' }
             evidence:
               type: array
               items: { $ref: '#/components/schemas/Evidence' }
@@ -920,14 +1170,14 @@ components:
       required: [sourceId, sourceName, role, accepted, officialPublication, relation, value, sourceRef, retrievedAt]
       additionalProperties: false
       properties:
-        sourceId: { type: string }
+        sourceId: { $ref: '#/components/schemas/SourceId' }
         sourceName: { type: string }
         role: { type: string, enum: [primary, verification] }
         accepted: { type: boolean }
         officialPublication: { type: boolean }
         relation: { type: string, enum: [supports, disagrees, consulted] }
-        value: {}
-        sourceRef: { type: string }
+        value: { $ref: '#/components/schemas/FactValue' }
+        sourceRef: { type: string, maxLength: 512, description: 'Provider-supplied; shown as text, linked only as an https URL on the configured source origin (T10-F16)' }
         retrievedAt: { type: string, format: date-time }
     Dispute:
       type: object
@@ -941,19 +1191,25 @@ components:
             required: [sourceId, independenceGroup, value]
             additionalProperties: false
             properties:
-              sourceId: { type: string }
-              independenceGroup: { type: string }
-              value: {}
-        consultedSourceId: { type: [string, 'null'] }
+              sourceId: { $ref: '#/components/schemas/SourceId' }
+              independenceGroup: { type: string, maxLength: 64 }
+              value: { $ref: '#/components/schemas/FactValue' }
+        consultedSourceId:
+          oneOf:
+            - $ref: '#/components/schemas/SourceId'
+            - type: 'null'
         consultedAt: { type: [string, 'null'], format: date-time }
         outcome: { type: string, enum: [resolved, unavailable, same_source, no_match] }
-        resolvedValue: {}
+        resolvedValue:
+          oneOf:
+            - $ref: '#/components/schemas/FactValue'
+            - type: 'null'
     LeftOutMatch:
       type: object
       required: [matchKey, label, status, reason]
       additionalProperties: false
       properties:
-        matchKey: { type: string }
+        matchKey: { $ref: '#/components/schemas/MatchKey' }
         label: { type: string }
         status: { type: [string, 'null'], enum: [scheduled, in_play, finished, postponed, abandoned, null] }
         reason: { type: string, enum: [not_finished, not_verified, excluded_by_operator] }
@@ -962,15 +1218,15 @@ components:
       required: [id, projectId, runId, factsRunId, language, createdAt, excludedMatchKeys, leftOutMatches, carousels]
       additionalProperties: false
       properties:
-        id: { type: string }
-        projectId: { type: string }
-        runId: { type: string }
-        factsRunId: { type: string }
+        id: { $ref: '#/components/schemas/Uuid' }
+        projectId: { $ref: '#/components/schemas/Uuid' }
+        runId: { $ref: '#/components/schemas/Uuid' }
+        factsRunId: { $ref: '#/components/schemas/Uuid' }
         language: { $ref: '#/components/schemas/Language' }
         createdAt: { type: string, format: date-time }
         excludedMatchKeys:
           type: array
-          items: { type: string }
+          items: { $ref: '#/components/schemas/MatchKey' }
         leftOutMatches:
           type: array
           items: { $ref: '#/components/schemas/LeftOutMatch' }
@@ -982,7 +1238,7 @@ components:
       required: [id, sequence, total, elements, readyForFinalApproval, finalApproval]
       additionalProperties: false
       properties:
-        id: { type: string }
+        id: { $ref: '#/components/schemas/Uuid' }
         sequence: { type: integer }
         total: { type: integer }
         elements:
@@ -998,8 +1254,8 @@ components:
       required: [id, carouselId, kind, position, slideType, currentVersion]
       additionalProperties: false
       properties:
-        id: { type: string }
-        carouselId: { type: string }
+        id: { $ref: '#/components/schemas/Uuid' }
+        carouselId: { $ref: '#/components/schemas/Uuid' }
         kind: { type: string, enum: [slide, caption] }
         position: { type: integer }
         slideType: { type: [string, 'null'], enum: [cover, match_result, standings, closing, null] }
@@ -1009,7 +1265,7 @@ components:
       required: [id, versionNumber, createdAt, state, blocked, blockingFacts, contentFlags, qa, fields, imageUrl, width, height]
       additionalProperties: false
       properties:
-        id: { type: string }
+        id: { $ref: '#/components/schemas/Uuid' }
         versionNumber: { type: integer }
         createdAt: { type: string, format: date-time }
         state: { type: string, enum: [pending_qa, qa_failed, ready, approved, superseded] }
@@ -1026,7 +1282,7 @@ components:
         fields:
           type: array
           items: { $ref: '#/components/schemas/TextField' }
-        imageUrl: { type: [string, 'null'] }
+        imageUrl: { type: [string, 'null'], maxLength: 200, description: 'Relative API path of the slide image' }
         width: { type: [integer, 'null'] }
         height: { type: [integer, 'null'] }
     TextField:
@@ -1043,41 +1299,139 @@ components:
             additionalProperties: false
             properties:
               provenance: { type: string, enum: [verified_fact, commentary, template_text], description: 'OD-01, R-028, R-208' }
-              text: { type: string }
-              factId: { type: [string, 'null'] }
+              text: { type: string, maxLength: 2200 }
+              factId:
+                oneOf:
+                  - $ref: '#/components/schemas/Uuid'
+                  - type: 'null'
     ContentFlag:
       type: object
       required: [code, field, excerpt]
       additionalProperties: false
       properties:
         code: { type: string, enum: [UNKNOWN_FACT_REFERENCE, UNVERIFIED_NUMBER, NON_OFFICIAL_TEAM_NAME, FORBIDDEN_CONTENT] }
-        field: { type: string }
+        field: { type: string, maxLength: 40 }
         excerpt: { type: string, maxLength: 120 }
     QaResult:
+      description: One QA check result; details are closed per check (T10-F17).
+      oneOf:
+        - type: object
+          required: [check, outcome, severity, details, acknowledgedAt]
+          additionalProperties: false
+          properties:
+            check: { const: data_match }
+            outcome: { $ref: '#/components/schemas/QaOutcome' }
+            severity: { const: blocking }
+            details:
+              type: object
+              required: [mismatches]
+              additionalProperties: false
+              properties:
+                mismatches:
+                  type: array
+                  items: { $ref: '#/components/schemas/QaMismatch' }
+            acknowledgedAt: { type: 'null' }
+        - type: object
+          required: [check, outcome, severity, details, acknowledgedAt]
+          additionalProperties: false
+          properties:
+            check: { const: team_names }
+            outcome: { $ref: '#/components/schemas/QaOutcome' }
+            severity: { const: blocking }
+            details:
+              type: object
+              required: [mismatches]
+              additionalProperties: false
+              properties:
+                mismatches:
+                  type: array
+                  items: { $ref: '#/components/schemas/QaMismatch' }
+            acknowledgedAt: { type: 'null' }
+        - type: object
+          required: [check, outcome, severity, details, acknowledgedAt]
+          additionalProperties: false
+          properties:
+            check: { const: text_fit }
+            outcome: { $ref: '#/components/schemas/QaOutcome' }
+            severity: { const: blocking }
+            details:
+              type: object
+              required: [overflowingElements]
+              additionalProperties: false
+              properties:
+                overflowingElements:
+                  type: array
+                  items: { type: string, maxLength: 64 }
+            acknowledgedAt: { type: 'null' }
+        - type: object
+          required: [check, outcome, severity, details, acknowledgedAt]
+          additionalProperties: false
+          properties:
+            check: { const: style_consistency }
+            outcome: { $ref: '#/components/schemas/QaOutcome' }
+            severity: { const: warning }
+            details:
+              type: object
+              required: [colorsOutsidePalette, fontsOutsideSet, templateVersions]
+              additionalProperties: false
+              properties:
+                colorsOutsidePalette:
+                  type: array
+                  items: { type: string, pattern: '^#[0-9a-f]{6}$' }
+                fontsOutsideSet:
+                  type: array
+                  items: { type: string, maxLength: 64 }
+                templateVersions:
+                  type: array
+                  items: { type: string, maxLength: 64 }
+            acknowledgedAt: { type: [string, 'null'], format: date-time }
+        - type: object
+          required: [check, outcome, severity, details, acknowledgedAt]
+          additionalProperties: false
+          properties:
+            check: { const: dimensions }
+            outcome: { $ref: '#/components/schemas/QaOutcome' }
+            severity: { const: blocking }
+            details:
+              type: object
+              required: [expectedWidth, expectedHeight, actualWidth, actualHeight]
+              additionalProperties: false
+              properties:
+                expectedWidth: { type: integer }
+                expectedHeight: { type: integer }
+                actualWidth: { type: integer }
+                actualHeight: { type: integer }
+            acknowledgedAt: { type: 'null' }
+    QaOutcome:
+      type: string
+      enum: [pass, fail]
+    QaMismatch:
       type: object
-      required: [check, outcome, severity, details, acknowledgedAt]
+      required: [elementId, factId, expected, actual]
       additionalProperties: false
       properties:
-        check: { type: string, enum: [data_match, team_names, text_fit, style_consistency, dimensions] }
-        outcome: { type: string, enum: [pass, fail] }
-        severity: { type: string, enum: [blocking, warning] }
-        details: { type: object }
-        acknowledgedAt: { type: [string, 'null'], format: date-time }
+        elementId: { type: string, maxLength: 64 }
+        factId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        expected: { type: string, maxLength: 200 }
+        actual: { type: string, maxLength: 200 }
     VersionRef:
       type: object
       required: [versionId]
       additionalProperties: false
       properties:
-        versionId: { type: string }
+        versionId: { $ref: '#/components/schemas/Uuid' }
     FinalApproval:
       type: object
       required: [id, carouselId, approvedAt, versionSetSha256, valid]
       additionalProperties: false
       properties:
-        id: { type: string }
-        carouselId: { type: string }
+        id: { $ref: '#/components/schemas/Uuid' }
+        carouselId: { $ref: '#/components/schemas/Uuid' }
         approvedAt: { type: string, format: date-time }
-        versionSetSha256: { type: string }
+        versionSetSha256: { type: string, pattern: '^[0-9a-f]{64}$' }
         valid: { type: boolean }
     Export:
       allOf:
@@ -1088,12 +1442,12 @@ components:
       type: object
       required: [id, projectId, carouselId, finalApprovalId, exportedAt, directory, files]
       properties:
-        id: { type: string }
-        projectId: { type: string }
-        carouselId: { type: string }
-        finalApprovalId: { type: string }
+        id: { $ref: '#/components/schemas/Uuid' }
+        projectId: { $ref: '#/components/schemas/Uuid' }
+        carouselId: { $ref: '#/components/schemas/Uuid' }
+        finalApprovalId: { $ref: '#/components/schemas/Uuid' }
         exportedAt: { type: string, format: date-time }
-        directory: { type: string, description: 'Path relative to the data directory' }
+        directory: { type: string, maxLength: 200, description: 'Path relative to the data directory' }
         files:
           type: array
           items:
@@ -1102,10 +1456,13 @@ components:
             additionalProperties: false
             properties:
               position: { type: integer }
-              fileName: { type: string }
+              fileName: { type: string, pattern: '^([0-9]{2}\.png|caption\.txt|manifest\.json)$' }
               kind: { type: string, enum: [slide_image, caption_text, manifest] }
-              sha256: { type: string }
-              elementVersionId: { type: [string, 'null'] }
+              sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+              elementVersionId:
+                oneOf:
+                  - $ref: '#/components/schemas/Uuid'
+                  - type: 'null'
     ExportDetail:
       unevaluatedProperties: false
       allOf:
@@ -1129,9 +1486,9 @@ components:
       required: [exportId, position, elementVersionId, facts]
       additionalProperties: false
       properties:
-        exportId: { type: string }
+        exportId: { $ref: '#/components/schemas/Uuid' }
         position: { type: integer }
-        elementVersionId: { type: string }
+        elementVersionId: { $ref: '#/components/schemas/Uuid' }
         facts:
           type: array
           items: { $ref: '#/components/schemas/Fact' }
@@ -1143,13 +1500,13 @@ components:
       required: [id, kind, label, mime, width, height, sha256, active, registeredAt]
       additionalProperties: false
       properties:
-        id: { type: string }
+        id: { $ref: '#/components/schemas/Uuid' }
         kind: { $ref: '#/components/schemas/BrandAssetKind' }
-        label: { type: string }
+        label: { $ref: '#/components/schemas/Label' }
         mime: { type: string, enum: [image/png, image/jpeg] }
         width: { type: integer }
         height: { type: integer }
-        sha256: { type: string }
+        sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
         active: { type: boolean }
         registeredAt: { type: string, format: date-time }
     Template:
@@ -1157,8 +1514,8 @@ components:
       required: [id, version, slideType, label, badgeSlots, imageSlots]
       additionalProperties: false
       properties:
-        id: { type: string }
-        version: { type: string }
+        id: { $ref: '#/components/schemas/Slug' }
+        version: { type: string, maxLength: 32 }
         slideType: { type: string, enum: [cover, match_result, standings, closing] }
         label: { type: string }
         badgeSlots: { type: integer, description: 'Reserved badge slots; empty while no authorized badge exists (R-050)' }
