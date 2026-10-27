@@ -10,7 +10,7 @@
 | Authorization | Product Owner request of 2026-10-27 via orchestrate analyze: requirements analysis only, no implementation. No merge, push or deploy is authorized. |
 | Config sha256 | `6614e48a55c0252c3962656d71eeec2dd29d537309bb39828a6df78b01824354` |
 | Last gate run | none yet |
-| Work-item status | PLANNING (change PD-12 to PD-20) |
+| Work-item status | PLANNED |
 
 Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orchestrate/workflows/task-tracking.md. Only the Orchestrator edits this file.
 
@@ -36,13 +36,13 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11 | Architecture verification | VERIFY | Orchestrator | T09, T10, T11D | DONE | 1 | 53e02a7 | `docs/work-items/WI-1/evidence/T11-plan-check.txt` |
 | T11E | Intake of the provider and data-mode change (S-003) | IMPL | Orchestrator | T11 | DONE | 1 | 4757d4e, 19bfba9 | T11I |
 | T11F | Requirements update for PD-12, PD-13 and PD-14 | IMPL | product-manager | T11E | DONE | 1 | 1715e21 | T11I |
-| T11G | Architecture delta and plan reconciliation for PD-12, PD-13 and PD-14 | IMPL | architect | T11F | IN_PROGRESS | 3 | - | - |
-| T11H | Security design review of the provider and data-mode change | IMPL | security-reviewer | T11G | IN_PROGRESS | 2 | - | - |
+| T11G | Architecture delta and plan reconciliation for PD-12, PD-13 and PD-14 | IMPL | architect | T11F | DONE | 3 | bf7dd40, 58e906a, b468d07 | T11J |
+| T11H | Security design review of the provider and data-mode change | IMPL | security-reviewer | T11G | DONE | 2 | 89c721d, 1f65fda | T11J |
 | T11I | Change requirements verification | VERIFY | Orchestrator | T11E, T11F | DONE | 1 | 3a2f8c9 | `docs/work-items/WI-1/evidence/T11I-requirements-check.txt` |
 | T11K | Intake of the change-batch Product Owner decisions (S-005) | IMPL | Orchestrator | T11I | DONE | 1 | 7bc11e2 | T11N |
 | T11L | Record PD-15 to PD-20 in the requirements | IMPL | product-manager | T11K | DONE | 1 | 966a599 | T11N |
 | T11N | Change-batch decisions verification | VERIFY | Orchestrator | T11K, T11L | DONE | 1 | 18491cd | `docs/work-items/WI-1/evidence/T11N-validate.txt` |
-| T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I, T11N | IN_PROGRESS | 1 | - | - |
+| T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I, T11N | DONE | 1 | 91e93b4 | `docs/work-items/WI-1/evidence/T11J-plan-check.txt` |
 | T12 | Source of truth: stack, architecture summary, interface conventions, architecture decisions | IMPL | architect | T11J | PENDING | 0 | - | - |
 | T13 | Collect public provider documentation for the PD-01 research | IMPL | Orchestrator | T11J | PENDING | 0 | - | - |
 | T14 | Provider research analysis and recommendation | IMPL | architect | T13, T53 | PENDING | 0 | - | - |
@@ -461,6 +461,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: run the plan check at the integration HEAD after the reconciled tracker is committed and record the evidence.
 - Acceptance criteria: evidence `RESULT: PASS`.
 - Verification: `orch plan check --plan ... --tracker ... --requirements ... --at '<integration worktree>'` -> exit 0
+- Agent result: n/a (Orchestrator task).
+- Orchestrator verification: `orch evidence capture -- plan check` exit 0 (42 tasks, 0 violations; warnings: plan IDs already in the tracker after reconciliation) at 076fd8e, 2026-10-27.
+- Evidence: docs/work-items/WI-1/evidence/T11J-plan-check.txt; evidence commit 91e93b4; VALIDATED_HEAD 076fd8ef01a70cb04c7b96be4482b733141f6263.
+- Decisions: OD-23 to OD-29.
+- Human interventions: PD-12 to PD-20 (S-003, S-004, S-005).
+- Agent usage: NOT RECORDED (Orchestrator task).
 
 ### T12: Source of truth: stack, architecture summary, interface conventions, architecture decisions
 - Kind: IMPL
@@ -1107,6 +1113,10 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T21:18:59Z | T11K | Status DONE | integration commit 7bc11e2; independently verified by T11N |
 | 2026-10-27T21:18:59Z | T11L | Status DONE | integration commit 966a599; independently verified by T11N |
 | 2026-10-27T21:19:00Z | T11J | Status IN_PROGRESS (attempt 1) | T11G, T11H integrated (change verdict PASS); T11I, T11N DONE; tracker reconciled |
+| 2026-10-27T21:19:18Z | T11J | Status DONE | evidence/T11J-plan-check.txt RESULT PASS; evidence commit 91e93b4; VALIDATED_HEAD 076fd8e |
+| 2026-10-27T21:19:19Z | T11G | Status DONE | integration commits bf7dd40, 58e906a, b468d07; independently verified by T11J |
+| 2026-10-27T21:19:19Z | T11H | Status DONE | integration commits 89c721d, 1f65fda; independently verified by T11J |
+| 2026-10-27T21:19:19Z | - | Change PD-12 to PD-20 planned; work item ready for execution | T11J evidence |
 
 ## Recovery log
 
