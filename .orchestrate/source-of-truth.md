@@ -28,6 +28,15 @@ Versions, install policy and runtime prerequisites:
 
 | ID | Decision | Level | Date | Source |
 |----|----------|-------|------|--------|
+| PD-01 | Option (c): licensed sports-data API as preferred primary source with an independent official source for verification (BR-03), provider research by the Architect, and the conditions SC-03 and SC-04. | HIGH | 2026-10-27 | WI-1 S-001; R-410 |
+| PD-02 | Option (a): scores, match dates and standings are verified only when two independent accepted sources agree, with the disagreement procedure of BR-02. | HIGH | 2026-10-27 | WI-1 S-001; R-411 |
+| PD-03 | Option (c): team names as text and existing authorized brand assets, with optional badge slots reserved and no unauthorized logos. | HIGH | 2026-10-27 | WI-1 S-001; R-413 |
+| PD-04 | Option (a): the initial MVP is limited to team-level and competition-level data, with no player-level information. | HIGH | 2026-10-27 | WI-1 S-001; R-414 |
+| PD-05 | Option (a): single local operator without login, with development services bound to localhost only. | HIGH | 2026-10-27 | WI-1 S-001; R-415 |
+| PD-06 | Language option (c), Spanish by default, and name option (i), verified official team names preserved. | HIGH | 2026-10-27 | WI-1 S-001; R-416 |
+| PD-07 | The main branch is `main`. | HIGH | 2026-10-27 | WI-1 S-001 |
+| PD-08 | A frontend is required, and the frontend-developer role is enabled in the project configuration through the authorized configuration workflow. | HIGH | 2026-10-27 | WI-1 S-001; R-020 |
+| PD-09 | Confirms the 1080 x 1350 carousel format, individual slide/caption approval plus final approval, and league-phase-only scope for the initial MVP; no automatic publication. | HIGH | 2026-10-27 | WI-1 S-001; R-408, R-405, R-417, R-042 |
 
 Product Owner decisions (HIGH) and architecture decisions are listed here. Orchestrator decisions (MEDIUM) are added at work-item close.
 
@@ -35,11 +44,26 @@ Product Owner decisions (HIGH) and architecture decisions are listed here. Orche
 
 | ID | Rule | Source |
 |----|------|--------|
+| BR-01 | Scores, match dates and standings are verified only when two independent accepted sources agree. | PD-02 (WI-1 S-001; R-411) |
+| BR-02 | When accepted sources disagree, the official competition publication is consulted, and a disputed fact is not marked as verified until the discrepancy is resolved. | PD-02 (WI-1 S-001; R-411) |
+| BR-03 | A licensed sports-data API is the preferred primary source, and an independent official source is used for verification. | PD-01 (WI-1 S-001; R-410) |
+| BR-04 | The initial MVP is limited to team-level and competition-level data; player-level information is not introduced. | PD-04 (WI-1 S-001; R-414) |
+| BR-05 | Team names are used as text and preserved as the verified official names. | PD-03, PD-06 (WI-1 S-001; R-413, R-416) |
+| BR-06 | Only existing authorized brand assets are used; optional badge slots may be reserved, and unauthorized logos are not used. | PD-03 (WI-1 S-001; R-413) |
+| BR-07 | Content language is configurable per project, with Spanish as the default. | PD-06 (WI-1 S-001; R-416) |
+| BR-08 | Carousel slides use the 1080 x 1350 format. | PD-09 (WI-1 S-001; R-408) |
+| BR-09 | Each slide and caption is approved individually, and the carousel requires a final approval. | PD-09 (WI-1 S-001; R-405) |
+| BR-10 | The initial MVP covers the league phase only. | PD-09 (WI-1 S-001; R-417) |
+| BR-11 | There is no automatic publication. | PD-09 (WI-1 S-001; R-042) |
 
 ## 5. Security constraints
 
 | ID | Constraint | Source |
 |----|------------|--------|
+| SC-01 | The MVP has a single local operator without login. | PD-05 (WI-1 S-001; R-415) |
+| SC-02 | Development services are bound to localhost only. | PD-05 (WI-1 S-001; R-415) |
+| SC-03 | No service is purchased or subscribed to without authorization. | PD-01 (WI-1 S-001; R-410) |
+| SC-04 | Synthetic fixtures are used during development. | PD-01 (WI-1 S-001; R-410) |
 
 The risk profile and the sensitive-data categories are recorded in the project configuration (`riskProfile`).
 
