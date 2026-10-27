@@ -1,0 +1,22 @@
+# Dependencies and build output
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Runtime data (EDR_DATA_DIR default) and project-local caches (Playwright browsers, probe output)
+/data
+/.cache
+
+# Local environment and credential files (credential rule 6, R-126, R-265); only the example is tracked
+.env*
+!.env.example
+
+# Test reports
+coverage/
+test-results/
+playwright-report/
+blob-report/
+
+# Logs and OS files
+*.log
+.DS_Store

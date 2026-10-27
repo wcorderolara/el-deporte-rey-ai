@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"]
+  },
+  "include": [
+    "*.ts",
+    "apps/server/src/**/*.test.ts",
+    "apps/server/scripts/**/*.test.ts",
+    "apps/server/test/**/*.ts",
+    "packages/*/src/**/*.test.ts",
+    "fixtures/**/*.ts",
+    "e2e/**/*.ts",
+    "scripts/**/*.ts"
+  ],
+  "references": [{ "path": "./packages/contracts" }, { "path": "./apps/server" }]
+}

@@ -1,0 +1,24 @@
+# Generated, vendored or runtime files
+node_modules/
+dist/
+coverage/
+.cache/
+data/
+test-results/
+playwright-report/
+blob-report/
+package-lock.json
+
+# Framework and work-item records (not code; edited by their own workflows)
+.claude/
+.orchestrate/
+docs/
+CLAUDE.md
+*.md
+
+# The declared HTTP contract is copied byte for byte from the accepted proposal (identity checked by hash)
+contracts/
+
+# Fixture data may be deliberately malformed or byte-exact; only fixture code is formatted
+fixtures/**
+!fixtures/**/*.ts
