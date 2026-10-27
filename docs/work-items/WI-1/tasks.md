@@ -1130,6 +1130,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T21:31:35Z | T13 | Status IN_PROGRESS (attempt 1); Orchestrator working | orch next SELECT |
 | 2026-10-27T21:31:35Z | T15 | Status IN_PROGRESS (attempt 1); agent orchestrate:backend-developer launched | orch next SELECT |
 | 2026-10-27T21:36:06Z | T13 | Status DONE | integration commit 70906b2; evidence/T13-gates.txt PASS; 20 captures |
+| 2026-10-27T21:36:15Z | - | Finding: football-data.org General Terms and Conditions are published on /about (attribution clause 7.1, logos 9.2); the earlier no-published-terms statement is corrected; R-316 outdated, carried to T14 and the PO | research/football-data-org/about-and-terms.txt |
 
 ## Recovery log
 
