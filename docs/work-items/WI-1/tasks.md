@@ -640,7 +640,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Kind: IMPL
 - Agent: frontend-developer
 - Depends on: T16, T20
-- Files owned: `apps/web/src/features/projects/**`
+- Files owned: `apps/web/src/features/projects/**`, `apps/web/src/api/types.ts`
 - Scope: project list as the home page (history columns: title, competition, stage display and matchday, source with `DataModeBadge`, demonstration label, language, approval state, last export time); create form that assumes no single competition format (R-077): competition selector from the catalogue (reference competitions first, each entry with its sources and availability reasons), data source selector (selectable sources only, first available preselected, OD-16), season selector loaded on source choice, stage selector listing stages by the source's names with their matchday numbers or a whole-stage choice and a note when standings are not expected, listing provenance (retrieved at, cached, stale) and the rate-limit wait message (R-291), unavailable competitions and seasons shown with their reason (R-286), language selector defaulting to Spanish; submit disabled until competition, source, season and stage (and a matchday when the stage is not selectable as a whole) are chosen (R-243); project detail (competition, source and mode, season, stage and matchday, demonstration banner, language change, start run, per-stage status with failure reason and restart, links to facts, review, exports and, for MANUAL_DATA, the import page) polling the run while active; accessible names, labels and keyboard use. Component tests with a mocked API client, including a stage-based competition, a stage without standings, an unavailable competition and an exhausted budget.
 - Acceptance criteria: R-200, R-203, R-235, R-236, R-243, R-269, R-283, R-284, R-286, R-291
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run build` -> exit 0
@@ -956,6 +956,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-32 | MEDIUM | MED-02 dependency set of T15 at exact versions (save-exact, ignore-scripts, registry pinned, lock file with integrity): typescript 6.0.3 (7.x incompatible with typescript-eslint), eslint 10.12.0, typescript-eslint 8.71.2, @eslint/js 10.0.1, prettier 3.9.10, vitest 5.0.4, vite 8.3.4 (vitest peer), jsdom 30.1.2, @testing-library/react 16.3.3, @testing-library/user-event 14.6.7, @testing-library/dom 10.4.2 (peer), @playwright/test 1.64.0, @axe-core/playwright 4.13.0, @types/node 22.20.5, zod 4.6.7, fastify 5.12.7 (avoids low advisory GHSA-389g-gv7q-r4x8), @fastify/static 10.1.6, satori 0.51.0, @resvg/resvg-js 2.6.2, opentype.js 2.0.0, @readme/openapi-parser 9.1.0, ajv 8.20.0, openapi-types 12.1.3 (peer); npm audit --audit-level=high clean (agent-run) | other versions | low (lock-file change) | MED-02; T15 report; PO notified |
 | OD-33 | MEDIUM | Moderate advisory GHSA-px8p-9vwx-vf98 (fflate 0.7.3, unzipSync infinite loop on malformed ZIP64) pinned by satori 0.51.0 is accepted for WI-1: satori's runtime uses only inflateSync and zlibSync, inputs are committed fonts, never ZIP files; T34 and T47 re-check reachability; revisit when satori moves to fflate >= 0.7.5 | pin satori 0.32.0; npm overrides fflate 0.7.5 | low | MED-02 (moderate, not HIGH or CRITICAL, so not HIGH-03); T10-F02; PO notified |
 | OD-34 | MEDIUM | Re-plan: T19 also owns `apps/server/test/integration/smoke/**` (created by T15, DONE), because T19 changes buildApp and createContainer which the smoke test calls | T15 reopened | low | MED-05; T15 report |
+| OD-35 | MEDIUM | MED-02 dependencies of T16 at exact versions: react 19.3.0, react-dom 19.3.0, react-router 8.4.0 (8.5.0 too recent), @vitejs/plugin-react 6.1.2, @types/react 19.3.0, @types/react-dom 19.3.0, vite 8.3.4 declared in apps/web (dedupes with root); new transitive scheduler, csstype, cookie-es, @remix-run/route-pattern; no advisory for any of them | other versions | low | MED-02; T16 report; PO notified |
+| OD-36 | MEDIUM | Re-plan: T28 also owns `apps/web/src/api/types.ts` (created by T16, DONE) and replaces its temporary copies of contract enums and shapes with re-exports from `@edr/contracts` (T20), and makes `parseProblem` use the contract Problem schema in coordination with T16's client (only types.ts is transferred) | a separate follow-up task | low | MED-05; T16 report |
 
 ## Conflicts
 
@@ -1162,6 +1164,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T21:55:48Z | T18 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-27T21:55:48Z | T20 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-27T22:10:07Z | T18 | Status DONE | integration commit 20d92b2; evidence/T18-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-27T22:12:52Z | - | OD-35 (T16 dependencies) and OD-36 (T28 owns apps/web/src/api/types.ts) recorded | T16 report |
+| 2026-10-27T22:12:52Z | T28 | Files owned extended by OD-36 (apps/web/src/api/types.ts) | OD-36 |
 
 ## Recovery log
 
