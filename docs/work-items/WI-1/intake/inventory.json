@@ -25,10 +25,16 @@
       "kind": "file",
       "path": "docs/work-items/WI-1/intake/sources/po-change-2026-10-27-provider-and-modes.md",
       "insideRepository": true
+    },
+    {
+      "input": "/Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/docs/work-items/WI-1/intake/sources/po-scope-clarification-2026-10-27-multi-competition.md",
+      "kind": "file",
+      "path": "docs/work-items/WI-1/intake/sources/po-scope-clarification-2026-10-27-multi-competition.md",
+      "insideRepository": true
     }
   ],
   "counts": {
-    "analyzed": 4,
+    "analyzed": 5,
     "unsupported": 0,
     "excluded": 0
   },
@@ -95,6 +101,21 @@
         "R-414",
         "R-415",
         "R-416",
+        "WI-1"
+      ]
+    },
+    {
+      "path": "docs/work-items/WI-1/intake/sources/po-scope-clarification-2026-10-27-multi-competition.md",
+      "status": "analyzed",
+      "reason": "text format",
+      "sourceId": "S-004",
+      "reader": "text",
+      "format": "md",
+      "sha256": "5eae4c9303d5cdd5f5506ae6cd65770194262eff494dfb2a068e57265de059e3",
+      "bytes": 3378,
+      "originalPath": null,
+      "typeCandidate": "unknown",
+      "idsFound": [
         "WI-1"
       ]
     }

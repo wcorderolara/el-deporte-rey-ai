@@ -3,7 +3,7 @@
   "workItem": "WI-1",
   "startingPoint": {
     "id": "SP-4",
-    "basis": "4 inputs (inline text counts as one)"
+    "basis": "5 inputs (inline text counts as one)"
   },
   "mode": "incremental",
   "inputs": [
@@ -30,6 +30,12 @@
       "kind": "file",
       "resolvedPath": "docs/work-items/WI-1/intake/sources/po-change-2026-10-27-provider-and-modes.md",
       "insideRepository": true
+    },
+    {
+      "input": "/Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/docs/work-items/WI-1/intake/sources/po-scope-clarification-2026-10-27-multi-competition.md",
+      "kind": "file",
+      "resolvedPath": "docs/work-items/WI-1/intake/sources/po-scope-clarification-2026-10-27-multi-competition.md",
+      "insideRepository": true
     }
   ],
   "precedenceAssignment": [
@@ -50,6 +56,11 @@
     },
     {
       "sourceId": "S-001",
+      "level": 1,
+      "basis": "Product Owner decision named with --precedence"
+    },
+    {
+      "sourceId": "S-004",
       "level": 1,
       "basis": "Product Owner decision named with --precedence"
     }
@@ -80,7 +91,30 @@
         "detail": "Do not merge into main, push or deploy."
       }
     ],
-    "idCollisions": [],
+    "idCollisions": [
+      {
+        "id": "idCollisions[0]",
+        "refs": [
+          {
+            "sourceId": "S-003",
+            "location": {
+              "heading": "WI-1 — Incremental Planning Update: Sports Data Provider",
+              "lines": "1-1",
+              "page": null
+            }
+          },
+          {
+            "sourceId": "S-004",
+            "location": {
+              "heading": "WI-1 — Product Owner Scope Clarification",
+              "lines": "1-1",
+              "page": null
+            }
+          }
+        ],
+        "detail": "WI-1"
+      }
+    ],
     "references": [
       {
         "id": "references[0]",
@@ -103,6 +137,28 @@
           }
         ],
         "detail": "mentions WI-1 defined in S-003"
+      },
+      {
+        "id": "references[1]",
+        "refs": [
+          {
+            "sourceId": "S-001",
+            "location": {
+              "heading": null,
+              "lines": "1-1",
+              "page": null
+            }
+          },
+          {
+            "sourceId": "S-004",
+            "location": {
+              "heading": "WI-1 — Product Owner Scope Clarification",
+              "lines": "1-1",
+              "page": null
+            }
+          }
+        ],
+        "detail": "mentions WI-1 defined in S-004"
       }
     ],
     "dependencies": [],

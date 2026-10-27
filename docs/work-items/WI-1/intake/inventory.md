@@ -1,8 +1,8 @@
 # Intake inventory: WI-1
 
-Starting point: SP-4 (4 inputs (inline text counts as one)). Mode: incremental.
+Starting point: SP-4 (5 inputs (inline text counts as one)). Mode: incremental.
 
-Counts: analyzed 4, unsupported 0, excluded 0.
+Counts: analyzed 5, unsupported 0, excluded 0.
 
 | Source | Path | Status | Reason | Reader | Format | Type candidate | SHA-256 | Bytes |
 |--------|------|--------|--------|--------|--------|----------------|---------|-------|
@@ -10,3 +10,4 @@ Counts: analyzed 4, unsupported 0, excluded 0.
 | S-003 | docs/work-items/WI-1/intake/sources/po-change-2026-10-27-provider-and-modes.md | analyzed | text format | text | md | technical-spec | 4eeb482afc7fcc61d159371d3ea02e0da9e7445079162ac5a94aeebeea9a511f | 7529 |
 | S-002 | docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-stage2.md | analyzed | text format | text | md | unknown | 99d18619acb2134b7c2c01e9569863fa4d425762fc3059a05fe5ad1693066512 | 58 |
 | S-001 | docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27.md | analyzed | text format | text | md | frd | de838ea30275c967d31e8e6886da138ca4a5c18f876f991f239c6df39cd952d9 | 2083 |
+| S-004 | docs/work-items/WI-1/intake/sources/po-scope-clarification-2026-10-27-multi-competition.md | analyzed | text format | text | md | unknown | 5eae4c9303d5cdd5f5506ae6cd65770194262eff494dfb2a068e57265de059e3 | 3378 |
