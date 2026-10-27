@@ -130,7 +130,7 @@ Rules:
 |-----------|----------------|------------------|
 | platform/config | Load and validate `config/*.json` and environment variables at startup; refuse to start on an invalid configuration; expose catalog (competitions, seasons, league-phase matchdays), languages, format (1080 x 1350, maximum slides per carousel), publication mode (`manual` only), display settings, provider selection | R-021, R-101, R-102, R-106, R-226, R-236, R-238, R-239 |
 | platform/format | Deterministic display formatting of facts (scores, integers, dates with code month tables, official names, hashtag-safe names) and per-language fixed template text; the single source of fact display text for content, rendering and visual QA | R-035, R-036, R-052, R-310, R-426 |
-| platform/net | `EgressClient`: HTTPS (or loopback HTTP for local AI servers) to hosts derived from configured provider base URLs only; per-request timeout; response size cap; no redirects to other hosts | R-222, AC-07, RK-07 |
+| platform/net | `EgressClient`: HTTPS (or loopback HTTP to the configured AI origin only) to exact origins of configured provider base URLs; total deadline including the body; streaming cap on decoded bytes (512 KiB sports, 256 KiB AI, at most 2 MiB); `redirect: 'error'`; TLS never disabled; the only module allowed to open network connections (ESLint rule; `contracts/provider-ports.md` section 4) | R-222, AC-07, RK-07 |
 | platform/http | Loopback binding, Host allow-list, origin and custom-header guard on mutating requests, security headers, problem+json errors, static UI | R-114, R-234, R-235, RK-13 |
 | platform/db | SQLite connection (foreign keys on, WAL), migration runner, transactions, repository helpers | R-043, R-044, R-403 |
 | providers/sports | `SportsDataSource` port; strict allow-list payload schemas (player-level fields dropped, malformed data rejected); fixture adapter; source registry with role, acceptance and independence group | R-022, R-046, R-105, R-110, R-112, R-224, R-232, R-241 |
@@ -151,7 +151,7 @@ Rules:
 
 ### 5.1 Configuration files and environment
 
-- `config/app.config.json` (committed, validated by a Zod schema that rejects unknown keys and any key whose name looks like a secret, for example `apiKey`, `token`, `secret`, `password`): server host (must be a loopback address; the schema accepts only `127.0.0.1`), port, data directory, display UTC offset (default -360 minutes, `America/Guatemala`, which has no daylight saving time), format (`width` 1080, `height` 1350, `maxSlidesPerCarousel`), `publicationMode` (enum with the single value `manual`), standings rows per slide, provider selection.
+- `config/app.config.json` (committed, validated by a Zod schema that rejects unknown keys and any key whose name looks like a secret, for example `apiKey`, `token`, `secret`, `password`): server host (must be a loopback address; the schema accepts only `127.0.0.1`), port, explicit Host and Origin allow-lists (section 12.1), data directory, display UTC offset (default -360 minutes, `America/Guatemala`, which has no daylight saving time), format (`width` 1080, `height` 1350, `maxSlidesPerCarousel`), `publicationMode` (enum with the single value `manual`), standings rows per slide, provider selection.
 - Provider selection is configuration only (R-106, R-223):
 
 ```json
@@ -190,7 +190,7 @@ Rules:
 ## 6. Workflow and stages
 
 - Runner (`apps/server/src/workflow`): `startRun(projectId, kind)` creates a `workflow_runs` row and its `stage_runs` (pending), then executes stages sequentially in the same process. A `full` run executes research, verification, content, rendering, visual QA. A `redraft` run reuses the facts of the latest completed verification of the project and executes content, rendering, visual QA (used after a language change or a change of excluded matches). A second start while a run is active is refused (`RUN_IN_PROGRESS`).
-- A stage failure stops the run: the stage is `failed` with a reason (provider unavailable, rate-limited, timeout, validation error with path), later stages are `skipped`, and the run is `failed`. The operator starts a new run (R-203). On startup, runs left `running` are marked `failed` with reason `interrupted`.
+- A stage failure stops the run: the stage is `failed` with a failure built from a closed code and sanitized parameters only (`{ code, sourceId, path, httpStatus }`, codes `unavailable`, `rate_limited`, `timeout`, `no_data`, `invalid`, `ai_response_invalid`, `interrupted`, `stage_not_available`, `run_superseded`, `internal`; never a provider body, an exception message or a file path; T10-F10), later stages are `skipped`, and the run is `failed`. The operator starts a new run (R-203). On startup, runs left `running` are marked `failed` with reason `interrupted`.
 - Stage interface (`contracts/provider-ports.md` section 3): each stage has a Zod input schema, a Zod output schema and a pure core function that the tests call with fixture inputs in isolation (R-104, R-225); a thin wrapper loads inputs from and persists outputs to the database.
 
 | Stage | Input | Output | Deterministic |
@@ -269,13 +269,15 @@ else (groups disagree):                             status disputed; consult off
 | Flag | Rule | Blocks approval |
 |------|------|-----------------|
 | `UNKNOWN_FACT_REFERENCE` | a placeholder not in the slide's fact set | yes |
-| `UNVERIFIED_NUMBER` | after removing placeholders, any digit, or any cardinal number word 0 to 20 of the project language or English (word lists in code) | yes |
-| `NON_OFFICIAL_TEAM_NAME` | any known alias of a team (all source name forms, the map's aliases) that is not identical to the official name, or a token sequence whose normalized form equals a normalized official name but whose exact form differs (translation, accent loss, abbreviation listed in the map) | yes |
+| `FORBIDDEN_CONTENT` (pre-check, T10-F05) | any `\p{Cc}` or `\p{Cf}` character (control, bidi control, zero-width) in AI text; checked before every other rule | yes |
+| `UNVERIFIED_NUMBER` | after removing placeholders, on an NFKC-normalized copy: any `\p{N}` character (not only ASCII digits: fullwidth, other-script decimal digits, superscripts, subscripts, circled numbers, Roman-numeral characters); any cardinal number word up to at least 100, any ordinal word, any multiplier or collective number word ("doble", "triplete", "media docena", "hat-trick", "double", "treble", "dozen") in Spanish and English (word lists in code, T10-F05) | yes |
+| `NON_OFFICIAL_TEAM_NAME` | any known alias of a team (all source name forms, the map's aliases) that is not identical to the official name, or a token sequence whose normalized form equals a normalized official name but whose exact form differs (translation, accent loss, abbreviation listed in the map); any mixed-script token (a token mixing Latin with another script, for example a Cyrillic homoglyph, in a Latin-script content language, T10-F05) | yes |
 | `UNVERIFIED_FACT_IN_USE` | a referenced fact that is not verified (computed at read and approval time, R-026) | yes (shown as "blocked", naming the facts) |
 | `FORBIDDEN_CONTENT` | URLs, e-mail addresses, `@` mentions other than the configured brand handle, HTML or Markdown control sequences, text over the field limit | yes |
 | `LANGUAGE_MISMATCH` | none; language is enforced by the request and by template text, not detected | - |
 
 - A flagged element version can be regenerated; it cannot be approved (R-207, R-237).
+- Residuals not caught by these deterministic checks (T10-F06): person names, venue names and misstated relations between correct values. With the stub AI they cannot occur; with a real model the fixed instruction forbids them, the result relation is given as a deterministic phrase, and human approval with provenance labels (BR-09, OD-01) is the final control. Before a real model or real sources are used, a deterministic warning flag for capitalized tokens outside the language word list, the alias table and the brand terms is to be added (a new flag: Orchestrator decision, MED-04) and TB-2 and TB-3 re-reviewed (follow-up to U-01).
 - Fixed template text (slide titles, labels, "as of") comes from per-language tables in `platform/format` (R-310); content language is a project attribute (R-051, R-236).
 
 ## 9. Deterministic rendering (R-035, R-036, R-213, R-238, AD-07)
@@ -284,7 +286,8 @@ else (groups disagree):                             status disputed; consult off
 - Colours: only palette roles from `config/brand.json` (provisional purple, gold, blue, white values, OD-07). Fonts: the bundled files.
 - Text layout: `layoutText(text, font, size, boxWidth, maxLines)` measures glyph advances with `opentype.js` from the same font files and returns explicit lines and an `overflow` flag. Fact-bearing text (scores, team names, standings values, dates) is placed from verified facts directly; it never passes through AI text.
 - Render model: a JSON document per slide version (template ID and version, canvas width and height, palette, fonts, and the list of elements with boxes, explicit lines, colours, fact IDs and image hashes). The renderer converts the render model to a Satori element tree (no React runtime on the server), Satori produces SVG, resvg produces PNG. Each text line is a separate non-wrapping node, so the layout measured is the layout rendered. Same render model + same template version + same fonts + same pinned library versions gives a byte-identical PNG; the tests assert identical numeric text (R-213) and identical PNG hashes.
-- Output: `data/renders/<projectId>/<elementVersionId>.png`; the hash, width and height are stored on the element version.
+- No external or host resources (T10-F09): image slots receive only `data:` URIs built from stored, verified asset bytes, never a URL or a file path; no `loadAdditionalAsset` callback is given to Satori; resvg runs with `font.loadSystemFonts: false`, `fontFiles` from `assets/fonts/` only and no resources directory. Text from the AI reaches Satori only as text content, and the SVG produced is well-formed: a test renders text containing `<`, `>`, `&`, `"`, `]]>` and `</text><image href=...>` and asserts a valid PNG and SVG with no added element; the renderer opens no socket (network guard test).
+- Output: `data/renders/<projectId>/<elementVersionId>.png` (created with the exclusive flag); the hash, width and height are stored on the element version.
 - Template change: a new template version applies to carousels generated afterwards; existing element versions keep the template version they were rendered with (R-211).
 
 ## 10. Visual QA (R-037, R-214, OD-09)
@@ -318,12 +321,14 @@ The caption element has no image; its QA is the content checks of section 8.3.
 - `approve(elementId, versionId)` is accepted only when: the version is the element's current version (`VERSION_CONFLICT` otherwise); every referenced fact is verified (`APPROVAL_BLOCKED`, naming each fact with status and reason, R-206); no content flag (`CONTENT_FLAGGED`, R-207); no blocking QA failure (`QA_FAILED`); every warning acknowledged (`QA_ACK_REQUIRED`).
 - "Blocked" is a derived overlay shown on any version whose referenced facts are not all verified; it is recomputed at read and at approval time.
 - Approvals are append-only rows bound to the exact element version (R-406). Regenerating a slide creates a new version of that element only (new AI text for that slide key, new render, new QA); the other elements keep their versions and approvals (R-217).
+- Atomicity (T10-F15): each guard check and the write it protects (approval, withdrawal, acknowledgement, final approval, export record, supersession by regeneration or redraft) run in one synchronous `BEGIN IMMEDIATE` transaction on `DatabaseSync`, with no `await` inside, so a concurrent supersession cannot slip between check and write.
 
 ### 11.2 Carousel final approval and export
 
 - Final approval of a carousel is accepted only when every element of the carousel (all included slides and the caption) has its current version approved and none is blocked (`FINAL_APPROVAL_REFUSED`, listing the items). It records the version set and its SHA-256 (R-240).
 - A final approval is valid while the carousel's current version set equals the recorded set; any regeneration, new draft or research run makes it invalid (stored `invalidated_at`).
-- Export requires a valid final approval (`FINAL_APPROVAL_REQUIRED`, R-216, R-240). It writes to `data/exports/<projectId>/<exportId>/`: `01.png` ... `NN.png` in carousel order (PNG, lossless, at the configured dimensions; R-218, R-421), `caption.txt` (UTF-8: caption, a blank line, hashtags separated by spaces), and `manifest.json` (project, carousel, final approval, per file: position, element version ID, SHA-256, fact IDs). Directory paths are built from generated IDs only and checked to stay under the data directory.
+- Export requires a valid final approval (`FINAL_APPROVAL_REQUIRED`, R-216, R-240). It writes to `data/exports/<projectId>/<exportId>/`: `01.png` ... `NN.png` in carousel order (PNG, lossless, at the configured dimensions; R-218, R-421), `caption.txt` (UTF-8: caption, a blank line, hashtags separated by spaces), and `manifest.json` (project, carousel, final approval, per file: position, element version ID, SHA-256, fact IDs). Directory paths are built from validated UUIDs only, checked against `fs.realpath` of the data directory, and files are created with the exclusive flag.
+- Export integrity (T10-F15): the export reads the version set from the final-approval row (never from the current versions), writes exactly those versions into a fresh export directory, then in one `BEGIN IMMEDIATE` transaction re-checks `invalidated_at IS NULL` and records the export; a failed commit leaves an orphan directory that history never references.
 - No publication function exists: no API operation, module or adapter sends content to a social platform; `publicationMode` accepts only `manual`; the export module receives no egress client (R-042, R-219, BR-11).
 - History: projects list with approval summary and last export time; an export can be reopened and shows the exported versions (R-043, R-220). Nothing is deleted (OD-08).
 - Traceability: for any exported slide, the API returns the element version, its fact references, each fact's status, evidence observations (source, reference, retrieval time) and dispute record (R-044, R-221).
@@ -343,6 +348,20 @@ The caption element has no image; its QA is the content checks of section 8.3.
 | External access | none with the default (fixture and stub) configuration; with real providers only to their configured hosts |
 
 Binding: the server listens on `127.0.0.1` only (the configuration schema rejects other hosts); Vite `server.host` and `preview.host` are `127.0.0.1`. Changing the binding or adding remote access is a security-sensitive change (HIGH-03, AC-11).
+
+### 12.1 Development mode (T10-F02)
+
+- The API's Host and Origin allow-lists are explicit configured sets of exact `host:port` values and exact origins (`server.allowedHosts`, `server.allowedOrigins` in `config/app.config.json`), never derived from request headers and never containing `0.0.0.0` or a wildcard. Production (`npm start`): Hosts `127.0.0.1:4300`, `localhost:4300`; Origins `http://127.0.0.1:4300`, `http://localhost:4300`. Development (`npm run dev`) adds Hosts `127.0.0.1:5173`, `localhost:5173` and the matching Origins. Verification (`4310`) and demo (`4320`) configurations list their own port in the same way. The schema rejects a wildcard, `0.0.0.0` or a non-loopback host in either list.
+- Fastify `trustProxy` stays `false`; `X-Forwarded-*` headers are ignored.
+- The Vite `/api` proxy keeps `changeOrigin: false`, so the API sees and checks the browser's Host (`127.0.0.1:5173`) and Origin.
+- Vite `server` and `preview`: `host` `127.0.0.1`; `strictPort`; `allowedHosts` never `true` (default or the two loopback names only); `cors` not widened (default); `fs.strict` `true`; `fs.deny` keeps Vite's default list (which covers `.env` and `.env.*`) and adds `data/**`; `envPrefix` stays `VITE_` and no secret uses it; `envDir` is `apps/web`, where no `.env.local` exists (T10-F11).
+- The pinned Vite version has no known advisory of any severity at pin time. Because the `--audit-level=high` gate lets moderate advisories through, T15 and T16 check this explicitly (full `npm audit` advisory list and `npm ls vite`) and report it; T46 records it ([versions], [audit-full]).
+- T16's unit test asserts these Vite settings; T19 and T41 test the development origin set (requests with the 5173 Host and Origin are accepted when configured, refused otherwise).
+
+### 12.2 Host assumptions (T10-F19, T10-F11)
+
+- A loopback listener accepts connections from every process of every OS account on the host, and possibly from containers or VMs sharing the host network namespace. The platform assumes a single-user workstation; `docs/local-setup.md` says not to run it on shared or multi-user hosts and to create `.env.local` with owner-only permissions (mode 0600). The data directory is created with mode 0700.
+- This residual is within PD-05 (and RK-13); it is re-raised to the Product Owner (HIGH-03, identity model) before the platform runs on a shared or multi-user host, before a paid AI key or real provider credentials are configured, or before real non-public data is introduced.
 
 ## 13. Extension points (R-102, R-226, R-109)
 
