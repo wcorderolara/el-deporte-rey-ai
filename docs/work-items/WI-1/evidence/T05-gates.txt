@@ -1,0 +1,37 @@
+TASK: WI-1-T05
+RESULT: PASS
+VALIDATED_HEAD: d93cbb1a4bf817f143bdaca94498472b54594fc0
+DATE: 2026-10-27T16:05:38Z
+COMMAND: orch gates run --work-item WI-1 --task T05 --set affected
+SUMMARY: 2 PASS / 0 FAIL / 0 NOT RUN; required not passing: none
+--- output ---
+CONFIG: .orchestrate/config.json
+CONFIG_SOURCE: committed@d93cbb1a4bf8
+CONFIG_SHA256: bd4be1f1ad74cebf9ac0482ee832513a04f195155ae04fc98f7fbafd3176ec4e
+SET: affected
+
+=== FW-TRACKER (framework, required) PASS exit=0 ms=266 ===
+COMMAND: builtin:tracker
+REASON: orch tracker check exited 0
+Tracker docs/work-items/WI-1/tasks.md on d93cbb1a4bf817f143bdaca94498472b54594fc0
+  T00  IMPL   recorded=DONE                                 commits 1176f8c; verified by T02                                                           => DONE
+  T01  IMPL   recorded=DONE                                 commits dd9499e; verified by T02                                                           => DONE
+  T02  VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T02-requirements-check.txt @ c68b058; validated 17f => DONE
+  T03  IMPL   recorded=IN_PROGRESS                          task branch none; worktree none                                                            => PENDING
+  T04  IMPL   recorded=IN_PROGRESS                          task branch ahead=0; worktree dirty=0                                                      => PENDING
+  T05  IMPL   recorded=IN_PROGRESS                          task branch ahead=0; worktree dirty=0                                                      => PENDING
+  T06  IMPL   recorded=IN_PROGRESS                          task branch ahead=0; worktree dirty=0                                                      => PENDING
+  T07  VERIFY recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T08  VERIFY recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+STATE: open
+RESULT: PASS (0 violations)
+
+=== FW-CONFIG (framework, required) PASS exit=0 ms=65 ===
+COMMAND: builtin:config
+REASON: orch validate --section config,policy,agents,models exited 0
+SECTION config: PASS
+SECTION policy: PASS
+SECTION agents: PASS
+SECTION models: PASS
+  NOTE 156 file(s) scanned
+RESULT: PASS (0 violation(s), 0 warning(s))

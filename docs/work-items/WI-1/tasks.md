@@ -101,6 +101,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: add PD-01 to PD-09 to section 3 (decision register), and the business rules and security constraints the decisions establish to sections 4 and 5, each referencing S-001 and the requirement records.
 - Acceptance criteria: nine HIGH rows in the decision register; no other section changed beyond sections 4 and 5.
 - Verification: `orch validate --work-item 'WI-1' --at .` -> exit 0
+- Agent result: PASS (files only; agent has no shell), base f4ccb0c.
+- Orchestrator verification: task commit 3f94846 (Orchestrator commit of agent files); `orch worktree verify-ownership` exit 0 (1 changed, 0 outside); diff limited to sections 3, 4 and 5; `orch validate --at .` all sections PASS except requirements (RQ-09, RQ-13 owned by T04); at 3f94846, 2026-10-27.
+- Integration commit(s): d93cbb1 (merge --no-ff of task/WI-1/T05). Affected gates: evidence/T05-gates.txt. Verifier: T07.
+- Decisions: LOW-1 PD-03 no-unauthorized-logos recorded as business rule BR-06; LOW-2 synthetic fixtures recorded as SC-04; LOW-3 PD-07 cites S-001 only. All inside the owned file and reversible.
+- Human interventions: PD-01 to PD-09 (S-001).
+- Agent usage: launches 1; tokens 30476; duration 1 minute.
 
 ### T06: Configuration update: frontend-developer role and personal-data profile
 - Kind: IMPL
@@ -199,6 +205,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T16:03:26Z | T05 | Status IN_PROGRESS (attempt 1); task worktree WI-1-T05 at base f4ccb0c; agent launched | worktree prepare exit 0 |
 | 2026-10-27T16:03:26Z | T06 | Status IN_PROGRESS (attempt 1); task worktree WI-1-T06 at base f4ccb0c; Orchestrator working | worktree prepare exit 0 |
 | 2026-10-27T16:04:47Z | T06 | Verified and integrated at 32d60da; affected gates PASS; awaiting T07 | verify-ownership exit 0; validate config sections exit 0; evidence/T06-gates.txt |
+| 2026-10-27T16:05:38Z | T05 | Agent report PASS; verified and integrated; affected gates run; awaiting T07 | verify-ownership exit 0; evidence/T05-gates.txt |
 
 ## Recovery log
 
