@@ -229,6 +229,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: add PD-10 and PD-11 to section 3 (decision register) and the security constraint PD-10 establishes to section 5.
 - Acceptance criteria: two HIGH rows citing WI-1 S-002; only sections 3 and 5 changed.
 - Verification: independently verified by T11D.
+- Agent result: PASS (files only; agent has no shell), base 266b29d.
+- Orchestrator verification: task commit 974139e (Orchestrator commit of agent file); `orch worktree verify-ownership` exit 0 (1 changed, 0 outside); diff limited to PD-10, PD-11 (section 3) and SC-05 (section 5); main working tree unchanged; at 974139e, 2026-10-27.
+- Integration commit(s): 16013be (merge --no-ff of task/WI-1/T11C). Affected gates at 16013be: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T11C-gates.txt). Verifier: T11D.
+- Decisions: LOW-1 PD-10 points to SC-05 for the condition; LOW-2 PD-11 names U-04 and HIGH-06.
+- Human interventions: PD-10, PD-11 (S-002).
+- Agent usage: launches 1; tokens 21369; duration 1 minute.
 
 ### T11D: Stage-2 decisions verification
 - Kind: VERIFY
@@ -351,6 +357,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T17:30:39Z | T11 | Dependency T11D added | stage-2 PO decisions follow-up |
 | 2026-10-27T17:30:47Z | T11B | Status IN_PROGRESS (attempt 1); agent launched | worktree prepare exit 0 at base 266b29d |
 | 2026-10-27T17:30:47Z | T11C | Status IN_PROGRESS (attempt 1); agent launched | worktree prepare exit 0 at base 266b29d |
+| 2026-10-27T17:32:07Z | T11C | Agent report PASS; verified and integrated at 16013be; affected gates PASS; awaiting T11D | verify-ownership exit 0; evidence/T11C-gates.txt |
 
 ## Recovery log
 
