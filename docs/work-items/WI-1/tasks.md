@@ -47,11 +47,11 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T13 | Collect public provider documentation for the PD-01 research | IMPL | Orchestrator | T11J | DONE | 1 | 70906b2 | `docs/work-items/WI-1/evidence/T13-gates.txt` |
 | T14 | Provider research analysis and recommendation | IMPL | architect | T13, T53 | PENDING | 0 | - | - |
 | T15 | Workspace scaffolding, tooling and server skeleton | IMPL | backend-developer | T11J | DONE | 1 | 93a4795 | `docs/work-items/WI-1/evidence/T15-gates.txt` |
-| T16 | Web application skeleton | IMPL | frontend-developer | T15 | PENDING | 0 | - | - |
-| T17 | Configuration, catalog, display formatting and egress client | IMPL | backend-developer | T15 | PENDING | 0 | - | - |
-| T18 | Persistence: SQLite access, migration runner and initial schema | IMPL | backend-developer | T15 | PENDING | 0 | - | - |
+| T16 | Web application skeleton | IMPL | frontend-developer | T15 | IN_PROGRESS | 1 | - | - |
+| T17 | Configuration, catalog, display formatting and egress client | IMPL | backend-developer | T15 | IN_PROGRESS | 1 | - | - |
+| T18 | Persistence: SQLite access, migration runner and initial schema | IMPL | backend-developer | T15 | IN_PROGRESS | 1 | - | - |
 | T19 | HTTP platform, composition root and local-origin protections | IMPL | backend-developer | T17, T18 | PENDING | 0 | - | - |
-| T20 | HTTP contract promotion and shared API schemas | IMPL | backend-developer | T15 | PENDING | 0 | - | - |
+| T20 | HTTP contract promotion and shared API schemas | IMPL | backend-developer | T15 | IN_PROGRESS | 1 | - | - |
 | T21 | Sports-data provider port, payload validation and fixture adapter | IMPL | backend-developer | T17, T20 | PENDING | 0 | - | - |
 | T22 | AI provider port, stub adapter and OpenAI-compatible adapter | IMPL | backend-developer | T17 | PENDING | 0 | - | - |
 | T23 | Synthetic fixture scenarios | IMPL | qa-engineer | T21, T22 | PENDING | 0 | - | - |
@@ -1151,6 +1151,10 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T21:55:34Z | T15 | Status DONE | integration commit 93a4795; evidence/T15-gates.txt PASS; Orchestrator re-run of typecheck, lint, unit (118), integration (3), live; npm ci offline |
 | 2026-10-27T21:55:34Z | - | OD-32 (dependency set), OD-33 (moderate fflate advisory accepted), OD-34 (T19 owns the smoke test) recorded | T15 report |
 | 2026-10-27T21:55:34Z | T19 | Files owned extended by OD-34 (apps/server/test/integration/smoke/**) | OD-34 |
+| 2026-10-27T21:55:48Z | T16 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-27T21:55:48Z | T17 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-27T21:55:48Z | T18 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-27T21:55:48Z | T20 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 
 ## Recovery log
 
