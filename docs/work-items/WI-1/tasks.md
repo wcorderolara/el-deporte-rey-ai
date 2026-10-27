@@ -35,7 +35,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11D | Stage-2 decisions verification | VERIFY | Orchestrator | T11A, T11B, T11C | DONE | 1 | d98a135 | `docs/work-items/WI-1/evidence/T11D-validate.txt` |
 | T11 | Architecture verification | VERIFY | Orchestrator | T09, T10, T11D | DONE | 1 | 53e02a7 | `docs/work-items/WI-1/evidence/T11-plan-check.txt` |
 | T11E | Intake of the provider and data-mode change (S-003) | IMPL | Orchestrator | T11 | IN_PROGRESS | 1 | - | - |
-| T11F | Requirements update for PD-12 and PD-13 | IMPL | product-manager | T11E | IN_PROGRESS | 1 | - | - |
+| T11F | Requirements update for PD-12, PD-13 and PD-14 | IMPL | product-manager | T11E | IN_PROGRESS | 1 | - | - |
 | T11G | Architecture delta and plan reconciliation for PD-12 and PD-13 | IMPL | architect | T11F | PENDING | 0 | - | - |
 | T11H | Security design review of the provider and data-mode change | IMPL | security-reviewer | T11G | PENDING | 0 | - | - |
 | T11I | Change requirements verification | VERIFY | Orchestrator | T11E, T11F | PENDING | 0 | - | - |
@@ -327,16 +327,16 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Agent: Orchestrator
 - Depends on: T11
 - Files owned: `docs/work-items/WI-1/intake/**`
-- Scope: record the Product Owner change message of 2026-10-27 (football-data.org provider selection; LIVE_DATA, MANUAL_DATA and DEMO_DATA modes) verbatim as source S-003 at precedence level 1 and rescan the intake.
+- Scope: record the Product Owner change message of 2026-10-27 (football-data.org provider selection; LIVE_DATA, MANUAL_DATA and DEMO_DATA modes) verbatim as source S-003, and the scope clarification (multi-competition platform) verbatim as source S-004, both at precedence level 1, and rescan the intake.
 - Acceptance criteria: S-003 analyzed at level 1; candidates resolved by T11F; checked by T11I.
 - Verification: independently verified by T11I.
 
-### T11F: Requirements update for PD-12 and PD-13
+### T11F: Requirements update for PD-12, PD-13 and PD-14
 - Kind: IMPL
 - Agent: product-manager
 - Depends on: T11E
 - Files owned: `docs/work-items/WI-1/requirements.md`, `docs/work-items/WI-1/requirements.json`
-- Scope: incremental update for S-003 (PD-12 provider selection and credentials; PD-13 data acquisition modes, manual import and verification statuses); resolve the new intake candidates; classify questions.
+- Scope: incremental update for S-003 and S-004 (PD-12 provider selection and credentials; PD-13 data acquisition modes, manual import and verification statuses; PD-14 multi-competition scope and provider independence); resolve the new intake candidates; classify questions.
 - Acceptance criteria: existing record IDs preserved (supersede, never delete); new records traced to S-003; `orch requirements check` passes.
 - Verification: `orch requirements check --work-item 'WI-1' --at .` -> exit 0
 
@@ -754,6 +754,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | PD-11 | HIGH | PO decision PD-11 (E-08, U-04): http-api contract-evolution policy approved as written in architecture-delta section 2.1 (additive-only within v1; breaking changes need a new major path and a PO decision) | other policy | PO decision | S-002; Product Owner 2026-10-27 |
 | PD-12 | HIGH | PO decision PD-12: football-data.org API v4 (https://api.football-data.org/v4) selected as preferred primary sports-data provider for the MVP; initial competition UEFA Champions League (code CL, id 2001); token from environment variable FOOTBALL_DATA_API_TOKEN sent in X-Auth-Token; credential rules 1-7 of S-003; rate-limit headers respected; two-source policy preserved (single-source results awaiting independent verification, not publishable); no purchase or upgrade | other providers | PO decision | S-003; Product Owner 2026-10-27 |
 | PD-13 | HIGH | PO decision PD-13: data acquisition modes LIVE_DATA (football-data.org), MANUAL_DATA (JSON, CSV, web form; competitions without public API, initial example Liga Nacional de Guatemala) and DEMO_DATA (synthetic fixtures), one normalized domain representation, manual import rules 1-10 of S-003, statuses UNVERIFIED, VERIFIED, MANUALLY_APPROVED (manual approval never represented as independent verification), adapters FootballDataProvider, ManualDataProvider, FixtureDataProvider | single LIVE mode | PO decision | S-003; Product Owner 2026-10-27 |
+| PD-14 | HIGH | PO decision PD-14 (scope clarification): the platform is dynamic and multi-competition; Champions League is only the initial validation scenario and never a hardcoded dependency; dynamic competition discovery from configured providers (catalogue, seasons, matchdays or stages, matches, results, standings, different tournament structures, unavailable competitions and features, subscription restrictions); provider IDs only in adapters or configuration; manual competitions in the same catalogue; one or more sources per competition with the used source recorded; provider-neutral domain concepts; MVP demonstrates at least two LIVE_DATA competitions (subject to provider coverage), one MANUAL_DATA and one DEMO_DATA competition; no provider-specific features beyond this capability | single-competition MVP | PO decision | S-004; Product Owner 2026-10-27 |
 | OD-10 | MEDIUM | R-424: the PD-02 two-source agreement rule applies to every fact used in content (teams in a match, match status, competition context), not only scores, dates and standings | apply the rule only to scores, dates and standings | low (stricter default; can be relaxed) | MED-04, S-000 lines 25-26, S-001 lines 14-19; PO notified in stage-1 report |
 | OD-11 | MEDIUM | R-425: selectable content languages are Spanish (default) and English, held as configuration | Spanish only; open list | low (configuration) | MED-04, S-001 line 37; PO notified in stage-1 report |
 | OD-12 | MEDIUM | R-426: the verified official team name comes from the independent official source; team identity is matched across sources and an unmatched team is not verified; any other name form fails Visual QA and is not approvable; hashtags may use a hashtag-safe form of the name | name from the primary API; allow display aliases | low (rule configurable before content exists) | MED-04, S-001 lines 4-5, 38; PO notified in stage-1 report, may override |
@@ -893,6 +894,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T18:27:22Z | T11I | Task added; status PENDING | provider and data-mode change (S-003) |
 | 2026-10-27T18:27:22Z | T11J | Task added; status PENDING | provider and data-mode change (S-003) |
 | 2026-10-27T18:27:29Z | T11F | Status IN_PROGRESS (attempt 1); agent launched | worktree prepare exit 0 at base 4757d4e |
+| 2026-10-27T18:38:28Z | T11E | Scope extended: PO scope clarification recorded as S-004 (level 1); intake rescan exit 0: 5 analyzed, new candidates idCollisions[0], references[1] | S-004 |
+| 2026-10-27T18:38:28Z | - | PO decision PD-14 (multi-competition scope, provider independence) recorded | S-004 |
+| 2026-10-27T18:38:29Z | T11F | Scope extended to S-004 while in progress (MED-05 re-plan within scope): integration merged into the task branch, ownership base moves to that merge | S-004 intake commit |
 
 ## Recovery log
 
