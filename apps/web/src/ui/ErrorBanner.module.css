@@ -1,0 +1,60 @@
+.banner {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--edr-color-error-text);
+  border-left-width: 0.5rem;
+  border-radius: 0.25rem;
+  color: var(--edr-color-error-text);
+  background: var(--edr-color-error-surface);
+}
+
+.banner p {
+  margin: 0.25rem 0;
+}
+
+.title {
+  font-weight: 700;
+}
+
+.list {
+  margin: 0.25rem 0;
+  padding-left: 1.25rem;
+}
+
+.tableWrapper {
+  max-height: 20rem;
+  overflow: auto;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  color: var(--edr-color-text);
+  background: var(--edr-color-background);
+  font-size: 0.875rem;
+}
+
+.table caption {
+  text-align: left;
+  font-weight: 700;
+  color: var(--edr-color-error-text);
+  padding: 0.25rem 0;
+}
+
+.table th,
+.table td {
+  border: 1px solid var(--edr-color-border);
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.retry {
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--edr-color-error-text);
+  border-radius: 0.25rem;
+  color: var(--edr-color-error-text);
+  background: var(--edr-color-background);
+  cursor: pointer;
+}
