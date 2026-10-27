@@ -37,7 +37,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11E | Intake of the provider and data-mode change (S-003) | IMPL | Orchestrator | T11 | DONE | 1 | 4757d4e, 19bfba9 | T11I |
 | T11F | Requirements update for PD-12, PD-13 and PD-14 | IMPL | product-manager | T11E | DONE | 1 | 1715e21 | T11I |
 | T11G | Architecture delta and plan reconciliation for PD-12, PD-13 and PD-14 | IMPL | architect | T11F | IN_PROGRESS | 2 | - | - |
-| T11H | Security design review of the provider and data-mode change | IMPL | security-reviewer | T11G | IN_PROGRESS | 1 | - | - |
+| T11H | Security design review of the provider and data-mode change | IMPL | security-reviewer | T11G | IN_PROGRESS | 2 | - | - |
 | T11I | Change requirements verification | VERIFY | Orchestrator | T11E, T11F | DONE | 1 | 3a2f8c9 | `docs/work-items/WI-1/evidence/T11I-requirements-check.txt` |
 | T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I | PENDING | 0 | - | - |
 | T12 | Source of truth: stack, architecture summary, interface conventions, architecture decisions | IMPL | architect | T11 | PENDING | 0 | - | - |
@@ -362,7 +362,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Verification: `orch plan check --plan '<worktree>/docs/work-items/WI-1/architecture/task-plan.md' --tracker '<worktree>/docs/work-items/WI-1/tasks.md' --requirements '<worktree>/docs/work-items/WI-1/requirements.json' --at .` -> exit 0
 - Agent result: PASS (files only; agent has no shell), base d862cb9.
 - Orchestrator verification: task commit 91cba66 (Orchestrator commit of agent files); `orch worktree verify-ownership` exit 0 (8 changed, 0 outside); contract YAML parses (OpenAPI 3.1.0, 1.0.0-proposed.2, 32 paths, 85 schemas); `orch contracts check` exit 0 (0 declared); `orch plan check --at .` exit 0 (42 tasks, 0 violations, 37 warnings: existing IDs T12 to T48); main working tree unchanged; at 91cba66, 2026-10-27.
-- Integration commit(s): bf7dd40 (merge --no-ff of task/WI-1/T11G). Affected gates: evidence/T11G-gates.txt. Verifier: T11J.
+- Attempt 2 (correction for T11H-F01 to T11H-F20): task commit 9680066; `orch worktree verify-ownership` exit 0 (8 changed, 0 outside); contract YAML parses (1.0.0-proposed.2, 32 paths, 85 schemas); `orch plan check --at .` exit 0 (42 tasks, 0 violations, 37 existing-ID warnings); 24 tasks changed in attempt 2, no task added; LOW-1 to LOW-8 (contentBase64; provider-neutral references; test-live test double; T53 after T41; T53 evidence via evidence write; defaults; token removed from process.env); 2026-10-27. Agent usage attempt 2: launches 1; tokens 295325; duration 16 minutes.
+- Integration commit(s): bf7dd40 (attempt 1), 58e906a (attempt 2); merges --no-ff of task/WI-1/T11G. Affected gates at 58e906a: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T11G-gates-2.txt). Affected gates: evidence/T11G-gates.txt. Verifier: T11J.
 - Decisions: LOW-1 to LOW-7 (new delta section 11 with amended pointers; T12 to T48 titles, kinds and agents kept; T49 to T53 new; T12, T13, T15 depend on T11J; UI selection order; synthetic fixtures in documented v4 shape; T10-A1-01 and T10-A1-03 applied; probe as Orchestrator task T53). Architecture decisions AD-21 to AD-34. Escalations: contract revision classification (MED-01 recommended); SC-05 isolation (HIGH-03) after T11H.
 - Human interventions: PD-12, PD-13, PD-14.
 - Agent usage: launches 1; tokens 570659; duration 44 minutes.
@@ -798,8 +799,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-20 | MEDIUM | R-436: with LIVE_DATA enabled, a missing or empty FOOTBALL_DATA_API_TOKEN stops startup with an error naming the variable and never its value; without LIVE_DATA the token is not required; invalid data-mode settings stop startup | warn and continue | low | MED-04, S-003 credential rule 7; PO notified |
 | OD-21 | MEDIUM | R-438: DEMO_DATA projects are labelled as demonstration content in the project list, review view and export | no label | low | MED-04, S-003, S-004; PO notified |
 | OD-22 | MEDIUM | R-440: MVP demonstration set: LIVE_DATA Champions League plus one domestic league whose coverage the capability probe confirms for the PO token, chosen from the catalogue at execution time, never fixed in code; MANUAL_DATA Liga Nacional de Guatemala; DEMO_DATA a fixture competition; fewer than two confirmed LIVE competitions is reported to the PO | fixed list in code | low | MED-04, S-004 lines 103-112; PO notified |
-| OD-23 | MEDIUM | The revision of the never-declared http-api proposal (1.0.0-proposed.2, as corrected for T11H-F01) is a pre-release revision and is re-accepted (supersedes the acceptance scope of OD-14); PD-11 applies from promotion (T20) and declaration (T25) onward; this acceptance does not decide C-1, C-3, R-429 or R-430 | treat as HIGH-06 | low (not declared, no consumer) | MED-01; Contract Safety CS-1 to CS-5 hold per T11H section 9 (CS-1 conditional on F01); effective after the T11H addendum confirms F01; PO notified |
-| OD-24 | MEDIUM | T11H-F13: DEMO_DATA (synthetic) sources never count as accepted or independent confirmation of LIVE_DATA or MANUAL_DATA facts, and sources that share an upstream belong to one independence group, so their agreement is one source | count every configured source separately | low | application of PD-02 independence (BR-01); MED-04; PO notified |
+| OD-23 | MEDIUM | The revision of the never-declared http-api proposal (1.0.0-proposed.2, as corrected for T11H-F01) is a pre-release revision and is re-accepted, covering the T11H-F01 change (contentBase64) and the F06, F11, F14 and F20 description and pattern edits (supersedes the acceptance scope of OD-14); PD-11 applies from promotion (T20) and declaration (T25) onward; this acceptance does not decide C-1, C-3, R-429 or R-430 | treat as HIGH-06 | low (not declared, no consumer) | MED-01; Contract Safety CS-1 to CS-5 hold per T11H section 9 (CS-1 conditional on F01); effective after the T11H addendum confirms F01; PO notified |
+| OD-24 | MEDIUM | T11H-F13: DEMO_DATA (synthetic) sources never count as accepted or independent confirmation of LIVE_DATA or MANUAL_DATA facts, and sources that share an upstream belong to one independence group, so their agreement is one source; the R-256 verification fixture is the `test-live` LIVE_DATA test double (T11G attempt 2, LOW-3), not a DEMO_DATA source | count every configured source separately | low | application of PD-02 independence (BR-01); MED-04; PO notified |
 
 ## Conflicts
 
@@ -957,6 +958,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T20:15:31Z | T11H | Agent report PASS; integrated at 89c721d; design verdict FAIL correctable (T11H-F01, F02 must-fix); addendum pending after T11G correction | design-review-change-1.md; verify-ownership exit 0; evidence/T11H-gates.txt |
 | 2026-10-27T20:15:31Z | T11G | Must-fix findings T11H-F01, T11H-F02 and should-fix F03 to F20: targeted correction, attempt 2 | security/design-review-change-1.md section 4 |
 | 2026-10-27T20:15:31Z | - | OD-23 (contract pre-release revision, MED-01) and OD-24 (demo and shared-upstream sources are not independent) recorded; escalations E-13 (SC-05 isolation) and E-14 (credential identity re-raise) raised | design-review-change-1.md sections 6, 7, 9 |
+| 2026-10-27T20:32:01Z | T11G | Attempt 2 verified and integrated at 58e906a; affected gates PASS; awaiting T11H addendum and T11J | plan check exit 0; YAML parses; evidence/T11G-gates-2.txt |
+| 2026-10-27T20:32:01Z | - | OD-23 scope confirmed (F01, F06, F11, F14, F20 contract edits); OD-24 note: R-256 fixture is the test-live test double | T11G attempt 2 escalations |
+| 2026-10-27T20:32:01Z | T11H | Attempt 2: addendum confirming the T11G correction requested | T11G attempt 2 integrated at 58e906a |
 
 ## Recovery log
 
