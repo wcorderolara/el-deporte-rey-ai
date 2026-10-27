@@ -34,11 +34,11 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11C | Record PD-10 and PD-11 in the source-of-truth decision register | IMPL | architect | T11A | DONE | 1 | 16013be | T11D |
 | T11D | Stage-2 decisions verification | VERIFY | Orchestrator | T11A, T11B, T11C | DONE | 1 | d98a135 | `docs/work-items/WI-1/evidence/T11D-validate.txt` |
 | T11 | Architecture verification | VERIFY | Orchestrator | T09, T10, T11D | DONE | 1 | 53e02a7 | `docs/work-items/WI-1/evidence/T11-plan-check.txt` |
-| T11E | Intake of the provider and data-mode change (S-003) | IMPL | Orchestrator | T11 | IN_PROGRESS | 1 | - | - |
-| T11F | Requirements update for PD-12, PD-13 and PD-14 | IMPL | product-manager | T11E | IN_PROGRESS | 1 | - | - |
+| T11E | Intake of the provider and data-mode change (S-003) | IMPL | Orchestrator | T11 | DONE | 1 | 4757d4e, 19bfba9 | T11I |
+| T11F | Requirements update for PD-12, PD-13 and PD-14 | IMPL | product-manager | T11E | DONE | 1 | 1715e21 | T11I |
 | T11G | Architecture delta and plan reconciliation for PD-12, PD-13 and PD-14 | IMPL | architect | T11F | IN_PROGRESS | 1 | - | - |
 | T11H | Security design review of the provider and data-mode change | IMPL | security-reviewer | T11G | PENDING | 0 | - | - |
-| T11I | Change requirements verification | VERIFY | Orchestrator | T11E, T11F | IN_PROGRESS | 1 | - | - |
+| T11I | Change requirements verification | VERIFY | Orchestrator | T11E, T11F | DONE | 1 | 3a2f8c9 | `docs/work-items/WI-1/evidence/T11I-requirements-check.txt` |
 | T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I | PENDING | 0 | - | - |
 | T12 | Source of truth: stack, architecture summary, interface conventions, architecture decisions | IMPL | architect | T11 | PENDING | 0 | - | - |
 | T13 | Collect public provider documentation for the PD-01 research | IMPL | Orchestrator | T11 | PENDING | 0 | - | - |
@@ -330,6 +330,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: record the Product Owner change message of 2026-10-27 (football-data.org provider selection; LIVE_DATA, MANUAL_DATA and DEMO_DATA modes) verbatim as source S-003, and the scope clarification (multi-competition platform) verbatim as source S-004, both at precedence level 1, and rescan the intake.
 - Acceptance criteria: S-003 analyzed at level 1; candidates resolved by T11F; checked by T11I.
 - Verification: independently verified by T11I.
+- Agent result: n/a (Orchestrator task).
+- Orchestrator verification: `orch intake scan --rescan` exit 0 for S-003 (4 analyzed) and S-004 (5 analyzed); candidates resolved in T11F; at 19bfba9, 2026-10-27.
+- Integration commit(s): 4757d4e, 19bfba9 (committed directly on work/WI-1). Verifier: T11I.
+- Decisions: PD-12, PD-13, PD-14 recorded.
+- Human interventions: PO messages S-003, S-004.
+- Agent usage: NOT RECORDED (Orchestrator task); documentation review of football-data.org pages by the Orchestrator.
 
 ### T11F: Requirements update for PD-12, PD-13 and PD-14
 - Kind: IMPL
@@ -372,6 +378,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: run the requirements check at the integration HEAD and record the evidence.
 - Acceptance criteria: evidence `RESULT: PASS`.
 - Verification: `orch requirements check --work-item 'WI-1' --at '<integration worktree>'` -> exit 0
+- Agent result: n/a (Orchestrator task).
+- Orchestrator verification: `orch evidence capture -- requirements check` exit 0 (15 rules, 0 failed) at 234e29c, 2026-10-27.
+- Evidence: docs/work-items/WI-1/evidence/T11I-requirements-check.txt; evidence commit 3a2f8c9; VALIDATED_HEAD 234e29cb3c7aa2d3dd699f427f8fb73d3354a0bb.
+- Decisions: none.
+- Human interventions: 0.
+- Agent usage: NOT RECORDED (Orchestrator task).
 
 ### T11J: Change architecture verification
 - Kind: VERIFY
@@ -921,6 +933,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T19:14:43Z | - | Conflicts C-1 to C-3 recorded; OD-16 to OD-22 recorded; escalations E-09 to E-12 raised for the batched PO request | requirements.md sections 10, 11, 13 |
 | 2026-10-27T19:14:43Z | T11G | Status IN_PROGRESS (attempt 1); agent orchestrate:architect launched | T11F integrated |
 | 2026-10-27T19:16:13Z | T11I | Status IN_PROGRESS (attempt 1) | T11E and T11F integrated |
+| 2026-10-27T19:16:28Z | T11I | Status DONE | evidence/T11I-requirements-check.txt RESULT PASS; evidence commit 3a2f8c9; VALIDATED_HEAD 234e29c |
+| 2026-10-27T19:16:28Z | T11E | Status DONE | integration commits 4757d4e, 19bfba9; independently verified by T11I |
+| 2026-10-27T19:16:28Z | T11F | Status DONE | integration commit 1715e21; independently verified by T11I |
 
 ## Recovery log
 
