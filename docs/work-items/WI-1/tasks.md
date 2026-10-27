@@ -52,17 +52,17 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T18 | Persistence: SQLite access, migration runner and initial schema | IMPL | backend-developer | T15 | DONE | 1 | 20d92b2 | `docs/work-items/WI-1/evidence/T18-gates.txt` |
 | T19 | HTTP platform, composition root and local-origin protections | IMPL | backend-developer | T17, T18 | IN_PROGRESS | 1 | - | - |
 | T20 | HTTP contract promotion and shared API schemas | IMPL | backend-developer | T15 | DONE | 2 | 6911bed | `docs/work-items/WI-1/evidence/T20-gates.txt` |
-| T21 | Sports-data provider port, payload validation and fixture adapter | IMPL | backend-developer | T17, T20 | PENDING | 0 | - | - |
+| T21 | Sports-data provider port, payload validation and fixture adapter | IMPL | backend-developer | T17, T20 | IN_PROGRESS | 1 | - | - |
 | T22 | AI provider port, stub adapter and OpenAI-compatible adapter | IMPL | backend-developer | T17 | IN_PROGRESS | 1 | - | - |
 | T23 | Synthetic fixture scenarios | IMPL | qa-engineer | T21, T22 | PENDING | 0 | - | - |
 | T24 | End-to-end and accessibility test harness | IMPL | qa-engineer | T16, T19 | PENDING | 0 | - | - |
 | T25 | Project gates, local-environment settings and contract declaration | IMPL | Orchestrator | T15, T16, T19, T20, T24 | PENDING | 0 | - | - |
 | T26 | Source of truth: exact versions, contract hash, gate and environment notes | IMPL | architect | T12, T25 | PENDING | 0 | - | - |
 | T27 | Projects module and workflow runner | IMPL | backend-developer | T18, T19, T20, T21 | PENDING | 0 | - | - |
-| T28 | Projects UI: list, create, detail and run progress | IMPL | frontend-developer | T16, T20 | PENDING | 0 | - | - |
+| T28 | Projects UI: list, create, detail and run progress | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
 | T29 | Research stage | IMPL | backend-developer | T21, T27 | PENDING | 0 | - | - |
 | T30 | Verification stage: two-source rule, disputes, team identity | IMPL | backend-developer | T21, T27 | PENDING | 0 | - | - |
-| T31 | Facts and verification UI | IMPL | frontend-developer | T16, T20 | PENDING | 0 | - | - |
+| T31 | Facts and verification UI | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
 | T32 | Content stage: structure, AI drafting, fact placeholders, content checks | IMPL | backend-developer | T22, T27 | PENDING | 0 | - | - |
 | T33 | Brand asset registry | IMPL | backend-developer | T27 | PENDING | 0 | - | - |
 | T34 | Rendering stage and carousel templates | IMPL | backend-developer | T27, T33 | PENDING | 0 | - | - |
@@ -1197,6 +1197,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T22:22:18Z | - | OD-38 (capitalized_tokens shape) and OD-39 (ajv layout fix moved to T43; T43 owns package.json and package-lock.json) recorded | T20 report E-1, E-2 |
 | 2026-10-27T22:22:18Z | T43 | Files owned extended by OD-39 (package.json, package-lock.json) | OD-39 |
 | 2026-10-27T22:23:20Z | T20 | Status DONE | integration commit 6911bed; evidence/T20-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-27T22:23:33Z | T21 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-27T22:23:33Z | T28 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-27T22:23:33Z | T31 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 
 ## Recovery log
 
