@@ -27,6 +27,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T06 | Configuration update: frontend-developer role and personal-data profile | IMPL | Orchestrator | T03 | DONE | 1 | 32d60da | T07 |
 | T07 | Configuration and source-of-truth verification | VERIFY | Orchestrator | T05, T06 | DONE | 1 | f648f85 | `docs/work-items/WI-1/evidence/T07-validate.txt` |
 | T08 | Follow-up requirements verification | VERIFY | Orchestrator | T03, T04, T07 | DONE | 1 | 70befa9 | `docs/work-items/WI-1/evidence/T08-requirements-check.txt` |
+| T09 | Architecture delta and task plan | IMPL | architect | T08 | IN_PROGRESS | 1 | - | - |
+| T10 | Security design review of the architecture | IMPL | security-reviewer | T09 | PENDING | 0 | - | - |
+| T11 | Architecture verification | VERIFY | Orchestrator | T09, T10 | PENDING | 0 | - | - |
 
 ## Tasks
 
@@ -165,6 +168,33 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Human interventions: 0.
 - Agent usage: NOT RECORDED (Orchestrator task).
 
+### T09: Architecture delta and task plan
+- Kind: IMPL
+- Agent: architect
+- Depends on: T08
+- Files owned: `docs/work-items/WI-1/architecture/**`
+- Scope: full-mode architecture (new system: subsystems, trust boundaries to external data and AI providers, persistence), technology stack proposal, provider research plan (PD-01), contract proposals, security delta, decisions and the task plan starting at T12.
+- Acceptance criteria: plan check passes; every acceptance criterion of the requirement records is named by at least one plan task; plan contains a security-reviewer VERIFY task and a final gate-run VERIFY task.
+- Verification: `orch plan check --plan '<worktree>/docs/work-items/WI-1/architecture/task-plan.md' --tracker '<worktree>/docs/work-items/WI-1/tasks.md' --requirements '<worktree>/docs/work-items/WI-1/requirements.json' --at .` -> exit 0
+
+### T10: Security design review of the architecture
+- Kind: IMPL
+- Agent: security-reviewer
+- Depends on: T09
+- Files owned: `docs/work-items/WI-1/security/**`
+- Scope: design-review mode: threat model and review of the architecture and security delta of T09 (full mode trigger); findings classified, must-fix findings returned to T09 as targeted corrections.
+- Acceptance criteria: review report under the security directory with a verdict and classified findings; no open must-fix finding.
+- Verification: independently verified by T11.
+
+### T11: Architecture verification
+- Kind: VERIFY
+- Agent: Orchestrator
+- Depends on: T09, T10
+- Files owned: `docs/work-items/WI-1/evidence/T11-plan-check.txt`
+- Scope: run the plan check at the integration HEAD and record the evidence.
+- Acceptance criteria: evidence `RESULT: PASS` with `VALIDATED_HEAD` at the integration HEAD.
+- Verification: `orch plan check --plan ... --tracker ... --requirements ... --at '<integration worktree>'` -> exit 0
+
 ## Decisions
 
 | ID | Level | Decision | Alternatives | Reversal cost | Source / PO notified |
@@ -244,6 +274,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T16:19:42Z | T03 | Status DONE | integration commit f4ccb0c; independently verified by T08 |
 | 2026-10-27T16:19:42Z | T04 | Status DONE | integration commit 01a71a7; independently verified by T08 |
 | 2026-10-27T16:19:42Z | - | Ordering correction: T05 and T06 were recorded DONE at 5ec665d before their dependency T03; T03 now DONE | tracker check at 5ec665d reported CT-03 for T05, T06 |
+| 2026-10-27T16:32:21Z | T09 | Task added; status IN_PROGRESS (attempt 1); full-mode architecture | stage 2 per planning workflow |
+| 2026-10-27T16:32:21Z | T10 | Task added; status PENDING; design review triggered by full-mode architecture | planning workflow section 4 |
+| 2026-10-27T16:32:21Z | T11 | Task added; status PENDING | stage 2 per planning workflow |
 
 ## Recovery log
 
