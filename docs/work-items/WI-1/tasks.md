@@ -18,9 +18,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 
 | ID | Title | Kind | Agent | Depends on | Status | Attempts | Commit(s) | Evidence |
 |----|-------|------|-------|------------|--------|----------|-----------|----------|
-| T00 | Intake of the Product Owner launch text | IMPL | Orchestrator | - | IN_PROGRESS | 1 | - | - |
-| T01 | Normalized requirements | IMPL | product-manager | T00 | IN_PROGRESS | 1 | - | - |
-| T02 | Requirements verification | VERIFY | Orchestrator | T00, T01 | IN_PROGRESS | 1 | - | - |
+| T00 | Intake of the Product Owner launch text | IMPL | Orchestrator | - | DONE | 1 | 1176f8c | T02 |
+| T01 | Normalized requirements | IMPL | product-manager | T00 | DONE | 1 | dd9499e | T02 |
+| T02 | Requirements verification | VERIFY | Orchestrator | T00, T01 | DONE | 1 | c68b058 | docs/work-items/WI-1/evidence/T02-requirements-check.txt |
 
 ## Tasks
 
@@ -32,6 +32,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: record the inline launch text verbatim, run the intake scan, produce the inventory and the intake record (starting point SP-1, mode full, S-000 at precedence level 1).
 - Acceptance criteria: intake record and inventory checked by requirements rules RQ-02, RQ-08, RQ-09, RQ-11 and RQ-13 in T02.
 - Verification: independently verified by T02 (`orch requirements check --work-item 'WI-1'` at the integration HEAD).
+- Agent result: n/a (Orchestrator task).
+- Orchestrator verification: `orch intake scan` exit 0 (1 analyzed, 0 unsupported, 0 excluded, 0 candidates); `orch tracker check` exit 0 at 1176f8c, 2026-10-27.
+- Integration commit(s): 1176f8c (committed directly on work/WI-1). Verifier: T02.
+- Decisions: none.
+- Human interventions: 0.
+- Agent usage: NOT RECORDED (Orchestrator task).
 
 ### T01: Normalized requirements
 - Kind: IMPL
@@ -56,6 +62,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: run the requirements check at the integration HEAD and record the evidence.
 - Acceptance criteria: evidence `RESULT: PASS` with `VALIDATED_HEAD` at the integration HEAD.
 - Verification: `orch requirements check --work-item 'WI-1' --at '<integration worktree>'` -> exit 0
+- Agent result: n/a (Orchestrator task).
+- Orchestrator verification: `orch evidence capture -- requirements check` exit 0 (15 rules, 0 failed) at 17f8786, 2026-10-27; `orch evidence check` exit 0 (6 checks).
+- Evidence: docs/work-items/WI-1/evidence/T02-requirements-check.txt; evidence commit c68b058; VALIDATED_HEAD 17f87863c4c632c7e5b4e983813c6f4d60a5d120.
+- Decisions: none.
+- Human interventions: 0.
+- Agent usage: NOT RECORDED (Orchestrator task).
 
 ## Decisions
 
@@ -97,6 +109,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T15:26:44Z | T01 | Status IN_PROGRESS (attempt 1); task worktree WI-1-T01 at base 1176f8c; agent orchestrate:product-manager launched | worktree prepare exit 0 |
 | 2026-10-27T15:42:04Z | T01 | Agent report PASS; verified and integrated at dd9499e; affected gates PASS; awaiting T02 | requirements check exit 0; evidence/T01-gates.txt |
 | 2026-10-27T15:42:04Z | T02 | Status IN_PROGRESS (attempt 1) | T00 and T01 integrated at dd9499e |
+| 2026-10-27T15:42:31Z | T02 | Status DONE | evidence/T02-requirements-check.txt RESULT PASS; evidence commit c68b058; VALIDATED_HEAD 17f8786 |
+| 2026-10-27T15:42:31Z | T00 | Status DONE | integration commit 1176f8c; independently verified by T02 |
+| 2026-10-27T15:42:31Z | T01 | Status DONE | integration commit dd9499e; independently verified by T02 |
 
 ## Recovery log
 
