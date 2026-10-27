@@ -1,0 +1,47 @@
+{
+  "name": "el-deporte-rey-ai",
+  "version": "0.0.0",
+  "private": true,
+  "description": "El Deporte Rey GT: local, single-operator AI sports-content platform (MVP)",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.22.2 <23"
+  },
+  "scripts": {
+    "typecheck": "tsc -b tsconfig.json && npm run typecheck --workspaces --if-present",
+    "lint": "eslint --max-warnings 0 . && prettier --check .",
+    "format": "prettier --write .",
+    "test:unit": "vitest run --project unit --project unit-web",
+    "test:integration": "vitest run --project integration",
+    "test:contract": "vitest run --project contract",
+    "test:live": "vitest run --project live --passWithNoTests",
+    "build": "npm run build --workspaces --if-present",
+    "test:e2e": "npm run build && node e2e/run.mjs --grep-invert @a11y",
+    "test:a11y": "npm run build && node e2e/run.mjs --grep @a11y",
+    "dev": "npm run dev:api & npm run dev:web; wait",
+    "dev:api": "tsc -b apps/server && (tsc -b apps/server --watch --preserveWatchOutput & node --watch --env-file-if-exists=.env.local --disable-warning=ExperimentalWarning apps/server/dist/src/main.js)",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "start": "node --env-file-if-exists=.env.local --disable-warning=ExperimentalWarning apps/server/dist/src/main.js",
+    "probe:football-data": "npm run build && node --env-file-if-exists=.env.local apps/server/dist/scripts/football-data-probe.js"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.0",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.7",
+    "@types/node": "22.20.5",
+    "eslint": "10.12.0",
+    "jsdom": "30.1.2",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.4"
+  }
+}
