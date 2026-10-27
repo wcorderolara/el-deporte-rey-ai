@@ -20,7 +20,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 |----|-------|------|-------|------------|--------|----------|-----------|----------|
 | T00 | Intake of the Product Owner launch text | IMPL | Orchestrator | - | DONE | 1 | 1176f8c | T02 |
 | T01 | Normalized requirements | IMPL | product-manager | T00 | DONE | 1 | dd9499e | T02 |
-| T02 | Requirements verification | VERIFY | Orchestrator | T00, T01 | DONE | 1 | c68b058 | docs/work-items/WI-1/evidence/T02-requirements-check.txt |
+| T02 | Requirements verification | VERIFY | Orchestrator | T00, T01 | DONE | 1 | c68b058 | `docs/work-items/WI-1/evidence/T02-requirements-check.txt` |
 
 ## Tasks
 
@@ -112,6 +112,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T15:42:31Z | T02 | Status DONE | evidence/T02-requirements-check.txt RESULT PASS; evidence commit c68b058; VALIDATED_HEAD 17f8786 |
 | 2026-10-27T15:42:31Z | T00 | Status DONE | integration commit 1176f8c; independently verified by T02 |
 | 2026-10-27T15:42:31Z | T01 | Status DONE | integration commit dd9499e; independently verified by T02 |
+| 2026-10-27T15:42:50Z | T02 | Evidence cell path formatted as code span so the tracker check reads it | tracker check CT-08 on da8700e |
 
 ## Recovery log
 
