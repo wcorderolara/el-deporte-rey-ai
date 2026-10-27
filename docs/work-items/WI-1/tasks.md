@@ -29,7 +29,11 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T08 | Follow-up requirements verification | VERIFY | Orchestrator | T03, T04, T07 | DONE | 1 | 70befa9 | `docs/work-items/WI-1/evidence/T08-requirements-check.txt` |
 | T09 | Architecture delta and task plan | IMPL | architect | T08 | IN_PROGRESS | 3 | - | - |
 | T10 | Security design review of the architecture | IMPL | security-reviewer | T09 | IN_PROGRESS | 2 | - | - |
-| T11 | Architecture verification | VERIFY | Orchestrator | T09, T10 | PENDING | 0 | - | - |
+| T11A | Intake of the stage-2 Product Owner decisions | IMPL | Orchestrator | T08 | IN_PROGRESS | 1 | - | - |
+| T11B | Record PD-10 and PD-11 in the requirements | IMPL | product-manager | T11A | PENDING | 0 | - | - |
+| T11C | Record PD-10 and PD-11 in the source-of-truth decision register | IMPL | architect | T11A | PENDING | 0 | - | - |
+| T11D | Stage-2 decisions verification | VERIFY | Orchestrator | T11A, T11B, T11C | PENDING | 0 | - | - |
+| T11 | Architecture verification | VERIFY | Orchestrator | T09, T10, T11D | PENDING | 0 | - | - |
 
 ## Tasks
 
@@ -199,10 +203,46 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Human interventions: 0.
 - Agent usage: launches 1; tokens 199373; duration 13 minutes.
 
+### T11A: Intake of the stage-2 Product Owner decisions
+- Kind: IMPL
+- Agent: Orchestrator
+- Depends on: T08
+- Files owned: `docs/work-items/WI-1/intake/**`
+- Scope: record the Product Owner message of 2026-10-27 answering E-07 and E-08 verbatim as source S-002 (precedence level 1) and rescan the intake.
+- Acceptance criteria: S-002 analyzed at level 1; checked by the requirements rules in T11D.
+- Verification: independently verified by T11D.
+
+### T11B: Record PD-10 and PD-11 in the requirements
+- Kind: IMPL
+- Agent: product-manager
+- Depends on: T11A
+- Files owned: `docs/work-items/WI-1/requirements.md`, `docs/work-items/WI-1/requirements.json`
+- Scope: add PD-10 (U-03 option A with its conditions) and PD-11 (U-04 contract-evolution policy) to the requirements decisions, with the records they establish, citing S-002; update the intake summary to the current intake record.
+- Acceptance criteria: both decision IDs present and traced to S-002; `orch requirements check` passes.
+- Verification: `orch requirements check --work-item 'WI-1' --at .` -> exit 0
+
+### T11C: Record PD-10 and PD-11 in the source-of-truth decision register
+- Kind: IMPL
+- Agent: architect
+- Depends on: T11A
+- Files owned: `.orchestrate/source-of-truth.md`
+- Scope: add PD-10 and PD-11 to section 3 (decision register) and the security constraint PD-10 establishes to section 5.
+- Acceptance criteria: two HIGH rows citing WI-1 S-002; only sections 3 and 5 changed.
+- Verification: independently verified by T11D.
+
+### T11D: Stage-2 decisions verification
+- Kind: VERIFY
+- Agent: Orchestrator
+- Depends on: T11A, T11B, T11C
+- Files owned: `docs/work-items/WI-1/evidence/T11D-validate.txt`
+- Scope: run `orch validate` (configuration, trackers, requirements) at the integration HEAD and record the evidence.
+- Acceptance criteria: evidence `RESULT: PASS` with `VALIDATED_HEAD` at the integration HEAD.
+- Verification: `orch validate --work-item 'WI-1' --at '<integration worktree>'` -> exit 0
+
 ### T11: Architecture verification
 - Kind: VERIFY
 - Agent: Orchestrator
-- Depends on: T09, T10
+- Depends on: T09, T10, T11D
 - Files owned: `docs/work-items/WI-1/evidence/T11-plan-check.txt`
 - Scope: run the plan check at the integration HEAD and record the evidence.
 - Acceptance criteria: evidence `RESULT: PASS` with `VALIDATED_HEAD` at the integration HEAD.
@@ -230,6 +270,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | PD-07 | HIGH | PO decision PD-07: default branch is main (confirms the assumed basis of init) | - | PO decision | S-001; Product Owner 2026-10-27 |
 | PD-08 | HIGH | PO decision PD-08: a frontend is required; enable the frontend-developer role in the project configuration (T06) | keep role disabled | PO decision | S-001; Product Owner 2026-10-27 |
 | PD-09 | HIGH | PO decision PD-09: confirms OD-04 (1080 x 1350 carousel format), OD-02 (per slide and caption approval plus final approval) and OD-06 (league-phase-only MVP scope); no automatic publication | - | PO decision | S-001; Product Owner 2026-10-27 |
+| PD-10 | HIGH | PO decision PD-10 (E-07, U-03 option A): in-process processing of untrusted input accepted for WI-1 scope (synthetic fixtures, stub or local AI, operator PNG/JPEG brand files) with the compensating controls of design-review Q2; the first real sports-data adapter, any hosted AI provider or any new input type requires a new security review and a new PO decision on isolation | B worker threads; C separate process | PO decision | S-002; Product Owner 2026-10-27 |
+| PD-11 | HIGH | PO decision PD-11 (E-08, U-04): http-api contract-evolution policy approved as written in architecture-delta section 2.1 (additive-only within v1; breaking changes need a new major path and a PO decision) | other policy | PO decision | S-002; Product Owner 2026-10-27 |
 | OD-10 | MEDIUM | R-424: the PD-02 two-source agreement rule applies to every fact used in content (teams in a match, match status, competition context), not only scores, dates and standings | apply the rule only to scores, dates and standings | low (stricter default; can be relaxed) | MED-04, S-000 lines 25-26, S-001 lines 14-19; PO notified in stage-1 report |
 | OD-11 | MEDIUM | R-425: selectable content languages are Spanish (default) and English, held as configuration | Spanish only; open list | low (configuration) | MED-04, S-001 line 37; PO notified in stage-1 report |
 | OD-12 | MEDIUM | R-426: the verified official team name comes from the independent official source; team identity is matched across sources and an unmatched team is not verified; any other name form fails Visual QA and is not approvable; hashtags may use a hashtag-safe form of the name | name from the primary API; allow display aliases | low (rule configurable before content exists) | MED-04, S-001 lines 4-5, 38; PO notified in stage-1 report, may override |
@@ -250,8 +292,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | E-04 | T01 | HIGH decision: R-414 personal or player-level data (HIGH-04, HIGH-07) | 2026-10-27 | 2026-10-27 (PD-04) |
 | E-05 | T01 | HIGH decision: R-415 user and authentication model (HIGH-03) | 2026-10-27 | 2026-10-27 (PD-05) |
 | E-06 | T01 | HIGH decision: R-416 content language and team-name display (HIGH-07) | 2026-10-27 | 2026-10-27 (PD-06) |
-| E-07 | T10 | HIGH decision: U-03 isolation of untrusted-input processing (in-process parsing of provider JSON and operator images) (HIGH-03) | 2026-10-27 | open |
-| E-08 | T09 | HIGH decision: U-04 first contract-evolution policy for http-api (additive-only within v1; breaking changes need a new major path and a PO decision) (HIGH-06, uncertain so raised) | 2026-10-27 | open |
+| E-07 | T10 | HIGH decision: U-03 isolation of untrusted-input processing (in-process parsing of provider JSON and operator images) (HIGH-03) | 2026-10-27 | 2026-10-27 (PD-10) |
+| E-08 | T09 | HIGH decision: U-04 first contract-evolution policy for http-api (additive-only within v1; breaking changes need a new major path and a PO decision) (HIGH-06, uncertain so raised) | 2026-10-27 | 2026-10-27 (PD-11) |
 
 ## Event log (append-only)
 
@@ -301,6 +343,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T17:27:54Z | T09 | Attempt 2 (2520c7a) failed Orchestrator verification: contracts/http-api.openapi.yaml is not valid YAML (line 636, plain scalar with colon-space); targeted correction, attempt 3 | plan check exit 0; YAML parse error at line 636 |
 | 2026-10-27T17:29:10Z | T09 | Attempt 3 verified and integrated at 41af5ee; affected gates PASS; awaiting T10 addendum and T11 | YAML parses; plan check exit 0; evidence/T09-gates-2.txt |
 | 2026-10-27T17:29:10Z | T10 | Attempt 2: addendum confirming the T09 correction requested | T09 correction integrated at 41af5ee |
+| 2026-10-27T17:30:39Z | T11A | Task added; status IN_PROGRESS (attempt 1) | PO message recorded as S-002; intake rescan exit 0: 3 analyzed, S-002 level 1 |
+| 2026-10-27T17:30:39Z | - | PO decisions PD-10 and PD-11 recorded; escalations E-07 and E-08 resolved | S-002 |
+| 2026-10-27T17:30:39Z | T11B | Task added; status PENDING | stage-2 PO decisions follow-up |
+| 2026-10-27T17:30:39Z | T11C | Task added; status PENDING | stage-2 PO decisions follow-up |
+| 2026-10-27T17:30:39Z | T11D | Task added; status PENDING | stage-2 PO decisions follow-up |
+| 2026-10-27T17:30:39Z | T11 | Dependency T11D added | stage-2 PO decisions follow-up |
 
 ## Recovery log
 
