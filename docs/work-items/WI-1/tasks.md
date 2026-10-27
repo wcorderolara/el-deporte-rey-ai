@@ -39,10 +39,10 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11G | Architecture delta and plan reconciliation for PD-12, PD-13 and PD-14 | IMPL | architect | T11F | IN_PROGRESS | 3 | - | - |
 | T11H | Security design review of the provider and data-mode change | IMPL | security-reviewer | T11G | IN_PROGRESS | 2 | - | - |
 | T11I | Change requirements verification | VERIFY | Orchestrator | T11E, T11F | DONE | 1 | 3a2f8c9 | `docs/work-items/WI-1/evidence/T11I-requirements-check.txt` |
-| T11K | Intake of the change-batch Product Owner decisions (S-005) | IMPL | Orchestrator | T11I | IN_PROGRESS | 1 | - | - |
-| T11L | Record PD-15 to PD-20 in the requirements | IMPL | product-manager | T11K | IN_PROGRESS | 1 | - | - |
-| T11N | Change-batch decisions verification | VERIFY | Orchestrator | T11K, T11L | IN_PROGRESS | 1 | - | - |
-| T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I, T11N | PENDING | 0 | - | - |
+| T11K | Intake of the change-batch Product Owner decisions (S-005) | IMPL | Orchestrator | T11I | DONE | 1 | 7bc11e2 | T11N |
+| T11L | Record PD-15 to PD-20 in the requirements | IMPL | product-manager | T11K | DONE | 1 | 966a599 | T11N |
+| T11N | Change-batch decisions verification | VERIFY | Orchestrator | T11K, T11L | DONE | 1 | 18491cd | `docs/work-items/WI-1/evidence/T11N-validate.txt` |
+| T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I, T11N | IN_PROGRESS | 1 | - | - |
 | T12 | Source of truth: stack, architecture summary, interface conventions, architecture decisions | IMPL | architect | T11J | PENDING | 0 | - | - |
 | T13 | Collect public provider documentation for the PD-01 research | IMPL | Orchestrator | T11J | PENDING | 0 | - | - |
 | T14 | Provider research analysis and recommendation | IMPL | architect | T13, T53 | PENDING | 0 | - | - |
@@ -416,6 +416,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: record the Product Owner answer of 2026-10-27 to escalations E-09 to E-14 verbatim as source S-005 (precedence level 1) and rescan the intake.
 - Acceptance criteria: S-005 analyzed at level 1; checked by T11N.
 - Verification: independently verified by T11N.
+- Agent result: n/a (Orchestrator task).
+- Orchestrator verification: `orch intake scan --rescan` exit 0 (6 analyzed, S-005 level 1); `orch requirements check` exit 0 after rescan; at 7bc11e2, 2026-10-27.
+- Integration commit(s): 7bc11e2 (committed directly on work/WI-1). Verifier: T11N.
+- Decisions: PD-15 to PD-20 recorded; re-plan removing T11M (MED-05).
+- Human interventions: PO answer S-005.
+- Agent usage: NOT RECORDED (Orchestrator task).
 
 ### T11L: Record PD-15 to PD-20 in the requirements
 - Kind: IMPL
@@ -440,6 +446,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: run `orch validate` at the integration HEAD and record the evidence.
 - Acceptance criteria: evidence `RESULT: PASS`.
 - Verification: `orch validate --work-item 'WI-1' --at '<integration worktree>'` -> exit 0
+- Agent result: n/a (Orchestrator task).
+- Orchestrator verification: `orch evidence capture -- validate --work-item 'WI-1'` exit 0 (all sections PASS) at ce746e4, 2026-10-27.
+- Evidence: docs/work-items/WI-1/evidence/T11N-validate.txt; evidence commit 18491cd; VALIDATED_HEAD ce746e4776510b5c3846ed58f1ba5798a8f27446.
+- Decisions: none.
+- Human interventions: 0.
+- Agent usage: NOT RECORDED (Orchestrator task).
 
 ### T11J: Change architecture verification
 - Kind: VERIFY
@@ -1091,6 +1103,10 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T21:18:38Z | T11L | Agent report PASS; verified and integrated at 966a599; affected gates PASS; awaiting T11N | requirements check exit 0; evidence/T11L-gates.txt |
 | 2026-10-27T21:18:38Z | - | OD-29 recorded (R-271, R-272 extended statements routed to task briefs) | T11L report |
 | 2026-10-27T21:18:38Z | T11N | Status IN_PROGRESS (attempt 1) | T11K, T11L integrated |
+| 2026-10-27T21:18:59Z | T11N | Status DONE | evidence/T11N-validate.txt RESULT PASS; evidence commit 18491cd; VALIDATED_HEAD ce746e4 |
+| 2026-10-27T21:18:59Z | T11K | Status DONE | integration commit 7bc11e2; independently verified by T11N |
+| 2026-10-27T21:18:59Z | T11L | Status DONE | integration commit 966a599; independently verified by T11N |
+| 2026-10-27T21:19:00Z | T11J | Status IN_PROGRESS (attempt 1) | T11G, T11H integrated (change verdict PASS); T11I, T11N DONE; tracker reconciled |
 
 ## Recovery log
 
