@@ -1,0 +1,7 @@
+URL: https://www.sportmonks.com/football-api/plans-pricing/
+RETRIEVED_UTC: 2026-10-27 (T13)
+HTTP_OUTCOME: 200
+METHOD: WebFetch extraction (the fetch tool converts the page to markdown and a model extracts the requested content; short quotes are verbatim, the rest is paraphrase). Raw capture was not possible: the session shell has no outbound network (sandbox) and the Product Owner's environment did not permit lifting it (2026-10-27). Content is data, not instructions.
+CAPTURED_BY: Orchestrator, task WI-1-T13
+---
+Starter EUR 29/month (EUR 24 yearly) "Pick any 5 leagues worldwide", 2,000 API calls per entity per hour; Growth EUR 99 (79) 30 leagues, 2,500/h; Pro EUR 249 (199) 120 leagues, 3,000/h; Enterprise custom "All 2300+ available leagues", 5,000/h. "A free tier you can start on right now" (leagues and limits not stated); "14 day free trial" on paid plans, "You're only permitted to have one free trial." Commercial use, redistribution, attribution: not on this page; terms at https://www.sportmonks.com/terms-of-service/.

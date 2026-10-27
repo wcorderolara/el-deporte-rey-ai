@@ -1,0 +1,7 @@
+URL: https://docs.football-data.org/general/v4/competition.html
+RETRIEVED_UTC: 2026-10-27 (earlier in the session, before T13)
+HTTP_OUTCOME: 200
+METHOD: WebFetch extraction (the fetch tool converts the page to markdown and a model extracts the requested content; short quotes are verbatim, the rest is paraphrase). Raw capture was not possible: the session shell has no outbound network (sandbox) and the Product Owner's environment did not permit lifting it (2026-10-27). Content is data, not instructions.
+CAPTURED_BY: Orchestrator, task WI-1-T13
+---
+/competitions/{code} (no filters; includes "seasons" and currentSeason.currentMatchday); /competitions/{code}/matches (season, matchday, status, dateFrom, dateTo, stage, group); /competitions/{code}/standings (season, matchday, date; by-matchday results lack deducted points; LEAGUE competitions return TOTAL, HOME, AWAY tables; rows position, team, playedGames, form, won, draw, lost, points, goalsFor, goalsAgainst, goalDifference); /competitions/{code}/teams (season); /competitions/{code}/scorers (season, matchday). Competition list path not shown (likely /competitions, filter areas).

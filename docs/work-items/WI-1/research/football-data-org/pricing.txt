@@ -1,0 +1,7 @@
+URL: https://www.football-data.org/pricing
+RETRIEVED_UTC: 2026-10-27 (earlier in the session, before T13)
+HTTP_OUTCOME: 200
+METHOD: WebFetch extraction (the fetch tool converts the page to markdown and a model extracts the requested content; short quotes are verbatim, the rest is paraphrase). Raw capture was not possible: the session shell has no outbound network (sandbox) and the Product Owner's environment did not permit lifting it (2026-10-27). Content is data, not instructions.
+CAPTURED_BY: Orchestrator, task WI-1-T13
+---
+Free plan: "€0,00 /mo"; 10 calls/minute; "12 competitions"; "Scores delayed"; "Schedules delayed"; fixtures and league tables. Paid columns 49 EUR, 99 EUR, 199 EUR (feature marks not extractable). History "10 seasons of history" listed only under ML Pack Light. Commercial use, redistribution, attribution: not on this page (see about-and-terms.txt). Delay size: not stated.
