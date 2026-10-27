@@ -3,7 +3,7 @@
   "workItem": "WI-1",
   "startingPoint": {
     "id": "SP-4",
-    "basis": "3 inputs (inline text counts as one)"
+    "basis": "4 inputs (inline text counts as one)"
   },
   "mode": "incremental",
   "inputs": [
@@ -24,6 +24,12 @@
       "kind": "file",
       "resolvedPath": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-stage2.md",
       "insideRepository": true
+    },
+    {
+      "input": "/Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/docs/work-items/WI-1/intake/sources/po-change-2026-10-27-provider-and-modes.md",
+      "kind": "file",
+      "resolvedPath": "docs/work-items/WI-1/intake/sources/po-change-2026-10-27-provider-and-modes.md",
+      "insideRepository": true
     }
   ],
   "precedenceAssignment": [
@@ -31,6 +37,11 @@
       "sourceId": "S-000",
       "level": 1,
       "basis": "inline launch instruction of the Product Owner"
+    },
+    {
+      "sourceId": "S-003",
+      "level": 1,
+      "basis": "Product Owner decision named with --precedence"
     },
     {
       "sourceId": "S-002",
@@ -45,9 +56,55 @@
   ],
   "candidates": {
     "exactDuplicates": [],
-    "paragraphDuplicates": [],
+    "paragraphDuplicates": [
+      {
+        "id": "paragraphDuplicates[0]",
+        "refs": [
+          {
+            "sourceId": "S-001",
+            "location": {
+              "heading": null,
+              "lines": "61-61",
+              "page": null
+            }
+          },
+          {
+            "sourceId": "S-003",
+            "location": {
+              "heading": "WI-1 — Additional Product Owner Requirement > Execution",
+              "lines": "324-324",
+              "page": null
+            }
+          }
+        ],
+        "detail": "Do not merge into main, push or deploy."
+      }
+    ],
     "idCollisions": [],
-    "references": [],
+    "references": [
+      {
+        "id": "references[0]",
+        "refs": [
+          {
+            "sourceId": "S-001",
+            "location": {
+              "heading": null,
+              "lines": "1-1",
+              "page": null
+            }
+          },
+          {
+            "sourceId": "S-003",
+            "location": {
+              "heading": "WI-1 — Incremental Planning Update: Sports Data Provider",
+              "lines": "1-1",
+              "page": null
+            }
+          }
+        ],
+        "detail": "mentions WI-1 defined in S-003"
+      }
+    ],
     "dependencies": [],
     "instructions": [
       {
@@ -58,6 +115,34 @@
             "location": {
               "heading": null,
               "lines": "61-61",
+              "page": null
+            }
+          }
+        ],
+        "detail": "rule merge-to-protected: Do not merge into main, push or deploy."
+      },
+      {
+        "id": "instructions[1]",
+        "refs": [
+          {
+            "sourceId": "S-003",
+            "location": {
+              "heading": "WI-1 — Incremental Planning Update: Sports Data Provider > Execution",
+              "lines": "213-213",
+              "page": null
+            }
+          }
+        ],
+        "detail": "rule merge-to-protected: Do not merge into main."
+      },
+      {
+        "id": "instructions[2]",
+        "refs": [
+          {
+            "sourceId": "S-003",
+            "location": {
+              "heading": "WI-1 — Additional Product Owner Requirement > Execution",
+              "lines": "324-324",
               "page": null
             }
           }

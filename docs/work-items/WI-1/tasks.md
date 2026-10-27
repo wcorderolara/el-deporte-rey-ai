@@ -10,7 +10,7 @@
 | Authorization | Product Owner request of 2026-10-27 via orchestrate analyze: requirements analysis only, no implementation. No merge, push or deploy is authorized. |
 | Config sha256 | `6614e48a55c0252c3962656d71eeec2dd29d537309bb39828a6df78b01824354` |
 | Last gate run | none yet |
-| Work-item status | PLANNED |
+| Work-item status | PLANNING (change PD-12, PD-13) |
 
 Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orchestrate/workflows/task-tracking.md. Only the Orchestrator edits this file.
 
@@ -34,6 +34,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11C | Record PD-10 and PD-11 in the source-of-truth decision register | IMPL | architect | T11A | DONE | 1 | 16013be | T11D |
 | T11D | Stage-2 decisions verification | VERIFY | Orchestrator | T11A, T11B, T11C | DONE | 1 | d98a135 | `docs/work-items/WI-1/evidence/T11D-validate.txt` |
 | T11 | Architecture verification | VERIFY | Orchestrator | T09, T10, T11D | DONE | 1 | 53e02a7 | `docs/work-items/WI-1/evidence/T11-plan-check.txt` |
+| T11E | Intake of the provider and data-mode change (S-003) | IMPL | Orchestrator | T11 | IN_PROGRESS | 1 | - | - |
+| T11F | Requirements update for PD-12 and PD-13 | IMPL | product-manager | T11E | PENDING | 0 | - | - |
+| T11G | Architecture delta and plan reconciliation for PD-12 and PD-13 | IMPL | architect | T11F | PENDING | 0 | - | - |
+| T11H | Security design review of the provider and data-mode change | IMPL | security-reviewer | T11G | PENDING | 0 | - | - |
+| T11I | Change requirements verification | VERIFY | Orchestrator | T11E, T11F | PENDING | 0 | - | - |
+| T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I | PENDING | 0 | - | - |
 | T12 | Source of truth: stack, architecture summary, interface conventions, architecture decisions | IMPL | architect | T11 | PENDING | 0 | - | - |
 | T13 | Collect public provider documentation for the PD-01 research | IMPL | Orchestrator | T11 | PENDING | 0 | - | - |
 | T14 | Provider research analysis and recommendation | IMPL | architect | T13 | PENDING | 0 | - | - |
@@ -315,6 +321,60 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Decisions: OD-14, OD-15.
 - Human interventions: PD-10, PD-11 (S-002).
 - Agent usage: NOT RECORDED (Orchestrator task).
+
+### T11E: Intake of the provider and data-mode change (S-003)
+- Kind: IMPL
+- Agent: Orchestrator
+- Depends on: T11
+- Files owned: `docs/work-items/WI-1/intake/**`
+- Scope: record the Product Owner change message of 2026-10-27 (football-data.org provider selection; LIVE_DATA, MANUAL_DATA and DEMO_DATA modes) verbatim as source S-003 at precedence level 1 and rescan the intake.
+- Acceptance criteria: S-003 analyzed at level 1; candidates resolved by T11F; checked by T11I.
+- Verification: independently verified by T11I.
+
+### T11F: Requirements update for PD-12 and PD-13
+- Kind: IMPL
+- Agent: product-manager
+- Depends on: T11E
+- Files owned: `docs/work-items/WI-1/requirements.md`, `docs/work-items/WI-1/requirements.json`
+- Scope: incremental update for S-003 (PD-12 provider selection and credentials; PD-13 data acquisition modes, manual import and verification statuses); resolve the new intake candidates; classify questions.
+- Acceptance criteria: existing record IDs preserved (supersede, never delete); new records traced to S-003; `orch requirements check` passes.
+- Verification: `orch requirements check --work-item 'WI-1' --at .` -> exit 0
+
+### T11G: Architecture delta and plan reconciliation for PD-12 and PD-13
+- Kind: IMPL
+- Agent: architect
+- Depends on: T11F
+- Files owned: `docs/work-items/WI-1/architecture/**`, `.orchestrate/source-of-truth.md`
+- Scope: update the architecture delta, contracts and data model for the football-data.org adapter and the three data acquisition modes; reconcile task-plan.md (preserve T12 to T48 IDs, add tasks only where needed); add PD-12 and PD-13 to the source-of-truth decision register.
+- Acceptance criteria: plan check exit 0 (existing-ID warnings expected); every active acceptance criterion named by a task.
+- Verification: `orch plan check --plan '<worktree>/docs/work-items/WI-1/architecture/task-plan.md' --tracker '<worktree>/docs/work-items/WI-1/tasks.md' --requirements '<worktree>/docs/work-items/WI-1/requirements.json' --at .` -> exit 0
+
+### T11H: Security design review of the provider and data-mode change
+- Kind: IMPL
+- Agent: security-reviewer
+- Depends on: T11G
+- Files owned: `docs/work-items/WI-1/security/**`
+- Scope: delta design review required by SC-05 (first real sports-data adapter; new input types CSV, JSON and form entry) and by the credential handling of PD-12; isolation recommendation for the PO.
+- Acceptance criteria: review addendum with verdict; no open must-fix finding.
+- Verification: independently verified by T11J.
+
+### T11I: Change requirements verification
+- Kind: VERIFY
+- Agent: Orchestrator
+- Depends on: T11E, T11F
+- Files owned: `docs/work-items/WI-1/evidence/T11I-requirements-check.txt`
+- Scope: run the requirements check at the integration HEAD and record the evidence.
+- Acceptance criteria: evidence `RESULT: PASS`.
+- Verification: `orch requirements check --work-item 'WI-1' --at '<integration worktree>'` -> exit 0
+
+### T11J: Change architecture verification
+- Kind: VERIFY
+- Agent: Orchestrator
+- Depends on: T11G, T11H, T11I
+- Files owned: `docs/work-items/WI-1/evidence/T11J-plan-check.txt`
+- Scope: run the plan check at the integration HEAD after the reconciled tracker is committed and record the evidence.
+- Acceptance criteria: evidence `RESULT: PASS`.
+- Verification: `orch plan check --plan ... --tracker ... --requirements ... --at '<integration worktree>'` -> exit 0
 
 ### T12: Source of truth: stack, architecture summary, interface conventions, architecture decisions
 - Kind: IMPL
@@ -692,6 +752,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | PD-09 | HIGH | PO decision PD-09: confirms OD-04 (1080 x 1350 carousel format), OD-02 (per slide and caption approval plus final approval) and OD-06 (league-phase-only MVP scope); no automatic publication | - | PO decision | S-001; Product Owner 2026-10-27 |
 | PD-10 | HIGH | PO decision PD-10 (E-07, U-03 option A): in-process processing of untrusted input accepted for WI-1 scope (synthetic fixtures, stub or local AI, operator PNG/JPEG brand files) with the compensating controls of design-review Q2; the first real sports-data adapter, any hosted AI provider or any new input type requires a new security review and a new PO decision on isolation | B worker threads; C separate process | PO decision | S-002; Product Owner 2026-10-27 |
 | PD-11 | HIGH | PO decision PD-11 (E-08, U-04): http-api contract-evolution policy approved as written in architecture-delta section 2.1 (additive-only within v1; breaking changes need a new major path and a PO decision) | other policy | PO decision | S-002; Product Owner 2026-10-27 |
+| PD-12 | HIGH | PO decision PD-12: football-data.org API v4 (https://api.football-data.org/v4) selected as preferred primary sports-data provider for the MVP; initial competition UEFA Champions League (code CL, id 2001); token from environment variable FOOTBALL_DATA_API_TOKEN sent in X-Auth-Token; credential rules 1-7 of S-003; rate-limit headers respected; two-source policy preserved (single-source results awaiting independent verification, not publishable); no purchase or upgrade | other providers | PO decision | S-003; Product Owner 2026-10-27 |
+| PD-13 | HIGH | PO decision PD-13: data acquisition modes LIVE_DATA (football-data.org), MANUAL_DATA (JSON, CSV, web form; competitions without public API, initial example Liga Nacional de Guatemala) and DEMO_DATA (synthetic fixtures), one normalized domain representation, manual import rules 1-10 of S-003, statuses UNVERIFIED, VERIFIED, MANUALLY_APPROVED (manual approval never represented as independent verification), adapters FootballDataProvider, ManualDataProvider, FixtureDataProvider | single LIVE mode | PO decision | S-003; Product Owner 2026-10-27 |
 | OD-10 | MEDIUM | R-424: the PD-02 two-source agreement rule applies to every fact used in content (teams in a match, match status, competition context), not only scores, dates and standings | apply the rule only to scores, dates and standings | low (stricter default; can be relaxed) | MED-04, S-000 lines 25-26, S-001 lines 14-19; PO notified in stage-1 report |
 | OD-11 | MEDIUM | R-425: selectable content languages are Spanish (default) and English, held as configuration | Spanish only; open list | low (configuration) | MED-04, S-001 line 37; PO notified in stage-1 report |
 | OD-12 | MEDIUM | R-426: the verified official team name comes from the independent official source; team identity is matched across sources and an unmatched team is not verified; any other name form fails Visual QA and is not approvable; hashtags may use a hashtag-safe form of the name | name from the primary API; allow display aliases | low (rule configurable before content exists) | MED-04, S-001 lines 4-5, 38; PO notified in stage-1 report, may override |
@@ -823,6 +885,13 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T17:43:29Z | T46 | created PENDING from plan /Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/docs/work-items/WI-1/architecture/task-plan.md | - |
 | 2026-10-27T17:43:29Z | T47 | created PENDING from plan /Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/docs/work-items/WI-1/architecture/task-plan.md | - |
 | 2026-10-27T17:43:29Z | T48 | created PENDING from plan /Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/docs/work-items/WI-1/architecture/task-plan.md | - |
+| 2026-10-27T18:27:22Z | T11E | Task added; status IN_PROGRESS (attempt 1) | PO change message recorded as S-003; intake rescan exit 0: SP-4, 4 analyzed, candidates: 1 paragraph duplicate, 1 reference, 3 instructions |
+| 2026-10-27T18:27:22Z | - | PO decisions PD-12 (football-data.org) and PD-13 (data acquisition modes) recorded; change handled as a new architecture task with its own verification (planning.md section 5) | S-003 |
+| 2026-10-27T18:27:22Z | T11F | Task added; status PENDING | provider and data-mode change (S-003) |
+| 2026-10-27T18:27:22Z | T11G | Task added; status PENDING | provider and data-mode change (S-003) |
+| 2026-10-27T18:27:22Z | T11H | Task added; status PENDING | provider and data-mode change (S-003) |
+| 2026-10-27T18:27:22Z | T11I | Task added; status PENDING | provider and data-mode change (S-003) |
+| 2026-10-27T18:27:22Z | T11J | Task added; status PENDING | provider and data-mode change (S-003) |
 
 ## Recovery log
 

@@ -19,10 +19,16 @@
       "kind": "file",
       "path": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-stage2.md",
       "insideRepository": true
+    },
+    {
+      "input": "/Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/docs/work-items/WI-1/intake/sources/po-change-2026-10-27-provider-and-modes.md",
+      "kind": "file",
+      "path": "docs/work-items/WI-1/intake/sources/po-change-2026-10-27-provider-and-modes.md",
+      "insideRepository": true
     }
   ],
   "counts": {
-    "analyzed": 3,
+    "analyzed": 4,
     "unsupported": 0,
     "excluded": 0
   },
@@ -39,6 +45,21 @@
       "originalPath": null,
       "typeCandidate": "frd",
       "idsFound": []
+    },
+    {
+      "path": "docs/work-items/WI-1/intake/sources/po-change-2026-10-27-provider-and-modes.md",
+      "status": "analyzed",
+      "reason": "text format",
+      "sourceId": "S-003",
+      "reader": "text",
+      "format": "md",
+      "sha256": "4eeb482afc7fcc61d159371d3ea02e0da9e7445079162ac5a94aeebeea9a511f",
+      "bytes": 7529,
+      "originalPath": null,
+      "typeCandidate": "technical-spec",
+      "idsFound": [
+        "WI-1"
+      ]
     },
     {
       "path": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-stage2.md",
