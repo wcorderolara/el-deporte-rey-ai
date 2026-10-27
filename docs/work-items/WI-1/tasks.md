@@ -43,7 +43,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11L | Record PD-15 to PD-20 in the requirements | IMPL | product-manager | T11K | DONE | 1 | 966a599 | T11N |
 | T11N | Change-batch decisions verification | VERIFY | Orchestrator | T11K, T11L | DONE | 1 | 18491cd | `docs/work-items/WI-1/evidence/T11N-validate.txt` |
 | T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I, T11N | DONE | 1 | 91e93b4 | `docs/work-items/WI-1/evidence/T11J-plan-check.txt` |
-| T12 | Source of truth: stack, architecture summary, interface conventions, architecture decisions | IMPL | architect | T11J | IN_PROGRESS | 1 | - | - |
+| T12 | Source of truth: stack, architecture summary, interface conventions, architecture decisions | IMPL | architect | T11J | DONE | 1 | 6d8830e | `docs/work-items/WI-1/evidence/T12-gates.txt` |
 | T13 | Collect public provider documentation for the PD-01 research | IMPL | Orchestrator | T11J | DONE | 1 | 70906b2 | `docs/work-items/WI-1/evidence/T13-gates.txt` |
 | T14 | Provider research analysis and recommendation | IMPL | architect | T13, T53 | PENDING | 0 | - | - |
 | T15 | Workspace scaffolding, tooling and server skeleton | IMPL | backend-developer | T11J | IN_PROGRESS | 1 | - | - |
@@ -476,6 +476,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: fill sections 1 (stack and pinning policy: `architecture.md` section 2; exact versions follow in T26), 2 (architecture summary with links to the WI-1 architecture documents, including the data acquisition modes and the ingestion layer of `architecture.md` section 15), 3 (add the accepted architecture decisions AD-01 to AD-20 of `architecture-delta.md` section 5 and AD-21 to AD-34 of section 11.5, and AD-35 to AD-38 of sections 11.12.2 and 11.13.2, once the Orchestrator has recorded which are accepted; PD-12 to PD-20 were recorded by T11G; update the PD-14 row's "pending ... E-12 ... E-11" note to cite their confirmation by PD-20 and PD-19), 6 (interface conventions of `architecture-delta.md` section 2.1, plus the provider-neutrality conventions of section 11.2 and `contracts/provider-ports.md` section 1: data modes, opaque source references, provider identifiers only in adapters and configuration), 7 (gate notes: ports, disposable data directories, network needs of `npm ci`, `npm audit` and the browser download; no gate uses `FOOTBALL_DATA_API_TOKEN`; `test:live` and `probe:football-data` are manual), 8 (reusable components: platform modules, module kit, display formatting, ingestion port and adapter registry, request budget and projection cache) and 9 (open items of `architecture-delta.md` sections 8 and 11.8). Sections 4 and 5 are not changed by this task (T11G recorded BR-12 to BR-18 and SC-06 to SC-08, and amended BR-10 and SC-05). Reference, do not restate.
 - Acceptance criteria: -
 - Verification: `orch validate --work-item 'WI-1' --at .` -> exit 0
+- Agent result: PASS (files only; agent has no shell), base 24468c5.
+- Orchestrator verification: task commit 1f59463 (Orchestrator commit of agent file); `orch worktree verify-ownership` exit 0 (1 changed, 0 outside); `orch validate --at .` exit 0; scope checked against the attempt-3 plan text (AD-01 to AD-38 incl. AD-35 to AD-38, PD-14 note corrected); main working tree unchanged; at 1f59463, 2026-10-27.
+- Integration commit(s): 6d8830e (merge --no-ff of task/WI-1/T12). Affected gates at 6d8830e: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T12-gates.txt, the evidence file of this task).
+- Decisions: LOW-1 to LOW-6 (AD rows as MEDIUM acceptances via OD-31; open items only in section 9; 11.13.3-a label; section 8 names the creating task; section 7 planned gates; relative links). Reported stale texts: T17 and T15 tracker scopes (corrected by the reconciliation correction), architecture.md and AD-01/AD-28 texts (superseded by OD-30 and AD-38, recorded in the register), section 0 still to be completed.
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 192263; duration 6 minutes.
 
 ### T13: Collect public provider documentation for the PD-01 research
 - Kind: IMPL
@@ -1132,6 +1138,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T21:36:06Z | T13 | Status DONE | integration commit 70906b2; evidence/T13-gates.txt PASS; 20 captures |
 | 2026-10-27T21:36:15Z | - | Finding: football-data.org General Terms and Conditions are published on /about (attribution clause 7.1, logos 9.2); the earlier no-published-terms statement is corrected; R-316 outdated, carried to T14 and the PO | research/football-data-org/about-and-terms.txt |
 | 2026-10-27T21:38:32Z | - | Reconciliation correction (MED-05): the Scope lines of T12, T14, T15, T17, T20, T30, T37, T38, T44, T47, T49, T50, T52, T53 updated to the T11G attempt-3 plan text (missed when the tracker was reconciled after attempt 2); T15 brief updated in flight; no other field changed | plan-vs-tracker diff: only Scope lines differed |
+| 2026-10-27T21:38:50Z | T12 | Status DONE | integration commit 6d8830e; evidence/T12-gates.txt PASS |
 
 ## Recovery log
 
