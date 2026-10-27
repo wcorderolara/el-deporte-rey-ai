@@ -36,7 +36,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11 | Architecture verification | VERIFY | Orchestrator | T09, T10, T11D | DONE | 1 | 53e02a7 | `docs/work-items/WI-1/evidence/T11-plan-check.txt` |
 | T11E | Intake of the provider and data-mode change (S-003) | IMPL | Orchestrator | T11 | IN_PROGRESS | 1 | - | - |
 | T11F | Requirements update for PD-12, PD-13 and PD-14 | IMPL | product-manager | T11E | IN_PROGRESS | 1 | - | - |
-| T11G | Architecture delta and plan reconciliation for PD-12 and PD-13 | IMPL | architect | T11F | PENDING | 0 | - | - |
+| T11G | Architecture delta and plan reconciliation for PD-12, PD-13 and PD-14 | IMPL | architect | T11F | IN_PROGRESS | 1 | - | - |
 | T11H | Security design review of the provider and data-mode change | IMPL | security-reviewer | T11G | PENDING | 0 | - | - |
 | T11I | Change requirements verification | VERIFY | Orchestrator | T11E, T11F | PENDING | 0 | - | - |
 | T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I | PENDING | 0 | - | - |
@@ -339,8 +339,14 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: incremental update for S-003 and S-004 (PD-12 provider selection and credentials; PD-13 data acquisition modes, manual import and verification statuses; PD-14 multi-competition scope and provider independence); resolve the new intake candidates; classify questions.
 - Acceptance criteria: existing record IDs preserved (supersede, never delete); new records traced to S-003; `orch requirements check` passes.
 - Verification: `orch requirements check --work-item 'WI-1' --at .` -> exit 0
+- Agent result: PASS (files only; agent has no shell); base 4757d4e, moved to 414e484 when S-004 was merged into the task branch (MED-05).
+- Orchestrator verification: task commit 9d642dd (Orchestrator commit of agent files); `orch worktree verify-ownership --base 414e484` exit 0 (2 changed, 0 outside); `orch requirements check --at .` exit 0 (15 rules, 0 failed); record diff: 145 before, 267 after, none removed; 7 superseded (R-021, R-101, R-102, R-201, R-210, R-239, R-417) with replacing records named in their basis; 9 amended (R-022, R-030, R-046, R-109, R-110, R-111, R-116, R-226, R-400); 2 open REQUIRES_PRODUCT_OWNER questions (R-429, R-430); main working tree unchanged; at 9d642dd, 2026-10-27.
+- Integration commit(s): 1715e21 (merge --no-ff of task/WI-1/T11F). Affected gates at 1715e21: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T11F-gates.txt). Verifier: T11I.
+- Decisions: LOW-8 to LOW-14 (supersede with pointers; R-400 reclassified; one record per credential and import rule; S-003 and S-004 cited by section and lines; R-119 rejects person fields; paragraph duplicate flagged; IDs in existing ranges). OD-16 to OD-22 concern this task. New acceptance criteria R-243 to R-291; superseded acceptance criteria R-201, R-210, R-239.
+- Human interventions: PD-12, PD-13, PD-14 (S-003, S-004); open E-09 to E-12.
+- Agent usage: launches 1 (one in-flight brief update); tokens 430518; duration 45 minutes.
 
-### T11G: Architecture delta and plan reconciliation for PD-12 and PD-13
+### T11G: Architecture delta and plan reconciliation for PD-12, PD-13 and PD-14
 - Kind: IMPL
 - Agent: architect
 - Depends on: T11F
@@ -761,11 +767,21 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-13 | MEDIUM | U-06: carousel templates are versioned code with a registry, list and preview in the UI; no template editing in the UI for the MVP (R-010) | in-UI template editor | low (additive later) | MED-04, architecture-delta section 8; PO notified in stage-2 report |
 | OD-14 | MEDIUM | U-05: the corrected http-api proposal (contracts/http-api.openapi.yaml at 41af5ee; 29 operations, 24 paths) is accepted as an additive new contract; promotion by T20, declaration in the configuration by T25, hash in the source of truth by T26 | reject or defer the contract | low (additive; not yet declared) | MED-01; Contract Safety CS-1 to CS-5 hold per T10 addendum; PD-11 policy; PO notified in stage-2 report |
 | OD-15 | MEDIUM | T10 addendum observations T10-A1-01 to T10-A1-06 (LOW, non-blocking) are carried as extra constraints in the briefs of the named tasks (A1-01 T20 and T43: declare 403 on GET operations, additive; A1-02 and A1-03 T41 and T46: hygiene subcommand, positive-control test, scripts in lint scope; A1-04 T19 brief wording; A1-05 T32 allowed character exceptions; A1-06 T30 and T43 slug conformance) instead of a fourth architecture attempt | re-open T09 | low | MED-05; design-review.md Addendum 1; PO notified in stage-2 report |
+| OD-16 | MEDIUM | R-431: each catalogue competition has one or more configured data sources (provider-discovered competitions have that LIVE_DATA provider; competitions without a public API have MANUAL_DATA; DEMO_DATA in development, test and demonstration configurations); the operator chooses among the available sources per project and the choice is recorded | single fixed source per competition | low | MED-04, S-004 line 57; PO notified in stage report |
+| OD-17 | MEDIUM | R-433: VERIFIED is the two-source verified state; UNVERIFIED covers every other fact with a reason (awaiting independent verification, disputed, no accepted source); MANUALLY_APPROVED is a separate status only for MANUAL_DATA facts and never counts as verification | separate status per reason | low | MED-04, S-003 verification section; PO notified |
+| OD-18 | MEDIUM | R-434: MANUAL_DATA uses the provider-neutral structure: a season contains matchdays or named stages with matches and, where the competition has them, standings; stages without standings are valid | manual matchdays only | low | MED-04, S-004; PO notified |
+| OD-19 | MEDIUM | R-435: match identity is competition, season, matchday or stage, home team and away team; an import is applied as a whole (any rejected record rejects the import, all errors reported); a reimport creates a new version and keeps the original data | partial imports | low | MED-04, S-003 manual import rules 3, 4, 7, 9; PO notified |
+| OD-20 | MEDIUM | R-436: with LIVE_DATA enabled, a missing or empty FOOTBALL_DATA_API_TOKEN stops startup with an error naming the variable and never its value; without LIVE_DATA the token is not required; invalid data-mode settings stop startup | warn and continue | low | MED-04, S-003 credential rule 7; PO notified |
+| OD-21 | MEDIUM | R-438: DEMO_DATA projects are labelled as demonstration content in the project list, review view and export | no label | low | MED-04, S-003, S-004; PO notified |
+| OD-22 | MEDIUM | R-440: MVP demonstration set: LIVE_DATA Champions League plus one domestic league whose coverage the capability probe confirms for the PO token, chosen from the catalogue at execution time, never fixed in code; MANUAL_DATA Liga Nacional de Guatemala; DEMO_DATA a fixture competition; fewer than two confirmed LIVE competitions is reported to the PO | fixed list in code | low | MED-04, S-004 lines 103-112; PO notified |
 
 ## Conflicts
 
 | ID | Sources in conflict | Resolution (higher source wins) | Follow-up |
 |----|---------------------|---------------------------------|-----------|
+| C-1 | S-000 single competition and selection flow (R-021, R-101, R-102, R-201) vs S-003 and S-004 multi-competition and manual competitions (R-072, R-137, R-138, R-243); both level 1 | Applied provisionally: later PO statements S-003, S-004 govern; earlier records superseded | Conflict between level-1 sources is HIGH: PO confirmation requested (E-11) |
+| C-2 | R-026, R-047 (two-source rule, block unverified) vs R-071 (MANUALLY_APPROVED status); both level 1 | Not decided by any source; R-026 applies until decided | R-429 to the PO (E-09) |
+| C-3 | PD-09 league-phase-only and mandatory standings slide (R-417, R-239, R-210) vs S-004 stages and different tournament structures (R-439, R-284, R-285); both level 1 | Applied provisionally: S-004 governs; earlier records superseded | Conflict between level-1 sources is HIGH: PO confirmation requested (E-12) |
 
 ## Escalations
 
@@ -779,6 +795,10 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | E-06 | T01 | HIGH decision: R-416 content language and team-name display (HIGH-07) | 2026-10-27 | 2026-10-27 (PD-06) |
 | E-07 | T10 | HIGH decision: U-03 isolation of untrusted-input processing (in-process parsing of provider JSON and operator images) (HIGH-03) | 2026-10-27 | 2026-10-27 (PD-10) |
 | E-08 | T09 | HIGH decision: U-04 first contract-evolution policy for http-api (additive-only within v1; breaking changes need a new major path and a PO decision) (HIGH-06, uncertain so raised) | 2026-10-27 | 2026-10-27 (PD-11) |
+| E-09 | T11F | HIGH decision: R-429 publication eligibility of MANUALLY_APPROVED facts (HIGH-07; conflict C-2) | 2026-10-27 | open |
+| E-10 | T11F | HIGH decision: R-430 confirmation of republishing permission for football-data.org content (HIGH-05, HIGH-07) | 2026-10-27 | open |
+| E-11 | T11F | HIGH decision: confirm conflict C-1 resolution (multi-competition supersedes single competition) (precedence.md: level 1 conflict) | 2026-10-27 | open |
+| E-12 | T11F | HIGH decision: confirm conflict C-3 resolution (generic stages supersede league-phase-only, PD-09) (precedence.md: level 1 conflict) | 2026-10-27 | open |
 
 ## Event log (append-only)
 
@@ -897,6 +917,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T18:38:28Z | T11E | Scope extended: PO scope clarification recorded as S-004 (level 1); intake rescan exit 0: 5 analyzed, new candidates idCollisions[0], references[1] | S-004 |
 | 2026-10-27T18:38:28Z | - | PO decision PD-14 (multi-competition scope, provider independence) recorded | S-004 |
 | 2026-10-27T18:38:29Z | T11F | Scope extended to S-004 while in progress (MED-05 re-plan within scope): integration merged into the task branch, ownership base moves to that merge | S-004 intake commit |
+| 2026-10-27T19:14:43Z | T11F | Agent report PASS; verified and integrated; affected gates PASS; awaiting T11I | requirements check exit 0; evidence/T11F-gates.txt |
+| 2026-10-27T19:14:43Z | - | Conflicts C-1 to C-3 recorded; OD-16 to OD-22 recorded; escalations E-09 to E-12 raised for the batched PO request | requirements.md sections 10, 11, 13 |
+| 2026-10-27T19:14:43Z | T11G | Status IN_PROGRESS (attempt 1); agent orchestrate:architect launched | T11F integrated |
 
 ## Recovery log
 
