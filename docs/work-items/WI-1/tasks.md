@@ -379,6 +379,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Agent result: PASS (report delivered; design verdict FAIL, correctable: must-fix T11H-F01 (import encoding, before contract re-acceptance) and T11H-F02 (real-token evidence); no HIGH or CRITICAL finding), base cdb4e81.
 - Orchestrator verification: task commit dcbfeea (Orchestrator commit of agent file); `orch worktree verify-ownership` exit 0 (1 changed, 0 outside); main working tree unchanged; at dcbfeea, 2026-10-27.
 - Integration commit(s): 89c721d (merge --no-ff of task/WI-1/T11H). Affected gates: evidence/T11H-gates.txt. Verifier: T11J. An addendum confirming the T11G correction follows (attempt 2).
+- Attempt 2 (addendum): agent result PASS; updated change verdict PASS (T11H-F01 and F02 resolved; F03 to F11, F13, F14, F15, F20 resolved; F12, F16 to be confirmed by T47; F17 residual; new LOW observations T11H-A1-01 and A1-02); OD-23 CS-1 condition met; task commit on task/WI-1/T11H; `orch worktree verify-ownership` exit 0; integration commit 1f65fda; affected gates evidence/T11H-gates-2.txt; 2026-10-27.
 - Decisions: LOW-1 numbering T11H-F01 to F20, V-31 to V-55, NV-7 to NV-12; LOW-2 session transcript and probe console count as logs (R-124). Escalations: SC-05 isolation (E-13), real-credential identity re-raise (E-14); contract revision MED-01 (OD-23 after F01); F13 classified MEDIUM (OD-24).
 - Human interventions: 0.
 - Agent usage: launches 1; tokens 309292; duration 14 minutes.
@@ -801,6 +802,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-22 | MEDIUM | R-440: MVP demonstration set: LIVE_DATA Champions League plus one domestic league whose coverage the capability probe confirms for the PO token, chosen from the catalogue at execution time, never fixed in code; MANUAL_DATA Liga Nacional de Guatemala; DEMO_DATA a fixture competition; fewer than two confirmed LIVE competitions is reported to the PO | fixed list in code | low | MED-04, S-004 lines 103-112; PO notified |
 | OD-23 | MEDIUM | The revision of the never-declared http-api proposal (1.0.0-proposed.2, as corrected for T11H-F01) is a pre-release revision and is re-accepted, covering the T11H-F01 change (contentBase64) and the F06, F11, F14 and F20 description and pattern edits (supersedes the acceptance scope of OD-14); PD-11 applies from promotion (T20) and declaration (T25) onward; this acceptance does not decide C-1, C-3, R-429 or R-430 | treat as HIGH-06 | low (not declared, no consumer) | MED-01; Contract Safety CS-1 to CS-5 hold per T11H section 9 (CS-1 conditional on F01); effective after the T11H addendum confirms F01; PO notified |
 | OD-24 | MEDIUM | T11H-F13: DEMO_DATA (synthetic) sources never count as accepted or independent confirmation of LIVE_DATA or MANUAL_DATA facts, and sources that share an upstream belong to one independence group, so their agreement is one source; the R-256 verification fixture is the `test-live` LIVE_DATA test double (T11G attempt 2, LOW-3), not a DEMO_DATA source | count every configured source separately | low | application of PD-02 independence (BR-01); MED-04; PO notified |
+| OD-25 | MEDIUM | T11H addendum observations go to task briefs: T11H-A1-01 (T53: run the step-4 scan even when the probe exits non-zero; unless the scan exits 0 with `real token checked: yes`, delete the uncommitted findings file unread) and T11H-A1-02 (T49: the provider-ports 1.4 error table rows from 404 onward, including never retry 404, apply although the table rendering is broken); V-52 in T47 also confirms that container.ts never registers test-only adapters and no committed config names test-live | re-open T11G | low | MED-05; design-review-change-1.md Addendum 1; PO notified |
 
 ## Conflicts
 
@@ -961,6 +963,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T20:32:01Z | T11G | Attempt 2 verified and integrated at 58e906a; affected gates PASS; awaiting T11H addendum and T11J | plan check exit 0; YAML parses; evidence/T11G-gates-2.txt |
 | 2026-10-27T20:32:01Z | - | OD-23 scope confirmed (F01, F06, F11, F14, F20 contract edits); OD-24 note: R-256 fixture is the test-live test double | T11G attempt 2 escalations |
 | 2026-10-27T20:32:01Z | T11H | Attempt 2: addendum confirming the T11G correction requested | T11G attempt 2 integrated at 58e906a |
+| 2026-10-27T20:35:15Z | T11H | Attempt 2 addendum PASS; integrated at 1f65fda; change verdict PASS; awaiting T11J | design-review-change-1.md Addendum 1; evidence/T11H-gates-2.txt |
+| 2026-10-27T20:35:15Z | - | OD-23 effective (CS-1 condition met); OD-25 recorded (T11H-A1 observations routed to T53 and T49 briefs) | T11H addendum |
 
 ## Recovery log
 
