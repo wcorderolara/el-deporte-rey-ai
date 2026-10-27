@@ -49,7 +49,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T15 | Workspace scaffolding, tooling and server skeleton | IMPL | backend-developer | T11J | DONE | 1 | 93a4795 | `docs/work-items/WI-1/evidence/T15-gates.txt` |
 | T16 | Web application skeleton | IMPL | frontend-developer | T15 | IN_PROGRESS | 1 | - | - |
 | T17 | Configuration, catalog, display formatting and egress client | IMPL | backend-developer | T15 | IN_PROGRESS | 1 | - | - |
-| T18 | Persistence: SQLite access, migration runner and initial schema | IMPL | backend-developer | T15 | IN_PROGRESS | 1 | - | - |
+| T18 | Persistence: SQLite access, migration runner and initial schema | IMPL | backend-developer | T15 | DONE | 1 | 20d92b2 | `docs/work-items/WI-1/evidence/T18-gates.txt` |
 | T19 | HTTP platform, composition root and local-origin protections | IMPL | backend-developer | T17, T18 | PENDING | 0 | - | - |
 | T20 | HTTP contract promotion and shared API schemas | IMPL | backend-developer | T15 | IN_PROGRESS | 1 | - | - |
 | T21 | Sports-data provider port, payload validation and fixture adapter | IMPL | backend-developer | T17, T20 | PENDING | 0 | - | - |
@@ -548,6 +548,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: `data-model.md` (revised by T11G): `Db` port over `node:sqlite` (`DatabaseSync`, WAL, foreign keys on), transaction helper, migration runner with `schema_migrations`, migration `0001_initial.sql` with every table, check constraint and index of `data-model.md` sections 3 and 4, including the T11G changes (`projects` selection columns without the league-phase check, `retrievals`, `manual_approvals`, `imports`, `manual_competitions`, `manual_seasons`, `manual_selection_versions`, the new `facts`, `observations`, `sources`, `workflow_runs`, `content_drafts` and `exports` columns); integration tests on a temporary database (constraints reject a fact without attribution, a verified fact without value, a disputed record without consistent outcome, a MANUAL_DATA observation without import version, a disputed fact with a candidate value, manual eligibility on an ineligible status, an unknown data mode) and the schema test of `data-model.md` section 5 with the extended name pattern (no player-level, person, user, account or credential names; this task owns migration `0001_initial.sql` and the R-233 schema test, T10-F21). The `Db` port exposes prepared statements with bound parameters only, dynamic identifiers come from code constants, and a synchronous `BEGIN IMMEDIATE` transaction helper with no `await` inside is provided for the guards of T30, T37, T38 and T50 (T10-F14, T10-F15); `failure` columns hold the closed failure JSON (T10-F10).
 - Acceptance criteria: R-204, R-233
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:integration` -> exit 0
+- Agent result: PASS at 2d05c0f (npm ci 0; typecheck 0; lint 0; test:unit 0, 148 tests; test:integration 0, 60 tests; npm audit --audit-level=high 0, 2 moderate as in base); acceptance criteria R-204, R-233.
+- Orchestrator verification: `orch worktree verify-ownership` exit 0 (12 changed, 0 outside); re-run in the task worktree at 2d05c0f: npm ci --offline 0, typecheck 0, lint 0, test:unit 0 (6 files, 148 tests), test:integration 0 (4 files, 60 tests); main working tree unchanged; 2026-10-27.
+- Decisions: LOW-1 to LOW-7 (config_snapshot json_valid check; schema_migrations IF NOT EXISTS; index names; R-233 pattern adds person, people, credential, api key; nested transactions as savepoints; busy timeout 5000 ms, statement cache 500, WAL check; repository helpers). No new dependency. Risks reported: async work after the first await escapes a transaction (type guard; T47 V-21); failure-code list enforced in code until repositories use the T20 Failure schema; T19 creates the data directory (0700) and opens the migrated database.
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 187762; duration 12 minutes.
+- Integration commit(s): 20d92b2 (merge --no-ff of task/WI-1/T18). Affected gates at 20d92b2: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T18-gates.txt, the evidence file of this task).
 
 ### T19: HTTP platform, composition root and local-origin protections
 - Kind: IMPL
@@ -1155,6 +1161,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T21:55:48Z | T17 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-27T21:55:48Z | T18 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-27T21:55:48Z | T20 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-27T22:10:07Z | T18 | Status DONE | integration commit 20d92b2; evidence/T18-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
