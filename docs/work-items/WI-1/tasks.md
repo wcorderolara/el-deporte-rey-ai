@@ -37,7 +37,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11E | Intake of the provider and data-mode change (S-003) | IMPL | Orchestrator | T11 | DONE | 1 | 4757d4e, 19bfba9 | T11I |
 | T11F | Requirements update for PD-12, PD-13 and PD-14 | IMPL | product-manager | T11E | DONE | 1 | 1715e21 | T11I |
 | T11G | Architecture delta and plan reconciliation for PD-12, PD-13 and PD-14 | IMPL | architect | T11F | IN_PROGRESS | 1 | - | - |
-| T11H | Security design review of the provider and data-mode change | IMPL | security-reviewer | T11G | PENDING | 0 | - | - |
+| T11H | Security design review of the provider and data-mode change | IMPL | security-reviewer | T11G | IN_PROGRESS | 1 | - | - |
 | T11I | Change requirements verification | VERIFY | Orchestrator | T11E, T11F | DONE | 1 | 3a2f8c9 | `docs/work-items/WI-1/evidence/T11I-requirements-check.txt` |
 | T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I | PENDING | 0 | - | - |
 | T12 | Source of truth: stack, architecture summary, interface conventions, architecture decisions | IMPL | architect | T11 | PENDING | 0 | - | - |
@@ -360,6 +360,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: update the architecture delta, contracts and data model for the football-data.org adapter and the three data acquisition modes; reconcile task-plan.md (preserve T12 to T48 IDs, add tasks only where needed); add PD-12 and PD-13 to the source-of-truth decision register.
 - Acceptance criteria: plan check exit 0 (existing-ID warnings expected); every active acceptance criterion named by a task.
 - Verification: `orch plan check --plan '<worktree>/docs/work-items/WI-1/architecture/task-plan.md' --tracker '<worktree>/docs/work-items/WI-1/tasks.md' --requirements '<worktree>/docs/work-items/WI-1/requirements.json' --at .` -> exit 0
+- Agent result: PASS (files only; agent has no shell), base d862cb9.
+- Orchestrator verification: task commit 91cba66 (Orchestrator commit of agent files); `orch worktree verify-ownership` exit 0 (8 changed, 0 outside); contract YAML parses (OpenAPI 3.1.0, 1.0.0-proposed.2, 32 paths, 85 schemas); `orch contracts check` exit 0 (0 declared); `orch plan check --at .` exit 0 (42 tasks, 0 violations, 37 warnings: existing IDs T12 to T48); main working tree unchanged; at 91cba66, 2026-10-27.
+- Integration commit(s): bf7dd40 (merge --no-ff of task/WI-1/T11G). Affected gates: evidence/T11G-gates.txt. Verifier: T11J.
+- Decisions: LOW-1 to LOW-7 (new delta section 11 with amended pointers; T12 to T48 titles, kinds and agents kept; T49 to T53 new; T12, T13, T15 depend on T11J; UI selection order; synthetic fixtures in documented v4 shape; T10-A1-01 and T10-A1-03 applied; probe as Orchestrator task T53). Architecture decisions AD-21 to AD-34. Escalations: contract revision classification (MED-01 recommended); SC-05 isolation (HIGH-03) after T11H.
+- Human interventions: PD-12, PD-13, PD-14.
+- Agent usage: launches 1; tokens 570659; duration 44 minutes.
 
 ### T11H: Security design review of the provider and data-mode change
 - Kind: IMPL
@@ -936,6 +942,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T19:16:28Z | T11I | Status DONE | evidence/T11I-requirements-check.txt RESULT PASS; evidence commit 3a2f8c9; VALIDATED_HEAD 234e29c |
 | 2026-10-27T19:16:28Z | T11E | Status DONE | integration commits 4757d4e, 19bfba9; independently verified by T11I |
 | 2026-10-27T19:16:28Z | T11F | Status DONE | integration commit 1715e21; independently verified by T11I |
+| 2026-10-27T20:00:36Z | T11G | Agent report PASS; verified and integrated at bf7dd40; affected gates run; awaiting T11H and T11J | plan check exit 0 (42 tasks); YAML parses; evidence/T11G-gates.txt |
+| 2026-10-27T20:00:36Z | T11H | Status IN_PROGRESS (attempt 1); agent orchestrate:security-reviewer launched (SC-05 delta review) | T11G integrated at bf7dd40 |
 
 ## Recovery log
 
