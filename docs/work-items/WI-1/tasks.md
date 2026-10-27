@@ -27,7 +27,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T06 | Configuration update: frontend-developer role and personal-data profile | IMPL | Orchestrator | T03 | DONE | 1 | 32d60da | T07 |
 | T07 | Configuration and source-of-truth verification | VERIFY | Orchestrator | T05, T06 | DONE | 1 | f648f85 | `docs/work-items/WI-1/evidence/T07-validate.txt` |
 | T08 | Follow-up requirements verification | VERIFY | Orchestrator | T03, T04, T07 | DONE | 1 | 70befa9 | `docs/work-items/WI-1/evidence/T08-requirements-check.txt` |
-| T09 | Architecture delta and task plan | IMPL | architect | T08 | IN_PROGRESS | 1 | - | - |
+| T09 | Architecture delta and task plan | IMPL | architect | T08 | IN_PROGRESS | 2 | - | - |
 | T10 | Security design review of the architecture | IMPL | security-reviewer | T09 | IN_PROGRESS | 1 | - | - |
 | T11 | Architecture verification | VERIFY | Orchestrator | T09, T10 | PENDING | 0 | - | - |
 
@@ -191,6 +191,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: design-review mode: threat model and review of the architecture and security delta of T09 (full mode trigger); findings classified, must-fix findings returned to T09 as targeted corrections.
 - Acceptance criteria: review report under the security directory with a verdict and classified findings; no open must-fix finding.
 - Verification: independently verified by T11.
+- Agent result: PASS (report delivered; design verdict FAIL, correctable: must-fix T10-F01, T10-F02, T10-F03; no HIGH or CRITICAL finding), base 8dc35d5.
+- Orchestrator verification: task commit eae1f6a (Orchestrator commit of agent file); `orch worktree verify-ownership` exit 0 (1 changed, 0 outside); main working tree unchanged; at eae1f6a, 2026-10-27.
+- Integration commit(s): 3ac5b85 (merge --no-ff of task/WI-1/T10). Affected gates at 3ac5b85: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T10-gates.txt). Verifier: T11. An addendum confirming the T09 correction follows (attempt 2).
+- Decisions: LOW-1 findings T10-F01 to T10-F21 with disposition and role class; LOW-2 library behaviours recorded as NV-1 to NV-6 for T47. Escalations: U-03 HIGH-03 (E-07); U-04 HIGH-06 reading (E-08); Q5 residual within PD-05 (no decision needed).
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 199373; duration 13 minutes.
 
 ### T11: Architecture verification
 - Kind: VERIFY
@@ -226,6 +232,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-10 | MEDIUM | R-424: the PD-02 two-source agreement rule applies to every fact used in content (teams in a match, match status, competition context), not only scores, dates and standings | apply the rule only to scores, dates and standings | low (stricter default; can be relaxed) | MED-04, S-000 lines 25-26, S-001 lines 14-19; PO notified in stage-1 report |
 | OD-11 | MEDIUM | R-425: selectable content languages are Spanish (default) and English, held as configuration | Spanish only; open list | low (configuration) | MED-04, S-001 line 37; PO notified in stage-1 report |
 | OD-12 | MEDIUM | R-426: the verified official team name comes from the independent official source; team identity is matched across sources and an unmatched team is not verified; any other name form fails Visual QA and is not approvable; hashtags may use a hashtag-safe form of the name | name from the primary API; allow display aliases | low (rule configurable before content exists) | MED-04, S-001 lines 4-5, 38; PO notified in stage-1 report, may override |
+| OD-13 | MEDIUM | U-06: carousel templates are versioned code with a registry, list and preview in the UI; no template editing in the UI for the MVP (R-010) | in-UI template editor | low (additive later) | MED-04, architecture-delta section 8; PO notified in stage-2 report |
 
 ## Conflicts
 
@@ -242,6 +249,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | E-04 | T01 | HIGH decision: R-414 personal or player-level data (HIGH-04, HIGH-07) | 2026-10-27 | 2026-10-27 (PD-04) |
 | E-05 | T01 | HIGH decision: R-415 user and authentication model (HIGH-03) | 2026-10-27 | 2026-10-27 (PD-05) |
 | E-06 | T01 | HIGH decision: R-416 content language and team-name display (HIGH-07) | 2026-10-27 | 2026-10-27 (PD-06) |
+| E-07 | T10 | HIGH decision: U-03 isolation of untrusted-input processing (in-process parsing of provider JSON and operator images) (HIGH-03) | 2026-10-27 | open |
+| E-08 | T09 | HIGH decision: U-04 first contract-evolution policy for http-api (additive-only within v1; breaking changes need a new major path and a PO decision) (HIGH-06, uncertain so raised) | 2026-10-27 | open |
 
 ## Event log (append-only)
 
@@ -285,6 +294,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T16:32:21Z | T11 | Task added; status PENDING | stage 2 per planning workflow |
 | 2026-10-27T17:02:43Z | T09 | Agent report PASS; verified and integrated at f017460; affected gates PASS; awaiting T11 | plan check exit 0 (37 tasks); evidence/T09-gates.txt |
 | 2026-10-27T17:02:43Z | T10 | Status IN_PROGRESS (attempt 1); agent orchestrate:security-reviewer launched in design-review mode | T09 integrated at f017460 |
+| 2026-10-27T17:16:51Z | T10 | Agent report PASS; integrated at 3ac5b85; design verdict FAIL correctable (T10-F01..F03 must-fix); addendum pending after T09 correction | design-review.md; verify-ownership exit 0; evidence/T10-gates.txt |
+| 2026-10-27T17:16:51Z | T09 | Must-fix design-review findings T10-F01, T10-F02, T10-F03: targeted correction, attempt 2 | security/design-review.md section 4 |
+| 2026-10-27T17:16:51Z | - | OD-13 recorded; escalations E-07 (U-03, HIGH-03) and E-08 (U-04, HIGH-06) raised for the stage-2 PO batch | design-review.md Q2; architecture-delta.md 2.1 |
 
 ## Recovery log
 

@@ -1,0 +1,40 @@
+TASK: WI-1-T10
+RESULT: PASS
+VALIDATED_HEAD: 3ac5b856a2fb75da8b292088b6503acf9bb91e38
+DATE: 2026-10-27T17:16:25Z
+COMMAND: orch gates run --work-item WI-1 --task T10 --set affected
+SUMMARY: 2 PASS / 0 FAIL / 0 NOT RUN; required not passing: none
+--- output ---
+CONFIG: .orchestrate/config.json
+CONFIG_SOURCE: committed@3ac5b856a2fb
+CONFIG_SHA256: bd4be1f1ad74cebf9ac0482ee832513a04f195155ae04fc98f7fbafd3176ec4e
+SET: affected
+
+=== FW-TRACKER (framework, required) PASS exit=0 ms=462 ===
+COMMAND: builtin:tracker
+REASON: orch tracker check exited 0
+Tracker docs/work-items/WI-1/tasks.md on 3ac5b856a2fb75da8b292088b6503acf9bb91e38
+  T00  IMPL   recorded=DONE                                 commits 1176f8c; verified by T02                                                           => DONE
+  T01  IMPL   recorded=DONE                                 commits dd9499e; verified by T02                                                           => DONE
+  T02  VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T02-requirements-check.txt @ c68b058; validated 17f => DONE
+  T03  IMPL   recorded=DONE                                 commits f4ccb0c; verified by T08                                                           => DONE
+  T04  IMPL   recorded=DONE                                 commits 01a71a7; verified by T08                                                           => DONE
+  T05  IMPL   recorded=DONE                                 commits d93cbb1; verified by T07                                                           => DONE
+  T06  IMPL   recorded=DONE                                 commits 32d60da; verified by T07                                                           => DONE
+  T07  VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T07-validate.txt @ f648f85; validated e1459cb72dd59 => DONE
+  T08  VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T08-requirements-check.txt @ 70befa9; validated 5ec => DONE
+  T09  IMPL   recorded=IN_PROGRESS                          task branch ahead=0; worktree dirty=0                                                      => PENDING
+  T10  IMPL   recorded=IN_PROGRESS                          task branch ahead=0; worktree dirty=0                                                      => PENDING
+  T11  VERIFY recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+STATE: open
+RESULT: PASS (0 violations)
+
+=== FW-CONFIG (framework, required) PASS exit=0 ms=77 ===
+COMMAND: builtin:config
+REASON: orch validate --section config,policy,agents,models exited 0
+SECTION config: PASS
+SECTION policy: PASS
+SECTION agents: PASS
+SECTION models: PASS
+  NOTE 156 file(s) scanned
+RESULT: PASS (0 violation(s), 0 warning(s))
