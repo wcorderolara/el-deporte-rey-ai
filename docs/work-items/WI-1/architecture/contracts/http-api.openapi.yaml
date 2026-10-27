@@ -633,7 +633,8 @@ paths:
     get:
       tags: [brand]
       operationId: getBrandAssetFile
-      description: Served with the stored MIME type, `nosniff`, `Content-Security-Policy: default-src 'none'; sandbox` and `Cross-Origin-Resource-Policy: same-origin`.
+      description: |
+        Served with the stored MIME type, `nosniff`, `Content-Security-Policy: default-src 'none'; sandbox` and `Cross-Origin-Resource-Policy: same-origin`.
       responses:
         '200':
           description: The registered file.
