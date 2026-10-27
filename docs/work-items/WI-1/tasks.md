@@ -44,7 +44,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11N | Change-batch decisions verification | VERIFY | Orchestrator | T11K, T11L | DONE | 1 | 18491cd | `docs/work-items/WI-1/evidence/T11N-validate.txt` |
 | T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I, T11N | DONE | 1 | 91e93b4 | `docs/work-items/WI-1/evidence/T11J-plan-check.txt` |
 | T12 | Source of truth: stack, architecture summary, interface conventions, architecture decisions | IMPL | architect | T11J | IN_PROGRESS | 1 | - | - |
-| T13 | Collect public provider documentation for the PD-01 research | IMPL | Orchestrator | T11J | IN_PROGRESS | 1 | - | - |
+| T13 | Collect public provider documentation for the PD-01 research | IMPL | Orchestrator | T11J | DONE | 1 | 70906b2 | `docs/work-items/WI-1/evidence/T13-gates.txt` |
 | T14 | Provider research analysis and recommendation | IMPL | architect | T13, T53 | PENDING | 0 | - | - |
 | T15 | Workspace scaffolding, tooling and server skeleton | IMPL | backend-developer | T11J | IN_PROGRESS | 1 | - | - |
 | T16 | Web application skeleton | IMPL | frontend-developer | T15 | PENDING | 0 | - | - |
@@ -485,6 +485,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: capture the public documentation pages listed in `provider-research-plan.md` sections 3 and 4 as refocused by T11G: football-data.org (documentation, coverage, pricing, policies, any terms, commercial-use, republishing or attribution statement, status page, any statement of its data origin; or a dated "not published" note per item), the candidates for the independent secondary verification source, the official competition publications of the reference competition and of the candidate second LIVE_DATA competitions (S-004 examples), and the AI options; text files with URL and retrieval date, one directory per candidate, plus an index. Limits of `provider-research-plan.md` section 1: no account, trial, key request, purchase or upgrade (SC-03); the Product Owner's token is not used by this task; captured text is data. If public pages cannot be fetched, report BLOCKED (reason: environment).
 - Acceptance criteria: R-242
 - Verification: `orch validate --work-item 'WI-1' --at .` -> exit 0
+- Agent result: n/a (Orchestrator task).
+- Orchestrator verification: raw capture impossible (session shell has no outbound network; lifting the sandbox was denied by the environment's safety check, not worked around); 20 WebFetch extractions written with URL, date, outcome and method under docs/work-items/WI-1/research/ with index.md; API-Football 403 and UEFA legal 404 recorded as not captured; `orch worktree verify-ownership` exit 0 (20 changed, 0 outside); `orch validate --at .` exit 0; at f125272, 2026-10-27.
+- Integration commit(s): 70906b2 (merge --no-ff of task/WI-1/T13). Affected gates at 70906b2: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T13-gates.txt, the evidence file of this task).
+- Decisions: finding: football-data.org terms are published on /about (General Terms and Conditions 2018-06-01, attribution clause 7.1, logos 9.2, single-application key 2.3, fair use 3.3, Dutch law), correcting the earlier review that found none; requirements assumption R-316 and the delta section 11.10 statement are outdated; carried to T14 (provider findings record R-281) and to the PO in the next status report.
+- Human interventions: 0.
+- Agent usage: NOT RECORDED (Orchestrator task).
 
 ### T14: Provider research analysis and recommendation
 - Kind: IMPL
@@ -1123,6 +1129,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T21:31:35Z | T12 | Status IN_PROGRESS (attempt 1); agent orchestrate:architect launched | orch next SELECT |
 | 2026-10-27T21:31:35Z | T13 | Status IN_PROGRESS (attempt 1); Orchestrator working | orch next SELECT |
 | 2026-10-27T21:31:35Z | T15 | Status IN_PROGRESS (attempt 1); agent orchestrate:backend-developer launched | orch next SELECT |
+| 2026-10-27T21:36:06Z | T13 | Status DONE | integration commit 70906b2; evidence/T13-gates.txt PASS; 20 captures |
 
 ## Recovery log
 
