@@ -685,3 +685,89 @@ Recommended in the same correction, but not blocking:
 Every other should-fix finding can be carried in the named task briefs and validated by T47.
 
 When the must-fix items are integrated, the reviewer confirms them by an addendum to this file, and the verdict becomes PASS. Contract Safety holds (MED-01 acceptance of the corrected proposal). U-03 goes to the Product Owner in the stage-2 batch, with the recommendation to accept Option A under its re-review condition.
+
+## Addendum 1 (attempt 2): confirmation of the T09 correction
+
+```
+TASK: WI-1-T10  RESULT: PASS
+HEAD: n/a  BASE: 8dc35d5db16e96e9836776c1138763ac332c8e65
+FILES: docs/work-items/WI-1/security/design-review.md
+COMMANDS: n/a
+DECISIONS: LOW-3: the new observations from this addendum are numbered T10-A1-01..T10-A1-06, with the same severity and disposition scheme as section 4
+ESCALATIONS: none new ; U-03 (HIGH-03) and U-04 (HIGH-06) remain with the Product Owner and are not decided here ; U-05 (MED-01) can be decided by the Orchestrator on the corrected contract (section A1.3)
+```
+
+- Date: 2026-10-27.
+- Reviewed, read-only, at the integrated correction `41af5ee` on `work/WI-1`, under `.claude/worktrees/WI-1-integration/docs/work-items/WI-1/architecture/`:
+  - `architecture-delta.md`: sections 2.1, 2.2, 4, AD-14, 7.1, 8, 9, and 10 (the mapping of findings to locations);
+  - `architecture.md`: sections 8.3, 9, 12.1, 12.2;
+  - `data-model.md`: sections 2, 3.1, 5;
+  - `contracts/http-api.openapi.yaml`, read in full;
+  - `contracts/provider-ports.md`: sections 1, 2, 4;
+  - `task-plan.md`: T15 to T24, T32 to T34, T37, T38, T40, T41, T43, T46, T47.
+- Relied on, from the Orchestrator's brief: the contract parses (OpenAPI 3.1.0), and `orch plan check` exits 0.
+
+### A1.1 Must-fix findings
+
+| Finding | Result | Evidence (file and section, or task) |
+|---------|--------|---------------------------------------|
+| T10-F01: evidence pack coverage | **Resolved** | `task-plan.md` T46 now runs 18 numbered commands (19 evidence files: item 11 is build plus bundle-secrets). Each item names the controls V-nn it evidences. The new items cover: platform unit tests (config schema, egress client, guards, redaction); brand, rendering, export and review unit tests; module and platform integration tests; web security unit tests; lint; secret scan; bundle secrets; lock file; versions; full advisory report; registry signatures (NOT RUN when unsupported, never PASS); git hygiene. The Verification line checks 18 PASS-checked files. T41 owns and provides `scripts/security-checks.mjs` (`secret-scan`, `bundle-secrets`, `lockfile`, `audit-report`), with exit 0 meaning the control holds. T47's Scope covers V-01 to V-30, NV-1 to NV-6, the moderate-advisory review and every should-fix finding F04 to F18. Two evidence-strength gaps remain (T10-A1-02, T10-A1-03); both are LOW and non-blocking. |
+| T10-F02: development-mode TB-1 | **Resolved** | `architecture-delta.md` TB-1 (development-mode paragraph) and AD-14. `architecture.md` section 12.1: exact configured `server.allowedHosts` and `server.allowedOrigins`, never from headers, never `0.0.0.0` or a wildcard; production, development (5173), verification (4310) and demo (4320) sets; `trustProxy` false; proxy `changeOrigin: false`; Vite `allowedHosts` never `true`, `cors` default, `fs.strict`, `fs.deny` default list plus `data/**`, `envPrefix` and `envDir`; a Vite version with no advisory of any severity, checked explicitly. Task coverage: T16 (Vite settings asserted by a unit test; `npm ls vite`; full audit; "an advisory naming Vite fails this task"); T17 (allow-list schema that rejects wildcards, `0.0.0.0` and non-loopback hosts); T19 (lists read from configuration only, applied to every request); T41 (5173 accepted only with the development configuration). Residual editorial note: T10-A1-04. |
+| T10-F03: contract request constraints | **Resolved** | `contracts/http-api.openapi.yaml`: schemas `Uuid` (lowercase pattern, length 36), `Slug`, `SourceId`, `MatchKey`, `Label` (`^[^\p{Cc}\p{Cf}]{1,80}$`; the Unicode-flag evaluation is stated in `info.description`). Every server-ID path parameter (`ProjectId`, `RunId`, `CarouselId`, `ElementId`, `VersionId`, `ExportId`, `AssetId`) is a `Uuid`. `TemplateId` and the catalog IDs in `ProjectCreate` are `Slug`. Body IDs (`VersionRef.versionId`, the QA-acknowledgement `versionId`) are `Uuid`. `excludedMatchKeys` items are `MatchKey`, with `uniqueItems`. `Position` is 1 to 99. Every request string has a pattern, an enum or a `maxLength`. `info.description` states that narrowing a request input is breaking. T43 tests traversal-style and over-long IDs and `label` control characters. |
+
+### A1.2 Recommended and should-fix findings (spot-checked)
+
+| Finding | Result | Evidence |
+|---------|--------|----------|
+| T10-F04 (recommended) | **Resolved** | TB-1 and AD-14: Fetch-Metadata refusal for `/api/**`; CORP and COOP; CSP `base-uri`, `form-action`, `object-src`; deny-by-default; `Origin: null` refused; guards in `onRequest`; side-effect-free GET and HEAD; preview cache. Contract `info.description` and the `previewTemplate` cache note. T19 (implementation and tests), T34 (cache), T41 (integration tests). See T10-A1-01 for the undeclared 403 on GET operations. |
+| T10-F05 (should-fix) | **Resolved** | `architecture.md` section 8.3: a `\p{Cc}` and `\p{Cf}` pre-check; NFKC; any `\p{N}`; cardinal words to at least 100, plus ordinals and multiplier words in es and en; mixed-script tokens. T23 adds one fixture per bypass class, and T32 adds one test per fixture. See T10-A1-05 for the newline and ZWJ exception. |
+| T10-F06 (should-fix, class 3) | **Resolved for WI-1; residual documented** | `provider-ports.md` section 2: the instruction forbids person names, venues and outcomes not in the data; the result relation is a deterministic phrase. `architecture.md` section 8.3: the residual paragraph, with the capitalized-token warning planned as a MED-04 decision before real models. T23 `injection-rejected` and `injection-plain` fixtures with exact expectations; TB-2 residual (pinned official names before real sources); delta section 9 lists R3 and R4 as production-blocking. |
+| T10-F07, T10-F08 | **Resolved** | `provider-ports.md` section 4 (exact origin, IDNA, userinfo rejected, loopback HTTP only for the configured AI origin, `redirect: 'error'`, total deadline, decoded-byte cap, 512 KiB, 256 KiB and 2 MiB, TLS); section 1 cap. Delta section 7.1: lint bans and the socket-level guard. T15 (the guard, with a test that a direct socket connection fails), T17 (egress tests against a loopback server), T38 (no network import). |
+| T10-F09 (recommended) | **Resolved** | `architecture.md` section 9 ("No external or host resources"): data URIs only, no `loadAdditionalAsset`, `loadSystemFonts: false`, bundled fonts only, the markup-escaping test, a no-socket test. T34 Scope. |
+| T10-F10 | **Resolved** | Contract `Failure` (closed codes, `SourceId`, payload path, HTTP status) replaces the free-text reasons. `Problem.detail` and `errors[]` are length-capped. `data-model.md` sections 2 and 3.1: `failure` JSON columns with a length check. T41 runs the echoing-key test. |
+| T10-F11, T10-F12, T10-F13, T10-F14, T10-F15, T10-F16, T10-F18 | **Resolved** (spot-checked in T15, T16, T18, T19, T33, T34, T37, T38, T40, T41 and `data-model.md` section 2) | Explicit redaction paths and tests; dummy key; `envPrefix` and `envDir`; upload hardening, including the type and signature mismatch and the header dimension check; realpath containment, `wx`, mode 0700, a static root only at `apps/web/dist`; parameterized SQL plus the lint rule; `BEGIN IMMEDIATE` guards with race tests; export from the recorded version set; `SafeReference` (T16, used by T31 and T40) with hostile-value tests; lock-file and `.npmrc` checks. |
+| T10-F17 (recommended) | **Resolved** | Contract: `FactSubject`, per-kind values (`FactKindValue`, `FactValue`), closed `Evidence.value` and `Dispute` values, per-check closed `QaResult` (blocking checks fix `acknowledgedAt` to null); 421 on all 29 operations; 403 and 415 on all 12 mutating operations; 413 on the 8 operations with a body. I checked each operation. |
+| T10-F19 (recommended) | **Resolved** | TB-1 residual wording ("any local process of any OS account ... containers or VMs sharing the host network namespace"); `architecture.md` section 12.2 with the re-raise triggers; T15 `docs/local-setup.md` (single-user workstation, `.env.local` mode 0600, no paid key on a shared host). |
+| T10-F20 (PO decision) | **Unchanged, correctly escalated** | `architecture-delta.md` section 8 U-03: HIGH-03, pending, not decided; Option A recommended; T33 waits. T47 checks the decision (V-30). |
+| T10-F21 (recommended) | **Resolved** | `data-model.md` section 2 (T18 owns migration `0001_initial.sql`) and section 5 (T18 adds the R-233 schema test), consistent with `task-plan.md` T18. |
+
+### A1.3 Contract Safety of the corrected `http-api` (for the U-05 decision)
+
+The changes since the first review are:
+- request constraints (T10-F03);
+- closed response schemas and declared problem responses (T10-F17);
+- the `Failure` object in place of the free-text `failureReason` (T10-F10);
+- description text for the guards, atomicity and export set.
+
+The operation set is unchanged: 29 operations on 24 paths, with no operation added or removed.
+
+| Condition | Result | Finding |
+|-----------|--------|---------|
+| CS-1 backward compatible | **Holds** | The contract is still new, with no consumer and no snapshot. **The T10-F03 condition is met**: request inputs are constrained before 1.0.0, so later narrowing is not needed. Replacing `failureReason` with `failure` before the first acceptance breaks nobody. |
+| CS-2 within approved scope | **Holds** | Same 29 operations, each traced to approved requirements; no publication, login or fact-status operation. |
+| CS-3 preserves authorization boundaries | **Holds** | All 12 mutating operations declare `ClientHeader`. `info.description` now states the configured Host and Origin allow-lists, the `Origin: null` refusal, deny-by-default for non-GET and non-HEAD methods, and the Fetch-Metadata refusal. No identity is added (PD-05). |
+| CS-4 does not weaken any security control | **Holds** | All changes add or tighten controls: patterns; closed values and details; the closed `Failure`; capped `detail`; `Settings` described as without credentials or base URLs; `Export.files[].fileName` patterned. No field exposes a secret, a base URL or an absolute path. |
+| CS-5 does not change business-rule semantics | **Holds** | The guards are the same. The added text ("guard and write are atomic", "exports exactly the version set recorded by the final approval") implements BR-09 and R-240 as written. The QA acknowledgement remains limited to `style_consistency` (OD-09). |
+
+**Result:** all five conditions hold for the corrected proposal at `41af5ee`. U-05 is MEDIUM (MED-01), and the Orchestrator can accept it. T10-A1-01 is the only contract observation, and it is additive and non-blocking.
+
+### A1.4 New observations introduced by, or visible in, the correction
+
+None is must-fix. All are should-fix, and T47 validates them in the tasks named.
+
+| ID | Severity | Location | Observation | Recommendation | Disposition |
+|----|----------|----------|-------------|----------------|-------------|
+| T10-A1-01 | LOW | contract GET operations | The contract says that `/api` requests with `Sec-Fetch-Site` `cross-site` or `same-site` get 403 `FORBIDDEN_ORIGIN`, and T19 and T41 implement this for GET too. The 17 GET operations declare at most 400, 404 and 421, so a correct 403 on a GET is undeclared. The risk is a later "fix" that drops the Fetch-Metadata check for GET to match the contract. | Declare 403 on every operation. Preferably do it before T20 promotes (one line per operation). Afterwards it is an additive change through `planning.md` section 3. | should-fix (architect, before promotion if convenient) |
+| T10-A1-02 | LOW | T46 items 17 and 18 | `git ls-files -- .env .env.local data .cache` exits 0 even when it lists tracked files. With several paths, `git check-ignore` exits 0 when *any* path is ignored. So the PASS header of [repo-hygiene] and [ignore-rules] does not prove the control. [secret-scan] covers tracked `.env*` but not `data/` or `.cache/`. | Add a `hygiene` subcommand to `scripts/security-checks.mjs` that exits 1 on any tracked file under `.env*` (other than `.env.example`), `data/` or `.cache/`, or on any of the three paths not ignored. Until then, T47 reads the outputs, not only the headers. | should-fix (T41 script, T46) |
+| T10-A1-03 | LOW | `scripts/security-checks.mjs` (T41) | The script is now an evidence control. A scan that matches nothing passes trivially. `scripts/**` is outside the `lint` scope and the `PRJ-LINT` gate paths (delta section 7.1 and 7.2). | Add a positive-control test (for example a temporary git repository with a planted dummy key and an unignored `data/` file, expecting exit 1). Add `scripts/**` to the lint scope and the PRJ-LINT paths. T47 reviews the script's patterns. | should-fix (T15 or T25 for paths, T41 for the test) |
+| T10-A1-04 | LOW (editorial) | `task-plan.md` T19 Scope | The original sentences ("Host allow-list (`127.0.0.1:<port>`, `localhost:<port>`)", "same-origin `Origin` when present") remain in front of the new "Host and Origin allow-lists read only from the configuration" items. The new items are explicit and take precedence, but the text is self-contradictory for the development set. | Replace the original phrases with a reference to `architecture.md` section 12.1 when the T19 brief is written. The Orchestrator can do this in the brief. | should-fix (brief wording) |
+| T10-A1-05 | LOW | `architecture.md` section 8.3, `FORBIDDEN_CONTENT` pre-check | "Any `\p{Cc}` or `\p{Cf}` character" also covers line feed (U+000A), which a caption may legitimately contain, and ZWJ (U+200D) in emoji sequences. The implementer will carve exceptions ad hoc. | Define the exception list explicitly in T32: U+000A only, at most N per field, with emoji ZWJ either refused or allowed only between emoji code points. Keep bidi controls and other zero-width characters refused. | should-fix (T32) |
+| T10-A1-06 | LOW (conformance, not a weakness) | contract `FactValue` and `MatchTeamsValue` | Evidence values use `Slug` team IDs. For an unmatched team, a source's own team key (any case or format) may not fit `Slug`. The server could then fail conformance, or an implementer could loosen the schema. | Confirm in T30 that observations store canonical team IDs or a mapped placeholder for unmatched keys. Otherwise add a closed `SourceTeamRef` (additive). T43 will detect a mismatch. | verify-in-T47 (T30, T43) |
+
+### A1.5 Updated verdict
+
+**PASS.** The three must-fix findings (T10-F01, T10-F02, T10-F03) are resolved. All recommended findings (T10-F04, T10-F09, T10-F17, T10-F19, T10-F21) and the spot-checked should-fix findings are folded into the named documents and tasks. There is no HIGH or CRITICAL finding, and the six new observations are LOW and non-blocking.
+
+- Contract Safety holds for the corrected `http-api` (MED-01; the Orchestrator decides U-05).
+- U-03 (HIGH-03, recommendation Option A) and U-04 (HIGH-06) remain Product Owner decisions in the stage-2 batch; they are not decided here.
+- T47 validates V-01 to V-30, NV-1 to NV-6, the should-fix findings T10-F04 to T10-F18, and observations T10-A1-01 to T10-A1-06.
