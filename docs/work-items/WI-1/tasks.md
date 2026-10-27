@@ -29,11 +29,11 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T08 | Follow-up requirements verification | VERIFY | Orchestrator | T03, T04, T07 | DONE | 1 | 70befa9 | `docs/work-items/WI-1/evidence/T08-requirements-check.txt` |
 | T09 | Architecture delta and task plan | IMPL | architect | T08 | IN_PROGRESS | 3 | - | - |
 | T10 | Security design review of the architecture | IMPL | security-reviewer | T09 | IN_PROGRESS | 2 | - | - |
-| T11A | Intake of the stage-2 Product Owner decisions | IMPL | Orchestrator | T08 | IN_PROGRESS | 1 | - | - |
-| T11B | Record PD-10 and PD-11 in the requirements | IMPL | product-manager | T11A | IN_PROGRESS | 1 | - | - |
-| T11C | Record PD-10 and PD-11 in the source-of-truth decision register | IMPL | architect | T11A | IN_PROGRESS | 1 | - | - |
-| T11D | Stage-2 decisions verification | VERIFY | Orchestrator | T11A, T11B, T11C | IN_PROGRESS | 1 | - | - |
-| T11 | Architecture verification | VERIFY | Orchestrator | T09, T10, T11D | PENDING | 0 | - | - |
+| T11A | Intake of the stage-2 Product Owner decisions | IMPL | Orchestrator | T08 | DONE | 1 | 266b29d | T11D |
+| T11B | Record PD-10 and PD-11 in the requirements | IMPL | product-manager | T11A | DONE | 1 | 380780f | T11D |
+| T11C | Record PD-10 and PD-11 in the source-of-truth decision register | IMPL | architect | T11A | DONE | 1 | 16013be | T11D |
+| T11D | Stage-2 decisions verification | VERIFY | Orchestrator | T11A, T11B, T11C | DONE | 1 | d98a135 | `docs/work-items/WI-1/evidence/T11D-validate.txt` |
+| T11 | Architecture verification | VERIFY | Orchestrator | T09, T10, T11D | IN_PROGRESS | 1 | - | - |
 
 ## Tasks
 
@@ -212,6 +212,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: record the Product Owner message of 2026-10-27 answering E-07 and E-08 verbatim as source S-002 (precedence level 1) and rescan the intake.
 - Acceptance criteria: S-002 analyzed at level 1; checked by the requirements rules in T11D.
 - Verification: independently verified by T11D.
+- Agent result: n/a (Orchestrator task).
+- Orchestrator verification: `orch intake scan --rescan` exit 0 (SP-4, 3 analyzed, mode incremental, S-002 level 1); `orch requirements check` exit 0 after rescan; at 266b29d, 2026-10-27.
+- Integration commit(s): 266b29d (committed directly on work/WI-1). Verifier: T11D.
+- Decisions: PD-10, PD-11 recorded.
+- Human interventions: PO message of 2026-10-27 (S-002).
+- Agent usage: NOT RECORDED (Orchestrator task).
 
 ### T11B: Record PD-10 and PD-11 in the requirements
 - Kind: IMPL
@@ -251,6 +257,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: run `orch validate` (configuration, trackers, requirements) at the integration HEAD and record the evidence.
 - Acceptance criteria: evidence `RESULT: PASS` with `VALIDATED_HEAD` at the integration HEAD.
 - Verification: `orch validate --work-item 'WI-1' --at '<integration worktree>'` -> exit 0
+- Agent result: n/a (Orchestrator task).
+- Orchestrator verification: `orch evidence capture -- validate --work-item 'WI-1'` exit 0 (all sections PASS) at 8373bcb, 2026-10-27.
+- Evidence: docs/work-items/WI-1/evidence/T11D-validate.txt; evidence commit d98a135; VALIDATED_HEAD 8373bcba3d623cd22b981c232081369d74998a16.
+- Decisions: none.
+- Human interventions: 0.
+- Agent usage: NOT RECORDED (Orchestrator task).
 
 ### T11: Architecture verification
 - Kind: VERIFY
@@ -371,6 +383,11 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T17:32:50Z | - | OD-14 (http-api accepted, MED-01) and OD-15 (A1 observations routed to task briefs) recorded | T10 addendum Contract Safety |
 | 2026-10-27T17:42:49Z | T11B | Agent report PASS; verified and integrated; affected gates PASS; awaiting T11D | requirements check exit 0; evidence/T11B-gates.txt |
 | 2026-10-27T17:42:49Z | T11D | Status IN_PROGRESS (attempt 1) | T11A, T11B, T11C integrated |
+| 2026-10-27T17:43:10Z | T11D | Status DONE | evidence/T11D-validate.txt RESULT PASS; evidence commit d98a135; VALIDATED_HEAD 8373bcb |
+| 2026-10-27T17:43:10Z | T11A | Status DONE | integration commit 266b29d; independently verified by T11D |
+| 2026-10-27T17:43:10Z | T11B | Status DONE | integration commit 380780f; independently verified by T11D |
+| 2026-10-27T17:43:10Z | T11C | Status DONE | integration commit 16013be; independently verified by T11D |
+| 2026-10-27T17:43:10Z | T11 | Status IN_PROGRESS (attempt 1) | T09, T10 integrated (design verdict PASS); T11D DONE |
 
 ## Recovery log
 
