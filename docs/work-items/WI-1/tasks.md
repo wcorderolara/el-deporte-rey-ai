@@ -32,7 +32,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11A | Intake of the stage-2 Product Owner decisions | IMPL | Orchestrator | T08 | IN_PROGRESS | 1 | - | - |
 | T11B | Record PD-10 and PD-11 in the requirements | IMPL | product-manager | T11A | IN_PROGRESS | 1 | - | - |
 | T11C | Record PD-10 and PD-11 in the source-of-truth decision register | IMPL | architect | T11A | IN_PROGRESS | 1 | - | - |
-| T11D | Stage-2 decisions verification | VERIFY | Orchestrator | T11A, T11B, T11C | PENDING | 0 | - | - |
+| T11D | Stage-2 decisions verification | VERIFY | Orchestrator | T11A, T11B, T11C | IN_PROGRESS | 1 | - | - |
 | T11 | Architecture verification | VERIFY | Orchestrator | T09, T10, T11D | PENDING | 0 | - | - |
 
 ## Tasks
@@ -221,6 +221,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: add PD-10 (U-03 option A with its conditions) and PD-11 (U-04 contract-evolution policy) to the requirements decisions, with the records they establish, citing S-002; update the intake summary to the current intake record.
 - Acceptance criteria: both decision IDs present and traced to S-002; `orch requirements check` passes.
 - Verification: `orch requirements check --work-item 'WI-1' --at .` -> exit 0
+- Agent result: PASS (files only; agent has no shell), base 266b29d.
+- Orchestrator verification: task commit 53d3956 (Orchestrator commit of agent files); `orch worktree verify-ownership` exit 0 (2 changed, 0 outside); `orch requirements check --at .` exit 0 (15 rules, 0 failed); record diff against base: 140 records unchanged, 5 added (R-115, R-116, R-117, R-427, R-428), none removed, no new acceptance criterion; main working tree unchanged; at 53d3956, 2026-10-27.
+- Integration commit(s): 380780f (merge --no-ff of task/WI-1/T11B). Affected gates: evidence/T11B-gates.txt. Verifier: T11D.
+- Decisions: LOW-5 decided escalations recorded as questions R-427, R-428; LOW-6 PD-10 as constraints R-115, R-116 and PD-11 as R-117, no new acceptance criterion; LOW-7 mode incremental from the intake record.
+- Human interventions: PD-10, PD-11 (S-002).
+- Agent usage: launches 1; tokens 220189; duration 11 minutes.
 
 ### T11C: Record PD-10 and PD-11 in the source-of-truth decision register
 - Kind: IMPL
@@ -363,6 +369,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T17:32:07Z | T11C | Agent report PASS; verified and integrated at 16013be; affected gates PASS; awaiting T11D | verify-ownership exit 0; evidence/T11C-gates.txt |
 | 2026-10-27T17:32:50Z | T10 | Attempt 2 addendum PASS; integrated at c1c0e2c; design verdict PASS; awaiting T11 | design-review.md Addendum 1; evidence/T10-gates-2.txt |
 | 2026-10-27T17:32:50Z | - | OD-14 (http-api accepted, MED-01) and OD-15 (A1 observations routed to task briefs) recorded | T10 addendum Contract Safety |
+| 2026-10-27T17:42:49Z | T11B | Agent report PASS; verified and integrated; affected gates PASS; awaiting T11D | requirements check exit 0; evidence/T11B-gates.txt |
+| 2026-10-27T17:42:49Z | T11D | Status IN_PROGRESS (attempt 1) | T11A, T11B, T11C integrated |
 
 ## Recovery log
 
