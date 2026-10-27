@@ -31,10 +31,16 @@
       "kind": "file",
       "path": "docs/work-items/WI-1/intake/sources/po-scope-clarification-2026-10-27-multi-competition.md",
       "insideRepository": true
+    },
+    {
+      "input": "/Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-change-batch.md",
+      "kind": "file",
+      "path": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-change-batch.md",
+      "insideRepository": true
     }
   ],
   "counts": {
-    "analyzed": 5,
+    "analyzed": 6,
     "unsupported": 0,
     "excluded": 0
   },
@@ -66,6 +72,19 @@
       "idsFound": [
         "WI-1"
       ]
+    },
+    {
+      "path": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-change-batch.md",
+      "status": "analyzed",
+      "reason": "text format",
+      "sourceId": "S-005",
+      "reader": "text",
+      "format": "md",
+      "sha256": "d324b6737bc69913284d86789d5856e9faff16945f501ee76332599d31010de6",
+      "bytes": 44,
+      "originalPath": null,
+      "typeCandidate": "product-idea",
+      "idsFound": []
     },
     {
       "path": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-stage2.md",

@@ -3,7 +3,7 @@
   "workItem": "WI-1",
   "startingPoint": {
     "id": "SP-4",
-    "basis": "5 inputs (inline text counts as one)"
+    "basis": "6 inputs (inline text counts as one)"
   },
   "mode": "incremental",
   "inputs": [
@@ -36,6 +36,12 @@
       "kind": "file",
       "resolvedPath": "docs/work-items/WI-1/intake/sources/po-scope-clarification-2026-10-27-multi-competition.md",
       "insideRepository": true
+    },
+    {
+      "input": "/Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-change-batch.md",
+      "kind": "file",
+      "resolvedPath": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-change-batch.md",
+      "insideRepository": true
     }
   ],
   "precedenceAssignment": [
@@ -46,6 +52,11 @@
     },
     {
       "sourceId": "S-003",
+      "level": 1,
+      "basis": "Product Owner decision named with --precedence"
+    },
+    {
+      "sourceId": "S-005",
       "level": 1,
       "basis": "Product Owner decision named with --precedence"
     },

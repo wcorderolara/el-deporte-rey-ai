@@ -10,7 +10,7 @@
 | Authorization | Product Owner request of 2026-10-27 via orchestrate analyze: requirements analysis only, no implementation. No merge, push or deploy is authorized. |
 | Config sha256 | `6614e48a55c0252c3962656d71eeec2dd29d537309bb39828a6df78b01824354` |
 | Last gate run | none yet |
-| Work-item status | PLANNING (change PD-12 to PD-14; awaiting PO decisions E-09 to E-14) |
+| Work-item status | PLANNING (change PD-12 to PD-20) |
 
 Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orchestrate/workflows/task-tracking.md. Only the Orchestrator edits this file.
 
@@ -39,7 +39,11 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11G | Architecture delta and plan reconciliation for PD-12, PD-13 and PD-14 | IMPL | architect | T11F | IN_PROGRESS | 2 | - | - |
 | T11H | Security design review of the provider and data-mode change | IMPL | security-reviewer | T11G | IN_PROGRESS | 2 | - | - |
 | T11I | Change requirements verification | VERIFY | Orchestrator | T11E, T11F | DONE | 1 | 3a2f8c9 | `docs/work-items/WI-1/evidence/T11I-requirements-check.txt` |
-| T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I | PENDING | 0 | - | - |
+| T11K | Intake of the change-batch Product Owner decisions (S-005) | IMPL | Orchestrator | T11I | IN_PROGRESS | 1 | - | - |
+| T11L | Record PD-15 to PD-20 in the requirements | IMPL | product-manager | T11K | PENDING | 0 | - | - |
+| T11M | Record PD-15 to PD-20 in the source-of-truth decision register | IMPL | architect | T11K | PENDING | 0 | - | - |
+| T11N | Change-batch decisions verification | VERIFY | Orchestrator | T11K, T11L, T11M | PENDING | 0 | - | - |
+| T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I, T11N | PENDING | 0 | - | - |
 | T12 | Source of truth: stack, architecture summary, interface conventions, architecture decisions | IMPL | architect | T11J | PENDING | 0 | - | - |
 | T13 | Collect public provider documentation for the PD-01 research | IMPL | Orchestrator | T11J | PENDING | 0 | - | - |
 | T14 | Provider research analysis and recommendation | IMPL | architect | T13, T53 | PENDING | 0 | - | - |
@@ -404,10 +408,46 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Human interventions: 0.
 - Agent usage: NOT RECORDED (Orchestrator task).
 
+### T11K: Intake of the change-batch Product Owner decisions (S-005)
+- Kind: IMPL
+- Agent: Orchestrator
+- Depends on: T11I
+- Files owned: `docs/work-items/WI-1/intake/**`
+- Scope: record the Product Owner answer of 2026-10-27 to escalations E-09 to E-14 verbatim as source S-005 (precedence level 1) and rescan the intake.
+- Acceptance criteria: S-005 analyzed at level 1; checked by T11N.
+- Verification: independently verified by T11N.
+
+### T11L: Record PD-15 to PD-20 in the requirements
+- Kind: IMPL
+- Agent: product-manager
+- Depends on: T11K
+- Files owned: `docs/work-items/WI-1/requirements.md`, `docs/work-items/WI-1/requirements.json`
+- Scope: resolve R-429 (PD-17) and R-430 (PD-18), record PD-15 (SC-05 isolation option A), PD-16 (credential identity option A), PD-19 (C-1 confirmed) and PD-20 (C-3 confirmed) with the records they establish, citing S-005; close conflicts C-1 to C-3.
+- Acceptance criteria: no open REQUIRES_PRODUCT_OWNER question; decisions traced to S-005; `orch requirements check` passes.
+- Verification: `orch requirements check --work-item 'WI-1' --at .` -> exit 0
+
+### T11M: Record PD-15 to PD-20 in the source-of-truth decision register
+- Kind: IMPL
+- Agent: architect
+- Depends on: T11K
+- Files owned: `.orchestrate/source-of-truth.md`
+- Scope: add PD-15 to PD-20 to section 3; confirm BR-10 superseded by PD-14 (PD-20); add the business rules and security constraints the decisions establish to sections 4 and 5.
+- Acceptance criteria: six HIGH rows citing WI-1 S-005; only sections 3 to 5 changed.
+- Verification: independently verified by T11N.
+
+### T11N: Change-batch decisions verification
+- Kind: VERIFY
+- Agent: Orchestrator
+- Depends on: T11K, T11L, T11M
+- Files owned: `docs/work-items/WI-1/evidence/T11N-validate.txt`
+- Scope: run `orch validate` at the integration HEAD and record the evidence.
+- Acceptance criteria: evidence `RESULT: PASS`.
+- Verification: `orch validate --work-item 'WI-1' --at '<integration worktree>'` -> exit 0
+
 ### T11J: Change architecture verification
 - Kind: VERIFY
 - Agent: Orchestrator
-- Depends on: T11G, T11H, T11I
+- Depends on: T11G, T11H, T11I, T11N
 - Files owned: `docs/work-items/WI-1/evidence/T11J-plan-check.txt`
 - Scope: run the plan check at the integration HEAD after the reconciled tracker is committed and record the evidence.
 - Acceptance criteria: evidence `RESULT: PASS`.
@@ -846,6 +886,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | PD-12 | HIGH | PO decision PD-12: football-data.org API v4 (https://api.football-data.org/v4) selected as preferred primary sports-data provider for the MVP; initial competition UEFA Champions League (code CL, id 2001); token from environment variable FOOTBALL_DATA_API_TOKEN sent in X-Auth-Token; credential rules 1-7 of S-003; rate-limit headers respected; two-source policy preserved (single-source results awaiting independent verification, not publishable); no purchase or upgrade | other providers | PO decision | S-003; Product Owner 2026-10-27 |
 | PD-13 | HIGH | PO decision PD-13: data acquisition modes LIVE_DATA (football-data.org), MANUAL_DATA (JSON, CSV, web form; competitions without public API, initial example Liga Nacional de Guatemala) and DEMO_DATA (synthetic fixtures), one normalized domain representation, manual import rules 1-10 of S-003, statuses UNVERIFIED, VERIFIED, MANUALLY_APPROVED (manual approval never represented as independent verification), adapters FootballDataProvider, ManualDataProvider, FixtureDataProvider | single LIVE mode | PO decision | S-003; Product Owner 2026-10-27 |
 | PD-14 | HIGH | PO decision PD-14 (scope clarification): the platform is dynamic and multi-competition; Champions League is only the initial validation scenario and never a hardcoded dependency; dynamic competition discovery from configured providers (catalogue, seasons, matchdays or stages, matches, results, standings, different tournament structures, unavailable competitions and features, subscription restrictions); provider IDs only in adapters or configuration; manual competitions in the same catalogue; one or more sources per competition with the used source recorded; provider-neutral domain concepts; MVP demonstrates at least two LIVE_DATA competitions (subject to provider coverage), one MANUAL_DATA and one DEMO_DATA competition; no provider-specific features beyond this capability | single-competition MVP | PO decision | S-004; Product Owner 2026-10-27 |
+| PD-15 | HIGH | PO decision PD-15 (E-13, SC-05): option A for both inputs: in-process processing of FootballDataProvider responses and of the JSON, CSV and form imports, with the conditions of design-review-change-1.md section 6.3 (caps, deadline, schemas; adversarial corpus and linear-time test for the CSV parser and JSON pre-scan, option B fallback by re-plan if the test fails; no new parser dependency or native decoder; re-review and a new PO decision before a new input format, raised caps, a second real provider adapter, a hosted AI provider, or a shared or multi-user host) | B worker thread; C separate process | PO decision | S-005; Product Owner 2026-10-27 |
+| PD-16 | HIGH | PO decision PD-16 (E-14, identity re-raise): option A: no login confirmed for LIVE_DATA on a single-user workstation with a free-plan token only, `.env.local` mode 0600, LIVE configuration enabled only when needed, and the budget controls of T11H-F05 and F06; re-raise before a paid plan, a shared or multi-user host, or real non-public data | B per-launch secret; C LIVE_DATA off until a login model | PO decision | S-005; Product Owner 2026-10-27 |
+| PD-17 | HIGH | PO decision PD-17 (E-09, R-429): option (c): MANUALLY_APPROVED facts may pass publication approval only for competitions configured as having no accepted public source (for example Liga Nacional de Guatemala), always labelled operator-attested and never shown or stored as verified; API-covered competitions keep the two-source rule | (a) always; (b) never | PO decision | S-005; Product Owner 2026-10-27 |
+| PD-18 | HIGH | PO decision PD-18 (E-10, R-430): option (a): before content using football-data.org data is approved for publication, the PO obtains written confirmation of republishing permission from the provider, including any attribution requirement, recorded as a PO decision; until then LIVE_DATA content from that provider is not publication-approvable | other confirmation route | PO decision | S-005; Product Owner 2026-10-27 |
+| PD-19 | HIGH | PO decision PD-19 (E-11): conflict C-1 resolution confirmed: multi-competition scope (S-003, S-004) supersedes the single-competition scope | reject | PO decision | S-005; Product Owner 2026-10-27 |
+| PD-20 | HIGH | PO decision PD-20 (E-12): conflict C-3 resolution confirmed: generic matchday-or-stage handling supersedes the league-phase-only limit of PD-09; knockout brackets and aggregate-score logic are not added | reject | PO decision | S-005; Product Owner 2026-10-27 |
 | OD-10 | MEDIUM | R-424: the PD-02 two-source agreement rule applies to every fact used in content (teams in a match, match status, competition context), not only scores, dates and standings | apply the rule only to scores, dates and standings | low (stricter default; can be relaxed) | MED-04, S-000 lines 25-26, S-001 lines 14-19; PO notified in stage-1 report |
 | OD-11 | MEDIUM | R-425: selectable content languages are Spanish (default) and English, held as configuration | Spanish only; open list | low (configuration) | MED-04, S-001 line 37; PO notified in stage-1 report |
 | OD-12 | MEDIUM | R-426: the verified official team name comes from the independent official source; team identity is matched across sources and an unmatched team is not verified; any other name form fails Visual QA and is not approvable; hashtags may use a hashtag-safe form of the name | name from the primary API; allow display aliases | low (rule configurable before content exists) | MED-04, S-001 lines 4-5, 38; PO notified in stage-1 report, may override |
@@ -867,9 +913,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 
 | ID | Sources in conflict | Resolution (higher source wins) | Follow-up |
 |----|---------------------|---------------------------------|-----------|
-| C-1 | S-000 single competition and selection flow (R-021, R-101, R-102, R-201) vs S-003 and S-004 multi-competition and manual competitions (R-072, R-137, R-138, R-243); both level 1 | Applied provisionally: later PO statements S-003, S-004 govern; earlier records superseded | Conflict between level-1 sources is HIGH: PO confirmation requested (E-11) |
-| C-2 | R-026, R-047 (two-source rule, block unverified) vs R-071 (MANUALLY_APPROVED status); both level 1 | Not decided by any source; R-026 applies until decided | R-429 to the PO (E-09) |
-| C-3 | PD-09 league-phase-only and mandatory standings slide (R-417, R-239, R-210) vs S-004 stages and different tournament structures (R-439, R-284, R-285); both level 1 | Applied provisionally: S-004 governs; earlier records superseded | Conflict between level-1 sources is HIGH: PO confirmation requested (E-12) |
+| C-1 | S-000 single competition and selection flow (R-021, R-101, R-102, R-201) vs S-003 and S-004 multi-competition and manual competitions (R-072, R-137, R-138, R-243); both level 1 | Applied provisionally: later PO statements S-003, S-004 govern; earlier records superseded | Conflict between level-1 sources is HIGH: PO confirmation requested (E-11); resolved by PD-19 |
+| C-2 | R-026, R-047 (two-source rule, block unverified) vs R-071 (MANUALLY_APPROVED status); both level 1 | Not decided by any source; R-026 applies until decided | R-429 to the PO (E-09); resolved by PD-17 |
+| C-3 | PD-09 league-phase-only and mandatory standings slide (R-417, R-239, R-210) vs S-004 stages and different tournament structures (R-439, R-284, R-285); both level 1 | Applied provisionally: S-004 governs; earlier records superseded | Conflict between level-1 sources is HIGH: PO confirmation requested (E-12); resolved by PD-20 |
 
 ## Escalations
 
@@ -883,12 +929,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | E-06 | T01 | HIGH decision: R-416 content language and team-name display (HIGH-07) | 2026-10-27 | 2026-10-27 (PD-06) |
 | E-07 | T10 | HIGH decision: U-03 isolation of untrusted-input processing (in-process parsing of provider JSON and operator images) (HIGH-03) | 2026-10-27 | 2026-10-27 (PD-10) |
 | E-08 | T09 | HIGH decision: U-04 first contract-evolution policy for http-api (additive-only within v1; breaking changes need a new major path and a PO decision) (HIGH-06, uncertain so raised) | 2026-10-27 | 2026-10-27 (PD-11) |
-| E-09 | T11F | HIGH decision: R-429 publication eligibility of MANUALLY_APPROVED facts (HIGH-07; conflict C-2) | 2026-10-27 | open |
-| E-10 | T11F | HIGH decision: R-430 confirmation of republishing permission for football-data.org content (HIGH-05, HIGH-07) | 2026-10-27 | open |
-| E-11 | T11F | HIGH decision: confirm conflict C-1 resolution (multi-competition supersedes single competition) (precedence.md: level 1 conflict) | 2026-10-27 | open |
-| E-12 | T11F | HIGH decision: confirm conflict C-3 resolution (generic stages supersede league-phase-only, PD-09) (precedence.md: level 1 conflict) | 2026-10-27 | open |
-| E-13 | T11H | HIGH decision: SC-05 isolation of untrusted-input processing for FootballDataProvider responses and for the JSON, CSV and form imports (HIGH-03; reviewer recommends option A for both, with conditions) | 2026-10-27 | open |
-| E-14 | T11H | HIGH decision: identity-model re-raise for the real credential (T10-F19, Q5): any local process can spend the token request budget through the login-less API (HIGH-03; reviewer recommends option A) | 2026-10-27 | open |
+| E-09 | T11F | HIGH decision: R-429 publication eligibility of MANUALLY_APPROVED facts (HIGH-07; conflict C-2) | 2026-10-27 | 2026-10-27 (PD-17) |
+| E-10 | T11F | HIGH decision: R-430 confirmation of republishing permission for football-data.org content (HIGH-05, HIGH-07) | 2026-10-27 | 2026-10-27 (PD-18) |
+| E-11 | T11F | HIGH decision: confirm conflict C-1 resolution (multi-competition supersedes single competition) (precedence.md: level 1 conflict) | 2026-10-27 | 2026-10-27 (PD-19) |
+| E-12 | T11F | HIGH decision: confirm conflict C-3 resolution (generic stages supersede league-phase-only, PD-09) (precedence.md: level 1 conflict) | 2026-10-27 | 2026-10-27 (PD-20) |
+| E-13 | T11H | HIGH decision: SC-05 isolation of untrusted-input processing for FootballDataProvider responses and for the JSON, CSV and form imports (HIGH-03; reviewer recommends option A for both, with conditions) | 2026-10-27 | 2026-10-27 (PD-15) |
+| E-14 | T11H | HIGH decision: identity-model re-raise for the real credential (T10-F19, Q5): any local process can spend the token request budget through the login-less API (HIGH-03; reviewer recommends option A) | 2026-10-27 | 2026-10-27 (PD-16) |
 
 ## Event log (append-only)
 
@@ -1030,6 +1076,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T20:35:36Z | T52 | Task added from the reconciled plan (T11G); status PENDING | architecture/task-plan.md Reconciliation (T11G) |
 | 2026-10-27T20:35:37Z | T53 | Task added from the reconciled plan (T11G); status PENDING | architecture/task-plan.md Reconciliation (T11G) |
 | 2026-10-27T20:35:37Z | - | Tracker reconciled with the T11G plan: T12 to T32, T34, T35, T37 to T48 updated (scope, depends on, files owned, acceptance criteria, verification); T33, T36 unchanged; T49 to T53 added before T48; all PENDING with 0 attempts; no task history changed | plan check exit 0 (42 tasks, 0 violations) |
+| 2026-10-27T20:54:50Z | T11K | Task added; status IN_PROGRESS (attempt 1) | PO answer recorded as S-005; intake rescan exit 0: 6 analyzed |
+| 2026-10-27T20:54:50Z | - | PO decisions PD-15 to PD-20 recorded (recommendations for E-09 to E-14); escalations E-09 to E-14 and conflicts C-1 to C-3 resolved | S-005 |
+| 2026-10-27T20:54:50Z | T11L | Task added; status PENDING | change-batch PO decisions follow-up |
+| 2026-10-27T20:54:50Z | T11M | Task added; status PENDING | change-batch PO decisions follow-up |
+| 2026-10-27T20:54:50Z | T11N | Task added; status PENDING | change-batch PO decisions follow-up |
+| 2026-10-27T20:54:50Z | T11J | Dependency T11N added | change-batch PO decisions follow-up |
 
 ## Recovery log
 
