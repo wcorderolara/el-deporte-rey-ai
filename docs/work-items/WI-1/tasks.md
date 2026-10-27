@@ -51,7 +51,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T17 | Configuration, catalog, display formatting and egress client | IMPL | backend-developer | T15 | DONE | 1 | b0b58d2 | `docs/work-items/WI-1/evidence/T17-gates.txt` |
 | T18 | Persistence: SQLite access, migration runner and initial schema | IMPL | backend-developer | T15 | DONE | 1 | 20d92b2 | `docs/work-items/WI-1/evidence/T18-gates.txt` |
 | T19 | HTTP platform, composition root and local-origin protections | IMPL | backend-developer | T17, T18 | IN_PROGRESS | 1 | - | - |
-| T20 | HTTP contract promotion and shared API schemas | IMPL | backend-developer | T15 | IN_PROGRESS | 1 | - | - |
+| T20 | HTTP contract promotion and shared API schemas | IMPL | backend-developer | T15 | IN_PROGRESS | 2 | - | - |
 | T21 | Sports-data provider port, payload validation and fixture adapter | IMPL | backend-developer | T17, T20 | PENDING | 0 | - | - |
 | T22 | AI provider port, stub adapter and OpenAI-compatible adapter | IMPL | backend-developer | T17 | IN_PROGRESS | 1 | - | - |
 | T23 | Synthetic fixture scenarios | IMPL | qa-engineer | T21, T22 | PENDING | 0 | - | - |
@@ -787,7 +787,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Kind: IMPL
 - Agent: qa-engineer
 - Depends on: T20, T38, T41, T50
-- Files owned: `apps/server/test/contract/**`
+- Files owned: `apps/server/test/contract/**`, `package.json`, `package-lock.json`
 - Scope: every operation of `contracts/http-api.openapi.yaml` exercised against the running app (Fastify `inject`) on fixture data, including the T11G operations (catalogue seasons and stages, manual approval and revocation, imports, originals and versions); responses validated against the contract schemas (status codes, problem+json shape and codes including `importErrors`, `retryAfterSeconds` and `refusalReason`, required and nullable fields, closed objects); every server route is in the contract and every contract operation is served; invalid inputs return `VALIDATION_FAILED` (R-224); no publication operation (R-219); no response, schema or contract text carries a provider identifier or provider field name (R-288). Security design review items (T10-F03, T10-F17, V-29, T10-A1-01): every ID parameter rejects non-UUID or non-slug values (including `..%2F..`, absolute paths and over-long strings) before any handler logic; `label`, names and file names with control or format characters are rejected; the 403 (including on GET operations through Fetch-Metadata), 421, 413 and 415 problem responses are exercised on the operations that declare them; response conformance relies on the closed per-kind fact values and per-check QA details; the promoted contract equals the accepted proposal except `info.version`. T11H review items: `createImport` with `contentBase64` (a valid CSV with a BOM and CRLF applied, and `getImport`'s `originalSha256` equals the SHA-256 of the sent bytes; malformed base64, a value over 699052 characters and a request with a text `content` field refused) (T11H-F01); `getImportOriginal` returns exactly the sent bytes with `Content-Disposition: attachment` and the server-generated ASCII file name `original-<importId>.csv` even when the stored file name is non-ASCII or NFD, plus `application/octet-stream`, `nosniff`, the sandbox CSP and CORP (T11H-F11, V-49); `listSeasons` and `listStages` answer 404 for unknown IDs (T11H-F06); no `sourceRef` or `ref` in any response is a URL or contains a provider host (T11H-F14, R-288).
 - Acceptance criteria: R-219, R-224, R-288
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:contract` -> exit 0
@@ -971,6 +971,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-35 | MEDIUM | MED-02 dependencies of T16 at exact versions: react 19.3.0, react-dom 19.3.0, react-router 8.4.0 (8.5.0 too recent), @vitejs/plugin-react 6.1.2, @types/react 19.3.0, @types/react-dom 19.3.0, vite 8.3.4 declared in apps/web (dedupes with root); new transitive scheduler, csstype, cookie-es, @remix-run/route-pattern; no advisory for any of them | other versions | low | MED-02; T16 report; PO notified |
 | OD-36 | MEDIUM | Re-plan: T28 also owns `apps/web/src/api/types.ts` (created by T16, DONE) and replaces its temporary copies of contract enums and shapes with re-exports from `@edr/contracts` (T20), and makes `parseProblem` use the contract Problem schema in coordination with T16's client (only types.ts is transferred) | a separate follow-up task | low | MED-05; T16 report |
 | OD-37 | MEDIUM | Re-plan: T19 also owns the root `package.json` (created by T15, DONE) to make `dev:api` run with `EDR_CONFIG=config/dev.config.json`, so the T19 Host and Origin guards accept the Vite dev server on 127.0.0.1:5173 (T10-F02); no other script changes | T25 owns it | low | MED-05; T17 file request |
+| OD-38 | MEDIUM | OD-26 contract shape confirmed: QA check `capitalized_tokens` (severity warning) with closed details `{ tokens: string[] }` (each at most 64 characters) and nullable acknowledgedAt; acknowledgeQaWarnings keeps `maxItems: 1` (widening later is additive under PD-11) | open details; maxItems 2 | low | MED-01 (covered by OD-23 pre-release scope); T20 E-2; PO notified |
+| OD-39 | MEDIUM | T20 E-1: `@readme/openapi-parser` cannot import as installed (legacy-peer-deps hoists ajv-draft-04 next to ESLint's ajv 6); the test-only resolve hook in `apps/server/test/contract/support/contract-document.ts` is accepted for now; re-plan: T43 also owns the root `package.json` and `package-lock.json` to add `ajv` 8.20.0 to the root devDependencies and remove the hook (T43 starts after T19, which owns package.json until DONE) | change .npmrc legacy-peer-deps | low | MED-02, MED-05; T20 report |
 
 ## Conflicts
 
@@ -1185,6 +1187,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T22:17:53Z | T17 | Status DONE | integration commit b0b58d2; evidence/T17-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-27T22:18:05Z | T19 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-27T22:18:05Z | T22 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-27T22:22:18Z | T20 | Attempt 1 verified (ownership 30/0; typecheck, lint, unit 203, integration 3, contract 465 all exit 0); correction attempt 2: info.description of the promoted contract still says proposal (T20 E-3) | contracts/http-api.openapi.yaml sha256 78741404ad40 |
+| 2026-10-27T22:22:18Z | - | OD-38 (capitalized_tokens shape) and OD-39 (ajv layout fix moved to T43; T43 owns package.json and package-lock.json) recorded | T20 report E-1, E-2 |
+| 2026-10-27T22:22:18Z | T43 | Files owned extended by OD-39 (package.json, package-lock.json) | OD-39 |
 
 ## Recovery log
 
