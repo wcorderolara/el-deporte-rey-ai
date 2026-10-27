@@ -1,0 +1,1186 @@
+{
+  "schema": "orchestrate/requirements@1",
+  "workItem": "WI-1",
+  "startingPoint": { "id": "SP-1", "override": null },
+  "mode": "full",
+  "language": "en",
+  "sources": [
+    {
+      "sourceId": "S-000",
+      "path": "docs/work-items/WI-1/intake/sources/inline-001.md",
+      "origin": "inline-record",
+      "originalPath": null,
+      "sha256": "b55dc299ab338c57d3555a183ccd11336c6f97bd79708a1f2737e7bdd6251aa2",
+      "type": "frd",
+      "precedenceLevel": 1
+    }
+  ],
+  "records": [
+    {
+      "id": "R-001", "originalId": null, "type": "functional",
+      "statement": "User story US-01: As the content operator, I want to create a content project in a web interface by selecting a competition, season and matchday, so that the platform prepares coverage of that matchday.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "16-16", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "54-55", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-002", "originalId": null, "type": "functional",
+      "statement": "User story US-02: As the content operator, I want the platform to research the selected matchday (results, teams and scores, dates, standings and competition context) and to show me the progress of the research, so that I receive structured, source-attributed data without collecting it by hand.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "18-23", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "56-57", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-003", "originalId": null, "type": "functional",
+      "statement": "User story US-03: As the content operator, I want every fact to be verified independently against reliable sources and marked as verified or not verified, so that content with invented or unverified scores, standings or statistics cannot be approved.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "25-26", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "58-58", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "86-90", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-004", "originalId": null, "type": "functional",
+      "statement": "User story US-04: As the content operator, I want the platform to draft the carousel structure, headlines, slide descriptions, social media caption and hashtags from the verified data, so that I start my review from a complete draft.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "28-33", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-005", "originalId": null, "type": "functional",
+      "statement": "User story US-05: As the content operator, I want cover, match-result, standings and closing slides generated in the El Deporte Rey GT visual identity from reusable templates, so that every post looks professional and consistent.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "35-39", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "59-59", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Branding", "lines": "67-77", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-006", "originalId": null, "type": "functional",
+      "statement": "User story US-06: As the content operator, I want an automated visual quality check of every slide before my review, so that wrong scores, standings or team names, overflowing text, inconsistent visuals and wrong dimensions are caught.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "41-46", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-007", "originalId": null, "type": "functional",
+      "statement": "User story US-07: As the content operator, I want to preview the carousel and captions, regenerate individual slides and explicitly approve the content, so that nothing I have not approved can be exported.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "48-48", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "60-61", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "94-94", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-008", "originalId": null, "type": "functional",
+      "statement": "User story US-08: As the content operator, I want to export the approved images and captions, so that I can publish them manually on Instagram.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "50-50", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "62-62", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "95-95", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-009", "originalId": null, "type": "functional",
+      "statement": "User story US-09: As the content operator, I want a history of generated content with traceability from each exported slide back to its source data, so that I can revisit past content and show where every fact came from.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "63-63", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "93-93", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-010", "originalId": null, "type": "functional",
+      "statement": "User story US-10: As the content operator, I want to manage reusable brand assets and carousel templates, and to have brand assets used only when they have actually been provided, so that the brand is applied consistently without placeholder or invented assets.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "59-59", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Branding", "lines": "79-82", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+
+    {
+      "id": "R-020", "originalId": null, "type": "functional",
+      "statement": "The platform provides a web interface for managing content projects: the user can create a project, list the existing projects and open a project.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "54-54", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-001" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-021", "originalId": null, "type": "functional",
+      "statement": "When creating a content project, the user selects a competition, a season and a matchday. In the MVP the only selectable competition is the UEFA Champions League (seasons and phases: R-417).",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Product Vision", "lines": "12-12", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "16-16", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "55-55", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Initial Scope", "lines": "102-102", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-001" }, { "type": "references", "target": "R-417" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-022", "originalId": null, "type": "functional",
+      "statement": "For the selected competition, season and matchday, the Research Agent retrieves: the match results; the teams and scores of each match; the match dates; the competition standings; and relevant competition context.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "18-23", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [
+        { "type": "refines", "target": "R-002" },
+        { "type": "depends-on", "target": "R-021" },
+        { "type": "depends-on", "target": "ext:sports-data provider, to be selected (R-400) and accepted by the Product Owner (R-410)" }
+      ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-023", "originalId": null, "type": "functional",
+      "statement": "The user starts the research execution from the project and can follow its progress: the interface shows which workflow stage is pending, running, completed or failed, and a failed stage reports its reason.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "56-56", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-002" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-024", "originalId": null, "type": "functional",
+      "statement": "Research results are stored as structured records. Each fact (for example a score, a match date or a standings row) carries its source attribution: the source it came from, a reference to its location in that source, and the retrieval time.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "57-58", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "87-87", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-002" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-025", "originalId": null, "type": "functional",
+      "statement": "A Fact-Checking Agent independently verifies all factual information produced by research against reliable sources and records, for each fact, whether it is verified, the sources used and, when it is not verified, the reason. The verification rule is decided under R-411.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "25-26", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "58-58", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [
+        { "type": "refines", "target": "R-003" },
+        { "type": "depends-on", "target": "R-024" },
+        { "type": "references", "target": "R-411" }
+      ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-026", "originalId": null, "type": "business-rule",
+      "statement": "If a fact cannot be verified, publication approval is blocked for the content affected by that fact (every slide, headline, slide description or caption that uses it) until the fact is verified. Content that does not use the fact is not blocked.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "89-90", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-003" }, { "type": "depends-on", "target": "R-025" }, { "type": "references", "target": "R-412" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-027", "originalId": null, "type": "business-rule",
+      "statement": "The platform never invents scores, standings or match statistics. Every score, standing or match statistic that appears in generated content (slides, headlines, slide descriptions, captions) is taken from the verified data; content that contains such a value not present in the verified data is flagged and cannot be approved.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "86-90", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-003" }, { "type": "depends-on", "target": "R-025" }, { "type": "references", "target": "R-422" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-028", "originalId": null, "type": "functional",
+      "statement": "The platform clearly distinguishes verified facts from AI-generated commentary: each content element is identified as verified fact or generated commentary (presentation decided under R-404).",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "88-88", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-003" }, { "type": "references", "target": "R-404" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-029", "originalId": null, "type": "functional",
+      "statement": "A Content Agent prepares, from the verified data: the carousel structure, the headlines, the slide descriptions, the social media captions and relevant hashtags.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "28-33", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [
+        { "type": "refines", "target": "R-004" },
+        { "type": "depends-on", "target": "R-025" },
+        { "type": "depends-on", "target": "ext:AI provider, to be selected by the Architect (R-401)" }
+      ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-030", "originalId": null, "type": "functional",
+      "statement": "A Graphic Design Agent creates the carousel slides: a cover slide, individual match-result slides (one per match), standings slides and a closing slide.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "35-39", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [
+        { "type": "refines", "target": "R-005" },
+        { "type": "depends-on", "target": "R-029" },
+        { "type": "depends-on", "target": "R-031" },
+        { "type": "references", "target": "R-407" }
+      ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-031", "originalId": null, "type": "functional",
+      "statement": "Slides are produced from reusable branded carousel templates; the same templates are reused across projects and matchdays.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "59-59", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Branding", "lines": "79-79", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "119-119", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-005" }, { "type": "refines", "target": "R-010" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-032", "originalId": null, "type": "functional",
+      "statement": "Templates apply the El Deporte Rey GT identity: brand name El Deporte Rey GT, social handle @ElDeporteReyGT, mascot KETSI (images only when provided, R-034), and the colours purple, gold, blue and white.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Branding", "lines": "67-77", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-005" }, { "type": "references", "target": "R-418" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-033", "originalId": null, "type": "functional",
+      "statement": "The platform supports reusable brand assets: assets that have been provided (for example logos or mascot images) are registered once and reused by templates across projects.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Branding", "lines": "79-79", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-010" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-034", "originalId": null, "type": "business-rule",
+      "statement": "Logos, team badges and mascot images are not assumed to exist; they are used only when they have been provided. Templates produce complete slides when such assets are absent.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Branding", "lines": "81-82", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-010" }, { "type": "references", "target": "R-413" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-035", "originalId": null, "type": "business-rule",
+      "statement": "Generated visuals preserve the exact verified scores and names: every score and name shown on a slide equals the verified value exactly (display convention for team names: R-416).",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "92-92", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-005" }, { "type": "references", "target": "R-416" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-036", "originalId": null, "type": "non-functional",
+      "statement": "Numeric information is rendered deterministically: the same verified data and the same template always produce the same numeric text on the slide; numbers are never produced by a non-deterministic generation step.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "91-91", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-005" }, { "type": "references", "target": "R-402" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-037", "originalId": null, "type": "functional",
+      "statement": "A Visual QA Agent verifies every generated slide: scores and standings match the verified data; team names are correct; text fits the layout; visuals are consistent across the carousel; and the slide has the configured social media dimensions. Results are reported per slide and per check; failure handling is decided under R-420.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "41-46", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [
+        { "type": "refines", "target": "R-006" },
+        { "type": "depends-on", "target": "R-025" },
+        { "type": "depends-on", "target": "R-030" },
+        { "type": "references", "target": "R-408" },
+        { "type": "references", "target": "R-420" }
+      ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-038", "originalId": null, "type": "functional",
+      "statement": "Before approving, the user can preview the generated carousel (all slides in carousel order) together with the captions and hashtags.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "48-48", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "60-60", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-007" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-039", "originalId": null, "type": "business-rule",
+      "statement": "Explicit user approval is required before any content can be exported for publication; only approved assets can be exported (approval granularity: R-405; approval after a change: R-406).",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "50-50", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "60-60", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "94-94", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-007" }, { "type": "references", "target": "R-405" }, { "type": "references", "target": "R-406" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-040", "originalId": null, "type": "functional",
+      "statement": "The user can regenerate an individual slide without regenerating the other slides of the carousel.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "61-61", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-007" }, { "type": "references", "target": "R-406" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-041", "originalId": null, "type": "functional",
+      "statement": "The user can export approved assets for manual publication: the slide images and the captions with their hashtags.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "50-50", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "62-62", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-008" }, { "type": "depends-on", "target": "R-039" }, { "type": "references", "target": "R-421" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-042", "originalId": null, "type": "constraint",
+      "statement": "The MVP does not publish automatically to any social platform; publication is done manually by the user from the exported files.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "95-95", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Initial Scope", "lines": "105-105", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-008" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-043", "originalId": null, "type": "functional",
+      "statement": "The platform keeps a history of generated content: past projects, with their generated slides, captions, approval state and exports, can be listed and reopened.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "63-63", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-009" }, { "type": "references", "target": "R-419" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-044", "originalId": null, "type": "functional",
+      "statement": "The platform maintains traceability from source data to exported slides: for every exported slide, the facts it shows, their verification status and their sources can be retrieved.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "93-93", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "57-57", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-009" }, { "type": "depends-on", "target": "R-024" }, { "type": "depends-on", "target": "R-025" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-045", "originalId": null, "type": "business-rule",
+      "statement": "Facts are taken only from trustworthy, attributable data sources. Which sources qualify is decided by the Product Owner under R-410.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "87-87", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "25-26", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "refines", "target": "R-003" }, { "type": "references", "target": "R-410" }, { "type": "references", "target": "R-411" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+
+    {
+      "id": "R-100", "originalId": null, "type": "constraint",
+      "statement": "The MVP is local-first: the platform and its data run on the user's local machine (access to external providers: R-306).",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Initial Scope", "lines": "99-99", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-306" } ],
+      "status": "active", "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-101", "originalId": null, "type": "constraint",
+      "statement": "MVP scope priorities, in order: (1) one competition, the UEFA Champions League; (2) matchday results and standings; (3) Instagram carousel generation; (4) manual approval and export.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Product Vision", "lines": "12-12", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Initial Scope", "lines": "101-105", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-102", "originalId": null, "type": "non-functional",
+      "statement": "The design supports future extension to additional competitions, additional social platforms and automated publishing; these extensions are not part of the MVP.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Initial Scope", "lines": "107-108", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "references", "target": "R-109" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-103", "originalId": null, "type": "constraint",
+      "statement": "The technology stack is not prescribed by the Product Owner; the Architect proposes it based on these requirements.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "112-113", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-104", "originalId": null, "type": "non-functional",
+      "statement": "Modular architecture with testable agent boundaries: each workflow stage (research, fact-checking, content, graphic design, visual QA) has defined inputs and outputs and can be tested in isolation.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "116-116", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "118-118", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "18-46", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "references", "target": "R-302" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-105", "originalId": null, "type": "non-functional",
+      "statement": "Strong runtime validation: data received from providers and data exchanged between workflow stages is validated at run time against its expected structure; invalid data is rejected and not used.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "117-117", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-106", "originalId": null, "type": "non-functional",
+      "statement": "Provider abstraction: AI providers and sports-data providers are configurable and can be replaced through configuration without changing the workflow stages.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "120-120", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "123-123", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "references", "target": "R-400" }, { "type": "references", "target": "R-401" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-107", "originalId": null, "type": "non-functional",
+      "statement": "Automated testing: the platform has automated tests covering the workflow stages and the business rules of this document.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "121-121", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-108", "originalId": null, "type": "non-functional",
+      "statement": "Local development: the platform can be developed, run and tested on a local machine.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "122-122", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-109", "originalId": null, "type": "constraint",
+      "statement": "Avoid unnecessary infrastructure and premature complexity: the MVP introduces no component that the MVP scope (R-101) does not need.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "125-125", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "references", "target": "R-101" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+
+    {
+      "id": "R-200", "originalId": null, "type": "acceptance-criterion",
+      "statement": "Given the web interface is open, when the user creates a content project, then the project appears in the project list and, when opened, shows its competition, season and matchday.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "54-55", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-020" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-201", "originalId": null, "type": "acceptance-criterion",
+      "statement": "The competition selector offers only the UEFA Champions League; the matchday selector lists only matchdays of the selected season; a project cannot be created until competition, season and matchday are all selected.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "55-55", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Initial Scope", "lines": "101-102", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-021" }, { "type": "verifies", "target": "R-101" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-202", "originalId": null, "type": "acceptance-criterion",
+      "statement": "Given a fixture sports-data provider with a known matchday dataset, when research runs for that matchday, then the result contains every match of the matchday with both teams, the score of each finished match and its date, the full competition standings, and at least one competition-context item, each equal to the fixture values.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "18-23", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-022" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-203", "originalId": null, "type": "acceptance-criterion",
+      "statement": "While research runs, the project view shows the status of each workflow stage; when the provider fails (simulated), the stage is shown as failed with a reason and the user can start the research again.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "56-56", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-023" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-204", "originalId": null, "type": "acceptance-criterion",
+      "statement": "Every fact in a stored research result has a source, a source reference and a retrieval time; a fact without attribution is rejected by validation and is not stored as a research result.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "57-58", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "87-87", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-024" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-205", "originalId": null, "type": "acceptance-criterion",
+      "statement": "After fact-checking, every fact has a verification status; a fact whose value differs between sources (a disagreement seeded in the fixture data) is marked not verified, with a reason naming the sources.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "25-26", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-025" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-206", "originalId": null, "type": "acceptance-criterion",
+      "statement": "Given one unverified score, approval of every slide, headline or caption that uses that score is refused with a message naming the fact, while content that does not use it can still be approved.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "89-90", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-026" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-207", "originalId": null, "type": "acceptance-criterion",
+      "statement": "Given a stub AI provider that returns a caption (or a headline) containing a score not present in the verified data, that caption (or headline) is flagged and cannot be approved.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "86-90", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-027" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-208", "originalId": null, "type": "acceptance-criterion",
+      "statement": "In the review view and in the stored content, every text element is identified as verified fact or generated commentary.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "88-88", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-028" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-209", "originalId": null, "type": "acceptance-criterion",
+      "statement": "For a verified matchday dataset, the content draft contains an ordered carousel structure with a slide type for each slide, a headline and a description for each slide, a caption, and at least one hashtag.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "28-33", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-029" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-210", "originalId": null, "type": "acceptance-criterion",
+      "statement": "The generated carousel contains a cover slide, one match-result slide for each match included in the carousel structure, at least one standings slide, and a closing slide.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "35-39", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-030" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-211", "originalId": null, "type": "acceptance-criterion",
+      "statement": "Carousels generated for two different matchdays from the same templates use the same layouts and only colours from the configured brand palette (purple, gold, blue, white); a change to a template is applied to every carousel generated after the change.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "59-59", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Branding", "lines": "73-79", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-031" }, { "type": "verifies", "target": "R-032" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-212", "originalId": null, "type": "acceptance-criterion",
+      "statement": "With no logo, team badge or mascot image provided, a complete carousel is generated without errors and without any placeholder or substitute image for those assets.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Branding", "lines": "81-82", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-034" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-213", "originalId": null, "type": "acceptance-criterion",
+      "statement": "Rendering the same slide twice from the same verified data and template produces identical numeric text; every score and team name placed on a slide equals the verified value exactly.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "91-92", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-035" }, { "type": "verifies", "target": "R-036" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-214", "originalId": null, "type": "acceptance-criterion",
+      "statement": "For each check (score or standing mismatch, incorrect team name, text overflow, inconsistent visual style, wrong dimensions), a slide seeded with that defect fails that check with a result naming it, and a correct slide passes all checks.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "41-46", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-037" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-215", "originalId": null, "type": "acceptance-criterion",
+      "statement": "Before approval, the preview shows all slides in carousel order together with the caption and hashtags.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "48-48", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "60-60", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-038" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-216", "originalId": null, "type": "acceptance-criterion",
+      "statement": "Export of content that has not been explicitly approved is refused; after explicit approval, the export succeeds.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "94-94", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-039" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-217", "originalId": null, "type": "acceptance-criterion",
+      "statement": "Regenerating one slide changes only that slide and leaves the other slides unchanged; the regenerated slide goes through Visual QA again and needs approval again (R-406).",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "61-61", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "94-94", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-040" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-218", "originalId": null, "type": "acceptance-criterion",
+      "statement": "Export of an approved carousel produces one image file per approved slide, in carousel order and at the configured dimensions, and a text file containing the approved caption and hashtags.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "50-50", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "62-62", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-041" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-219", "originalId": null, "type": "acceptance-criterion",
+      "statement": "The MVP has no function that publishes to a social platform, and no export step sends data to a social platform.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "95-95", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-042" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-220", "originalId": null, "type": "acceptance-criterion",
+      "statement": "After an export, the project is listed in the history with its approval state and export time; reopening it shows the same slides and captions that were exported.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "63-63", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-043" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-221", "originalId": null, "type": "acceptance-criterion",
+      "statement": "For any exported slide, the platform shows the facts displayed on it, their verification status and their sources.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "93-93", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-044" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-222", "originalId": null, "type": "acceptance-criterion",
+      "statement": "Following the documented local setup, the full workflow (selection, research, fact-checking, content, design, visual QA, approval, export) runs on a single local machine, with external access only to the configured providers.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Initial Scope", "lines": "99-99", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "122-122", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-100" }, { "type": "verifies", "target": "R-108" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-223", "originalId": null, "type": "acceptance-criterion",
+      "statement": "Replacing the configured AI provider and sports-data provider with stub providers requires only a configuration change, and the full workflow then runs end to end with the stubs.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "120-123", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-106" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-224", "originalId": null, "type": "acceptance-criterion",
+      "statement": "Provider data or data passed between workflow stages that violates the expected structure (for example a missing score or a malformed date) is rejected with a validation error and is not used in any content.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "117-117", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-105" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-225", "originalId": null, "type": "acceptance-criterion",
+      "statement": "Each workflow stage has automated tests that run it in isolation with fixture inputs; the automated test suite runs without access to real external providers.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "116-121", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-104" }, { "type": "verifies", "target": "R-107" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-226", "originalId": null, "type": "acceptance-criterion",
+      "statement": "The architecture review confirms that the competition, the target platform format (slide dimensions, maximum slides per carousel) and the publication mode are configuration or data, not logic fixed in the workflow stages.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Initial Scope", "lines": "107-108", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-102" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-227", "originalId": null, "type": "acceptance-criterion",
+      "statement": "Every fact in research and verification results names its source, and only sources accepted under R-410 can make a fact verified; a fact supported only by another source stays not verified.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "87-87", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-045" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+    {
+      "id": "R-228", "originalId": null, "type": "acceptance-criterion",
+      "statement": "A brand asset registered once is available to the templates of every later project without being provided again.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Branding", "lines": "79-79", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "verifies", "target": "R-033" } ], "status": "active",
+      "classification": null, "resolution": null, "recommendation": null, "basis": null
+    },
+
+    {
+      "id": "R-300", "originalId": null, "type": "assumption",
+      "statement": "The MVP has one user role, the content operator of El Deporte Rey GT, who creates projects, runs research, reviews, approves and exports. The followers of @ElDeporteReyGT are the audience of the exported content, not users of the platform.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "16-16", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "48-48", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "references", "target": "R-415" } ], "status": "assumption",
+      "classification": null, "resolution": null, "recommendation": null,
+      "basis": "S-000 refers only to 'the user' (lines 16 and 48) and names no other role; the authentication and user model is open (R-415)."
+    },
+    {
+      "id": "R-301", "originalId": null, "type": "assumption",
+      "statement": "No logos, mascot images, team badges or brand fonts have been provided at the time of this analysis; the first templates are built without them.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Branding", "lines": "81-82", "page": null } } ],
+      "precedenceLevel": 1, "relationships": [ { "type": "references", "target": "R-034" } ], "status": "assumption",
+      "classification": null, "resolution": null, "recommendation": null,
+      "basis": "S-000 lines 81-82 say not to assume such assets exist unless provided; the intake inventory holds only the S-000 text and no asset files."
+    },
+    {
+      "id": "R-302", "originalId": null, "type": "assumption",
+      "statement": "The Research, Fact-Checking, Content, Graphic Design and Visual QA Agents of S-000 are functional stages of the product. Whether each stage uses an AI model, deterministic code or both is an architecture decision (for example, comparing rendered scores with verified data can be deterministic).",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "18-46", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "112-113", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "references", "target": "R-104" } ], "status": "assumption",
+      "classification": null, "resolution": null, "recommendation": null,
+      "basis": "S-000 lines 18-46 describe the responsibilities of each agent, not their implementation; lines 112-113 leave the technology to the Architect. These agents are product features, not framework roles."
+    },
+    {
+      "id": "R-303", "originalId": null, "type": "assumption",
+      "statement": "The only target social platform of the MVP is Instagram, so 'social media dimensions' (S-000 line 46) means the Instagram carousel format.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "46-46", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Initial Scope", "lines": "104-108", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "references", "target": "R-408" } ], "status": "assumption",
+      "classification": null, "resolution": null, "recommendation": null,
+      "basis": "S-000 line 104 prioritises Instagram carousel generation and lines 107-108 make other platforms a future extension."
+    },
+    {
+      "id": "R-304", "originalId": null, "type": "assumption",
+      "statement": "Export means saving the approved images and caption text as local files, which the user uploads to Instagram manually.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "50-50", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "95-95", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "references", "target": "R-041" } ], "status": "assumption",
+      "classification": null, "resolution": null, "recommendation": null,
+      "basis": "S-000 lines 50 and 62 (export for manual publication), 95 (no automatic publishing) and 99 (local-first)."
+    },
+    {
+      "id": "R-305", "originalId": null, "type": "assumption",
+      "statement": "'Relevant competition context' (S-000 line 23) means short factual context about the matchday derived from competition data (for example the matchday number, the competition phase or positions in the standings); every factual claim in it is subject to fact-checking (R-025).",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "23-26", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "references", "target": "R-022" } ], "status": "assumption",
+      "classification": null, "resolution": null, "recommendation": null,
+      "basis": "S-000 line 23 does not define competition context; lines 25-26 require verification of all factual information."
+    },
+    {
+      "id": "R-306", "originalId": null, "type": "assumption",
+      "statement": "Local-first does not mean offline: the platform needs internet access at run time to reach the sports-data and AI providers.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Initial Scope", "lines": "99-99", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "123-123", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "references", "target": "R-100" } ], "status": "assumption",
+      "classification": null, "resolution": null, "recommendation": null,
+      "basis": "S-000 lines 18-26 and 87 require third-party data and line 123 configurable AI providers; line 99 sets where the platform runs, not that it is offline."
+    },
+    {
+      "id": "R-307", "originalId": null, "type": "assumption",
+      "statement": "No performance, availability or scale targets are set for the MVP; the expected load is that of a single operator.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Initial Scope", "lines": "99-99", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "125-125", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "references", "target": "R-300" } ], "status": "assumption",
+      "classification": null, "resolution": null, "recommendation": null,
+      "basis": "S-000 states no performance or scale target; line 99 (local-first MVP) and line 125 (avoid premature complexity)."
+    },
+    {
+      "id": "R-308", "originalId": null, "type": "assumption",
+      "statement": "Research collects only the data items listed in S-000 lines 19-23; detailed match statistics and player-level data are not collected in the MVP unless the Product Owner decides otherwise (R-414).",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "18-23", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "86-86", "page": null } }
+      ],
+      "precedenceLevel": 1, "relationships": [ { "type": "references", "target": "R-414" } ], "status": "assumption",
+      "classification": null, "resolution": null, "recommendation": null,
+      "basis": "S-000 lines 18-23 list the research data; line 86 mentions match statistics only as something never to invent."
+    },
+
+    {
+      "id": "R-400", "originalId": null, "type": "question",
+      "statement": "Which sports-data provider or providers does the platform use for research and verification?",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "112-123", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-022" }, { "type": "references", "target": "R-410" }, { "type": "references", "target": "R-411" } ],
+      "status": "resolved-question", "classification": "AUTONOMOUS_DECISION",
+      "resolution": "Left to the Architect in the architecture stage. The requirements stay provider-neutral (R-106); development and automated tests use a fixture provider. The choice is bounded by the Product Owner decisions on accepted sources and the verification rule (R-410, R-411); if the proposed provider needs a paid account or acceptance of terms, that is raised to the Product Owner with the architecture.",
+      "recommendation": "The Architect shortlists candidate providers with their coverage of the UEFA Champions League, terms-of-use summary and cost.",
+      "basis": "S-000 lines 112-113 (the Architect proposes the stack), 120 and 123 (provider abstraction, configurable sports-data providers); S-000 names no provider."
+    },
+    {
+      "id": "R-401", "originalId": null, "type": "question",
+      "statement": "Which AI provider or providers and models do the AI-based workflow stages use?",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "112-123", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-029" }, { "type": "references", "target": "R-106" } ],
+      "status": "resolved-question", "classification": "AUTONOMOUS_DECISION",
+      "resolution": "Left to the Architect in the architecture stage, behind the provider abstraction (R-106). Automated tests use a deterministic stub provider. Provider credentials are never stored in the repository. Any paid account or cost is raised to the Product Owner with the architecture.",
+      "recommendation": "The Architect proposes a default provider and documents how to switch providers by configuration.",
+      "basis": "S-000 lines 112-113, 120 and 123; S-000 names no AI provider."
+    },
+    {
+      "id": "R-402", "originalId": null, "type": "question",
+      "statement": "Which approach renders the slide images (for example programmatic template rendering, generative imagery, or a combination)?",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "91-92", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "112-113", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-035" }, { "type": "references", "target": "R-036" } ],
+      "status": "resolved-question", "classification": "AUTONOMOUS_DECISION",
+      "resolution": "Left to the Architect, bounded by R-035 and R-036: scores, standings, team names and all other numbers are placed on slides deterministically from the verified data; any generated imagery must not be the means by which those values appear on a slide.",
+      "recommendation": "Template-based rendering for every fact-bearing element.",
+      "basis": "S-000 lines 91-92 require deterministic numbers and exact names but name no rendering technique; lines 112-113 leave the stack to the Architect."
+    },
+    {
+      "id": "R-403", "originalId": null, "type": "question",
+      "statement": "Where and how are projects, research results, verification results, generated content and history stored?",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Initial Scope", "lines": "99-99", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "112-125", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-043" }, { "type": "references", "target": "R-044" } ],
+      "status": "resolved-question", "classification": "AUTONOMOUS_DECISION",
+      "resolution": "Left to the Architect, bounded by R-100 (local-first), R-109 (no unnecessary infrastructure), R-043 (history) and R-044 (traceability).",
+      "recommendation": "Local storage on the operator's machine with no separately hosted service.",
+      "basis": "S-000 lines 99, 112-113 and 125; S-000 names no storage technology."
+    },
+    {
+      "id": "R-404", "originalId": null, "type": "question",
+      "statement": "Where and how is the distinction between verified facts and AI-generated commentary shown (review interface, stored data, exported images, captions)?",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "88-88", "page": null } } ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-028" } ],
+      "status": "resolved-question", "classification": "ORCHESTRATOR_DECISION",
+      "resolution": "Recommended reversible default: every stored content element carries a provenance label (verified fact, with references to its facts, or generated commentary); the review view displays the label; exported images and captions carry no visible label; commentary must not state scores, standings or statistics that are not verified (R-027).",
+      "recommendation": "Adopt the default as an Orchestrator decision; the Product Owner can ask for visible labels on exported content later.",
+      "basis": "S-000 line 88 requires the distinction but not where it is shown; reversible, non-security default (autonomy.md MED-04)."
+    },
+    {
+      "id": "R-405", "originalId": null, "type": "question",
+      "statement": "At what granularity is content approved: per slide, per caption, per carousel?",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "48-50", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "89-94", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-039" }, { "type": "references", "target": "R-026" } ],
+      "status": "resolved-question", "classification": "ORCHESTRATOR_DECISION",
+      "resolution": "Recommended reversible default: each slide and the caption have their own review state; a final carousel approval is possible only when every included slide and the caption are approved and none is blocked (R-026, R-420); export (R-041) requires the final carousel approval.",
+      "recommendation": "Adopt the default as an Orchestrator decision.",
+      "basis": "S-000 lines 48, 50, 60, 89-90 and 94 require explicit approval and blocking of affected content but do not set the granularity; reversible and consistent with the blocking rule (autonomy.md MED-04)."
+    },
+    {
+      "id": "R-406", "originalId": null, "type": "question",
+      "statement": "Does approval survive a later change, such as regenerating an approved slide or re-running research?",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "93-94", "page": null } } ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-039" }, { "type": "references", "target": "R-040" } ],
+      "status": "resolved-question", "classification": "RESOLVED_BY_EXISTING_SOURCE",
+      "resolution": "No. Approval applies to the exact version approved. Regenerating or otherwise changing an approved slide or caption, or re-running research, returns the changed content to pending review, re-runs Visual QA for changed slides and requires approval again.",
+      "recommendation": null,
+      "basis": "S-000 line 94 (explicit user approval before publication) and line 93 (traceability to exported slides): content changed after approval has not been explicitly approved."
+    },
+    {
+      "id": "R-407", "originalId": null, "type": "question",
+      "statement": "How does the carousel structure handle a matchday whose individual match-result slides, plus cover, standings and closing slides, exceed the maximum number of slides Instagram allows in one carousel post?",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "36-39", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Initial Scope", "lines": "104-104", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-030" }, { "type": "references", "target": "R-029" } ],
+      "status": "resolved-question", "classification": "ORCHESTRATOR_DECISION",
+      "resolution": "Recommended reversible default: the maximum number of slides per carousel is a configuration value, set to the limit Instagram publishes at implementation time; when the structure exceeds it, the Content Agent splits the matchday into numbered carousels within the same project, each with its own cover and closing slide; the user can exclude matches from a carousel. Individual match-result slides (S-000 line 36) are kept.",
+      "recommendation": "Adopt the default as an Orchestrator decision.",
+      "basis": "S-000 lines 36, 46 and 104 require individual match slides and correct social media dimensions but set no slide count; reversible, non-security default (autonomy.md MED-04)."
+    },
+    {
+      "id": "R-408", "originalId": null, "type": "question",
+      "statement": "Which slide dimensions does the Instagram carousel use?",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "46-46", "page": null } } ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-037" }, { "type": "references", "target": "R-303" } ],
+      "status": "resolved-question", "classification": "ORCHESTRATOR_DECISION",
+      "resolution": "Recommended reversible default: portrait 4:5 at 1080 x 1350 pixels, held as configuration and confirmed against Instagram's published specifications at implementation time; Visual QA checks the configured value.",
+      "recommendation": "Adopt the default as an Orchestrator decision.",
+      "basis": "S-000 line 46 requires correct social media dimensions and line 104 targets Instagram carousels, without a size; reversible (autonomy.md MED-04)."
+    },
+    {
+      "id": "R-409", "originalId": null, "type": "question",
+      "statement": "How are matches that are not finished, postponed or abandoned, and matchdays still in progress, handled?",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "18-23", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "86-90", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-022" }, { "type": "references", "target": "R-026" } ],
+      "status": "resolved-question", "classification": "ORCHESTRATOR_DECISION",
+      "resolution": "Recommended reversible default: only matches with a verified final result get a match-result slide; matches without one are listed in the project with their verified status (for example scheduled or postponed) and are left out of the carousel; standings slides show the verified date and time the standings refer to; research on a matchday with no finished match reports that no result content can be produced.",
+      "recommendation": "Adopt the default as an Orchestrator decision.",
+      "basis": "S-000 lines 86 and 89-90 (no invented results; block unverified content) do not cover incomplete matchdays; reversible, consistent with those rules (autonomy.md MED-04)."
+    },
+    {
+      "id": "R-410", "originalId": null, "type": "question",
+      "statement": "Which sports-data sources may the platform use, and does the Product Owner accept their licensing and terms of use, including use of the data in content published on a public social account? Options: (a) a licensed commercial sports-data API whose terms allow derived social media content; (b) free or public sources, such as the competition organiser's official publications, after the Product Owner confirms their terms allow this use; (c) a combination: one licensed API as primary source and an official public source as the independent verification source.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "87-87", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Technical Direction", "lines": "123-123", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-045" }, { "type": "references", "target": "R-022" }, { "type": "references", "target": "R-025" } ],
+      "status": "open-question", "classification": "REQUIRES_PRODUCT_OWNER",
+      "resolution": null,
+      "recommendation": "Option (c). The Architect prepares a shortlist with coverage, a terms-of-use summary and cost for the Product Owner; development continues on fixture data until the decision. This document gives no legal assessment of any provider's terms.",
+      "basis": "S-000 lines 87 and 123 require trustworthy, attributable, configurable sources but name none; accepting third-party terms and costs and publishing derived data publicly affects scope and business-rule behaviour (autonomy.md HIGH-05, HIGH-07)."
+    },
+    {
+      "id": "R-411", "originalId": null, "type": "question",
+      "statement": "When is a fact 'verified'? S-000 requires independent verification against reliable sources but does not define the rule. Options: (a) two independent sources accepted under R-410 agree exactly on the value; any disagreement, or only one available source, means not verified; (b) the competition organiser's official publication alone suffices; other sources are used only when it is unavailable; (c) the research source and one independent source must agree, and when they disagree the organiser's official publication decides.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "25-26", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "89-90", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-025" }, { "type": "references", "target": "R-026" }, { "type": "references", "target": "R-410" } ],
+      "status": "open-question", "classification": "REQUIRES_PRODUCT_OWNER",
+      "resolution": null,
+      "recommendation": "Option (a) for scores, match dates and standings: the strictest reading of 'independently verifies' (lines 25-26) and of 'never invent' (line 86). Cross-checking standings by recomputing them from verified results is a consideration for the Architect.",
+      "basis": "S-000 lines 25-26 and 89-90; the rule decides which content is blocked, a business-rule semantics no source decides (autonomy.md HIGH-07)."
+    },
+    {
+      "id": "R-412", "originalId": null, "type": "question",
+      "statement": "Can the user override the block on unverified content, for example by marking a fact as verified manually?",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "86-90", "page": null } } ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-026" } ],
+      "status": "resolved-question", "classification": "RESOLVED_BY_EXISTING_SOURCE",
+      "resolution": "No. In the MVP an unverified fact keeps the affected content blocked; the user can re-run research and verification, or remove the affected content from the carousel. Adding an override would be a scope change for the Product Owner.",
+      "recommendation": null,
+      "basis": "S-000 lines 86 and 89-90 require blocking publication approval for affected content and name no exception."
+    },
+    {
+      "id": "R-413", "originalId": null, "type": "question",
+      "statement": "May slides use club badges and competition names or marks (for example the UEFA Champions League name and logo), and in what form may team names appear? Options: (a) team names and the competition name as plain text, and only El Deporte Rey GT assets; no club badges and no competition logos or marks; (b) badges and competition marks are used when the Product Owner provides the files and confirms the right to use them; (c) as (a) for the MVP, with an optional badge slot in templates that stays empty until (b) is decided.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Branding", "lines": "81-82", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Product Vision", "lines": "12-12", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-034" }, { "type": "references", "target": "R-033" } ],
+      "status": "open-question", "classification": "REQUIRES_PRODUCT_OWNER",
+      "resolution": null,
+      "recommendation": "Option (c): consistent with S-000 lines 81-82 (no assumed badges), keeps the MVP independent of third-party graphics and allows (b) later by Product Owner decision. No legal assessment of trademark use is given here.",
+      "basis": "S-000 lines 81-82 forbid assuming badges exist but do not decide whether third-party marks may appear on public content; this affects scope and business behaviour (autonomy.md HIGH-05, HIGH-07)."
+    },
+    {
+      "id": "R-414", "originalId": null, "type": "question",
+      "statement": "Does the MVP process personal data? S-000 lists team-level data (results, scores, dates, standings, competition context) and mentions neither player data nor user accounts. Options: (a) team- and competition-level data only: no player-level data (for example goal scorers) and no personal data of users; (b) include public player data such as goal scorers' names on slides and in captions; (c) as (b), plus player statistics.",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "18-23", "page": null } } ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-308" }, { "type": "references", "target": "R-022" } ],
+      "status": "open-question", "classification": "REQUIRES_PRODUCT_OWNER",
+      "resolution": null,
+      "recommendation": "Option (a) for the MVP, which lets the project configuration record that no personal data is processed; (b) can be added later with a Product Owner decision on the data kept and its retention.",
+      "basis": "riskProfile.personalData in the project configuration is 'unknown'; handling personal data is a Product Owner decision (autonomy.md HIGH-04) and changes scope (HIGH-07); S-000 lines 18-23 do not mention players."
+    },
+    {
+      "id": "R-415", "originalId": null, "type": "question",
+      "statement": "What is the user and authentication model of the MVP? S-000 refers only to 'the user' and asks for a local-first MVP. Options: (a) a single local operator without login; the web interface accepts connections from the local machine only; (b) a local login with a password for one or more operators; (c) multi-user accounts with roles, which implies hosting outside the local-first MVP.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "16-16", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Initial Scope", "lines": "99-99", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-300" }, { "type": "references", "target": "R-020" } ],
+      "status": "open-question", "classification": "REQUIRES_PRODUCT_OWNER",
+      "resolution": null,
+      "recommendation": "Option (a); revisit when hosting or several operators are planned.",
+      "basis": "S-000 lines 16, 48 and 99 do not set an identity model; the identity and authentication model is a security-sensitive decision (autonomy.md HIGH-03)."
+    },
+    {
+      "id": "R-416", "originalId": null, "type": "question",
+      "statement": "In which language is content generated (headlines, slide descriptions, captions, hashtags), and how are team names displayed? Language options: (a) Spanish; (b) English; (c) configurable per project. Team-name options: (i) exactly as in the verified data; (ii) a Product Owner-approved display name per team (for example a Spanish name), bound to the verified team identity and checked by Visual QA.",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "28-33", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "43-43", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "92-92", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-029" }, { "type": "references", "target": "R-035" } ],
+      "status": "open-question", "classification": "REQUIRES_PRODUCT_OWNER",
+      "resolution": null,
+      "recommendation": "Language (c) with Spanish as the default, as the brand name is Spanish; team names (i) for the MVP, which applies S-000 line 92 literally; (ii) later if localised names are wanted.",
+      "basis": "S-000 sets no content language (project.language governs these documents, not product output); the correctness rule for names (lines 43 and 92) depends on the display convention, a business-rule semantics no source decides (autonomy.md HIGH-07)."
+    },
+    {
+      "id": "R-417", "originalId": null, "type": "question",
+      "statement": "Which UEFA Champions League seasons and competition phases are in MVP scope?",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Product Vision", "lines": "12-12", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Initial Scope", "lines": "102-103", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-021" }, { "type": "references", "target": "R-101" } ],
+      "status": "resolved-question", "classification": "ORCHESTRATOR_DECISION",
+      "resolution": "Recommended reversible default: matchdays of the league phase (the phase that has a standings table) of the seasons covered by the accepted data source, starting with the current season; knockout rounds, which have no standings table, are a later extension (results only); seasons played under a different competition format are outside the MVP.",
+      "recommendation": "Adopt the default as an Orchestrator decision; if the Orchestrator considers it a narrowing of scope, raise it to the Product Owner (autonomy.md HIGH-07).",
+      "basis": "S-000 lines 12 and 102-103 prioritise matchday results and standings of the UEFA Champions League but name no season or phase; the default stays within that scope and is reversible (autonomy.md MED-04)."
+    },
+    {
+      "id": "R-418", "originalId": null, "type": "question",
+      "statement": "What are the exact brand colour values and fonts?",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Branding", "lines": "73-77", "page": null } } ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-032" } ],
+      "status": "resolved-question", "classification": "ORCHESTRATOR_DECISION",
+      "resolution": "Recommended reversible default: provisional values for purple, gold, blue and white and a provisional font are held as brand configuration and used until the Product Owner supplies official values; no logo or mascot image is created as a substitute (R-034).",
+      "recommendation": "Adopt the default; ask the Product Owner for official values in the next status report.",
+      "basis": "S-000 lines 73-77 name the colours but not their values, and name no font; reversible, non-security default (autonomy.md MED-04)."
+    },
+    {
+      "id": "R-419", "originalId": null, "type": "question",
+      "statement": "How long is the content history kept, and can it be deleted?",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "63-63", "page": null } } ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-043" } ],
+      "status": "resolved-question", "classification": "ORCHESTRATOR_DECISION",
+      "resolution": "Recommended reversible default: all projects and their versions are kept locally without automatic expiry; the MVP offers no deletion function (deleting user data is a destructive operation, autonomy.md HIGH-02).",
+      "recommendation": "Adopt the default as an Orchestrator decision.",
+      "basis": "S-000 line 63 asks for a history and is silent on retention and deletion; additive and reversible (autonomy.md MED-04)."
+    },
+    {
+      "id": "R-420", "originalId": null, "type": "question",
+      "statement": "What happens when a Visual QA check fails?",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "41-46", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "89-92", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-037" }, { "type": "references", "target": "R-405" } ],
+      "status": "resolved-question", "classification": "ORCHESTRATOR_DECISION",
+      "resolution": "Recommended default: a failure of the score, standing, team-name, text-fit or dimension checks blocks approval of that slide until a regenerated version passes (data mismatches are already blocking under R-026 and R-035); a visual-consistency finding is shown as a warning that the user must acknowledge before approving.",
+      "recommendation": "Adopt the default as an Orchestrator decision.",
+      "basis": "S-000 lines 41-46 list the checks but not the handling of failures; lines 89-92 already make data mismatches blocking; reversible (autonomy.md MED-04)."
+    },
+    {
+      "id": "R-421", "originalId": null, "type": "question",
+      "statement": "Which file formats and file naming does the export use?",
+      "sources": [
+        { "sourceId": "S-000", "location": { "heading": "Primary Workflow", "lines": "50-50", "page": null } },
+        { "sourceId": "S-000", "location": { "heading": "Functional Requirements", "lines": "62-62", "page": null } }
+      ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-041" } ],
+      "status": "resolved-question", "classification": "AUTONOMOUS_DECISION",
+      "resolution": "Implementation choice within R-041 and R-218: an image format accepted by Instagram (lossless preferred for sharp text), file names in carousel order, captions and hashtags as UTF-8 text.",
+      "recommendation": "Left to the implementing agent.",
+      "basis": "S-000 lines 50 and 62 require export of images and captions without naming formats."
+    },
+    {
+      "id": "R-422", "originalId": null, "type": "question",
+      "statement": "Are captions, headlines and slide descriptions, which the Visual QA Agent does not check, also subject to the rule against invented facts?",
+      "sources": [ { "sourceId": "S-000", "location": { "heading": "Quality Requirements", "lines": "86-90", "page": null } } ],
+      "precedenceLevel": 1,
+      "relationships": [ { "type": "references", "target": "R-027" } ],
+      "status": "resolved-question", "classification": "RESOLVED_BY_EXISTING_SOURCE",
+      "resolution": "Yes. R-027 applies to all generated content, including captions, headlines and slide descriptions.",
+      "recommendation": null,
+      "basis": "S-000 line 86 (never invent scores, standings or match statistics) and lines 89-90 apply to all content, not only to slides."
+    }
+  ],
+  "conflicts": [],
+  "candidateResolutions": [],
+  "flaggedInstructions": [
+    {
+      "sourceId": "S-000",
+      "location": { "heading": "Orchestration", "lines": "129-140", "page": null },
+      "text": "Use the installed ORCH-V3 framework. Start with requirements analysis and normalization. Generate: Product requirements. User stories. Acceptance criteria. Architecture considerations. Dependencies. Risks. Proposed MVP delivery phases.",
+      "action": "not-acted-on"
+    },
+    {
+      "sourceId": "S-000",
+      "location": { "heading": "Orchestration", "lines": "142-143", "page": null },
+      "text": "Resolve routine technical decisions autonomously within established project policies.",
+      "action": "not-acted-on"
+    },
+    {
+      "sourceId": "S-000",
+      "location": { "heading": "Orchestration", "lines": "145-145", "page": null },
+      "text": "Do not begin implementation during this analysis phase.",
+      "action": "not-acted-on"
+    },
+    {
+      "sourceId": "S-000",
+      "location": { "heading": "Orchestration", "lines": "147-147", "page": null },
+      "text": "Do not push or deploy.",
+      "action": "not-acted-on"
+    }
+  ],
+  "asBuilt": null,
+  "workItems": [
+    {
+      "id": "MVP-P1",
+      "title": "Phase 1: Foundation - local web interface, content projects and UEFA Champions League selection, provider abstraction with fixture and stub providers, runtime validation, automated test harness (Initial Scope priority 1)",
+      "records": ["R-001", "R-020", "R-021", "R-100", "R-101", "R-102", "R-103", "R-104", "R-105", "R-106", "R-107", "R-108", "R-109", "R-200", "R-201", "R-222", "R-223", "R-224", "R-225", "R-226", "R-300", "R-306", "R-307", "R-400", "R-401", "R-403", "R-415", "R-417"]
+    },
+    {
+      "id": "MVP-P2",
+      "title": "Phase 2: Verified matchday results and standings - research, source attribution, independent fact-checking (Initial Scope priority 2)",
+      "records": ["R-002", "R-003", "R-022", "R-023", "R-024", "R-025", "R-045", "R-202", "R-203", "R-204", "R-205", "R-227", "R-305", "R-308", "R-409", "R-410", "R-411", "R-412", "R-414"]
+    },
+    {
+      "id": "MVP-P3",
+      "title": "Phase 3: Instagram carousel generation - content drafting, branded templates and assets, deterministic slide rendering, visual QA (Initial Scope priority 3)",
+      "records": ["R-004", "R-005", "R-006", "R-010", "R-027", "R-028", "R-029", "R-030", "R-031", "R-032", "R-033", "R-034", "R-035", "R-036", "R-037", "R-207", "R-208", "R-209", "R-210", "R-211", "R-212", "R-213", "R-214", "R-228", "R-301", "R-302", "R-303", "R-402", "R-404", "R-407", "R-408", "R-413", "R-416", "R-418", "R-420", "R-422"]
+    },
+    {
+      "id": "MVP-P4",
+      "title": "Phase 4: Review, manual approval and export, history and traceability (Initial Scope priority 4)",
+      "records": ["R-007", "R-008", "R-009", "R-026", "R-038", "R-039", "R-040", "R-041", "R-042", "R-043", "R-044", "R-206", "R-215", "R-216", "R-217", "R-218", "R-219", "R-220", "R-221", "R-304", "R-405", "R-406", "R-419", "R-421"]
+    }
+  ]
+}
