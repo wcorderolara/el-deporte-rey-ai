@@ -66,7 +66,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T32 | Content stage: structure, AI drafting, fact placeholders, content checks | IMPL | backend-developer | T22, T27 | DONE | 2 | 9630543 | `docs/work-items/WI-1/evidence/T32-gates.txt` |
 | T33 | Brand asset registry | IMPL | backend-developer | T27 | DONE | 1 | 982c722 | `docs/work-items/WI-1/evidence/T33-gates.txt` |
 | T34 | Rendering stage and carousel templates | IMPL | backend-developer | T27, T33 | DONE | 2 | 7e96f23 | `docs/work-items/WI-1/evidence/T34-gates.txt` |
-| T35 | Visual QA stage | IMPL | backend-developer | T30, T34 | PENDING | 0 | - | - |
+| T35 | Visual QA stage | IMPL | backend-developer | T30, T34 | IN_PROGRESS | 1 | - | - |
 | T36 | Brand assets and templates UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | e457fc8 | `docs/work-items/WI-1/evidence/T36-gates.txt` |
 | T37 | Review module: approval state machine, regeneration, final approval | IMPL | backend-developer | T32, T35 | PENDING | 0 | - | - |
 | T38 | Export, history and traceability module | IMPL | backend-developer | T37 | PENDING | 0 | - | - |
@@ -82,7 +82,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T49 | FootballDataProvider adapter, request budget, projection cache, live tests and capability probe script | IMPL | backend-developer | T21, T23 | DONE | 2 | 7dba63d | `docs/work-items/WI-1/evidence/T49-gates.txt` |
 | T50 | Manual data import module and ManualDataProvider | IMPL | backend-developer | T18, T19, T20, T21 | DONE | 1 | b972c53 | `docs/work-items/WI-1/evidence/T50-gates.txt` |
 | T51 | Manual import UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 70c6f98 | `docs/work-items/WI-1/evidence/T51-gates.txt` |
-| T52 | Integration tests: data modes, catalogue, manual import and credentials | IMPL | qa-engineer | T23, T27, T29, T30, T41, T49, T50 | PENDING | 0 | - | - |
+| T52 | Integration tests: data modes, catalogue, manual import and credentials | IMPL | qa-engineer | T23, T27, T29, T30, T41, T49, T50 | IN_PROGRESS | 1 | - | - |
 | T53 | Capability probe run and football-data.org findings | IMPL | Orchestrator | T13, T41, T49 | PENDING | 0 | - | - |
 | T54 | Verification fixes: dispute outcome rule and unavailable consultation record | IMPL | backend-developer | T30, T41 | IN_PROGRESS | 1 | - | - |
 | T55 | Security checks: accepted-advisory option for audit-report | IMPL | qa-engineer | T41 | IN_PROGRESS | 1 | - | - |
@@ -1441,6 +1441,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T16:22:44Z | T55 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T16:26:01Z | - | OD-54 recorded (unbundled synthetic fonts in three test helpers, note for T42 and T52) | T34 attempt 2 report |
 | 2026-10-28T16:26:40Z | T34 | Status DONE | integration commit 7e96f23; evidence/T34-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T16:27:01Z | T35 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-28T16:27:01Z | T52 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 
 ## Recovery log
 
