@@ -91,7 +91,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T58 | Research run invalidates final approvals | IMPL | backend-developer | T37 | DONE | 1 | 4bdfd2c | `docs/work-items/WI-1/evidence/T58-gates-2.txt` |
 | T59 | football-data adapter and probe corrections (FU-1, FU-2, FU-4, FU-5) | IMPL | backend-developer | T14 | DONE | 1 | 7845e6f | `docs/work-items/WI-1/evidence/T59-gates.txt` |
 | T60 | Security check of the probe diagnostics (FU-2) | VERIFY | security-reviewer | T59 | DONE | 1 | 7120696 | `docs/work-items/WI-1/evidence/T60-gates.txt` |
-| T61 | Second capability probe run (FU-3) | IMPL | Orchestrator | T60 | PENDING | 0 | - | - |
+| T61 | Second capability probe run (FU-3) | IMPL | Orchestrator | T60 | IN_PROGRESS | 1 | - | - |
 | T62 | Provider research addendum and architecture corrections (FU-3, FU-6, FU-7) | IMPL | architect | T61 | PENDING | 0 | - | - |
 | T63 | Requirements corrections from the provider research (FU-7) | IMPL | product-manager | T14 | DONE | 1 | f6226fe | `docs/work-items/WI-1/evidence/T63-gates.txt` |
 | T64 | Explicit timeouts for workflow-heavy ingestion tests | IMPL | qa-engineer | T52 | DONE | 1 | 4bda364 | `docs/work-items/WI-1/evidence/T64-gates.txt` |
@@ -1777,6 +1777,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T21:19:56Z | T66 | Status DONE | integration commit 052a1fe; evidence/T66-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T21:20:15Z | - | PD-25 recorded (no task-worktree re-run after a PASS report; ownership, main-tree check and merged-state gates kept) | Product Owner 2026-10-28 |
 | 2026-10-28T21:23:17Z | T60 | Status DONE | integration commit 8efe25c; evidence/T60-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T21:24:06Z | T61 | Status IN_PROGRESS (attempt 1); Orchestrator task; waits for the Product Owner to place the token (PD-24) | orch next SELECT |
 
 ## Recovery log
 
