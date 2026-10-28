@@ -1,0 +1,6 @@
+{
+  "request": {"method":"GET","path":"/v4/competitions/TL1/matches","query":{"season":"2019"}},
+  "status": 403,
+  "headers": {"X-API-Version":"v4","X-Authenticated-Client":"edr-test-client-marker-0000","X-RequestCounter-Reset":"60","X-RequestsAvailable":"5"},
+  "body": {"error":"Synthetic error: the resource is restricted."}
+}

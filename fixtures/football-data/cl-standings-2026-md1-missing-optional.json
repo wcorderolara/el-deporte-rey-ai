@@ -1,0 +1,55 @@
+{
+  "request": {"method":"GET","path":"/v4/competitions/CL/standings","query":{"season":"2026","matchday":"1"}},
+  "status": 200,
+  "headers": {"X-API-Version":"v4","X-Authenticated-Client":"edr-test-client-marker-0000","X-RequestCounter-Reset":"60","X-RequestsAvailable":"5"},
+  "body": {
+    "filters": {"season":"2026","matchday":"1"},
+    "competition": {"id":2001,"name":"Copa Continental Sintética","code":"CL","type":"CUP","emblem":"https://crests.invalid/competitions/2001.png"},
+    "season": {"id":8802,"startDate":"2026-09-15","endDate":"2027-05-29","currentMatchday":2,"winner":null},
+    "standings": [
+      {
+        "stage": "LEAGUE_STAGE",
+        "type": "TOTAL",
+        "group": null,
+        "table": [
+          {"position":1,"team":{"id":5032,"name":"Centauros Piedrafría"},"playedGames":1,"won":1,"draw":0,"lost":0,"points":3,"goalsFor":4,"goalsAgainst":1,"goalDifference":3},
+          {"position":2,"team":{"id":5009,"name":"Estrella Sabinar"},"playedGames":1,"won":1,"draw":0,"lost":0,"points":3,"goalsFor":4,"goalsAgainst":1,"goalDifference":3},
+          {"position":3,"team":{"id":5024,"name":"Unión Vientosur"},"playedGames":1,"won":1,"draw":0,"lost":0,"points":3,"goalsFor":4,"goalsAgainst":1,"goalDifference":3},
+          {"position":4,"team":{"id":5017,"name":"Victoria Salinar"},"playedGames":1,"won":1,"draw":0,"lost":0,"points":3,"goalsFor":4,"goalsAgainst":1,"goalDifference":3},
+          {"position":5,"team":{"id":5007,"name":"Olímpico Brezal"},"playedGames":1,"won":1,"draw":0,"lost":0,"points":3,"goalsFor":2,"goalsAgainst":0,"goalDifference":2},
+          {"position":6,"team":{"id":5033,"name":"Cometa Valleluz"},"playedGames":1,"won":1,"draw":0,"lost":0,"points":3,"goalsFor":4,"goalsAgainst":3,"goalDifference":1},
+          {"position":7,"team":{"id":5008,"name":"Club Faro Norte"},"playedGames":1,"won":1,"draw":0,"lost":0,"points":3,"goalsFor":3,"goalsAgainst":2,"goalDifference":1},
+          {"position":8,"team":{"id":5022,"name":"Marina Bahía Gris"},"playedGames":1,"won":1,"draw":0,"lost":0,"points":3,"goalsFor":2,"goalsAgainst":1,"goalDifference":1},
+          {"position":9,"team":{"id":5035,"name":"Pumas Montesal"},"playedGames":1,"won":1,"draw":0,"lost":0,"points":3,"goalsFor":2,"goalsAgainst":1,"goalDifference":1},
+          {"position":10,"team":{"id":5001,"name":"Atlético Valdoria"},"playedGames":1,"won":1,"draw":0,"lost":0,"points":3,"goalsFor":1,"goalsAgainst":0,"goalDifference":1},
+          {"position":11,"team":{"id":5026,"name":"Granate Pinosol"},"playedGames":1,"won":1,"draw":0,"lost":0,"points":3,"goalsFor":1,"goalsAgainst":0,"goalDifference":1},
+          {"position":12,"team":{"id":5018,"name":"Rápido Encinar"},"playedGames":1,"won":1,"draw":0,"lost":0,"points":3,"goalsFor":1,"goalsAgainst":0,"goalDifference":1},
+          {"position":13,"team":{"id":5016,"name":"Fortaleza Quebrada"},"playedGames":1,"won":0,"draw":1,"lost":0,"points":1,"goalsFor":3,"goalsAgainst":3,"goalDifference":0},
+          {"position":14,"team":{"id":5021,"name":"Leones de Cumbral"},"playedGames":1,"won":0,"draw":1,"lost":0,"points":1,"goalsFor":3,"goalsAgainst":3,"goalDifference":0},
+          {"position":15,"team":{"id":5014,"name":"Atlético Robledal"},"playedGames":1,"won":0,"draw":1,"lost":0,"points":1,"goalsFor":2,"goalsAgainst":2,"goalDifference":0},
+          {"position":16,"team":{"id":5023,"name":"Deportes Tierraluz"},"playedGames":1,"won":0,"draw":1,"lost":0,"points":1,"goalsFor":2,"goalsAgainst":2,"goalDifference":0},
+          {"position":17,"team":{"id":5031,"name":"Aurora Llanomar"},"playedGames":1,"won":0,"draw":1,"lost":0,"points":1,"goalsFor":1,"goalsAgainst":1,"goalDifference":0},
+          {"position":18,"team":{"id":5012,"name":"Ciclón Marisma"},"playedGames":1,"won":0,"draw":1,"lost":0,"points":1,"goalsFor":1,"goalsAgainst":1,"goalDifference":0},
+          {"position":19,"team":{"id":5025,"name":"Nacional Riberal"},"playedGames":1,"won":0,"draw":1,"lost":0,"points":1,"goalsFor":1,"goalsAgainst":1,"goalDifference":0},
+          {"position":20,"team":{"id":5006,"name":"Racing Nievalia"},"playedGames":1,"won":0,"draw":1,"lost":0,"points":1,"goalsFor":1,"goalsAgainst":1,"goalDifference":0},
+          {"position":21,"team":{"id":5034,"name":"Alianza Rocamar"},"playedGames":1,"won":0,"draw":1,"lost":0,"points":1,"goalsFor":0,"goalsAgainst":0,"goalDifference":0},
+          {"position":22,"team":{"id":5003,"name":"Deportivo Costaluna"},"playedGames":1,"won":0,"draw":1,"lost":0,"points":1,"goalsFor":0,"goalsAgainst":0,"goalDifference":0},
+          {"position":23,"team":{"id":5010,"name":"Juventud Arcosol"},"playedGames":1,"won":0,"draw":1,"lost":0,"points":1,"goalsFor":0,"goalsAgainst":0,"goalDifference":0},
+          {"position":24,"team":{"id":5027,"name":"Royal Lagunel"},"playedGames":1,"won":0,"draw":1,"lost":0,"points":1,"goalsFor":0,"goalsAgainst":0,"goalDifference":0},
+          {"position":25,"team":{"id":5004,"name":"Unión Pradera Alta"},"playedGames":1,"won":0,"draw":0,"lost":1,"points":0,"goalsFor":3,"goalsAgainst":4,"goalDifference":-1},
+          {"position":26,"team":{"id":5029,"name":"Corsarios Islabruma"},"playedGames":1,"won":0,"draw":0,"lost":1,"points":0,"goalsFor":2,"goalsAgainst":3,"goalDifference":-1},
+          {"position":27,"team":{"id":5015,"name":"Celeste Altoviento"},"playedGames":1,"won":0,"draw":0,"lost":1,"points":0,"goalsFor":1,"goalsAgainst":2,"goalDifference":-1},
+          {"position":28,"team":{"id":5002,"name":"Real Montebrisa"},"playedGames":1,"won":0,"draw":0,"lost":1,"points":0,"goalsFor":1,"goalsAgainst":2,"goalDifference":-1},
+          {"position":29,"team":{"id":5011,"name":"Academia Tormenta"},"playedGames":1,"won":0,"draw":0,"lost":1,"points":0,"goalsFor":0,"goalsAgainst":1,"goalDifference":-1},
+          {"position":30,"team":{"id":5019,"name":"Dínamo Vallefrío"},"playedGames":1,"won":0,"draw":0,"lost":1,"points":0,"goalsFor":0,"goalsAgainst":1,"goalDifference":-1},
+          {"position":31,"team":{"id":5036,"name":"Vikingos Neblinar"},"playedGames":1,"won":0,"draw":0,"lost":1,"points":0,"goalsFor":0,"goalsAgainst":1,"goalDifference":-1},
+          {"position":32,"team":{"id":5030,"name":"Titanes Serrabal"},"playedGames":1,"won":0,"draw":0,"lost":1,"points":0,"goalsFor":0,"goalsAgainst":2,"goalDifference":-2},
+          {"position":33,"team":{"id":5028,"name":"Esperanza Campiña"},"playedGames":1,"won":0,"draw":0,"lost":1,"points":0,"goalsFor":1,"goalsAgainst":4,"goalDifference":-3},
+          {"position":34,"team":{"id":5013,"name":"Halcones de Peñaclara"},"playedGames":1,"won":0,"draw":0,"lost":1,"points":0,"goalsFor":1,"goalsAgainst":4,"goalDifference":-3},
+          {"position":35,"team":{"id":5020,"name":"Inter Mareal"},"playedGames":1,"won":0,"draw":0,"lost":1,"points":0,"goalsFor":1,"goalsAgainst":4,"goalDifference":-3},
+          {"position":36,"team":{"id":5005,"name":"Sporting Lumbrera"},"playedGames":1,"won":0,"draw":0,"lost":1,"points":0,"goalsFor":1,"goalsAgainst":4,"goalDifference":-3}
+        ]
+      }
+    ]
+  }
+}

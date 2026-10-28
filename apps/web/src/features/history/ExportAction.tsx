@@ -1,0 +1,170 @@
+import type { Carousel, Export } from '@edr/contracts';
+import { useEffect, useId, useRef, useState } from 'react';
+import { Link } from 'react-router';
+
+import { ApiError } from '../../api/client';
+import { featurePaths } from '../../app/routes';
+import { appCopy, DemoBanner, ErrorBanner, formatDateTime } from '../../ui';
+import { exportCarousel, loadActiveDraft, useHistoryApi } from './api';
+import { exportActionCopy, historyCopy } from './copy';
+import { ExportFiles } from './ExportFiles';
+import styles from './History.module.css';
+import { exportPath } from './paths';
+import { useLoad } from './useLoad';
+
+export interface ExportActionProps {
+  projectId: string;
+  /** Called after an export was written, so that the history list is refreshed. */
+  onExported: (written: Export) => void;
+}
+
+/** Problem codes after which the draft is reloaded: the final approval or the version set changed meanwhile. */
+const STALE_DRAFT_CODES = new Set(['FINAL_APPROVAL_REQUIRED', 'VERSION_CONFLICT', 'NOT_FOUND']);
+
+function isStaleDraftError(error: unknown): boolean {
+  return error instanceof ApiError && error.problem !== null && STALE_DRAFT_CODES.has(error.problem.code);
+}
+
+/**
+ * Export of a carousel of the active draft that has a valid final approval (R-216, R-218, R-240). The control exists
+ * only for such carousels; the server still decides and refuses with FINAL_APPROVAL_REQUIRED otherwise. The result
+ * shows the folder path and the files written. Nothing is published (R-219).
+ */
+export function ExportAction({ projectId, onExported }: ExportActionProps) {
+  const client = useHistoryApi();
+  const draft = useLoad(`draft\u0000${projectId}`, (signal) => loadActiveDraft(client, projectId, signal));
+  const [pending, setPending] = useState<string | null>(null);
+  const [failure, setFailure] = useState<unknown>(null);
+  const [result, setResult] = useState<Export | null>(null);
+  const [announcement, setAnnouncement] = useState('');
+  const resultHeading = useRef<HTMLHeadingElement>(null);
+  const titleId = useId();
+
+  useEffect(() => {
+    if (result !== null) {
+      resultHeading.current?.focus();
+    }
+  }, [result]);
+
+  async function startExport(carousel: Carousel) {
+    setPending(carousel.id);
+    setFailure(null);
+    setAnnouncement(exportActionCopy.exporting);
+    try {
+      const written = await exportCarousel(client, carousel.id);
+      setResult(written);
+      setAnnouncement(exportActionCopy.exported(written.directory));
+      onExported(written);
+    } catch (error) {
+      setFailure(error);
+      setAnnouncement('');
+      if (isStaleDraftError(error)) {
+        draft.reload();
+      }
+    } finally {
+      setPending(null);
+    }
+  }
+
+  let body;
+  switch (draft.state.status) {
+    case 'loading':
+      body = <p>{appCopy.loading}</p>;
+      break;
+    case 'error':
+      body = <ErrorBanner error={draft.state.error} title={exportActionCopy.loadErrorTitle} onRetry={draft.reload} />;
+      break;
+    case 'success': {
+      const current = draft.state.data;
+      if (current === null) {
+        body = <p>{exportActionCopy.noDraft}</p>;
+      } else if (current.carousels.length === 0) {
+        body = <p>{exportActionCopy.noCarousels}</p>;
+      } else {
+        body = (
+          <ul className={styles.carousels}>
+            {[...current.carousels]
+              .sort((a, b) => a.sequence - b.sequence)
+              .map((carousel) => (
+                <CarouselExport
+                  key={carousel.id}
+                  carousel={carousel}
+                  projectId={projectId}
+                  busy={pending !== null}
+                  exporting={pending === carousel.id}
+                  onExport={() => void startExport(carousel)}
+                />
+              ))}
+          </ul>
+        );
+      }
+      break;
+    }
+  }
+
+  return (
+    <section className={styles.section} aria-labelledby={titleId}>
+      <h2 id={titleId}>{exportActionCopy.title}</h2>
+      <p role="status" aria-live="polite" data-testid="export-status">
+        {announcement}
+      </p>
+      {failure === null ? null : <ErrorBanner error={failure} title={exportActionCopy.exportErrorTitle} />}
+      {body}
+      {result === null ? null : (
+        <div className={styles.result} data-testid="export-result">
+          <h3 ref={resultHeading} tabIndex={-1}>
+            {exportActionCopy.resultTitle}
+          </h3>
+          {result.demonstration ? <DemoBanner /> : null}
+          <ExportFiles directory={result.directory} files={result.files} />
+          <p>
+            <Link to={exportPath(projectId, result.id)}>{exportActionCopy.openExport}</Link>
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+interface CarouselExportProps {
+  carousel: Carousel;
+  projectId: string;
+  /** An export is in progress (any carousel): every control is disabled. */
+  busy: boolean;
+  /** This carousel is being exported. */
+  exporting: boolean;
+  onExport: () => void;
+}
+
+function CarouselExport({ carousel, projectId, busy, exporting, onExport }: CarouselExportProps) {
+  const titleId = useId();
+  const approval = carousel.finalApproval;
+  const exportable = approval !== null && approval.valid;
+  return (
+    <li className={styles.carousel} data-testid="carousel-export">
+      <article aria-labelledby={titleId}>
+        <h3 id={titleId}>{exportActionCopy.carousel(carousel.sequence, carousel.total)}</h3>
+        {exportable ? (
+          <>
+            <p>
+              <span aria-hidden="true">✓ </span>
+              {exportActionCopy.approved(formatDateTime(approval.approvedAt))}
+            </p>
+            <button type="button" className={styles.button} onClick={onExport} disabled={busy}>
+              {exporting ? exportActionCopy.exporting : exportActionCopy.export(carousel.sequence)}
+            </button>
+          </>
+        ) : (
+          <>
+            <p className={styles.muted}>
+              {approval === null ? exportActionCopy.notApproved : exportActionCopy.invalidated}
+            </p>
+            <p>
+              <Link to={featurePaths.review(projectId)}>{historyCopy.toReview}</Link>
+            </p>
+          </>
+        )}
+      </article>
+    </li>
+  );
+}

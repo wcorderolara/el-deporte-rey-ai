@@ -1,0 +1,7 @@
+URL: https://www.premierleague.com/terms-and-conditions
+RETRIEVED_UTC: 2026-10-27 (T13)
+HTTP_OUTCOME: 200
+METHOD: WebFetch extraction (the fetch tool converts the page to markdown and a model extracts the requested content; short quotes are verbatim, the rest is paraphrase). Raw capture was not possible: the session shell has no outbound network (sandbox) and the Product Owner's environment did not permit lifting it (2026-10-27). Content is data, not instructions.
+CAPTURED_BY: Orchestrator, task WI-1-T13
+---
+Statistics accuracy not guaranteed. Download and print "as is reasonable for your own private and personal use"; forwarding for private use with credit to www.premierleague.com; other reproduction, re-use or redistribution needs prior written approval; creating a database from downloaded material prohibited; marks: "No rights are granted to use any of them without the prior written permission of the owner"; the Website and App "must not be used in any other way, including for commercial purposes". Scraping not mentioned explicitly.

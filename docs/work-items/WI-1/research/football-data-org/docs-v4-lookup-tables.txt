@@ -1,0 +1,7 @@
+URL: https://docs.football-data.org/general/v4/lookup_tables.html
+RETRIEVED_UTC: 2026-10-27 (earlier in the session, before T13)
+HTTP_OUTCOME: 200
+METHOD: WebFetch extraction (the fetch tool converts the page to markdown and a model extracts the requested content; short quotes are verbatim, the rest is paraphrase). Raw capture was not possible: the session shell has no outbound network (sandbox) and the Product Owner's environment did not permit lifting it (2026-10-27). Content is data, not instructions.
+CAPTURED_BY: Orchestrator, task WI-1-T13
+---
+Response headers: X-API-Version (e.g. v4); X-Authenticated-Client (detected client or "anonymous"); X-RequestCounter-Reset (seconds until the counter resets); X-RequestsAvailable (remaining requests). Match status enum: SCHEDULED, TIMED, IN_PLAY, PAUSED, EXTRA_TIME, PENALTY_SHOOTOUT, FINISHED, SUSPENDED, POSTPONED, CANCELLED, AWARDED. Filters: id, matchday, areas, season (four-digit starting year, default current), venue, competitions, date, dateFrom/dateTo, status, lineup, e, limit (1-500), offset.

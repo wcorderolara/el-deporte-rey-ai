@@ -1,0 +1,90 @@
+{
+  "description": "Synthetic manual import samples (format edr-manual-import/1; provider-ports section 1.6). Valid samples describe the domestic league \"Liga Manual Sintética\" with named stages; the equivalence set is the reference-shaped matchday of R-267. Each invalid sample has exactly one defect, named by its expected ImportProblem.",
+  "samples": [
+    {
+      "file": "valid/liga-manual.json",
+      "channel": "json_file",
+      "valid": true,
+      "purpose": "domestic league with named stages: Torneo Apertura matchdays 1 and 2 with standings, Cuartos de Final as a whole stage without standings"
+    },
+    {
+      "file": "valid/liga-manual-matches.csv",
+      "channel": "csv_file",
+      "valid": true,
+      "layout": "matches",
+      "equals": "valid/liga-manual.json",
+      "purpose": "the same matches in the CSV matches layout (LF line ends, quoted names, empty matchday = whole stage)"
+    },
+    {
+      "file": "valid/liga-manual-standings.csv",
+      "channel": "csv_file",
+      "valid": true,
+      "layout": "standings",
+      "equals": "valid/liga-manual.json",
+      "purpose": "the same standings in the CSV standings layout (CRLF line ends)"
+    },
+    {"file":"valid/liga-manual.form.json","channel":"form","valid":true,"purpose":"ImportFormCreate body built by the web form: Torneo Apertura matchday 1"},
+    {"file":"equivalence/equivalence.json","channel":"json_file","valid":true,"equivalence":true,"purpose":"equivalence set (R-267) as a JSON file"},
+    {"file":"equivalence/equivalence-matches.csv","channel":"csv_file","valid":true,"layout":"matches","equivalence":true,"purpose":"equivalence set matches as CSV"},
+    {"file":"equivalence/equivalence-standings.csv","channel":"csv_file","valid":true,"layout":"standings","equivalence":true,"purpose":"equivalence set standings as CSV"},
+    {"file":"equivalence/equivalence.form.json","channel":"form","valid":true,"equivalence":true,"purpose":"equivalence set as a form submission"},
+    {"file":"invalid/parse-error.json","channel":"json_file","valid":false,"problem":"parse_error","purpose":"unparsable JSON (truncated document)"},
+    {"file":"invalid/duplicate-member.json","channel":"json_file","valid":false,"problem":"parse_error","purpose":"duplicate member name inside one object (T11H-F08)","record":"/competition/name"},
+    {"file":"invalid/deep-nesting.json","channel":"json_file","valid":false,"problem":"parse_error","purpose":"nesting deeper than 16 levels outside strings"},
+    {"file":"invalid/required-missing.json","channel":"json_file","valid":false,"problem":"required_missing","purpose":"match without kickoff","record":"/selections/0/matches/0","field":"kickoff"},
+    {"file":"invalid/type-invalid.json","channel":"json_file","valid":false,"problem":"type_invalid","purpose":"score given as a string","record":"/selections/0/matches/1/score","field":"home"},
+    {"file":"invalid/value-out-of-range.json","channel":"json_file","valid":false,"problem":"value_out_of_range","purpose":"negative score","record":"/selections/0/matches/2/score","field":"away"},
+    {
+      "file": "invalid/duplicate-match.json",
+      "channel": "json_file",
+      "valid": false,
+      "problem": "duplicate_match",
+      "purpose": "the same match identity twice in one selection (both records named)",
+      "record": "/selections/0/matches/4"
+    },
+    {"file":"invalid/finished-without-score.json","channel":"json_file","valid":false,"problem":"finished_without_score","purpose":"finished match without score","record":"/selections/1/matches/0"},
+    {"file":"invalid/person-key.json","channel":"json_file","valid":false,"problem":"person_field","purpose":"person-level key scorers inside a match (R-119, R-280)","field":"scorers"},
+    {
+      "file": "invalid/metadata-conflict.json",
+      "channel": "json_file",
+      "valid": false,
+      "problem": "metadata_conflict",
+      "purpose": "competition name differs from the earlier import of the same competition ID",
+      "precondition": "valid/liga-manual.json imported first",
+      "field": "competition.name"
+    },
+    {"file":"invalid/oversize.json","channel":"json_file","valid":false,"problem":"too_large","purpose":"valid document padded to 524 290 bytes (limit 524 288)"},
+    {"file":"invalid/header-invalid.csv","channel":"csv_file","valid":false,"problem":"header_invalid","purpose":"wrong CSV columns: two columns swapped and away_score missing"},
+    {"file":"invalid/person-column.csv","channel":"csv_file","valid":false,"problem":"person_field","purpose":"person-level column scorer (R-119, R-280)","field":"scorer"},
+    {"file":"invalid/too-many-rows.csv","channel":"csv_file","valid":false,"problem":"too_many_rows","purpose":"5 001 data rows (limit 5 000) within the 512 KiB size limit"},
+    {"file":"invalid/encoding-invalid.csv","channel":"csv_file","valid":false,"problem":"encoding_invalid","purpose":"invalid UTF-8 sequence (0xC3 0x28) in the first data row"},
+    {
+      "file": "invalid/control-character.csv",
+      "channel": "csv_file",
+      "valid": false,
+      "problem": "type_invalid",
+      "purpose": "BEL control character (U+0007) inside a team name (row 3)",
+      "field": "home_team",
+      "record": "row 3",
+      "problemNote": "section 1.6 does not fix the problem code for a control character; any rejection naming row 3 and home_team satisfies the sample"
+    },
+    {"file":"invalid/line-break-in-field.csv","channel":"csv_file","valid":false,"problem":"parse_error","purpose":"line break inside a quoted field"},
+    {
+      "file": "invalid/team-key-collision.csv",
+      "channel": "csv_file",
+      "valid": false,
+      "problem": "value_inconsistent",
+      "purpose": "two different team names that derive the same key club-a-b (T11H-F09)",
+      "record": "rows 2 and 3"
+    },
+    {"file":"invalid/metadata-missing.csv","channel":"csv_file","valid":false,"problem":"metadata_missing","purpose":"competition_name empty in every row (R-276)","field":"competition_name"},
+    {
+      "file": "invalid/standings-inconsistent.csv",
+      "channel": "csv_file",
+      "valid": false,
+      "problem": "value_inconsistent",
+      "purpose": "standings row where won + drawn + lost differs from played",
+      "record": "row 2"
+    }
+  ]
+}

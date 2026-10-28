@@ -1,0 +1,97 @@
+{
+  "description": "Synthetic football-data.org v4-shaped responses (SC-04: invented data, nothing copied from real responses). Each file: request (method, path, query), status, the documented headers (X-API-Version, X-Authenticated-Client, X-RequestCounter-Reset, X-RequestsAvailable) and either body (a JSON value, served as its JSON text) or bodyText (raw text). The X-Authenticated-Client value is the synthetic marker edr-test-client-marker-0000 (T11H-F04). Person data (referees, coaches) uses values starting with edr-person-marker-; crests use the reserved .invalid domain.",
+  "referenceCompetition": {"code":"CL","id":2001,"localKey":"cl","name":"Copa Continental Sintética","area":"Synthetic Continent"},
+  "secondCompetition": {"code":"TL1","id":9901,"localKey":"tl1","name":"Liga Sintética del Norte","area":"Synthetic Republic"},
+  "markers": {"authenticatedClient":"edr-test-client-marker-0000","personPrefix":"edr-person-marker-"},
+  "responses": [
+    {"file":"competitions.json","expect":"ok","purpose":"competition list: the reference-shaped competition (code CL, ID 2001) and the synthetic league TL1"},
+    {
+      "file": "competitions-missing-optional.json",
+      "expect": "ok",
+      "purpose": "competition list without optional fields: no emblem, plan, currentSeason or lastUpdated; area without code; TL1 without code and area (localKey from the ID)"
+    },
+    {"file":"requests-available-zero.json","expect":"ok","purpose":"valid competition list whose X-RequestsAvailable is 0 (reset in 23 s): the budget blocks the next request until the reset"},
+    {"file":"competition-cl.json","expect":"ok","purpose":"reference-shaped competition detail with two seasons (2026 current at matchday 2, 2025 complete with a winner team carrying a crest)"},
+    {"file":"competition-cl-missing-optional.json","expect":"ok","purpose":"competition detail without optional fields: no area, type, emblem, lastUpdated, currentMatchday or winner"},
+    {"file":"competition-tl1.json","expect":"ok","purpose":"synthetic league TL1 detail with one season"},
+    {"file":"cl-matches-2026.json","expect":"ok","purpose":"stage discovery, current season: LEAGUE_STAGE matchdays 1 to 8 (1 finished, 2 in progress with every status, 3 to 8 TIMED)"},
+    {
+      "file": "cl-matches-2025.json",
+      "expect": "ok",
+      "purpose": "stage discovery, complete past season: LEAGUE_STAGE matchdays 1 to 8, then PLAYOFFS, LAST_16, QUARTER_FINALS, SEMI_FINALS and FINAL without matchday numbers (selectable as whole stages)"
+    },
+    {
+      "file": "cl-matches-2026-md1.json",
+      "expect": "ok",
+      "equivalence": true,
+      "purpose": "equivalence matchday (R-267): 18 finished matches; every match has referees, crests and synthetic coach objects to be dropped (R-119, R-280)"
+    },
+    {
+      "file": "cl-matches-2026-md2.json",
+      "expect": "ok",
+      "purpose": "incomplete matchday with every football-data status (SCHEDULED, TIMED, IN_PLAY, PAUSED, EXTRA_TIME, PENALTY_SHOOTOUT, FINISHED, POSTPONED, SUSPENDED, CANCELLED, AWARDED); in-play scores are dropped"
+    },
+    {
+      "file": "cl-matches-2026-md1-missing-optional.json",
+      "expect": "ok",
+      "purpose": "equivalence matchday without optional fields: no area, group, lastUpdated, odds, referees, team shortName, tla or crest, score with fullTime only"
+    },
+    {"file":"cl-matches-2025-stage-last-16.json","expect":"ok","purpose":"stage match list (two legs, matchday null), no standings for the stage"},
+    {"file":"cl-matches-2025-stage-final.json","expect":"ok","purpose":"stage match list of a single-match stage"},
+    {
+      "file": "cl-standings-2026-md1.json",
+      "expect": "ok",
+      "equivalence": true,
+      "purpose": "standings after the equivalence matchday: TOTAL, HOME and AWAY tables (only TOTAL is used); rows carry form and crests"
+    },
+    {"file":"cl-standings-2026-md1-missing-optional.json","expect":"ok","purpose":"standings without optional fields: TOTAL table only, no area, form, team shortName, tla or crest"},
+    {"file":"cl-standings-2026-no-total.json","expect":"ok","purpose":"standings response without any TOTAL table: standings { available: false } with a reason, nothing derived (R-254)"},
+    {"file":"tl1-matches-2026.json","expect":"ok","purpose":"stage discovery of the synthetic league: REGULAR_SEASON matchdays 1 and 2"},
+    {"file":"tl1-matches-2026-md1.json","expect":"ok","purpose":"matchday match list of the synthetic league"},
+    {"file":"tl1-standings-2026-md1.json","expect":"ok","purpose":"standings of the synthetic league with TOTAL, HOME and AWAY tables"},
+    {"file":"invalid-non-json.json","expect":"invalid","purpose":"body that is not JSON"},
+    {"file":"invalid-missing-required.json","expect":"invalid","purpose":"match without the required utcDate","path":"/matches/2/utcDate"},
+    {"file":"invalid-wrong-type.json","expect":"invalid","purpose":"full-time score given as a string","path":"/matches/1/score/fullTime/home"},
+    {"file":"invalid-unknown-status.json","expect":"invalid","purpose":"unknown match status (R-247)","path":"/matches/0/status"},
+    {"file":"error-400.json","expect":"bad_request","retry":false,"purpose":"400: a defect in the adapter filter"},
+    {
+      "file": "error-403-authenticated.json",
+      "expect": "not_available",
+      "retry": false,
+      "purpose": "403 with a positive X-Authenticated-Client (synthetic marker value): subscription restriction (R-253, R-286); the header value is never logged, stored or returned"
+    },
+    {"file":"error-403-anonymous.json","expect":"access_refused","retry":false,"purpose":"403 without X-Authenticated-Client: provider access refused (R-248)"},
+    {"file":"error-404.json","expect":"not_available","retry":false,"purpose":"404: competition or season not found"},
+    {"file":"error-429.json","expect":"rate_limited","retry":"once after the reset wait","retryAfterSeconds":42,"purpose":"429 with X-RequestCounter-Reset 42 and X-RequestsAvailable 0"},
+    {"file":"error-500.json","expect":"unavailable","retry":"up to maxRetries","purpose":"500: transient provider failure"},
+    {"file":"error-503.json","expect":"unavailable","retry":"up to maxRetries","purpose":"503: transient provider failure"},
+    {
+      "file": "cl-matches-2025-numbered-knockout.json",
+      "expect": "ok",
+      "purpose": "stage discovery, complete past season, CL-like numbering (FU-1): LEAGUE_STAGE matchdays 1 to 8, then PLAYOFFS, LAST_16, QUARTER_FINALS and SEMI_FINALS restarting at matchdays 1 and 2 (legs), FINAL without a number; standings expected for LEAGUE_STAGE only"
+    },
+    {
+      "file": "tc1-matches-2024.json",
+      "expect": "ok",
+      "purpose": "stage discovery of a synthetic tournament TC1 (not listed by competitions.json), EC-like numbering (FU-1): GROUP_STAGE matchdays 1 to 3, then LAST_16 4, QUARTER_FINALS 5, SEMI_FINALS 6 and FINAL 7 continuing the season's numbering; standings expected for GROUP_STAGE only"
+    },
+    {
+      "file": "planted-cl-matches-2026-md1.json",
+      "expect": "ok",
+      "domainPath": "/teams/2/name",
+      "purpose": "planted values (FU-2; T11H-F02, T11H-F04): a provider-valid matchday list (same request as cl-matches-2026-md1.json, never served by default) whose team names break the shared team-name rule (a slash, typographic quotes, a URL carrying the marker token), with an unusual score 917-853 and the marker token in a dropped field; the shared domain validation of the selection rejects it at domainPath; tests add planted header values; no planted value may reach a probe diagnostic"
+    },
+    {
+      "file": "planted-cl-standings-2026-md1.json",
+      "expect": "ok",
+      "domainPath": "/standings/rows/3/played",
+      "purpose": "planted values (FU-2): provider-valid standings (same request as cl-standings-2026-md1.json, never served by default) whose fourth TOTAL row breaks won + drawn + lost = played, with a planted team name and form; the shared domain validation of the selection rejects it at domainPath"
+    },
+    {
+      "file": "planted-tl1-matches-2026-md1.json",
+      "expect": "invalid",
+      "path": "/matches/0/score/fullTime/home",
+      "purpose": "planted values (FU-2): matchday list whose first full-time score is a string carrying a planted score and URL; the allow-list schema rejects it"
+    }
+  ]
+}

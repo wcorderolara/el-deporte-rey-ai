@@ -1,0 +1,47 @@
+TASK: WI-1-T46
+RESULT: PASS
+VALIDATED_HEAD: 9eaa8991260bd96de4054f38765e5b844e657a00
+DATE: 2026-10-28T22:18:21Z
+COMMAND: npm run build
+SUMMARY: exit 0; workspaces @edr/server (tsc -b), @edr/web (vite build, 321 modules transformed), @edr/contracts (tsc -b) built
+--- output ---
+
+> el-deporte-rey-ai@0.0.0 build
+> npm run build --workspaces --if-present
+
+
+> @edr/server@0.0.0 build
+> tsc -b
+
+
+> @edr/web@0.0.0 build
+> vite build
+
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 321 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                           0.45 kB │ gzip:   0.28 kB
+dist/assets/EvidenceTable-Bxdd_pGi.css    3.29 kB │ gzip:   0.99 kB
+dist/assets/brand-bWcEcPyc.css            3.31 kB │ gzip:   1.09 kB
+dist/assets/projects-Cr7COfyc.css         3.51 kB │ gzip:   1.05 kB
+dist/assets/history-A0uurjXW.css          3.59 kB │ gzip:   1.02 kB
+dist/assets/index-yTM_qEz3.css            4.54 kB │ gzip:   1.49 kB
+dist/assets/imports-Dh1Tf7BS.css          4.60 kB │ gzip:   1.22 kB
+dist/assets/review-BsJp5BaE.css           5.14 kB │ gzip:   1.37 kB
+dist/assets/copy-CTWqsk8M.js              7.29 kB │ gzip:   2.65 kB
+dist/assets/facts-ByDf0NfY.js            13.00 kB │ gzip:   4.11 kB
+dist/assets/EvidenceTable-D8jWr33i.js    14.98 kB │ gzip:   5.12 kB
+dist/assets/brand-oKqznlxP.js            17.05 kB │ gzip:   5.73 kB
+dist/assets/history-CA0e5OKM.js          24.84 kB │ gzip:   6.87 kB
+dist/assets/projects-CxcOuZh7.js         25.62 kB │ gzip:   6.55 kB
+dist/assets/review-DbT8XGa1.js           33.51 kB │ gzip:  10.15 kB
+dist/assets/imports-s-qdrNWY.js          62.31 kB │ gzip:  16.73 kB
+dist/assets/index-B9OtWc9O.js           450.72 kB │ gzip: 139.34 kB
+
+✓ built in 492ms
+
+> @edr/contracts@0.0.0 build
+> tsc -b
+

@@ -1,0 +1,163 @@
+{
+  "simulate": null,
+  "competitions": [
+    {
+      "localKey": "liga-demo",
+      "name": "Liga Demo",
+      "areaName": "País Sintético",
+      "seasons": [
+        {
+          "id": "2026",
+          "label": "2026/27",
+          "current": true,
+          "startDate": "2026-08-15",
+          "endDate": "2027-05-23",
+          "startYear": 2026,
+          "stages": [
+            {
+              "id": "temporada-regular",
+              "name": "Temporada Regular",
+              "order": 1,
+              "standings": "expected",
+              "wholeStage": null,
+              "matchdays": {
+                "1": {
+                  "competition": {"name":"Liga Demo"},
+                  "season": {"label":"2026/27"},
+                  "stage": {"name":"Temporada Regular","matchday":1,"totalMatchdays":30},
+                  "teams": [
+                    {"teamKey":"deportivo-arenisca","name":"Deportivo Arenisca","aliases":[],"ref":"fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/team/deportivo-arenisca"},
+                    {"teamKey":"club-pinar-del-eco","name":"Club Pinar del Eco","aliases":[],"ref":"fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/team/club-pinar-del-eco"},
+                    {"teamKey":"atletico-bruma","name":"Atlético Bruma","aliases":[],"ref":"fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/team/atletico-bruma"},
+                    {"teamKey":"sociedad-roca-azul","name":"Sociedad Roca Azul","aliases":[],"ref":"fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/team/sociedad-roca-azul"},
+                    {"teamKey":"union-cerro-dorado","name":"Unión Cerro Dorado","aliases":[],"ref":"fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/team/union-cerro-dorado"},
+                    {"teamKey":"real-brisamar","name":"Real Brisamar","aliases":[],"ref":"fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/team/real-brisamar"},
+                    {"teamKey":"cf-las-garzas","name":"CF Las Garzas","aliases":[],"ref":"fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/team/cf-las-garzas"},
+                    {
+                      "teamKey": "estudiantes-de-valcorvo",
+                      "name": "Estudiantes de Valcorvo",
+                      "aliases": [],
+                      "ref": "fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/team/estudiantes-de-valcorvo"
+                    },
+                    {"teamKey":"ferroviario-ocaso","name":"Ferroviario Ocaso","aliases":[],"ref":"fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/team/ferroviario-ocaso"},
+                    {
+                      "teamKey": "independiente-lomaclara",
+                      "name": "Independiente Lomaclara",
+                      "aliases": [],
+                      "ref": "fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/team/independiente-lomaclara"
+                    },
+                    {
+                      "teamKey": "juventud-sierraplata",
+                      "name": "Juventud Sierraplata",
+                      "aliases": [],
+                      "ref": "fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/team/juventud-sierraplata"
+                    },
+                    {
+                      "teamKey": "mineros-de-vetaroja",
+                      "name": "Mineros de Vetaroja",
+                      "aliases": [],
+                      "ref": "fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/team/mineros-de-vetaroja"
+                    },
+                    {"teamKey":"obreros-puertofrio","name":"Obreros Puertofrío","aliases":[],"ref":"fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/team/obreros-puertofrio"},
+                    {"teamKey":"rayo-montenublo","name":"Rayo Montenublo","aliases":[],"ref":"fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/team/rayo-montenublo"},
+                    {
+                      "teamKey": "tranviarios-calizar",
+                      "name": "Tranviarios Calizar",
+                      "aliases": [],
+                      "ref": "fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/team/tranviarios-calizar"
+                    },
+                    {
+                      "teamKey": "universitario-robleda",
+                      "name": "Universitario Robleda",
+                      "aliases": [],
+                      "ref": "fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/team/universitario-robleda"
+                    }
+                  ],
+                  "matches": [
+                    {
+                      "matchKey": "ld26-1-01",
+                      "homeTeamKey": "deportivo-arenisca",
+                      "awayTeamKey": "universitario-robleda",
+                      "kickoff": "2026-08-15T17:45:00Z",
+                      "status": "finished",
+                      "score": {"home":2,"away":1},
+                      "ref": "fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/match/01"
+                    },
+                    {
+                      "matchKey": "ld26-1-02",
+                      "homeTeamKey": "tranviarios-calizar",
+                      "awayTeamKey": "club-pinar-del-eco",
+                      "kickoff": "2026-08-15T20:00:00Z",
+                      "status": "finished",
+                      "score": {"home":2,"away":3},
+                      "ref": "fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/match/02"
+                    },
+                    {
+                      "matchKey": "ld26-1-03",
+                      "homeTeamKey": "atletico-bruma",
+                      "awayTeamKey": "rayo-montenublo",
+                      "kickoff": "2026-08-15T17:45:00Z",
+                      "status": "finished",
+                      "score": {"home":2,"away":2},
+                      "ref": "fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/match/03"
+                    },
+                    {
+                      "matchKey": "ld26-1-04",
+                      "homeTeamKey": "obreros-puertofrio",
+                      "awayTeamKey": "sociedad-roca-azul",
+                      "kickoff": "2026-08-15T20:00:00Z",
+                      "status": "finished",
+                      "score": {"home":2,"away":4},
+                      "ref": "fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/match/04"
+                    },
+                    {
+                      "matchKey": "ld26-1-05",
+                      "homeTeamKey": "union-cerro-dorado",
+                      "awayTeamKey": "mineros-de-vetaroja",
+                      "kickoff": "2026-08-16T17:45:00Z",
+                      "status": "finished",
+                      "score": {"home":2,"away":4},
+                      "ref": "fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/match/05"
+                    },
+                    {
+                      "matchKey": "ld26-1-06",
+                      "homeTeamKey": "juventud-sierraplata",
+                      "awayTeamKey": "real-brisamar",
+                      "kickoff": "2026-08-16T20:00:00Z",
+                      "status": "finished",
+                      "score": {"home":1,"away":2},
+                      "ref": "fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/match/06"
+                    },
+                    {
+                      "matchKey": "ld26-1-07",
+                      "homeTeamKey": "cf-las-garzas",
+                      "awayTeamKey": "independiente-lomaclara",
+                      "kickoff": "2026-08-16T17:45:00Z",
+                      "status": "finished",
+                      "score": {"home":3,"away":1},
+                      "ref": "fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/match/07"
+                    },
+                    {
+                      "matchKey": "ld26-1-08",
+                      "homeTeamKey": "ferroviario-ocaso",
+                      "awayTeamKey": "estudiantes-de-valcorvo",
+                      "kickoff": "2026-08-16T20:00:00Z",
+                      "status": "finished",
+                      "score": {"home":0,"away":2},
+                      "ref": "fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/match/08"
+                    }
+                  ],
+                  "standings": {"available":false,"reason":"not_provided_by_source"},
+                  "context": [
+                    {"type":"matchday_of_total","matchday":1,"totalMatchdays":30,"ref":"fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/context/matchday"},
+                    {"type":"matches_in_selection","count":8,"ref":"fixture:disputed-resolved/demo-a.json#liga-demo/2026/temporada-regular/1/context/matches"}
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

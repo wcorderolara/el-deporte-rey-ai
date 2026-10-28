@@ -77,7 +77,16 @@
       ]
     }
   ],
-  "contracts": [],
+  "contracts": [
+    {
+      "id": "http-api",
+      "kind": "http-api",
+      "path": "contracts/http-api.openapi.yaml",
+      "sha256": "f4538151d084f4e328804f9a9eb4bc2ab104664f7527ef2aaaef146fd28225b1",
+      "status": "current",
+      "frozenSnapshots": []
+    }
+  ],
   "agents": [
     {
       "name": "product-manager",
@@ -112,8 +121,8 @@
     {
       "name": "frontend-developer",
       "role": "frontend-developer",
-      "enabled": false,
-      "reason": "no user interface detected",
+      "enabled": true,
+      "reason": "Product Owner decision PD-08 (WI-1): frontend required",
       "responsibilities": [],
       "ownedPaths": [],
       "read": [],
@@ -234,14 +243,371 @@
       "decisionLevel": null,
       "countsPattern": null,
       "timeoutSeconds": 120
+    },
+    {
+      "id": "PRJ-INSTALL",
+      "category": "other",
+      "kind": "command",
+      "command": "npm ci",
+      "builtin": null,
+      "procedure": null,
+      "reason": "Clean install from the lock file (exact pins, ignore-scripts); runs first so later gates have node_modules.",
+      "origin": {
+        "kind": "architecture",
+        "evidence": [
+          "docs/work-items/WI-1/architecture/architecture-delta.md",
+          "package.json"
+        ]
+      },
+      "required": true,
+      "when": [
+        "affected",
+        "final"
+      ],
+      "paths": [],
+      "status": "configured",
+      "decision": null,
+      "decisionLevel": null,
+      "countsPattern": null,
+      "timeoutSeconds": 600
+    },
+    {
+      "id": "PRJ-TYPECHECK",
+      "category": "typecheck",
+      "kind": "command",
+      "command": "npm run typecheck",
+      "builtin": null,
+      "procedure": null,
+      "reason": "Type safety.",
+      "origin": {
+        "kind": "architecture",
+        "evidence": [
+          "docs/work-items/WI-1/architecture/architecture-delta.md",
+          "package.json"
+        ]
+      },
+      "required": true,
+      "when": [
+        "affected",
+        "final"
+      ],
+      "paths": [
+        "apps/**",
+        "packages/**",
+        "e2e/**",
+        "fixtures/**",
+        "package.json",
+        "tsconfig.base.json",
+        "tsconfig.json"
+      ],
+      "status": "configured",
+      "decision": null,
+      "decisionLevel": null,
+      "countsPattern": null,
+      "timeoutSeconds": 300
+    },
+    {
+      "id": "PRJ-LINT",
+      "category": "lint",
+      "kind": "command",
+      "command": "npm run lint",
+      "builtin": null,
+      "procedure": null,
+      "reason": "Static analysis, format, security lint rules and the provider-identifier rule (R-289).",
+      "origin": {
+        "kind": "architecture",
+        "evidence": [
+          "docs/work-items/WI-1/architecture/architecture-delta.md",
+          "package.json"
+        ]
+      },
+      "required": true,
+      "when": [
+        "affected",
+        "final"
+      ],
+      "paths": [
+        "apps/**",
+        "packages/**",
+        "e2e/**",
+        "fixtures/**",
+        "config/**",
+        "scripts/**",
+        "eslint.config.mjs",
+        ".prettierrc.json"
+      ],
+      "status": "configured",
+      "decision": null,
+      "decisionLevel": null,
+      "countsPattern": null,
+      "timeoutSeconds": 300
+    },
+    {
+      "id": "PRJ-UNIT",
+      "category": "unit",
+      "kind": "command",
+      "command": "npm run test:unit",
+      "builtin": null,
+      "procedure": null,
+      "reason": "Unit tests and business rules (R-107).",
+      "origin": {
+        "kind": "architecture",
+        "evidence": [
+          "docs/work-items/WI-1/architecture/architecture-delta.md",
+          "package.json"
+        ]
+      },
+      "required": true,
+      "when": [
+        "affected",
+        "final"
+      ],
+      "paths": [
+        "apps/**",
+        "packages/**",
+        "fixtures/**",
+        "config/**",
+        "assets/**",
+        "scripts/**",
+        "vitest.config.ts",
+        "vitest.setup.ts"
+      ],
+      "status": "configured",
+      "decision": null,
+      "decisionLevel": null,
+      "countsPattern": null,
+      "timeoutSeconds": 600
+    },
+    {
+      "id": "PRJ-INTEGRATION",
+      "category": "integration",
+      "kind": "command",
+      "command": "npm run test:integration",
+      "builtin": null,
+      "procedure": null,
+      "reason": "Workflow, data and API on fixtures (R-225).",
+      "origin": {
+        "kind": "architecture",
+        "evidence": [
+          "docs/work-items/WI-1/architecture/architecture-delta.md",
+          "package.json"
+        ]
+      },
+      "required": true,
+      "when": [
+        "affected",
+        "final"
+      ],
+      "paths": [
+        "apps/server/**",
+        "packages/**",
+        "fixtures/**",
+        "config/**",
+        "assets/**",
+        "vitest.config.ts",
+        "vitest.setup.ts"
+      ],
+      "status": "configured",
+      "decision": null,
+      "decisionLevel": null,
+      "countsPattern": null,
+      "timeoutSeconds": 900
+    },
+    {
+      "id": "PRJ-CONTRACT",
+      "category": "contract",
+      "kind": "command",
+      "command": "npm run test:contract",
+      "builtin": null,
+      "procedure": null,
+      "reason": "Contract parity and conformance.",
+      "origin": {
+        "kind": "architecture",
+        "evidence": [
+          "docs/work-items/WI-1/architecture/architecture-delta.md",
+          "package.json"
+        ]
+      },
+      "required": true,
+      "when": [
+        "affected",
+        "final"
+      ],
+      "paths": [
+        "contracts/**",
+        "packages/contracts/**",
+        "apps/server/src/**",
+        "apps/server/test/contract/**"
+      ],
+      "status": "configured",
+      "decision": null,
+      "decisionLevel": null,
+      "countsPattern": null,
+      "timeoutSeconds": 300
+    },
+    {
+      "id": "PRJ-CONTRACT-ID",
+      "category": "contract",
+      "kind": "builtin",
+      "command": null,
+      "builtin": "contract-identity",
+      "procedure": null,
+      "reason": "Declared contract hash matches (http-api).",
+      "origin": {
+        "kind": "architecture",
+        "evidence": [
+          "docs/work-items/WI-1/architecture/architecture-delta.md",
+          "package.json"
+        ]
+      },
+      "required": true,
+      "when": [
+        "affected",
+        "final"
+      ],
+      "paths": [
+        "contracts/**"
+      ],
+      "status": "configured",
+      "decision": null,
+      "decisionLevel": null,
+      "countsPattern": null,
+      "timeoutSeconds": 120
+    },
+    {
+      "id": "PRJ-BUILD",
+      "category": "build",
+      "kind": "command",
+      "command": "npm run build",
+      "builtin": null,
+      "procedure": null,
+      "reason": "Production build.",
+      "origin": {
+        "kind": "architecture",
+        "evidence": [
+          "docs/work-items/WI-1/architecture/architecture-delta.md",
+          "package.json"
+        ]
+      },
+      "required": true,
+      "when": [
+        "affected",
+        "final"
+      ],
+      "paths": [
+        "apps/**",
+        "packages/**",
+        "package.json"
+      ],
+      "status": "configured",
+      "decision": null,
+      "decisionLevel": null,
+      "countsPattern": null,
+      "timeoutSeconds": 600
+    },
+    {
+      "id": "PRJ-E2E",
+      "category": "e2e",
+      "kind": "command",
+      "command": "npm run test:e2e",
+      "builtin": null,
+      "procedure": null,
+      "reason": "Browser journeys on the built app (127.0.0.1:4310).",
+      "origin": {
+        "kind": "architecture",
+        "evidence": [
+          "docs/work-items/WI-1/architecture/architecture-delta.md",
+          "package.json"
+        ]
+      },
+      "required": true,
+      "when": [
+        "affected",
+        "final"
+      ],
+      "paths": [
+        "apps/web/**",
+        "apps/server/src/**",
+        "e2e/**",
+        "config/**"
+      ],
+      "status": "configured",
+      "decision": null,
+      "decisionLevel": null,
+      "countsPattern": null,
+      "timeoutSeconds": 1200
+    },
+    {
+      "id": "PRJ-A11Y",
+      "category": "accessibility",
+      "kind": "command",
+      "command": "npm run test:a11y",
+      "builtin": null,
+      "procedure": null,
+      "reason": "Axe checks on every page.",
+      "origin": {
+        "kind": "architecture",
+        "evidence": [
+          "docs/work-items/WI-1/architecture/architecture-delta.md",
+          "package.json"
+        ]
+      },
+      "required": true,
+      "when": [
+        "affected",
+        "final"
+      ],
+      "paths": [
+        "apps/web/**",
+        "e2e/**"
+      ],
+      "status": "configured",
+      "decision": null,
+      "decisionLevel": null,
+      "countsPattern": null,
+      "timeoutSeconds": 900
+    },
+    {
+      "id": "PRJ-AUDIT",
+      "category": "security-audit",
+      "kind": "command",
+      "command": "npm audit --audit-level=high",
+      "builtin": null,
+      "procedure": null,
+      "reason": "Known high or critical vulnerabilities in dependencies (moderate advisories reviewed per decision, OD-33).",
+      "origin": {
+        "kind": "architecture",
+        "evidence": [
+          "docs/work-items/WI-1/architecture/architecture-delta.md",
+          "package.json"
+        ]
+      },
+      "required": true,
+      "when": [
+        "affected",
+        "final"
+      ],
+      "paths": [
+        "package.json",
+        "package-lock.json",
+        "apps/*/package.json",
+        "packages/*/package.json"
+      ],
+      "status": "configured",
+      "decision": null,
+      "decisionLevel": null,
+      "countsPattern": null,
+      "timeoutSeconds": 300
     }
   ],
   "riskProfile": {
     "level": "standard",
-    "personalData": "unknown",
+    "personalData": "none",
     "realDataDecision": null,
     "sensitiveDataCategories": [],
-    "notes": []
+    "notes": [
+      "Product Owner decision PD-04 (WI-1): MVP limited to team-level and competition-level data; no player-level information."
+    ]
   },
   "policy": {
     "additionalHigh": [],
@@ -262,9 +628,20 @@
   },
   "concurrency": 5,
   "localEnvironment": {
-    "notes": [],
-    "verificationPorts": {},
-    "demoPorts": {}
+    "notes": [
+      "Data directory: each run uses a disposable temporary directory (EDR_DATA_DIR) on local storage, removed afterwards; never a shared or existing data directory.",
+      "Browser for PRJ-E2E and PRJ-A11Y: project-local Chromium under .cache/ms-playwright (git-ignored), downloaded by the test runner on first use; no host installation.",
+      "Network: PRJ-INSTALL (npm ci) and PRJ-AUDIT (npm audit) need the npm registry; the first PRJ-E2E or PRJ-A11Y run needs the Playwright browser download host. No gate contacts a sports-data or AI provider.",
+      "Long runs: on macOS keep the host awake during e2e and final gate runs (caffeinate -i; a closed lid or manual sleep still interrupts).",
+      "Servers in gate runs bind 127.0.0.1 only: verification port 4310 (verify worktree), demo port 4320 (demo worktree, PO acceptance only).",
+      "LIVE_DATA is optional and manual: the Product Owner places a free-plan FOOTBALL_DATA_API_TOKEN in .env.local (mode 0600) of the worktree that runs the probe (T53); no gate uses the token, test:live or probe:football-data (R-135, R-258)."
+    ],
+    "verificationPorts": {
+      "app": 4310
+    },
+    "demoPorts": {
+      "app": 4320
+    }
   },
   "intake": {
     "additionalExclusions": [],

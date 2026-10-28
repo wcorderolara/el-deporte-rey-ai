@@ -1,0 +1,12 @@
+TASK: WI-1-T46
+RESULT: PASS
+VALIDATED_HEAD: 9eaa8991260bd96de4054f38765e5b844e657a00
+DATE: 2026-10-28T22:19:40Z
+COMMAND: node scripts/security-checks.mjs marker-scan docs/work-items/WI-1/evidence docs/work-items/WI-1/research apps/web/dist
+SUMMARY: exit 0; 121 files scanned; real token checked: no (verify environment holds no token; real-token evidence is T53-marker-scan-real.txt and T61-marker-scan-real.txt); findings: 0
+--- output ---
+marker-scan: looks for: the synthetic marker token, the marker client value
+files scanned: 121
+real token checked: no
+marker-scan: findings: 0
+RESULT: PASS

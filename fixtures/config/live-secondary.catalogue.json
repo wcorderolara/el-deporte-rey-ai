@@ -1,0 +1,11 @@
+{
+  "links": [
+    {
+      "id": "copa-continental",
+      "name": "Copa Continental Sintética",
+      "reference": true,
+      "bindings": [{"sourceId":"football-data","competitionRef":"cl"},{"sourceId":"live-secondary","competitionRef":"copa-continental"}]
+    }
+  ],
+  "restrictToLinks": false
+}

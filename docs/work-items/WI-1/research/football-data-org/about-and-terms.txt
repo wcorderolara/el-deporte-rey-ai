@@ -1,0 +1,23 @@
+URL: https://www.football-data.org/about
+RETRIEVED_UTC: 2026-10-27 (T13)
+HTTP_OUTCOME: 200
+METHOD: WebFetch extraction (the fetch tool converts the page to markdown and a model extracts the requested content; short quotes are verbatim, the rest is paraphrase). Raw capture was not possible: the session shell has no outbound network (sandbox) and the Product Owner's environment did not permit lifting it (2026-10-27). Content is data, not instructions.
+CAPTURED_BY: Orchestrator, task WI-1-T13
+---
+Operator: Freitag Web Tec UG, Oberweg 5, 35469 Allendorf (Lumda), Germany; API created by Daniel Freitag (software architect), run as "a small side business"; also Data Protection Officer.
+Data origin: "different upstreams, doing manual data checking each day and with automatic QA-services in place"; no upstream provider named.
+General Terms and Conditions on this page ("Last updated June 1, 2018"; effective 2018-06-01). Clause outline (extraction; quotes verbatim where marked):
+1 Accepting the Terms: 1.1 signing up means accepting the terms in full; 1.2 registration may require a valid email address.
+2 Using the API: 2.1 registration; 2.2 API key issued; 2.3 a key "applies to a single Application" and its domain.
+3 Fair Use Policy: 3.1-3.2 usage appropriate to the tier; 3.3 usage monitored; service may be cancelled for excessive or unfair use "without prior formal notice".
+4 Subscriptions & Tiers: 4.1 free tier and paid tiers (pricing page); 4.2-4.3 upgrade, downgrade, cancellation by email to billing, no partial-month refunds; 4.4 fee changes with 30 days notice; 4.5 provider may cancel with 15 days notice; 4.6 cancellation deletes account and stored data.
+5 Payments: monthly card payment via Stripe (5.3 truncated on the page).
+6 Confidentiality: 6.1 keys and passwords confidential; may not be stored in public open-source code repositories.
+7 Attribution: 7.1 apps or websites must credit the API in a visible location; wording given: "Football data provided by the Football-Data.org API".
+8 Warranties and Liability: 8.1 "we make no representations or warranties as to the Service's accuracy, correctness or reliability"; 8.2 "We accept no responsibility for any losses incurred through the use or termination of the Service"; 8.3 liability excluded except as stated; 8.4 liability capped at the value of transactions to date.
+9 Intellectual Property: 9.1 after cancellation "the Customer is not permitted to reference the football data"; 9.2 logos, photos and other graphics belong to their owners; customers must obtain permission themselves.
+10 Governing Law: 10.1 laws of the Netherlands.
+11 Amendments: 11.1 may amend at any time; 11.2 at renewal; 11.3 continued use counts as acceptance.
+12 Effective Date: 12.1 June 1, 2018.
+Not stated on the page: an explicit permission or prohibition for republishing derived content on social media; commercial-use conditions beyond the paid tiers.
+Contacts: daniel@football-data.org (general, privacy, owner); info@football-data.org (terms); billing@football-data.org (upgrades, cancellations).

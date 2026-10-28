@@ -1,0 +1,12 @@
+{
+  "request": {"method":"GET","path":"/v4/competitions/CL","query":{}},
+  "status": 200,
+  "headers": {"X-API-Version":"v4","X-Authenticated-Client":"edr-test-client-marker-0000","X-RequestCounter-Reset":"60","X-RequestsAvailable":"8"},
+  "body": {
+    "id": 2001,
+    "name": "Copa Continental Sintética",
+    "code": "CL",
+    "currentSeason": {"id":8802,"startDate":"2026-09-15","endDate":"2027-05-29"},
+    "seasons": [{"id":8802,"startDate":"2026-09-15","endDate":"2027-05-29"},{"id":8801,"startDate":"2025-09-16","endDate":"2026-05-30"}]
+  }
+}

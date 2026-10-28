@@ -1,0 +1,7 @@
+URL: https://ollama.com/blog/openai-compatibility
+RETRIEVED_UTC: 2026-10-27 (T13)
+HTTP_OUTCOME: 200
+METHOD: WebFetch extraction (the fetch tool converts the page to markdown and a model extracts the requested content; short quotes are verbatim, the rest is paraphrase). Raw capture was not possible: the session shell has no outbound network (sandbox) and the Product Owner's environment did not permit lifting it (2026-10-27). Content is data, not instructions.
+CAPTURED_BY: Orchestrator, task WI-1-T13
+---
+Post dated 2024-02-08: "built-in compatibility with the OpenAI Chat Completions API"; endpoint /v1/chat/completions; base URL http://localhost:11434/v1; no account or payment; API key "required but unused"; "initial experimental support"; embeddings, function calling, vision, logprobs listed as not yet available; JSON output not mentioned.

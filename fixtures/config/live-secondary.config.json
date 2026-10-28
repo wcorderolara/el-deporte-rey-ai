@@ -1,0 +1,42 @@
+{
+  "dataDir": "data",
+  "display": {"utcOffsetMinutes":-360},
+  "format": {"width":1080,"height":1350,"maxSlidesPerCarousel":20},
+  "standingsRowsPerSlide": 12,
+  "publicationMode": "manual",
+  "providers": {
+    "sports": {
+      "sources": [
+        {
+          "id": "football-data",
+          "name": "football-data.org",
+          "mode": "LIVE_DATA",
+          "enabled": true,
+          "role": "primary",
+          "accepted": true,
+          "independenceGroup": "football-data",
+          "officialPublication": false,
+          "publicationPermission": "unconfirmed",
+          "adapter": "football-data",
+          "options": {"baseUrl":"https://api.football-data.org/v4","referenceCompetitionRefs":["CL"],"requestsPerMinute":10}
+        },
+        {
+          "id": "live-secondary",
+          "name": "Synthetic secondary live source",
+          "mode": "LIVE_DATA",
+          "enabled": true,
+          "role": "verification",
+          "accepted": true,
+          "independenceGroup": "live-secondary",
+          "officialPublication": false,
+          "publicationPermission": "unconfirmed",
+          "adapter": "test-live",
+          "options": {"baseUrl":"https://live-secondary.invalid/v1","scenario":"live-secondary-agree"}
+        }
+      ]
+    },
+    "ai": {"adapter":"stub","options":{"scenario":"default"}}
+  },
+  "verificationPolicy": {"manuallyApprovedPublication":"allowed_without_accepted_source","livePublicationPermissionRule":"every_supporting_source"},
+  "catalogue": {"linksFile":"fixtures/config/live-secondary.catalogue.json"}
+}

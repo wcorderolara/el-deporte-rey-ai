@@ -1,0 +1,13 @@
+{
+  "request": {"method":"GET","path":"/v4/competitions","query":{}},
+  "status": 200,
+  "headers": {"X-API-Version":"v4","X-Authenticated-Client":"edr-test-client-marker-0000","X-RequestCounter-Reset":"60","X-RequestsAvailable":"8"},
+  "body": {
+    "count": 2,
+    "filters": {},
+    "competitions": [
+      {"id":2001,"area":{"id":9077,"name":"Synthetic Continent"},"name":"Copa Continental Sintética","code":"CL","type":"CUP"},
+      {"id":9901,"area":null,"name":"Liga Sintética del Norte","code":null,"type":"LEAGUE"}
+    ]
+  }
+}

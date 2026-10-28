@@ -1,0 +1,19 @@
+competition_id,competition_name,season_id,season_label,stage_id,stage_name,stage_order,matchday,home_team,away_team,kickoff,status,home_score,away_score
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Atlético Valdoria,Vikingos Neblinar,2026-09-15T17:45:00Z,finished,1,0
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Pumas Montesal,Real Montebrisa,2026-09-15T20:00:00Z,finished,2,1
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Deportivo Costaluna,Alianza Rocamar,2026-09-15T17:45:00Z,finished,0,0
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Cometa Valleluz,Unión Pradera Alta,2026-09-15T20:00:00Z,finished,4,3
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Sporting Lumbrera,Centauros Piedrafría,2026-09-15T17:45:00Z,finished,1,4
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Aurora Llanomar,Racing Nievalia,2026-09-15T20:00:00Z,finished,1,1
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Olímpico Brezal,Titanes Serrabal,2026-09-15T17:45:00Z,finished,2,0
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Corsarios Islabruma,Club Faro Norte,2026-09-15T20:00:00Z,finished,2,3
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Estrella Sabinar,Esperanza Campiña,2026-09-15T17:45:00Z,finished,4,1
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Royal Lagunel,Juventud Arcosol,2026-09-16T20:00:00Z,finished,0,0
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Academia Tormenta,Granate Pinosol,2026-09-16T17:45:00Z,finished,0,1
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Nacional Riberal,Ciclón Marisma,2026-09-16T20:00:00Z,finished,1,1
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Halcones de Peñaclara,Unión Vientosur,2026-09-16T17:45:00Z,finished,1,4
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Deportes Tierraluz,Atlético Robledal,2026-09-16T20:00:00Z,finished,2,2
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Celeste Altoviento,Marina Bahía Gris,2026-09-16T17:45:00Z,finished,1,2
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Leones de Cumbral,Fortaleza Quebrada,2026-09-16T20:00:00Z,finished,3,3
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Victoria Salinar,Inter Mareal,2026-09-16T17:45:00Z,finished,4,1
+copa-continental,Copa Continental Sintética,2026,2026/27,league-stage,LEAGUE_STAGE,1,1,Dínamo Vallefrío,Rápido Encinar,2026-09-16T20:00:00Z,finished,0,1

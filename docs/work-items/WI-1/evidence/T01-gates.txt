@@ -1,0 +1,31 @@
+TASK: WI-1-T01
+RESULT: PASS
+VALIDATED_HEAD: dd9499e67a0ce0bcc463301c2286cced01b10206
+DATE: 2026-10-27T15:41:22Z
+COMMAND: orch gates run --work-item WI-1 --task T01 --set affected
+SUMMARY: 2 PASS / 0 FAIL / 0 NOT RUN; required not passing: none
+--- output ---
+CONFIG: .orchestrate/config.json
+CONFIG_SOURCE: committed@dd9499e67a0c
+CONFIG_SHA256: 6614e48a55c0252c3962656d71eeec2dd29d537309bb39828a6df78b01824354
+SET: affected
+
+=== FW-TRACKER (framework, required) PASS exit=0 ms=90 ===
+COMMAND: builtin:tracker
+REASON: orch tracker check exited 0
+Tracker docs/work-items/WI-1/tasks.md on dd9499e67a0ce0bcc463301c2286cced01b10206
+  T00  IMPL   recorded=IN_PROGRESS                          task branch none; worktree none                                                            => PENDING
+  T01  IMPL   recorded=IN_PROGRESS                          task branch ahead=0; worktree dirty=0                                                      => PENDING
+  T02  VERIFY recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+STATE: open
+RESULT: PASS (0 violations)
+
+=== FW-CONFIG (framework, required) PASS exit=0 ms=79 ===
+COMMAND: builtin:config
+REASON: orch validate --section config,policy,agents,models exited 0
+SECTION config: PASS
+SECTION policy: PASS
+SECTION agents: PASS
+SECTION models: PASS
+  NOTE 156 file(s) scanned
+RESULT: PASS (0 violation(s), 0 warning(s))

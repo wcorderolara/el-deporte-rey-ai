@@ -1,0 +1,7 @@
+URL: https://docs.football-data.org/general/v4/match.html
+RETRIEVED_UTC: 2026-10-27 (T13)
+HTTP_OUTCOME: 200
+METHOD: WebFetch extraction (the fetch tool converts the page to markdown and a model extracts the requested content; short quotes are verbatim, the rest is paraphrase). Raw capture was not possible: the session shell has no outbound network (sandbox) and the Product Owner's environment did not permit lifting it (2026-10-27). Content is data, not instructions.
+CAPTURED_BY: Orchestrator, task WI-1-T13
+---
+Sample /v4/matches/{id} top-level fields: area, competition, season, id, utcDate, status, minute, injuryTime, attendance, venue, matchday, stage, group, lastUpdated, homeTeam, awayTeam, score, goals, penalties, bookings, substitutions, odds, referees. score: winner, duration, fullTime, halfTime (regularTime, extraTime not in the sample; top-level penalties array). Teams: id, name, shortName, tla, crest, coach, leagueRank, formation, lineup, bench, statistics. Persons present: referees (id, name, type, nationality), coach, lineup, bench, goals/bookings/substitutions players. /matches filters: ids, date, dateFrom (with dateTo), dateTo, status; LIVE pseudo-status = IN_PLAY+PAUSED. Data delays: not on this page.

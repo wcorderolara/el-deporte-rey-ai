@@ -1,0 +1,142 @@
+{
+  "schema": "orchestrate/inventory@1",
+  "workItem": "WI-1",
+  "roots": [
+    {
+      "input": "(inline record)",
+      "kind": "inline",
+      "path": "docs/work-items/WI-1/intake/sources/inline-001.md",
+      "insideRepository": true
+    },
+    {
+      "input": "/Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27.md",
+      "kind": "file",
+      "path": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27.md",
+      "insideRepository": true
+    },
+    {
+      "input": "/Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-stage2.md",
+      "kind": "file",
+      "path": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-stage2.md",
+      "insideRepository": true
+    },
+    {
+      "input": "/Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/docs/work-items/WI-1/intake/sources/po-change-2026-10-27-provider-and-modes.md",
+      "kind": "file",
+      "path": "docs/work-items/WI-1/intake/sources/po-change-2026-10-27-provider-and-modes.md",
+      "insideRepository": true
+    },
+    {
+      "input": "/Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/docs/work-items/WI-1/intake/sources/po-scope-clarification-2026-10-27-multi-competition.md",
+      "kind": "file",
+      "path": "docs/work-items/WI-1/intake/sources/po-scope-clarification-2026-10-27-multi-competition.md",
+      "insideRepository": true
+    },
+    {
+      "input": "/Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-change-batch.md",
+      "kind": "file",
+      "path": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-change-batch.md",
+      "insideRepository": true
+    }
+  ],
+  "counts": {
+    "analyzed": 6,
+    "unsupported": 0,
+    "excluded": 0
+  },
+  "files": [
+    {
+      "path": "docs/work-items/WI-1/intake/sources/inline-001.md",
+      "status": "analyzed",
+      "reason": "inline record",
+      "sourceId": "S-000",
+      "reader": "text",
+      "format": "md",
+      "sha256": "b55dc299ab338c57d3555a183ccd11336c6f97bd79708a1f2737e7bdd6251aa2",
+      "bytes": 3708,
+      "originalPath": null,
+      "typeCandidate": "frd",
+      "idsFound": []
+    },
+    {
+      "path": "docs/work-items/WI-1/intake/sources/po-change-2026-10-27-provider-and-modes.md",
+      "status": "analyzed",
+      "reason": "text format",
+      "sourceId": "S-003",
+      "reader": "text",
+      "format": "md",
+      "sha256": "4eeb482afc7fcc61d159371d3ea02e0da9e7445079162ac5a94aeebeea9a511f",
+      "bytes": 7529,
+      "originalPath": null,
+      "typeCandidate": "technical-spec",
+      "idsFound": [
+        "WI-1"
+      ]
+    },
+    {
+      "path": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-change-batch.md",
+      "status": "analyzed",
+      "reason": "text format",
+      "sourceId": "S-005",
+      "reader": "text",
+      "format": "md",
+      "sha256": "d324b6737bc69913284d86789d5856e9faff16945f501ee76332599d31010de6",
+      "bytes": 44,
+      "originalPath": null,
+      "typeCandidate": "product-idea",
+      "idsFound": []
+    },
+    {
+      "path": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27-stage2.md",
+      "status": "analyzed",
+      "reason": "text format",
+      "sourceId": "S-002",
+      "reader": "text",
+      "format": "md",
+      "sha256": "99d18619acb2134b7c2c01e9569863fa4d425762fc3059a05fe5ad1693066512",
+      "bytes": 58,
+      "originalPath": null,
+      "typeCandidate": "unknown",
+      "idsFound": [
+        "E-07",
+        "E-08"
+      ]
+    },
+    {
+      "path": "docs/work-items/WI-1/intake/sources/po-decisions-2026-10-27.md",
+      "status": "analyzed",
+      "reason": "text format",
+      "sourceId": "S-001",
+      "reader": "text",
+      "format": "md",
+      "sha256": "de838ea30275c967d31e8e6886da138ca4a5c18f876f991f239c6df39cd952d9",
+      "bytes": 2083,
+      "originalPath": null,
+      "typeCandidate": "frd",
+      "idsFound": [
+        "R-410",
+        "R-411",
+        "R-413",
+        "R-414",
+        "R-415",
+        "R-416",
+        "WI-1"
+      ]
+    },
+    {
+      "path": "docs/work-items/WI-1/intake/sources/po-scope-clarification-2026-10-27-multi-competition.md",
+      "status": "analyzed",
+      "reason": "text format",
+      "sourceId": "S-004",
+      "reader": "text",
+      "format": "md",
+      "sha256": "5eae4c9303d5cdd5f5506ae6cd65770194262eff494dfb2a068e57265de059e3",
+      "bytes": 3378,
+      "originalPath": null,
+      "typeCandidate": "unknown",
+      "idsFound": [
+        "WI-1"
+      ]
+    }
+  ]
+}

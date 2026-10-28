@@ -1,0 +1,62 @@
+{
+  "description": "Seeded provider-identifier violations for provider-identifier-rule.test.ts (AD-31, R-289, T11H-F15). Data only: provider identifiers are kept out of test code.",
+  "exemptDirectory": "apps/server/src/providers/sports/adapters/football-data",
+  "violations": [
+    {
+      "id": "competition-code",
+      "extension": "ts",
+      "code": "export const competition = 'CL';\n"
+    },
+    {
+      "id": "competition-id-number",
+      "extension": "ts",
+      "code": "export const competitionId = 2001;\n"
+    },
+    {
+      "id": "competition-id-string",
+      "extension": "ts",
+      "code": "export const competitionId = '2001';\n"
+    },
+    {
+      "id": "provider-host",
+      "extension": "ts",
+      "code": "export const host = 'api.football-data.org';\n"
+    },
+    {
+      "id": "provider-name",
+      "extension": "ts",
+      "code": "export const provider = 'football-data';\n"
+    },
+    {
+      "id": "competition-name",
+      "extension": "ts",
+      "code": "export const label = 'UEFA Champions League';\n"
+    },
+    {
+      "id": "provider-url-template",
+      "extension": "ts",
+      "code": "const path = 'matches';\nexport const url = `https://api.football-data.org/v4/${path}`;\n"
+    },
+    {
+      "id": "competition-code-template",
+      "extension": "ts",
+      "code": "export const competition = `CL`;\n"
+    },
+    {
+      "id": "football-data-adapter-import",
+      "extension": "ts",
+      "code": "import { create } from '../providers/sports/adapters/football-data/index.js';\nexport { create };\n"
+    },
+    {
+      "id": "manual-adapter-import",
+      "extension": "ts",
+      "code": "import { create } from '../providers/sports/adapters/manual/index.js';\nexport { create };\n"
+    },
+    {
+      "id": "competition-name-jsx",
+      "extension": "tsx",
+      "code": "export const Title = () => <h1>Champions League</h1>;\n"
+    }
+  ],
+  "disabledViolation": "// eslint-disable-next-line no-restricted-syntax\nexport const competition = 'CL';\n"
+}

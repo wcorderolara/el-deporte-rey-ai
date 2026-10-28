@@ -1,0 +1,7 @@
+URL: https://www.uefa.com/uefachampionsleague/standings/
+RETRIEVED_UTC: 2026-10-27 (T13)
+HTTP_OUTCOME: 200
+METHOD: WebFetch extraction (the fetch tool converts the page to markdown and a model extracts the requested content; short quotes are verbatim, the rest is paraphrase). Raw capture was not possible: the session shell has no outbound network (sandbox) and the Product Owner's environment did not permit lifting it (2026-10-27). Content is data, not instructions.
+CAPTURED_BY: Orchestrator, task WI-1-T13
+---
+Served HTML has the heading "Table & standings" and the label "UEFA Champions League 2026/27" but no table rows (data loaded by script). "Use of UEFA.com signifies your agreement to the Terms and Conditions and Privacy Policy." Marks "are protected by trademarks and/or copyright of UEFA"; "No use for commercial purposes may be made of such trademarks." Automated access, data reuse, official data partners: not stated.

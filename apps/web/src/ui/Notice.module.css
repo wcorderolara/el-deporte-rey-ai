@@ -1,0 +1,47 @@
+.banner {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 2px dashed #6b2a00;
+  border-left-width: 0.5rem;
+  border-radius: 0.25rem;
+  color: #6b2a00;
+  background: #ffe8d6;
+}
+
+.banner p {
+  margin: 0;
+}
+
+.note {
+  margin: 0.25rem 0;
+  padding: 0.25rem 0.5rem;
+  border-left: 0.25rem solid var(--edr-color-warning-text);
+  color: var(--edr-color-warning-text);
+  background: var(--edr-color-warning-surface);
+}
+
+.provenance {
+  margin: 0.25rem 0;
+  color: var(--edr-color-muted);
+  font-size: 0.875rem;
+}
+
+.provenance p {
+  margin: 0;
+}
+
+.stale {
+  color: var(--edr-color-warning-text);
+  font-weight: 600;
+}
+
+.reference {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.label {
+  font-weight: 700;
+}

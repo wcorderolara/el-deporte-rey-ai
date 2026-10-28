@@ -1,0 +1,21 @@
+TASK: WI-1-T11N
+RESULT: PASS
+VALIDATED_HEAD: ce746e4776510b5c3846ed58f1ba5798a8f27446
+DATE: 2026-10-27T21:18:42Z
+COMMAND: orch validate --work-item WI-1 --at /Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration
+SUMMARY: PASS (exit 0)
+--- output ---
+SECTION config: PASS
+SECTION policy: PASS
+SECTION agents: PASS
+SECTION models: PASS
+  NOTE 156 file(s) scanned
+SECTION framework: PASS
+SECTION closures: PASS
+  NOTE 0 closure(s); source absent
+SECTION trackers: PASS
+  NOTE tracker WI-1: open
+SECTION requirements: PASS
+  NOTE 1 requirement record file(s) checked
+SECTION contracts: PASS
+RESULT: PASS (0 violation(s), 0 warning(s))
