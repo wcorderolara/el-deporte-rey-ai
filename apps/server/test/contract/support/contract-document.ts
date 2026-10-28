@@ -3,8 +3,7 @@
  * OpenAPI parser (OD-32), and compiles its JSON Schemas with Ajv (draft 2020-12, the dialect of OpenAPI 3.1) so that
  * the Zod mirror in `packages/contracts` can be compared with the authoritative document (AD-04).
  */
-import module, { createRequire } from 'node:module';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 import type * as OpenApiParser from '@readme/openapi-parser';
 import type { ValidateFunction } from 'ajv';
@@ -17,39 +16,24 @@ export const CONTRACT_PATH = fileURLToPath(new URL('../../../../../contracts/htt
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 export type JsonObject = { [key: string]: JsonValue };
 
-/**
- * Install-layout workaround (escalated in the WI-1-T20 report): with `legacy-peer-deps`, npm hoists `ajv-draft-04`
- * (a dependency of `@readme/openapi-parser` with the peer `ajv@^8`) to the root `node_modules`, where `ajv` is the
- * 6.x copy that ESLint uses, so `require('ajv/dist/core')` fails when the parser is imported. This resolve hook makes
- * `ajv-draft-04` load the `ajv` 8.20.0 that `apps/server` declares. It is test-only, affects only that one importer,
- * and has no effect once the install layout resolves `ajv` 8 for `ajv-draft-04` by itself.
- */
-let shimInstalled = false;
-function installParserResolutionShim(): void {
-  if (shimInstalled) {
-    return;
-  }
-  shimInstalled = true;
-  const serverRequire = createRequire(fileURLToPath(new URL('../../../package.json', import.meta.url)));
-  module.registerHooks({
-    resolve(specifier, context, nextResolve) {
-      if (specifier.startsWith('ajv/') && context.parentURL?.includes('/node_modules/ajv-draft-04/')) {
-        return { url: pathToFileURL(serverRequire.resolve(specifier)).href, format: 'commonjs', shortCircuit: true };
-      }
-      return nextResolve(specifier, context);
-    },
-  });
+async function parser(): Promise<typeof OpenApiParser> {
+  return import('@readme/openapi-parser');
 }
 
-async function parser(): Promise<typeof OpenApiParser> {
-  installParserResolutionShim();
-  return import('@readme/openapi-parser');
+/** Absolute path of the accepted proposal (WI-1-T09 and WI-1-T11G, 1.0.0-proposed.2) that T20 promoted. */
+export const PROPOSAL_PATH = fileURLToPath(
+  new URL('../../../../../docs/work-items/WI-1/architecture/contracts/http-api.openapi.yaml', import.meta.url),
+);
+
+/** Parses an OpenAPI YAML document without resolving references. */
+export async function loadDocument(path: string): Promise<JsonObject> {
+  const { parse } = await parser();
+  return (await parse(path)) as unknown as JsonObject;
 }
 
 /** Parses the YAML contract without resolving references. */
 export async function loadContract(): Promise<JsonObject> {
-  const { parse } = await parser();
-  return (await parse(CONTRACT_PATH)) as unknown as JsonObject;
+  return loadDocument(CONTRACT_PATH);
 }
 
 /** Validates the contract file against the OpenAPI specification schema and the parser's semantic rules. */
