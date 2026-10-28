@@ -1,8 +1,8 @@
-import type { Fact } from '@edr/contracts';
+import type { Fact, Language } from '@edr/contracts';
 import { useId } from 'react';
 
 import { FactStatusBadge, formatDateTime, refusalReasonLabel } from '../../ui';
-import { blockReasonLabel, manualCopy, publicationCopy, valueCopy } from './copy';
+import { manualCopy, publicationCopy, valueCopy } from './copy';
 import { DisputeRecord } from './DisputeRecord';
 import {
   manualControlFor,
@@ -15,6 +15,7 @@ import styles from './Facts.module.css';
 import { factValueText, type TeamNames } from './format';
 import { Heading, nextLevel, type HeadingLevel } from './Heading';
 import { ManualApprovalControl } from './ManualApprovalControl';
+import { blockReasonText, factReasonText, UI_LANGUAGE } from './reasonText';
 
 export interface FactCardProps {
   fact: Fact;
@@ -29,6 +30,8 @@ export interface FactCardProps {
   headingLevel: HeadingLevel;
   onUpdated: (fact: Fact) => void;
   announce: (message: string) => void;
+  /** Language of the reason texts built from the closed codes; the interface language by default (OD-63). */
+  language?: Language;
 }
 
 function ineligibleText(reason: IneligibleReason): string {
@@ -55,7 +58,8 @@ function valueLabel(fact: Fact): string {
 
 /**
  * One fact of the run: status (VERIFIED; UNVERIFIED with its reason; MANUALLY_APPROVED labelled operator-attested and
- * never styled or worded as verified; OD-17, OD-28), value or candidate value, server reason, manual approval audit,
+ * never styled or worded as verified; OD-17, OD-28), value or candidate value, the reason built from the closed codes
+ * in the interface language (OD-63; the server text only where no code covers it), manual approval audit,
  * publication approval note (R-026, R-271, R-272, R-078), evidence per source, dispute record and, for eligible facts
  * only, the manual approval or revocation control (R-272). No control sets a fact to verified (R-412).
  */
@@ -70,6 +74,7 @@ export function FactCard({
   headingLevel,
   onUpdated,
   announce,
+  language = UI_LANGUAGE,
 }: FactCardProps) {
   const titleId = useId();
   const disputeId = useId();
@@ -77,6 +82,7 @@ export function FactCard({
   const control = manualControlFor(fact, manualApproval);
   const publication = publicationNoteFor(fact);
   const subLevel = nextLevel(headingLevel);
+  const reason = factReasonText(fact, language);
 
   return (
     <li className={styles.fact} data-status={fact.status} data-testid="fact" data-fact-key={fact.factKey}>
@@ -94,12 +100,12 @@ export function FactCard({
               {valueText ?? (fact.unverifiedReason === 'disputed' ? valueCopy.noneDisputed : '—')}
             </dd>
           </div>
-          {fact.reason === null || fact.reason === '' ? null : (
-            <div>
-              <dt>{valueCopy.reason}</dt>
-              <dd>{fact.reason}</dd>
-            </div>
-          )}
+          <div>
+            <dt>{valueCopy.reason}</dt>
+            <dd lang={reason.lang} data-testid="fact-reason" data-origin={reason.origin}>
+              {reason.text}
+            </dd>
+          </div>
           <div>
             <dt>{valueCopy.factKey}</dt>
             <dd>
@@ -119,7 +125,8 @@ export function FactCard({
         {publication.kind === 'blocked' ? (
           <p className={styles.blocked} data-testid="publication-note">
             <span aria-hidden="true">⛔ </span>
-            <strong>{publicationCopy.blocked}:</strong> {blockReasonLabel[publication.reason]}
+            <strong>{publicationCopy.blocked}:</strong>{' '}
+            <span lang={language}>{blockReasonText(publication.reason, language)}</span>
           </p>
         ) : (
           <p className={styles.noBlock} data-testid="publication-note">

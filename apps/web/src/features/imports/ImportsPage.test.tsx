@@ -259,11 +259,28 @@ describe('ImportsPage: file channel', () => {
     const rows = within(table).getAllByRole('row');
     expect(rows).toHaveLength(151);
     const firstError = rows[1] as HTMLElement;
-    expect(within(firstError).getByText('Archivo row 2')).toBeTruthy();
-    expect(within(firstError).getByText('home_score')).toBeTruthy();
-    expect(within(firstError).getByText('Partido finalizado sin marcador')).toBeTruthy();
-    expect(within(firstError).getByText('A finished match needs a score')).toBeTruthy();
-    expect(within(rows[150] as HTMLElement).getByText('Archivo row 151')).toBeTruthy();
+    const firstCells = within(firstError)
+      .getAllByRole('cell')
+      .map((cell) => cell.textContent);
+    expect(firstCells).toEqual([
+      'Fila 2',
+      'home_score',
+      'Partido finalizado sin marcador',
+      'Un partido finalizado necesita su marcador (home_score); no se completa automáticamente.',
+    ]);
+    // The server's English message is never shown: the detail comes from the closed problem code (OD-63 F-2).
+    expect(within(table).queryByText(/A finished match needs a score|Value has an invalid type/)).toBeNull();
+    expect(
+      within(rows[2] as HTMLElement)
+        .getAllByRole('cell')
+        .map((cell) => cell.textContent),
+    ).toEqual([
+      'Fila 3',
+      'status',
+      'Tipo de valor no válido',
+      'El valor de «status» no tiene el tipo o el formato esperado.',
+    ]);
+    expect(within(rows[150] as HTMLElement).getAllByRole('cell')[0]?.textContent).toBe('Fila 151');
     expect(within(result).queryByRole('button', { name: 'Reintentar' })).toBeNull();
     expect(within(result).queryByText(/como máximo 500 errores/)).toBeNull();
     expect(screen.getByRole('status', { name: 'Avisos de la página de importaciones' }).textContent).toBe(
@@ -299,8 +316,15 @@ describe('ImportsPage: file channel', () => {
     await screen.findByRole('table', { name: /Importaciones aplicadas/ });
     await uploadAndSubmit(bytesFile('jornada-1.csv', CSV_BYTES));
     const table = await screen.findByRole('table', { name: '1 error en la importación' });
+    expect(within(table).getByText('Archivo completo')).toBeTruthy();
     expect(within(table).getByText('scorer')).toBeTruthy();
     expect(within(table).getByText('Campo con datos de personas (no permitido)')).toBeTruthy();
+    expect(
+      within(table).getByText(
+        '«scorer» contiene datos de personas, que no se aceptan: solo datos de equipos y de competición.',
+      ),
+    ).toBeTruthy();
+    expect(within(table).queryByText('Person-level column refused')).toBeNull();
   });
 
   it('disables sending while the request runs, and offers a retry of the same body after a network failure', async () => {
@@ -457,7 +481,12 @@ describe('ImportsPage: form channel', () => {
 
     expect(await screen.findByText(/Los datos del formulario fueron rechazados completos/)).toBeTruthy();
     const table = screen.getByRole('table', { name: '1 error en la importación' });
-    expect(within(table).getByText('Formulario /selections/0/matches/0')).toBeTruthy();
+    const cells = within(table).getAllByRole('cell');
+    expect(cells[0]?.textContent).toBe('Entrada del formulario /selections/0/matches/0');
+    expect(cells[0]?.querySelector('code')?.getAttribute('translate')).toBe('no');
+    expect(cells[3]?.textContent).toBe(
+      'Un partido finalizado necesita su marcador (score); no se completa automáticamente.',
+    );
   });
 
   it('adds and removes rows with focus on the new field or the add button', async () => {

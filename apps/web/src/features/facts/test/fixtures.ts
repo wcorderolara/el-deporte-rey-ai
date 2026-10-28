@@ -245,7 +245,7 @@ export function demoFacts(): FactListResponse {
         kickoff: '2026-10-24T20:00:00Z',
         status: 'unverified',
         unverifiedReason: 'awaiting_independent_verification',
-        reason: 'Una sola fuente: Fuente de demostración A',
+        reason: 'Awaiting independent verification; single source: demo-a.',
         display: '24 oct 2026, 20:00',
         evidence: [evidence({ value: { kickoff: '2026-10-24T20:00:00Z' } })],
       }),
@@ -254,7 +254,8 @@ export function demoFacts(): FactListResponse {
         matchKey: 'm2',
         status: 'unverified',
         unverifiedReason: 'disputed',
-        reason: 'Las fuentes Fuente de demostración A y Fuente de demostración B no coinciden',
+        reason:
+          'Disputed: accepted sources disagree (demo-a, demo-b); the official publication (demo-oficial) is independent and does not settle it.',
         score: null,
         evidence: [
           evidence({ relation: 'disagrees' }),
@@ -457,7 +458,7 @@ export function liveFacts(): FactListResponse {
         matchKey: 'm3',
         status: 'unverified',
         unverifiedReason: 'awaiting_independent_verification',
-        reason: 'Una sola fuente: Proveedor en vivo A',
+        reason: 'Awaiting independent verification; single source: live-a.',
         display: '1-1',
         score: { home: 1, away: 1 },
         blockReason: 'not_verified',

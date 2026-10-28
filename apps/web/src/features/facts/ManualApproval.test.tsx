@@ -243,7 +243,11 @@ describe('publication approval notes', () => {
       'El servidor no indica ningún bloqueo de publicación para este dato.',
     );
     const single = factCard('match:m3:score');
-    expect(single.textContent).toContain('Una sola fuente: Proveedor en vivo A');
+    expect(within(single).getByTestId('fact-reason').textContent).toBe(
+      'Sin verificar: pendiente de verificación independiente; el valor tiene el respaldo de una sola fuente ' +
+        'aceptada independiente.',
+    );
+    expect(single.textContent).not.toContain('single source');
     expect(within(single).getByTestId('publication-note').textContent).toContain('el dato no está verificado.');
   });
 });

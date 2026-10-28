@@ -140,11 +140,41 @@ describe('statuses, reasons and values', () => {
     expect(factCard('match:m1:score').querySelector('dt')?.textContent).toBe('Valor');
     expect(within(factCard('match:m1:score')).getByTestId('fact-value').textContent).toBe('2-1');
     expect(factCard('match:m1:kickoff').querySelector('dt')?.textContent).toBe('Valor candidato (sin verificar)');
-    expect(factCard('match:m1:kickoff').textContent).toContain('Una sola fuente: Fuente de demostración A');
     expect(factCard('match:m2:score').querySelector('dt')?.textContent).toBe('Sin valor');
     expect(within(factCard('match:m2:score')).getByTestId('fact-value').textContent).toBe(
       'No se muestra ningún valor mientras las fuentes no coincidan.',
     );
+  });
+
+  it('shows the reason of every status from its closed codes in Spanish, never the English server reason (OD-63)', async () => {
+    const { fetch } = server();
+    renderFacts(fetch);
+    await waitForFacts();
+
+    const reasonOf = (key: string) => within(factCard(key)).getByTestId('fact-reason');
+    expect(reasonOf('match:m1:score').textContent).toBe(
+      'Verificado: fuentes aceptadas independientes coinciden en el valor.',
+    );
+    expect(reasonOf('match:m1:kickoff').textContent).toBe(
+      'Sin verificar: pendiente de verificación independiente; el valor tiene el respaldo de una sola fuente ' +
+        'aceptada independiente.',
+    );
+    expect(reasonOf('match:m2:score').textContent).toBe(
+      'Sin verificar: en disputa; las fuentes aceptadas no coinciden y el dato no se verifica mientras la disputa ' +
+        'no se resuelva.',
+    );
+    expect(reasonOf('match:m3:teams').textContent).toBe(
+      'Sin verificar: un equipo de este dato no está identificado en todas las fuentes.',
+    );
+    expect(reasonOf('context:matches_in_selection:0').textContent).toBe(
+      'Sin verificar: ninguna fuente aceptada aporta un valor para este dato.',
+    );
+    for (const key of ['match:m1:score', 'match:m1:kickoff', 'match:m2:score']) {
+      expect(reasonOf(key).getAttribute('lang')).toBe('es');
+      expect(reasonOf(key).getAttribute('data-origin')).toBe('code');
+      expect(reasonOf(key).previousElementSibling?.textContent).toBe('Motivo');
+    }
+    expect(screen.queryByText(/Awaiting independent verification|Disputed: accepted sources disagree/)).toBeNull();
   });
 
   it('shows MANUALLY_APPROVED as operator-attested and never styles or words it as verified', async () => {
@@ -161,6 +191,10 @@ describe('statuses, reasons and values', () => {
       expect(header?.textContent).not.toMatch(/verific/i);
       expect(card.querySelector('dl')?.textContent).not.toMatch(/verific/i);
       expect(card.querySelector('dt')?.textContent).toBe('Valor aprobado manualmente (atestiguado por el operador)');
+      expect(within(card).getByTestId('fact-reason').textContent).toBe(
+        'Aprobado manualmente: el operador atestigua el valor importado. No cuenta como fuente aceptada ni como ' +
+          'segunda fuente.',
+      );
       expect(card.querySelector('[data-tone="positive"]')).toBeNull();
     }
     expect(factCard('match:m8:score').textContent).toContain('Aprobación conservada de la ejecución anterior');
