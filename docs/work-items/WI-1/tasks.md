@@ -70,7 +70,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T36 | Brand assets and templates UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | e457fc8 | `docs/work-items/WI-1/evidence/T36-gates.txt` |
 | T37 | Review module: approval state machine, regeneration, final approval | IMPL | backend-developer | T32, T35 | PENDING | 0 | - | - |
 | T38 | Export, history and traceability module | IMPL | backend-developer | T37 | PENDING | 0 | - | - |
-| T39 | Review UI: preview, per-item approval, regeneration, final approval | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
+| T39 | Review UI: preview, per-item approval, regeneration, final approval | IMPL | frontend-developer | T16, T20 | DONE | 1 | 34e9569 | `docs/work-items/WI-1/evidence/T39-gates.txt` |
 | T40 | Export, history and traceability UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 9c7f249 | `docs/work-items/WI-1/evidence/T40-gates.txt` |
 | T41 | Integration tests: platform, research and verification | IMPL | qa-engineer | T19, T22, T23, T29, T30 | PENDING | 0 | - | - |
 | T42 | Integration tests: content, rendering, visual QA, approval, export, history | IMPL | qa-engineer | T32, T33, T34, T35, T37, T38, T41 | PENDING | 0 | - | - |
@@ -797,6 +797,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: review page of the active draft: carousel preview with all slides in order plus caption and hashtags (R-215); demonstration banner for DEMO_DATA (R-269); per text segment a provenance label showing the fact's current status (verified fact, UNVERIFIED, MANUALLY_APPROVED) or commentary or template text, never labelling an unverified or manually approved value as verified (OD-01, R-208, R-071); per element state, blocked facts with names and block reasons in clear text (awaiting independent verification, manual approval not publishable under the current policy, publication permission not confirmed; R-271, R-272), content flags, QA results, acknowledge warnings, approve, withdraw, regenerate; final approval control enabled only when the carousel is ready and refusal messages shown otherwise; left-out matches with status; a carousel without standings shown without a gap; exclusions editor starting a redraft. Component tests.
 - Acceptance criteria: R-206, R-208, R-215, R-217, R-240, R-269, R-271, R-272
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run build` -> exit 0
+- Agent result: PASS at d17b006 (npm ci 0; typecheck 0; lint 0; test:unit 0, 754 tests, review 50; build 0; npm audit --audit-level=high 0, 2 moderate per OD-33).
+- Orchestrator verification: `orch worktree verify-ownership` exit 0 (19 changed, 0 outside); re-run in the task worktree at d17b006: npm ci --offline 0, typecheck 0, lint 0, test:unit 0 (39 files, 754 tests), test:integration 0 (5 files, 75 tests), build 0 (Orchestrator build output removed); main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-7 (slide image address from the getSlideImage operation, server imageUrl only as existence flag; approve buttons disabled with linked reasons, server refusals always shown and draft reloaded; returned objects shown then draft reloaded; derived block reason when blockReason is absent; exclusions editor from listFacts match_teams facts, contract maximum 64; 404 draft shown as no active draft; read-only featurePaths). OD-42 concerns this task. Verified against the contract with fake responses (T37 and T38 server modules pending). No new dependency.
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 236396; duration NOT RECORDED (loaded host).
+- Integration commit(s): 34e9569 (merge --no-ff of task/WI-1/T39). Affected gates at 34e9569: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T39-gates.txt, the evidence file of this task).
 
 ### T40: Export, history and traceability UI
 - Kind: IMPL
@@ -1269,6 +1275,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T10:30:30Z | T27 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T10:32:33Z | T50 | Status IN_PROGRESS (attempt 1); agent launched (PD-15 option A conditions apply) | orch next SELECT |
 | 2026-10-28T10:33:14Z | - | OD-42 recorded (imageUrl equals getSlideImage path, carried to T37) | T39 report |
+| 2026-10-28T10:33:16Z | T39 | Status DONE | integration commit 34e9569; evidence/T39-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
