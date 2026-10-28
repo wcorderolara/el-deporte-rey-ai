@@ -84,7 +84,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T51 | Manual import UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 70c6f98 | `docs/work-items/WI-1/evidence/T51-gates.txt` |
 | T52 | Integration tests: data modes, catalogue, manual import and credentials | IMPL | qa-engineer | T23, T27, T29, T30, T41, T49, T50 | IN_PROGRESS | 1 | - | - |
 | T53 | Capability probe run and football-data.org findings | IMPL | Orchestrator | T13, T41, T49 | IN_PROGRESS | 1 | - | - |
-| T54 | Verification fixes: dispute outcome rule and unavailable consultation record | IMPL | backend-developer | T30, T41 | IN_PROGRESS | 1 | - | - |
+| T54 | Verification fixes: dispute outcome rule and unavailable consultation record | IMPL | backend-developer | T30, T41 | DONE | 1 | d002b9d | `docs/work-items/WI-1/evidence/T54-gates.txt` |
 | T55 | Security checks: accepted-advisory option for audit-report | IMPL | qa-engineer | T41 | DONE | 1 | f63dbb2 | `docs/work-items/WI-1/evidence/T55-gates.txt` |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55 | PENDING | 0 | - | - |
 
@@ -1049,6 +1049,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: T41 defects F-01 and F-02 in the T30 verification stage. F-01: for the disputed-no-match scenario T30 records outcome `same_source` while fixtures/sports/_manifest.json expects `no_match`; apply architecture.md 7.3 and R-230/R-423 (`same_source` only when the official publication is the same source as, or in the same independence group as, a disputing source; `no_match` when an independent official publication gives a value matching neither) and make the T41 assertion exact instead of accepting either code; if the fixture is wrong under that rule, report it in ESCALATIONS with the evidence (fixtures are T23's, DONE). F-02: when the official-publication consultation fails or is unavailable, the dispute record stores the consultation source, the attempt time and `unavailable` outcome as architecture.md 7.3 states (not only a retrievals row), without swallowing the SourceError code.
 - Acceptance criteria: R-205, R-230
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:integration` -> exit 0
+- Agent result: PASS at 2d2e639 (npm ci 0; typecheck 0; lint 0; test:unit 0, 1722 tests; test:integration 0, 277 tests). F-01: T30's decision rule was wrong (fixture right): an independent official publication with a third value now gives no_match, same_source only for a shared independence group or a dispute existing only through the official value; T41 assertion made exact. F-02: a failed or unavailable consultation is stored on the dispute (source, attempt time, unavailable); the source_unavailable resolution is a failed retrieval with code unavailable.
+- Orchestrator verification: ownership against the integration tracker, re-run of npm ci --offline, typecheck, lint, test:unit, test:integration in the task worktree (see verification log); main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-3 (reading of disputing sources; first official retrieval attempt as the consultation; source_unavailable recorded as unavailable). Escalation (lost SourceError code in catalogue.resolveCounterpart) routed to T57 (OD-56).
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 125365; duration 6 minutes.
+- Integration commit(s): d002b9d (merge --no-ff of task/WI-1/T54). Affected gates at d002b9d: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-AUDIT PASS (evidence/T54-gates.txt, the evidence file of this task).
 
 ### T55: Security checks: accepted-advisory option for audit-report
 - Kind: IMPL
@@ -1451,6 +1457,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T16:27:01Z | T52 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T16:27:51Z | T53 | Status IN_PROGRESS (attempt 1); Orchestrator working; the probe needs network access to the provider, which the Orchestrator shell does not have; PO asked to run it or to have it recorded as not run | orch next SELECT |
 | 2026-10-28T17:45:17Z | T55 | Status DONE | integration commit f63dbb2; evidence/T55-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T17:46:21Z | T54 | Status DONE | integration commit d002b9d; evidence/T54-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
