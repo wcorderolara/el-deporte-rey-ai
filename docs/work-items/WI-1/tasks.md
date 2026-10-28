@@ -1068,6 +1068,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-42 | MEDIUM | T39 note carried to the T37 brief: `ElementVersion.imageUrl` must equal the relative path of the contract operation getSlideImage (`/api/v1/element-versions/{versionId}/image`); the review UI builds image addresses from that operation and uses imageUrl only as an existence flag | UI uses imageUrl directly | low | MED-05; T39 report |
 | OD-43 | MEDIUM | T27 escalation: operator match exclusions for a redraft are stored in `workflow_runs.config_snapshot` under `parameters.excludedMatchKeys` (null when a run does not change exclusions), read by T32 through `RunRepository.parameters(runId)` / `RunParametersSchema` in `apps/server/src/workflow/index.ts`; no DDL change; data-model.md is updated at close (configuration-update task) | nullable column via a new migration | low (additive JSON field) | MED-04, MED-05; T27 report; PO notified |
 | OD-44 | MEDIUM | Re-plan: T44 also owns `e2e/support/**` and `e2e/run.mjs` (created by T24, DONE) to add MANUAL_DATA to the e2e configuration (INCLUDED_MODES in e2e/support/harness.mjs, base fixtures/config/demo-manual.config.json) once T50 is integrated, and to remove the T19-seam fallback (e2e/support/seam-server.mjs and the stub detection), now inactive since T21 | separate follow-up task | low | MED-05; T24 report |
+| OD-45 | MEDIUM | T50 note carried to the T52 brief: run every sample of `fixtures/manual/invalid/` (T23) through the real import pipeline and assert the expected record, field and problem from `fixtures/manual/_manifest.json`; T50 covered each error class with inline generated cases because the fixtures were not in its base | reopen T50 | low | MED-05; T50 report |
 
 ## Conflicts
 
@@ -1335,6 +1336,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T15:35:50Z | - | Environment: the Orchestrator shell reaches the npm registry (plain npm ci and npm audit --audit-level=high exit 0 at 596e86e: 2 moderate, OD-33); general web access stays blocked | verify worktree run |
 | 2026-10-28T15:37:42Z | T25 | Status DONE | integration commit da9a37c; evidence/T25-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T15:38:09Z | T26 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-28T15:39:10Z | - | OD-45 recorded (fixture-driven invalid manual samples carried to T52) | T50 report |
 
 ## Recovery log
 
