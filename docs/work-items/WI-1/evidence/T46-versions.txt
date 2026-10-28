@@ -1,0 +1,35 @@
+TASK: WI-1-T46
+RESULT: PASS
+VALIDATED_HEAD: 9eaa8991260bd96de4054f38765e5b844e657a00
+DATE: 2026-10-28T22:18:34Z
+COMMAND: npm ls fastify @fastify/static zod satori @resvg/resvg-js vite react react-dom
+SUMMARY: exit 0; fastify 5.12.7, @fastify/static 10.1.6, zod 4.6.7, satori 0.51.0, @resvg/resvg-js 2.6.2, vite 8.3.4, react 19.3.0, react-dom 19.3.0 (single version each)
+--- output ---
+el-deporte-rey-ai@0.0.0 /Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-T46
+├─┬ @edr/contracts@0.0.0 -> ./packages/contracts
+│ └── zod@4.6.7
+├─┬ @edr/server@0.0.0 -> ./apps/server
+│ ├── @fastify/static@10.1.6
+│ ├── @resvg/resvg-js@2.6.2
+│ ├── fastify@5.12.7
+│ ├── satori@0.51.0
+│ └── zod@4.6.7 deduped
+├─┬ @edr/web@0.0.0 -> ./apps/web
+│ ├─┬ @vitejs/plugin-react@6.1.2
+│ │ └── vite@8.3.4 deduped
+│ ├─┬ react-dom@19.3.0
+│ │ └── react@19.3.0 deduped
+│ ├─┬ react-router@8.4.0
+│ │ ├── react-dom@19.3.0 deduped
+│ │ └── react@19.3.0 deduped
+│ ├── react@19.3.0
+│ └── vite@8.3.4 deduped
+├─┬ @testing-library/react@16.3.3
+│ ├── react-dom@19.3.0 deduped
+│ └── react@19.3.0 deduped
+├── vite@8.3.4
+└─┬ vitest@5.0.4
+  ├─┬ @vitest/mocker@5.0.4
+  │ └── vite@8.3.4 deduped
+  └── vite@8.3.4 deduped
+

@@ -1,0 +1,12 @@
+TASK: WI-1-T46
+RESULT: PASS
+VALIDATED_HEAD: 9eaa8991260bd96de4054f38765e5b844e657a00
+DATE: 2026-10-28T22:18:29Z
+COMMAND: node scripts/security-checks.mjs lockfile
+SUMMARY: exit 0; 330 registry entries checked, 6 local workspace entries; .npmrc no auth token, no alternate registry; findings: 0
+--- output ---
+lockfile: scope: package-lock.json (every resolved URL under https://registry.npmjs.org/, every entry with integrity) and .npmrc
+lockfile: registry entries checked: 330; local workspace entries: 6
+lockfile: .npmrc checked: no auth token, no alternate registry
+lockfile: findings: 0
+RESULT: PASS

@@ -1,0 +1,16 @@
+TASK: WI-1-T46
+RESULT: PASS
+VALIDATED_HEAD: 9eaa8991260bd96de4054f38765e5b844e657a00
+DATE: 2026-10-28T22:18:47Z
+COMMAND: node scripts/security-checks.mjs audit-report --accept GHSA-px8p-9vwx-vf98=OD-33
+SUMMARY: exit 0; npm summary moderate 2, high 0, critical 0; advisories listed: 2 (fflate, satori via fflate), both ACCEPTED GHSA-px8p-9vwx-vf98 by OD-33; findings: 0
+--- output ---
+audit-report: source: npm audit --json (live); fails on high or critical, or on any advisory naming fastify, @fastify/static, zod, satori, @resvg/resvg-js, vite, react, react-dom
+audit-report: acceptances requested (moderate or low only): GHSA-px8p-9vwx-vf98 by OD-33
+audit-report: npm summary: info 0, low 0, moderate 2, high 0, critical 0, total 2
+audit-report: advisory: package fflate; severity moderate; fflate unzipSync can enter an infinite loop when parsing malformed ZIP64 archives; range >=0.7.0 <0.7.5; https://github.com/advisories/GHSA-px8p-9vwx-vf98; accepted: GHSA-px8p-9vwx-vf98 by OD-33
+audit-report: advisory: package satori; severity moderate; via fflate; range >=0.33.0; accepted: GHSA-px8p-9vwx-vf98 by OD-33
+audit-report: ACCEPTED GHSA-px8p-9vwx-vf98 by OD-33
+audit-report: advisories listed: 2
+audit-report: findings: 0
+RESULT: PASS
