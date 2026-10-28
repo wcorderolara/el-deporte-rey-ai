@@ -411,14 +411,26 @@ describe('runs (R-203, AD-10)', () => {
     expect(base.base_run_id).toBe(fullId);
   });
 
-  it('fails a run with stage_not_available while the registered modules provide no stage', async () => {
-    const app = await projectsTestApp({});
-    apps.push(app);
+  it('fails a run with stage_not_available when no registered module provides a stage of the run', async () => {
+    // Every stage is registered except one (here `rendering`); the run stops there (R-203, AD-10).
+    const calls: StageCall[] = [];
+    const app = await start({ stages: () => stagesOf(calls).filter((stage) => stage.name !== 'rendering') });
     const project = await createProject(app);
     const runId = await completedRun(app, project.id);
     const run = RunSchema.parse((await get(app, `/projects/${project.id}/runs/${runId}`)).json());
+    const notAvailable = { code: 'stage_not_available', sourceId: null, path: null, httpStatus: null };
     expect(run.status).toBe('failed');
-    expect(run.failure).toEqual({ code: 'stage_not_available', sourceId: null, path: null, httpStatus: null });
+    expect(run.failure).toEqual(notAvailable);
+    expect(run.stages.map((stage) => [stage.stage, stage.status])).toEqual([
+      ['research', 'completed'],
+      ['verification', 'completed'],
+      ['content', 'completed'],
+      ['rendering', 'failed'],
+      ['visual_qa', 'skipped'],
+    ]);
+    expect(run.stages.find((stage) => stage.stage === 'rendering')?.failure).toEqual(notAvailable);
+    // No stage after the missing one ran.
+    expect([...new Set(calls.map((call) => call.stage))]).toEqual(['research', 'verification', 'content']);
   });
 
   it('answers 404 for a run of another project and 400 for an invalid kind', async () => {
