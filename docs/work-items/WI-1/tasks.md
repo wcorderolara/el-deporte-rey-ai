@@ -73,9 +73,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T39 | Review UI: preview, per-item approval, regeneration, final approval | IMPL | frontend-developer | T16, T20 | DONE | 1 | 34e9569 | `docs/work-items/WI-1/evidence/T39-gates.txt` |
 | T40 | Export, history and traceability UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 9c7f249 | `docs/work-items/WI-1/evidence/T40-gates.txt` |
 | T41 | Integration tests: platform, research and verification | IMPL | qa-engineer | T19, T22, T23, T29, T30 | DONE | 2 | fec71d3, aa37fef | `docs/work-items/WI-1/evidence/T41-gates-2.txt` |
-| T42 | Integration tests: content, rendering, visual QA, approval, export, history | IMPL | qa-engineer | T32, T33, T34, T35, T37, T38, T41, T56, T58 | PENDING | 0 | - | - |
-| T43 | Contract conformance tests | IMPL | qa-engineer | T20, T38, T41, T50 | PENDING | 0 | - | - |
-| T44 | End-to-end and accessibility journeys | IMPL | qa-engineer | T23, T24, T28, T29, T31, T36, T38, T39, T40, T50, T51 | PENDING | 0 | - | - |
+| T42 | Integration tests: content, rendering, visual QA, approval, export, history | IMPL | qa-engineer | T32, T33, T34, T35, T37, T38, T41, T56, T58 | IN_PROGRESS | 1 | - | - |
+| T43 | Contract conformance tests | IMPL | qa-engineer | T20, T38, T41, T50 | IN_PROGRESS | 1 | - | - |
+| T44 | End-to-end and accessibility journeys | IMPL | qa-engineer | T23, T24, T28, T29, T31, T36, T38, T39, T40, T50, T51 | IN_PROGRESS | 1 | - | - |
 | T45 | Architecture conformance review | IMPL | architect | T14, T26, T42, T43, T44, T52 | PENDING | 0 | - | - |
 | T46 | Security evidence pack | VERIFY | qa-engineer | T45 | PENDING | 0 | - | - |
 | T47 | Security delta validation | VERIFY | security-reviewer | T46 | PENDING | 0 | - | - |
@@ -1569,6 +1569,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T18:27:06Z | - | OD-59 recorded (U-11: carousel limit 20 confirmed; API publishing JPEG only; manual PNG upload UNVERIFIED) | T38 report; Meta developer documentation |
 | 2026-10-28T18:24:01Z | T14 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T18:27:56Z | T38 | Status DONE | integration commit 3a4bb03; evidence/T38-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T18:28:17Z | T42 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
+| 2026-10-28T18:28:17Z | T43 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
+| 2026-10-28T18:28:17Z | T44 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 
 ## Recovery log
 
