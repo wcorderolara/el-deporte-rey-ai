@@ -45,7 +45,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T11J | Change architecture verification | VERIFY | Orchestrator | T11G, T11H, T11I, T11N | DONE | 1 | 91e93b4 | `docs/work-items/WI-1/evidence/T11J-plan-check.txt` |
 | T12 | Source of truth: stack, architecture summary, interface conventions, architecture decisions | IMPL | architect | T11J | DONE | 1 | 6d8830e | `docs/work-items/WI-1/evidence/T12-gates.txt` |
 | T13 | Collect public provider documentation for the PD-01 research | IMPL | Orchestrator | T11J | DONE | 1 | 70906b2 | `docs/work-items/WI-1/evidence/T13-gates.txt` |
-| T14 | Provider research analysis and recommendation | IMPL | architect | T13, T53 | PENDING | 0 | - | - |
+| T14 | Provider research analysis and recommendation | IMPL | architect | T13, T53 | IN_PROGRESS | 1 | - | - |
 | T15 | Workspace scaffolding, tooling and server skeleton | IMPL | backend-developer | T11J | DONE | 1 | 93a4795 | `docs/work-items/WI-1/evidence/T15-gates.txt` |
 | T16 | Web application skeleton | IMPL | frontend-developer | T15 | DONE | 1 | cf0716e | `docs/work-items/WI-1/evidence/T16-gates.txt` |
 | T17 | Configuration, catalog, display formatting and egress client | IMPL | backend-developer | T15 | DONE | 1 | b0b58d2 | `docs/work-items/WI-1/evidence/T17-gates.txt` |
@@ -1559,6 +1559,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T18:23:04Z | - | OD-58 recorded (intermittent App shell focus test; fix routed to T44) | T58 gate run |
 | 2026-10-28T18:23:04Z | T44 | Files owned and scope extended by `apps/web/src/app/App.test.tsx` (OD-58) | OD-58 |
 | 2026-10-28T18:23:50Z | T58 | Status DONE | integration commit 4bdfd2c; evidence/T58-gates-2.txt PASS after intermittent PRJ-UNIT failure (OD-58); Orchestrator re-verification |
+| 2026-10-28T18:24:01Z | T14 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 
 ## Recovery log
 
