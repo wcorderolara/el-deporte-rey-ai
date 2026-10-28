@@ -5,6 +5,7 @@
 - Evidence used: only the T13 captures under `docs/work-items/WI-1/research/` and the T53 probe findings `research/football-data-capabilities.md`. The configuration and adapter code were read for reference only. A statement these inputs do not support is marked UNVERIFIED, with the reason.
 - No legal assessment. Terms are quoted or paraphrased with their location. Whether a use is allowed is a question for the Product Owner (HIGH-05). This document names no AI model.
 - Addendum (architect, task WI-1-T62, 2026-10-28; OD-60): updates from the second probe run (source tag P2, T61) are marked "Update (T62)" in sections 2.1, 2.2, 2.4, 2.5 and 7; the outcome of PD-21 to PD-24 is in section 9; the FU-6 decision request, the T60 findings to carry and the new follow-ups are in section 13. The text written by T14 is kept as history where an update supersedes it.
+- Close record (architect, task WI-1-T68, 2026-10-28; OD-65, T45 finding CR-06): the Product Owner's decision PD-26 on DR-6 and on the third run is recorded at the start of section 13 and in sections 13.1, 13.3, 13.4 and 13.5; the T62 text of the request is kept as history.
 
 ## 1. Method, limits and sources
 
@@ -499,9 +500,24 @@ Added by T62 (LOW, inside this document):
 11. The five named S-004 leagues are ranked equal (section 7.1); PL is listed first only because it was confirmed first.
 12. The follow-up IDs FU-9 to FU-15 (section 13.4) continue the FU numbering of section 8; they are proposals for the Orchestrator's re-plan, not task IDs.
 
+Added by T68 (LOW, inside this document):
+
+13. The PD-26 outcome is recorded as an outcome table at the start of section 13 (as section 9 does for PD-21 to PD-24) and as status lines in sections 13.1, 13.3, 13.4 and 13.5; the T62 text is not rewritten (as item 8).
+
 ## 13. Addendum (T62): FU-6 decision request, T60 findings and follow-ups
 
+Outcome (T68 record of the Product Owner's answer to E-16, 2026-10-28; the decision is in the tracker's Decisions table and in the source of truth, section 3):
+
+| Request | Decision | Outcome and effect |
+|---------|----------|--------------------|
+| DR-6 (FU-6) | PD-26 | Option (b) for WI-1 ("Keep rule now, widen later"): the shared `TeamName` rule is kept; a selection whose official team name the rule refuses is refused whole and never altered. CL league-phase matchday selections stay not selectable in LIVE_DATA in WI-1; the CL final (whole-stage selection) and the seven confirmed competitions of section 7.1 work, so OD-22's CL part is demonstrated in WI-1 with a whole-stage selection (section 7.1, DR-5). Option (a) with L0 = { `/`, `’` } and FU-9 to FU-15 is planned for the next work item. No contract, security-control or data change in WI-1 |
+| Third probe run (section 13.5 item 2) | PD-26 | No third run in WI-1. In the next work item the run is FU-15 and needs the Product Owner's consent and action again (T60 condition C6) |
+
+Deferred items (TeamName widening FU-9 to FU-15, the T60-F01, F03 and F06 hardening, U-33) are listed in the source of truth, section 9.
+
 ### 13.1 DR-6: CL league-phase team name refused by the shared team-name rule (FU-6; HIGH)
+
+- Status (T68): decided by PD-26, option (b) for WI-1 and option (a) planned for the next work item (outcome above). The request below is kept as written by T62.
 
 - Context (section 2.2.1): one of the 36 CL 2026/27 league-phase team names, as football-data.org writes it, fails the shared team-name rule, so every CL league-phase matchday selection is refused with `invalid` and nothing is stored. The rule is one schema used in three roles: the domain snapshot rule (`contracts/provider-ports.md` section 1.3), the approved http-api contract component `TeamName` (requests: manual import teams; responses: `TeamOfficialNameValue.officialName` and every fact or evidence value that carries it), and the T10-F06 security control that keeps structure-breaking characters out of the prompt data block and the rendered output. The failing character or length is UNVERIFIED.
 - Why HIGH: any change to the rule changes the declared contract (`http-api`, `status: current`) and relaxes a security control (HIGH-03 "weakening any control"; HIGH-06 when Contract Safety fails). Keeping the rule leaves the reference competition of PD-12 unusable for league-phase matchdays in LIVE_DATA, which affects the OD-22 demonstration set. No existing source decides between them (section 11).
@@ -584,6 +600,8 @@ Considered and not proposed:
 | T60-F04 (LOW) | Resolved by measurement (section 2.4.1 item 10): 537,320 bytes, 1 MiB kept | Closed |
 | T60-F02 (INFO), T60-F05 (LOW, residual) | No action; F05 stays a residual covered by code and tests | - |
 
+Status (T68): PD-26 rules out another run in WI-1, so F01, F03 and F06 are carried to the next work item with FU-9 (source of truth, section 9). Until F01 is hardened, condition C7 stays a mandatory run condition.
+
 ### 13.4 Follow-up tasks proposed (for the Orchestrator's re-plan; not edited here)
 
 | ID | Agent | Change | Files owned | Depends on | Condition and level |
@@ -600,7 +618,11 @@ Parallel groups: {FU-9, FU-11}; {FU-10, FU-12}; FU-13; {FU-14, FU-15}. Critical 
 
 Under option (b): none of FU-11 to FU-15; FU-9 and FU-10 optional (they belong to the next work item that runs the probe).
 
+Status (T68): under PD-26 none of FU-9 to FU-15 is planned in WI-1; all seven are planned for the next work item, where option (a) applies. The owned files above name the WI-1 directories; the Orchestrator re-plans the paths in that work item (for example, FU-11's proposed contract file goes to that work item's architecture directory).
+
 ### 13.5 Product Owner decisions requested (to batch with DR-6)
+
+Status (T68): both answered by PD-26 (outcome at the start of section 13): item 1 option (b) for WI-1 with (a) planned for the next work item; item 2 no third run in WI-1.
 
 1. DR-6 (FU-6): option (a), (b) or (c) of section 13.1; recommendation (a) with L0 in WI-1, or (b) for WI-1 if WI-1 is not to be extended.
 2. Consent to a third probe run (CL only, at most 30 requests, the Product Owner places the free-plan token and starts the run, PD-16 conditions and the FU-10 conditions), needed only under option (a) in WI-1, or under (b) if the Product Owner wants the refusal explained. Precedent: PD-24. Recommendation: consent, together with (a).
