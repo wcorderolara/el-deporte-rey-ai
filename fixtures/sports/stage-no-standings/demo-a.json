@@ -1,0 +1,284 @@
+{
+  "simulate": null,
+  "competitions": [
+    {
+      "localKey": "copa-demo",
+      "name": "Copa Demo",
+      "areaName": "Continente Sintético",
+      "seasons": [
+        {
+          "id": "2025",
+          "label": "2025/26",
+          "current": true,
+          "startDate": "2025-09-16",
+          "endDate": "2026-05-30",
+          "startYear": 2025,
+          "stages": [
+            {
+              "id": "octavos-de-final",
+              "name": "Octavos de Final",
+              "order": 3,
+              "standings": "not_expected",
+              "wholeStage": null,
+              "matchdays": {
+                "1": {
+                  "competition": {"name":"Copa Demo"},
+                  "season": {"label":"2025/26"},
+                  "stage": {"name":"Octavos de Final","matchday":1,"totalMatchdays":2},
+                  "teams": [
+                    {
+                      "teamKey": "deportivo-costaluna",
+                      "name": "Deportivo Costaluna",
+                      "aliases": [],
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/team/deportivo-costaluna"
+                    },
+                    {"teamKey":"titanes-serrabal","name":"Titanes Serrabal","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/team/titanes-serrabal"},
+                    {"teamKey":"deportes-tierraluz","name":"Deportes Tierraluz","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/team/deportes-tierraluz"},
+                    {"teamKey":"aurora-llanomar","name":"Aurora Llanomar","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/team/aurora-llanomar"},
+                    {"teamKey":"estrella-sabinar","name":"Estrella Sabinar","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/team/estrella-sabinar"},
+                    {"teamKey":"inter-mareal","name":"Inter Mareal","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/team/inter-mareal"},
+                    {"teamKey":"vikingos-neblinar","name":"Vikingos Neblinar","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/team/vikingos-neblinar"},
+                    {"teamKey":"celeste-altoviento","name":"Celeste Altoviento","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/team/celeste-altoviento"},
+                    {"teamKey":"royal-lagunel","name":"Royal Lagunel","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/team/royal-lagunel"},
+                    {"teamKey":"nacional-riberal","name":"Nacional Riberal","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/team/nacional-riberal"},
+                    {
+                      "teamKey": "corsarios-islabruma",
+                      "name": "Corsarios Islabruma",
+                      "aliases": [],
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/team/corsarios-islabruma"
+                    },
+                    {"teamKey":"pumas-montesal","name":"Pumas Montesal","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/team/pumas-montesal"},
+                    {"teamKey":"ciclon-marisma","name":"Ciclón Marisma","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/team/ciclon-marisma"},
+                    {"teamKey":"olimpico-brezal","name":"Olímpico Brezal","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/team/olimpico-brezal"},
+                    {"teamKey":"dinamo-vallefrio","name":"Dínamo Vallefrío","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/team/dinamo-vallefrio"},
+                    {"teamKey":"sporting-lumbrera","name":"Sporting Lumbrera","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/team/sporting-lumbrera"}
+                  ],
+                  "matches": [
+                    {
+                      "matchKey": "cd25-last16-1-01",
+                      "homeTeamKey": "deportivo-costaluna",
+                      "awayTeamKey": "titanes-serrabal",
+                      "kickoff": "2026-03-10T17:45:00Z",
+                      "status": "finished",
+                      "score": {"home":1,"away":4},
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/match/01"
+                    },
+                    {
+                      "matchKey": "cd25-last16-1-02",
+                      "homeTeamKey": "deportes-tierraluz",
+                      "awayTeamKey": "aurora-llanomar",
+                      "kickoff": "2026-03-10T20:00:00Z",
+                      "status": "finished",
+                      "score": {"home":0,"away":0},
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/match/02"
+                    },
+                    {
+                      "matchKey": "cd25-last16-1-03",
+                      "homeTeamKey": "estrella-sabinar",
+                      "awayTeamKey": "inter-mareal",
+                      "kickoff": "2026-03-10T17:45:00Z",
+                      "status": "finished",
+                      "score": {"home":1,"away":0},
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/match/03"
+                    },
+                    {
+                      "matchKey": "cd25-last16-1-04",
+                      "homeTeamKey": "vikingos-neblinar",
+                      "awayTeamKey": "celeste-altoviento",
+                      "kickoff": "2026-03-10T20:00:00Z",
+                      "status": "finished",
+                      "score": {"home":3,"away":2},
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/match/04"
+                    },
+                    {
+                      "matchKey": "cd25-last16-1-05",
+                      "homeTeamKey": "royal-lagunel",
+                      "awayTeamKey": "nacional-riberal",
+                      "kickoff": "2026-03-11T17:45:00Z",
+                      "status": "finished",
+                      "score": {"home":1,"away":0},
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/match/05"
+                    },
+                    {
+                      "matchKey": "cd25-last16-1-06",
+                      "homeTeamKey": "corsarios-islabruma",
+                      "awayTeamKey": "pumas-montesal",
+                      "kickoff": "2026-03-11T20:00:00Z",
+                      "status": "finished",
+                      "score": {"home":2,"away":1},
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/match/06"
+                    },
+                    {
+                      "matchKey": "cd25-last16-1-07",
+                      "homeTeamKey": "ciclon-marisma",
+                      "awayTeamKey": "olimpico-brezal",
+                      "kickoff": "2026-03-11T17:45:00Z",
+                      "status": "finished",
+                      "score": {"home":3,"away":4},
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/match/07"
+                    },
+                    {
+                      "matchKey": "cd25-last16-1-08",
+                      "homeTeamKey": "dinamo-vallefrio",
+                      "awayTeamKey": "sporting-lumbrera",
+                      "kickoff": "2026-03-11T20:00:00Z",
+                      "status": "finished",
+                      "score": {"home":3,"away":4},
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/match/08"
+                    }
+                  ],
+                  "standings": {"available":false,"reason":"not_provided_for_stage"},
+                  "context": [
+                    {"type":"matchday_of_total","matchday":1,"totalMatchdays":2,"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/context/matchday"},
+                    {"type":"matches_in_selection","count":8,"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/1/context/matches"}
+                  ]
+                },
+                "2": {
+                  "competition": {"name":"Copa Demo"},
+                  "season": {"label":"2025/26"},
+                  "stage": {"name":"Octavos de Final","matchday":2,"totalMatchdays":2},
+                  "teams": [
+                    {"teamKey":"titanes-serrabal","name":"Titanes Serrabal","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/team/titanes-serrabal"},
+                    {
+                      "teamKey": "deportivo-costaluna",
+                      "name": "Deportivo Costaluna",
+                      "aliases": [],
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/team/deportivo-costaluna"
+                    },
+                    {"teamKey":"aurora-llanomar","name":"Aurora Llanomar","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/team/aurora-llanomar"},
+                    {"teamKey":"deportes-tierraluz","name":"Deportes Tierraluz","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/team/deportes-tierraluz"},
+                    {"teamKey":"inter-mareal","name":"Inter Mareal","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/team/inter-mareal"},
+                    {"teamKey":"estrella-sabinar","name":"Estrella Sabinar","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/team/estrella-sabinar"},
+                    {"teamKey":"celeste-altoviento","name":"Celeste Altoviento","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/team/celeste-altoviento"},
+                    {"teamKey":"vikingos-neblinar","name":"Vikingos Neblinar","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/team/vikingos-neblinar"},
+                    {"teamKey":"nacional-riberal","name":"Nacional Riberal","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/team/nacional-riberal"},
+                    {"teamKey":"royal-lagunel","name":"Royal Lagunel","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/team/royal-lagunel"},
+                    {"teamKey":"pumas-montesal","name":"Pumas Montesal","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/team/pumas-montesal"},
+                    {
+                      "teamKey": "corsarios-islabruma",
+                      "name": "Corsarios Islabruma",
+                      "aliases": [],
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/team/corsarios-islabruma"
+                    },
+                    {"teamKey":"olimpico-brezal","name":"Olímpico Brezal","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/team/olimpico-brezal"},
+                    {"teamKey":"ciclon-marisma","name":"Ciclón Marisma","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/team/ciclon-marisma"},
+                    {"teamKey":"sporting-lumbrera","name":"Sporting Lumbrera","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/team/sporting-lumbrera"},
+                    {"teamKey":"dinamo-vallefrio","name":"Dínamo Vallefrío","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/team/dinamo-vallefrio"}
+                  ],
+                  "matches": [
+                    {
+                      "matchKey": "cd25-last16-2-01",
+                      "homeTeamKey": "titanes-serrabal",
+                      "awayTeamKey": "deportivo-costaluna",
+                      "kickoff": "2026-03-17T17:45:00Z",
+                      "status": "finished",
+                      "score": {"home":0,"away":4},
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/match/01"
+                    },
+                    {
+                      "matchKey": "cd25-last16-2-02",
+                      "homeTeamKey": "aurora-llanomar",
+                      "awayTeamKey": "deportes-tierraluz",
+                      "kickoff": "2026-03-17T20:00:00Z",
+                      "status": "finished",
+                      "score": {"home":1,"away":0},
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/match/02"
+                    },
+                    {
+                      "matchKey": "cd25-last16-2-03",
+                      "homeTeamKey": "inter-mareal",
+                      "awayTeamKey": "estrella-sabinar",
+                      "kickoff": "2026-03-17T17:45:00Z",
+                      "status": "finished",
+                      "score": {"home":4,"away":4},
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/match/03"
+                    },
+                    {
+                      "matchKey": "cd25-last16-2-04",
+                      "homeTeamKey": "celeste-altoviento",
+                      "awayTeamKey": "vikingos-neblinar",
+                      "kickoff": "2026-03-17T20:00:00Z",
+                      "status": "finished",
+                      "score": {"home":0,"away":2},
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/match/04"
+                    },
+                    {
+                      "matchKey": "cd25-last16-2-05",
+                      "homeTeamKey": "nacional-riberal",
+                      "awayTeamKey": "royal-lagunel",
+                      "kickoff": "2026-03-18T17:45:00Z",
+                      "status": "finished",
+                      "score": {"home":1,"away":4},
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/match/05"
+                    },
+                    {
+                      "matchKey": "cd25-last16-2-06",
+                      "homeTeamKey": "pumas-montesal",
+                      "awayTeamKey": "corsarios-islabruma",
+                      "kickoff": "2026-03-18T20:00:00Z",
+                      "status": "finished",
+                      "score": {"home":2,"away":0},
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/match/06"
+                    },
+                    {
+                      "matchKey": "cd25-last16-2-07",
+                      "homeTeamKey": "olimpico-brezal",
+                      "awayTeamKey": "ciclon-marisma",
+                      "kickoff": "2026-03-18T17:45:00Z",
+                      "status": "finished",
+                      "score": {"home":0,"away":3},
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/match/07"
+                    },
+                    {
+                      "matchKey": "cd25-last16-2-08",
+                      "homeTeamKey": "sporting-lumbrera",
+                      "awayTeamKey": "dinamo-vallefrio",
+                      "kickoff": "2026-03-18T20:00:00Z",
+                      "status": "finished",
+                      "score": {"home":1,"away":1},
+                      "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/match/08"
+                    }
+                  ],
+                  "standings": {"available":false,"reason":"not_provided_for_stage"},
+                  "context": [
+                    {"type":"matchday_of_total","matchday":2,"totalMatchdays":2,"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/context/matchday"},
+                    {"type":"matches_in_selection","count":8,"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/octavos-de-final/2/context/matches"}
+                  ]
+                }
+              }
+            },
+            {
+              "id": "final",
+              "name": "Final",
+              "order": 6,
+              "standings": "not_expected",
+              "wholeStage": {
+                "competition": {"name":"Copa Demo"},
+                "season": {"label":"2025/26"},
+                "stage": {"name":"Final","matchday":null,"totalMatchdays":null},
+                "teams": [
+                  {"teamKey":"aurora-llanomar","name":"Aurora Llanomar","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/final/whole/team/aurora-llanomar"},
+                  {"teamKey":"royal-lagunel","name":"Royal Lagunel","aliases":[],"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/final/whole/team/royal-lagunel"}
+                ],
+                "matches": [
+                  {
+                    "matchKey": "cd25-final-01",
+                    "homeTeamKey": "aurora-llanomar",
+                    "awayTeamKey": "royal-lagunel",
+                    "kickoff": "2026-05-30T19:00:00Z",
+                    "status": "finished",
+                    "score": {"home":3,"away":2},
+                    "ref": "fixture:stage-no-standings/demo-a.json#copa-demo/2025/final/whole/match/01"
+                  }
+                ],
+                "standings": {"available":false,"reason":"not_provided_for_stage"},
+                "context": [{"type":"matches_in_selection","count":1,"ref":"fixture:stage-no-standings/demo-a.json#copa-demo/2025/final/whole/context/matches"}]
+              },
+              "matchdays": {}
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

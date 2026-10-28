@@ -1,0 +1,17 @@
+competition_id,competition_name,season_id,season_label,stage_id,stage_name,stage_order,matchday,as_of,position,team,played,won,drawn,lost,goals_for,goals_against,goal_difference,points
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,1,2026-08-03T06:00:00Z,1,Estrella Trigal,1,2,0,0,4,0,4,3
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,1,2026-08-03T06:00:00Z,2,Atlético Cafetal,1,0,1,0,3,3,0,1
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,1,2026-08-03T06:00:00Z,3,Deportivo Cacaotal,1,0,1,0,3,3,0,1
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,1,2026-08-03T06:00:00Z,4,Juventud Arrozal,1,0,1,0,3,3,0,1
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,1,2026-08-03T06:00:00Z,5,Sporting Algodonal,1,0,1,0,3,3,0,1
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,1,2026-08-03T06:00:00Z,6,Real Cañaveral,1,0,1,0,1,1,0,1
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,1,2026-08-03T06:00:00Z,7,Unión Platanar,1,0,1,0,1,1,0,1
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,1,2026-08-03T06:00:00Z,8,Club Maizal,1,0,0,1,0,4,-4,0
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,2,2026-08-10T06:00:00Z,1,Atlético Cafetal,2,1,1,0,7,4,3,4
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,2,2026-08-10T06:00:00Z,2,Sporting Algodonal,2,1,1,0,7,4,3,4
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,2,2026-08-10T06:00:00Z,3,Unión Platanar,2,1,1,0,5,2,3,4
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,2,2026-08-10T06:00:00Z,4,Estrella Trigal,2,1,0,1,5,4,1,3
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,2,2026-08-10T06:00:00Z,5,Club Maizal,2,1,0,1,4,5,-1,3
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,2,2026-08-10T06:00:00Z,6,Deportivo Cacaotal,2,0,1,1,4,7,-3,1
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,2,2026-08-10T06:00:00Z,7,Juventud Arrozal,2,0,1,1,4,7,-3,1
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,2,2026-08-10T06:00:00Z,8,Real Cañaveral,2,0,1,1,2,5,-3,1
