@@ -62,7 +62,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T28 | Projects UI: list, create, detail and run progress | IMPL | frontend-developer | T16, T20 | DONE | 1 | 4cefeba | `docs/work-items/WI-1/evidence/T28-gates.txt` |
 | T29 | Research stage | IMPL | backend-developer | T21, T27 | PENDING | 0 | - | - |
 | T30 | Verification stage: two-source rule, disputes, team identity | IMPL | backend-developer | T21, T27 | PENDING | 0 | - | - |
-| T31 | Facts and verification UI | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
+| T31 | Facts and verification UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 63d83cd | `docs/work-items/WI-1/evidence/T31-gates.txt` |
 | T32 | Content stage: structure, AI drafting, fact placeholders, content checks | IMPL | backend-developer | T22, T27 | PENDING | 0 | - | - |
 | T33 | Brand asset registry | IMPL | backend-developer | T27 | PENDING | 0 | - | - |
 | T34 | Rendering stage and carousel templates | IMPL | backend-developer | T27, T33 | PENDING | 0 | - | - |
@@ -707,6 +707,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: facts view of a run: each fact with its status (VERIFIED; UNVERIFIED with its reason: awaiting independent verification, disputed, no accepted source, team identity unmatched; MANUALLY_APPROVED, labelled operator-attested and never styled or worded as verified), value or candidate value (marked unverified), evidence per source (source name, data mode, role, accepted, reference, retrieval time, import version link) and dispute record (values per source, consultation, outcome); standings availability note; left-out matches with status; demonstration banner for DEMO_DATA (R-269); manual approval and revoke controls shown only for eligible facts, with refusal reasons (R-272); no control that sets a fact to verified (R-412). Provider `sourceRef` and `ref` values are rendered with the shared `SafeReference` component only: as plain text, never as a link (T10-F16, T11H-F14). Component tests, including hostile reference values (`javascript:`, `data:`, `https:`) rendered with no anchor, each status and reason, and eligible and ineligible facts.
 - Acceptance criteria: R-204, R-205, R-230, R-269, R-270, R-272, R-287
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run build` -> exit 0
+- Agent result: PASS at de8b80e after two interruptions (usage limit, host sleep; resumed) (npm ci 0; typecheck 0; lint 0; test:unit 0, 521 tests, facts 70; build 0; npm audit --audit-level=high 0, 2 moderate per OD-33).
+- Orchestrator verification: `orch worktree verify-ownership` exit 0 (19 changed, 0 outside); re-run in the task worktree at de8b80e: npm ci --offline 0, typecheck 0, lint 0, test:unit 0 (24 files, 521 tests), test:integration 0 (4 files, 60 tests), build 0 (Orchestrator build output removed); main working tree unchanged; 2026-10-27.
+- Decisions: LOW-1 to LOW-6 (UI-side eligibility per architecture 7.4 with the server as final word; latest completed full run rule; fallback block note for unverified facts; import version link to /imports; inline confirmation with focus management; read-only use of src/app paths). OD-40 concerns this task (blockReason in listFacts routed to T30). No new dependency.
+- Human interventions: 0.
+- Agent usage: launches 3 (two resumes); tokens 235359; duration NOT RECORDED (interrupted runs).
+- Integration commit(s): 63d83cd (merge --no-ff of task/WI-1/T31). Affected gates at 63d83cd: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T31-gates.txt, the evidence file of this task).
 
 ### T32: Content stage: structure, AI drafting, fact placeholders, content checks
 - Kind: IMPL
@@ -1231,6 +1237,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T04:31:39Z | T24 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T04:31:39Z | T39 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T05:32:23Z | - | OD-40 recorded (blockReason in listFacts carried to the T30 brief) | T31 report |
+| 2026-10-28T05:32:26Z | T31 | Status DONE | integration commit 63d83cd; evidence/T31-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
