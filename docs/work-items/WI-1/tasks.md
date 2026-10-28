@@ -86,7 +86,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T53 | Capability probe run and football-data.org findings | IMPL | Orchestrator | T13, T41, T49 | IN_PROGRESS | 1 | - | - |
 | T54 | Verification fixes: dispute outcome rule and unavailable consultation record | IMPL | backend-developer | T30, T41 | DONE | 1 | d002b9d | `docs/work-items/WI-1/evidence/T54-gates.txt` |
 | T55 | Security checks: accepted-advisory option for audit-report | IMPL | qa-engineer | T41 | DONE | 1 | f63dbb2 | `docs/work-items/WI-1/evidence/T55-gates.txt` |
-| T56 | Migration 0002: capitalized_tokens in qa_results | IMPL | backend-developer | T18, T35 | IN_PROGRESS | 1 | - | - |
+| T56 | Migration 0002: capitalized_tokens in qa_results | IMPL | backend-developer | T18, T35 | DONE | 1 | ef115d4 | `docs/work-items/WI-1/evidence/T56-gates.txt` |
 | T57 | Counterpart resolution keeps the source failure code | IMPL | backend-developer | T54 | DONE | 1 | b9f9f24 | `docs/work-items/WI-1/evidence/T57-gates.txt` |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57 | PENDING | 0 | - | - |
 
@@ -1093,6 +1093,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: (OD-56, T35 escalation E-1) migration `0001_initial.sql` limits `qa_results.check_name` to five names, so the `capitalized_tokens` warning (OD-26, OD-38; already in the contract's QA check list) is computed but never stored. Add migration `0002_qa_capitalized_tokens.sql` that rebuilds `qa_results` (SQLite cannot alter a CHECK constraint: create the new table with the six names, copy every row, drop the old table, rename, recreate any index) with every other column, constraint and the `UNIQUE (element_version_id, check_name)` unchanged, inside the runner's transaction and foreign-key check; `0001_initial.sql` is never edited. Update `data-model.md` (the `qa_results` row and the migration list) and the db tests (schema test expectations; an upgrade test from 0001 with existing `qa_results` rows preserved byte for byte; the constraint accepts `capitalized_tokens` and still rejects an unknown name). In visual QA, `capitalized_tokens` is then stored by `storableChecks` with no logic change; update the repository and stage comments, keep or remove the unstored-check log only if it stays correct, and add an integration test that a version with an unlisted capitalized token stores a `capitalized_tokens` warning row and `qa_status` `warnings`. No contract change, no new dependency.
 - Acceptance criteria: -
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:integration` -> exit 0
+- Agent result: PASS at 65f074a (npm ci --offline 0; typecheck 0; lint 0; test:unit 0, 1864 tests; test:integration 0, 405 tests; test:contract 0, 465 tests). Migration `0002_qa_capitalized_tokens.sql` rebuilds `qa_results` (create, copy with explicit columns, drop, rename) inside the runner's transaction and foreign-key check, with every other column, check, foreign key, UNIQUE and STRICT unchanged; 0001 not edited; upgrade test from 0001 with rows preserved byte for byte; constraint tests for the six names; visual QA stores `capitalized_tokens` with no logic change (warning row and `qa_status` `warnings`); data-model.md `qa_results` row and migration list updated.
+- Orchestrator verification: ownership against the integration tracker, re-run of npm ci --offline, typecheck, lint, test:unit, test:integration in the task worktree (see verification log); main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-4 (unstored-check log generalized to any contract check missing from the constraint; test helper `acceptCapitalizedTokens` kept as a wrapper for T37, removable later; data-model.md migration list in section 2; npm ci offline). Notes: flows that previously saw `passed` may now see `warnings` needing the existing QA acknowledgement (re-checked at T37 integration and in T42, T44); stored tokens are the OD-26/OD-38 residual (T11H-F17). No contract change, no new dependency.
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 134387; duration 8 minutes.
+- Integration commit(s): ef115d4 (merge --no-ff of task/WI-1/T56). Affected gates at ef115d4: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-AUDIT PASS (evidence/T56-gates.txt, the evidence file of this task).
 
 ### T57: Counterpart resolution keeps the source failure code
 - Kind: IMPL
@@ -1510,6 +1516,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T17:51:30Z | T56 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T17:51:30Z | T57 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T18:00:31Z | T57 | Status DONE | integration commit b9f9f24; evidence/T57-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T18:01:47Z | T56 | Status DONE | integration commit ef115d4; evidence/T56-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
