@@ -100,7 +100,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T67 | Load-robust SC-05 linear-time test | IMPL | qa-engineer | T50 | DONE | 1 | 02f4a42 | `docs/work-items/WI-1/evidence/T67-gates.txt` |
 | T68 | Source of truth and architecture records at close | IMPL | architect | T45 | DONE | 1 | 916673a | `docs/work-items/WI-1/evidence/T68-gates.txt` |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65, T66, T67, T68 | DONE | 1 | 73cb101 | `docs/work-items/WI-1/evidence/T48-gates-2.txt` |
-| T69 | Close: configuration update | IMPL | architect | T48 | IN_PROGRESS | 1 | - | - |
+| T69 | Close: configuration update | IMPL | architect | T48 | DONE | 1 | 7569d12 | `docs/work-items/WI-1/evidence/T69-gates.txt` |
 | T70 | Close: regression on `main` | VERIFY | qa-engineer | T69 | PENDING | 0 | - | - |
 
 ## Tasks
@@ -1377,6 +1377,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: (`closing.md` section 3) record in the project source of truth the facts WI-1 established that T68 did not yet record: the decisions taken after T68 (OD-66 and OD-67, PD-25 and PD-26 as recorded), the final gate set and its results (`reports/final-gates.md`, `evidence/T48-gates-2.txt`), the security verdict (T47, `Verdict: PASS`), the contract hash (unchanged at 1.0.0), the reusable components the work item added, and the work item's state (merged into `main` as cefc4eb); reference the tracker for the Orchestrator decisions OD-01 to OD-67 rather than restating them (source of truth section 10). `paths.metricsComparison` is not set, so no metrics column is added.
 - Acceptance criteria: -
 - Verification: `orch scan models .orchestrate/source-of-truth.md` -> exit 0 ; `orch validate --work-item 'WI-1' --at .` -> exit 0
+- Agent result: PASS (the agent has no shell; the Orchestrator committed the file on its behalf with the agent's commit message). Source of truth: section 1 Vitest project `unit-web`; section 2 links to the T47 validation and `reports/final-gates.md` and the work-item state (merge 1 as cefc4eb, closure pending); section 3 pointer covers OD-01 to OD-67 with OD-66 and OD-67 cited; section 5 security verdict (T47 `Verdict: PASS`); section 6 contract unchanged at 1.0.0 (MATCH in T48); section 7 framework gates and the WI-1 final runs; section 8 reusable components (integration suite support, fixtures, e2e harness, security-checks script with all subcommands, capability probe); section 9 SOT-6 decided by OD-66 (data-model correction open), T47-F01, F02, F05 and F06 follow-ups, U-25 and SOT-4 updated. `paths.metricsComparison` not set, so no metrics column.
+- Orchestrator verification: `orch scan models .orchestrate/source-of-truth.md` exit 0; `orch validate --work-item 'WI-1' --at .` exit 0; ownership against the integration tracker; main working tree unchanged; verified by the regression task T70; 2026-10-28.
+- Decisions: LOW-1 to LOW-7 (work-item state paragraph in section 2; verdict as a paragraph after the section 5 table; T47-F06 tied to SOT-2; SOT-6 kept open for the documentation fix; U-25 and SOT-4 updated; `unit-web` listed; only missing components added, by reference).
+- Human interventions: 0.
+- Agent usage: launches 1.
+- Integration commit(s): 7569d12 (merge --no-ff of task/WI-1/T69). Affected gates at 7569d12: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T69-gates.txt, the evidence file of this task).
 
 ### T70: Close: regression on `main`
 - Kind: VERIFY
@@ -1887,6 +1893,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T23:10:20Z | T69 | Task added (closing.md section 3); status PENDING | close |
 | 2026-10-28T23:10:20Z | T70 | Task added (closing.md section 3); status PENDING | close |
 | 2026-10-28T23:10:30Z | T69 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
+| 2026-10-28T23:16:44Z | T69 | Status DONE | integration commit 7569d12; evidence/T69-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
 
 ## Recovery log
 
