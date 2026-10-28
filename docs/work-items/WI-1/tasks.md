@@ -87,7 +87,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T54 | Verification fixes: dispute outcome rule and unavailable consultation record | IMPL | backend-developer | T30, T41 | DONE | 1 | d002b9d | `docs/work-items/WI-1/evidence/T54-gates.txt` |
 | T55 | Security checks: accepted-advisory option for audit-report | IMPL | qa-engineer | T41 | DONE | 1 | f63dbb2 | `docs/work-items/WI-1/evidence/T55-gates.txt` |
 | T56 | Migration 0002: capitalized_tokens in qa_results | IMPL | backend-developer | T18, T35 | IN_PROGRESS | 1 | - | - |
-| T57 | Counterpart resolution keeps the source failure code | IMPL | backend-developer | T54 | IN_PROGRESS | 1 | - | - |
+| T57 | Counterpart resolution keeps the source failure code | IMPL | backend-developer | T54 | DONE | 1 | b9f9f24 | `docs/work-items/WI-1/evidence/T57-gates.txt` |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57 | PENDING | 0 | - | - |
 
 ## Tasks
@@ -1102,6 +1102,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: (OD-56, T54 escalation) `catalogue.resolveCounterpart` turns every failed counterpart listing into the reason `source_unavailable` and drops the `SourceError` (code, HTTP status, retry-after) and the listing availability, so the verification stage records every such consultation as code `unavailable` (T54 LOW-3) even when the source answered, for example, `rate_limited`, `forbidden` or `timeout` (architecture.md 7.3: keep the SourceError code, no swallowing into a different code). Extend the `source_unavailable` failure of `CounterpartResolution` with the closed failure (the `SourceError` code and HTTP status from `fetchListing`, or the listing's availability reason when the listing answered unavailable) without any provider text, header or token, and make the verification stage record the dispute consultation and the failed retrieval with that code; the fact stays unverified. Tests: each failure code reaches the retrieval row and the dispute record; the other counterpart reasons stay `not_available`; T41 and T54 tests unchanged in meaning. No contract or data-model change, no new dependency.
 - Acceptance criteria: -
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:integration` -> exit 0
+- Agent result: PASS at 036e44b (npm ci --offline 0; typecheck 0; lint 0; test:unit 0, 1906 tests; test:integration 0, 430 tests). `fetchListing` keeps the closed failure (SourceError code and sanitised HTTP status, or the listing availability reason); `resolveCounterpart` returns `source_unavailable` with that failure for the counterpart competitions, seasons and stages listings; the verification stage records the retrieval with the real code (`not_available` outcome only for code not_available) and the fact reason names the code; dispute outcome `unavailable` with consulted source and time kept; T41 and T54 tests unchanged and passing.
+- Orchestrator verification: ownership against the integration tracker, re-run of npm ci --offline, typecheck, lint, test:unit, test:integration in the task worktree (see verification log); main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-5 (separate `source_unavailable` variant with a closed failure; `counterpartFailureCode()` as the inverse of `availabilityReasonOf`; outcome rule same as the fetchSelection catch path; code reaches the dispute record through the identified retrieval row and the reason text, no data-model change; opt-in `liveOfficial` option in the verification test app). Notes: fact reason text gains the suffix "(code <code>)"; `retryAfterSeconds` not stored (contract Failure has no such field). No new dependency.
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 112636; duration 7 minutes.
+- Integration commit(s): b9f9f24 (merge --no-ff of task/WI-1/T57). Affected gates at b9f9f24: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-AUDIT PASS (evidence/T57-gates.txt, the evidence file of this task).
 
 ### T48: Final gate run
 - Kind: VERIFY
@@ -1503,6 +1509,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T17:51:30Z | T37 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T17:51:30Z | T56 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T17:51:30Z | T57 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
+| 2026-10-28T18:00:31Z | T57 | Status DONE | integration commit b9f9f24; evidence/T57-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 

@@ -1,0 +1,307 @@
+TASK: WI-1-T57
+RESULT: PASS
+VALIDATED_HEAD: b9f9f243a888a3c523b664598c54ed082178c410
+DATE: 2026-10-28T18:00:31Z
+COMMAND: orch gates run --work-item WI-1 --task T57 --set affected
+SUMMARY: 11 PASS / 0 FAIL / 0 NOT RUN; required not passing: none
+--- output ---
+CONFIG: .orchestrate/config.json
+CONFIG_SOURCE: committed@b9f9f243a888
+CONFIG_SHA256: b5516f6e3e0b316e4e1ede3d3e5a661d8c0533011b296f2709b3468becad8f67
+SET: affected
+
+=== FW-TRACKER (framework, required) PASS exit=0 ms=2437 ===
+COMMAND: builtin:tracker
+REASON: orch tracker check exited 0
+Tracker docs/work-items/WI-1/tasks.md on b9f9f243a888a3c523b664598c54ed082178c410
+  T00  IMPL   recorded=DONE                                 commits 1176f8c; verified by T02                                                           => DONE
+  T01  IMPL   recorded=DONE                                 commits dd9499e; verified by T02                                                           => DONE
+  T02  VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T02-requirements-check.txt @ c68b058; validated 17f => DONE
+  T03  IMPL   recorded=DONE                                 commits f4ccb0c; verified by T08                                                           => DONE
+  T04  IMPL   recorded=DONE                                 commits 01a71a7; verified by T08                                                           => DONE
+  T05  IMPL   recorded=DONE                                 commits d93cbb1; verified by T07                                                           => DONE
+  T06  IMPL   recorded=DONE                                 commits 32d60da; verified by T07                                                           => DONE
+  T07  VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T07-validate.txt @ f648f85; validated e1459cb72dd59 => DONE
+  T08  VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T08-requirements-check.txt @ 70befa9; validated 5ec => DONE
+  T09  IMPL   recorded=DONE                                 commits f017460,41af5ee; verified by T11                                                   => DONE
+  T10  IMPL   recorded=DONE                                 commits 3ac5b85,c1c0e2c; verified by T11                                                   => DONE
+  T11A IMPL   recorded=DONE                                 commits 266b29d; verified by T11D                                                          => DONE
+  T11B IMPL   recorded=DONE                                 commits 380780f; verified by T11D                                                          => DONE
+  T11C IMPL   recorded=DONE                                 commits 16013be; verified by T11D                                                          => DONE
+  T11D VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T11D-validate.txt @ d98a135; validated 8373bcba3d62 => DONE
+  T11  VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T11-plan-check.txt @ 53e02a7; validated a05778d34c6 => DONE
+  T11E IMPL   recorded=DONE                                 commits 4757d4e,19bfba9; verified by T11I                                                  => DONE
+  T11F IMPL   recorded=DONE                                 commits 1715e21; verified by T11I                                                          => DONE
+  T11G IMPL   recorded=DONE                                 commits bf7dd40,58e906a,b468d07; verified by T11J                                          => DONE
+  T11H IMPL   recorded=DONE                                 commits 89c721d,1f65fda; verified by T11J                                                  => DONE
+  T11I VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T11I-requirements-check.txt @ 3a2f8c9; validated 23 => DONE
+  T11K IMPL   recorded=DONE                                 commits 7bc11e2; verified by T11N                                                          => DONE
+  T11L IMPL   recorded=DONE                                 commits 966a599; verified by T11N                                                          => DONE
+  T11N VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T11N-validate.txt @ 18491cd; validated ce746e477651 => DONE
+  T11J VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T11J-plan-check.txt @ 91e93b4; validated 076fd8ef01 => DONE
+  T12  IMPL   recorded=DONE                                 commits 6d8830e; verified by docs/work-items/WI-1/evidence/T12-gates.txt                   => DONE
+  T13  IMPL   recorded=DONE                                 commits 70906b2; verified by docs/work-items/WI-1/evidence/T13-gates.txt                   => DONE
+  T14  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T15  IMPL   recorded=DONE                                 commits 93a4795; verified by docs/work-items/WI-1/evidence/T15-gates.txt                   => DONE
+  T16  IMPL   recorded=DONE                                 commits cf0716e; verified by docs/work-items/WI-1/evidence/T16-gates.txt                   => DONE
+  T17  IMPL   recorded=DONE                                 commits b0b58d2; verified by docs/work-items/WI-1/evidence/T17-gates.txt                   => DONE
+  T18  IMPL   recorded=DONE                                 commits 20d92b2; verified by docs/work-items/WI-1/evidence/T18-gates.txt                   => DONE
+  T19  IMPL   recorded=DONE                                 commits acaa2da; verified by docs/work-items/WI-1/evidence/T19-gates.txt                   => DONE
+  T20  IMPL   recorded=DONE                                 commits 6911bed; verified by docs/work-items/WI-1/evidence/T20-gates.txt                   => DONE
+  T21  IMPL   recorded=DONE                                 commits 03a6a6e; verified by docs/work-items/WI-1/evidence/T21-gates.txt                   => DONE
+  T22  IMPL   recorded=DONE                                 commits 89fa98d; verified by docs/work-items/WI-1/evidence/T22-gates.txt                   => DONE
+  T23  IMPL   recorded=DONE                                 commits 5c73712; verified by docs/work-items/WI-1/evidence/T23-gates.txt                   => DONE
+  T24  IMPL   recorded=DONE                                 commits 8ff8fbf; verified by docs/work-items/WI-1/evidence/T24-gates.txt                   => DONE
+  T25  IMPL   recorded=DONE                                 commits da9a37c; verified by docs/work-items/WI-1/evidence/T25-gates.txt                   => DONE
+  T26  IMPL   recorded=DONE                                 commits 4419d2d; verified by docs/work-items/WI-1/evidence/T26-gates.txt                   => DONE
+  T27  IMPL   recorded=DONE                                 commits 833f585; verified by docs/work-items/WI-1/evidence/T27-gates.txt                   => DONE
+  T28  IMPL   recorded=DONE                                 commits 4cefeba; verified by docs/work-items/WI-1/evidence/T28-gates.txt                   => DONE
+  T29  IMPL   recorded=DONE                                 commits 328c6ef; verified by docs/work-items/WI-1/evidence/T29-gates.txt                   => DONE
+  T30  IMPL   recorded=DONE                                 commits 6f4019d; verified by docs/work-items/WI-1/evidence/T30-gates.txt                   => DONE
+  T31  IMPL   recorded=DONE                                 commits 63d83cd; verified by docs/work-items/WI-1/evidence/T31-gates.txt                   => DONE
+  T32  IMPL   recorded=DONE                                 commits 9630543; verified by docs/work-items/WI-1/evidence/T32-gates.txt                   => DONE
+  T33  IMPL   recorded=DONE                                 commits 982c722; verified by docs/work-items/WI-1/evidence/T33-gates.txt                   => DONE
+  T34  IMPL   recorded=DONE                                 commits 7e96f23; verified by docs/work-items/WI-1/evidence/T34-gates.txt                   => DONE
+  T35  IMPL   recorded=DONE                                 commits f7ae5c3; verified by docs/work-items/WI-1/evidence/T35-gates.txt                   => DONE
+  T36  IMPL   recorded=DONE                                 commits e457fc8; verified by docs/work-items/WI-1/evidence/T36-gates.txt                   => DONE
+  T37  IMPL   recorded=IN_PROGRESS                          task branch ahead=0; worktree dirty=2                                                      => IN_PROGRESS (interrupted)
+  T38  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T39  IMPL   recorded=DONE                                 commits 34e9569; verified by docs/work-items/WI-1/evidence/T39-gates.txt                   => DONE
+  T40  IMPL   recorded=DONE                                 commits 9c7f249; verified by docs/work-items/WI-1/evidence/T40-gates.txt                   => DONE
+  T41  IMPL   recorded=DONE                                 commits fec71d3,aa37fef; verified by docs/work-items/WI-1/evidence/T41-gates-2.txt         => DONE
+  T42  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T43  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T44  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T45  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T46  VERIFY recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T47  VERIFY recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T49  IMPL   recorded=DONE                                 commits 7dba63d; verified by docs/work-items/WI-1/evidence/T49-gates.txt                   => DONE
+  T50  IMPL   recorded=DONE                                 commits b972c53; verified by docs/work-items/WI-1/evidence/T50-gates.txt                   => DONE
+  T51  IMPL   recorded=DONE                                 commits 70c6f98; verified by docs/work-items/WI-1/evidence/T51-gates.txt                   => DONE
+  T52  IMPL   recorded=DONE                                 commits 4621738; verified by docs/work-items/WI-1/evidence/T52-gates.txt                   => DONE
+  T53  IMPL   recorded=IN_PROGRESS                          task branch ahead=0; worktree dirty=0                                                      => PENDING
+  T54  IMPL   recorded=DONE                                 commits d002b9d; verified by docs/work-items/WI-1/evidence/T54-gates.txt                   => DONE
+  T55  IMPL   recorded=DONE                                 commits f63dbb2; verified by docs/work-items/WI-1/evidence/T55-gates.txt                   => DONE
+  T56  IMPL   recorded=IN_PROGRESS                          task branch ahead=1; worktree dirty=0                                                      => IN_PROGRESS (awaiting verification)
+  T57  IMPL   recorded=IN_PROGRESS                          task branch ahead=0; worktree dirty=0                                                      => PENDING
+  T48  VERIFY recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+STATE: open
+RESULT: PASS (0 violations)
+
+=== FW-CONFIG (framework, required) PASS exit=0 ms=94 ===
+COMMAND: builtin:config
+REASON: orch validate --section config,policy,agents,models exited 0
+SECTION config: PASS
+SECTION policy: PASS
+SECTION agents: PASS
+SECTION models: PASS
+  NOTE 156 file(s) scanned
+RESULT: PASS (0 violation(s), 0 warning(s))
+
+=== PRJ-INSTALL (other, required) PASS exit=0 ms=2550 ===
+COMMAND: npm ci
+REASON: exit 0
+
+added 304 packages, and audited 308 packages in 2s
+
+2 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+=== PRJ-TYPECHECK (typecheck, required) PASS exit=0 ms=6412 ===
+COMMAND: npm run typecheck
+REASON: exit 0
+
+> el-deporte-rey-ai@0.0.0 typecheck
+> tsc -b tsconfig.json && npm run typecheck --workspaces --if-present
+
+
+> @edr/web@0.0.0 typecheck
+> tsc -p tsconfig.json && tsc -p tsconfig.node.json
+
+=== PRJ-LINT (lint, required) PASS exit=0 ms=5664 ===
+COMMAND: npm run lint
+REASON: exit 0
+
+> el-deporte-rey-ai@0.0.0 lint
+> eslint --max-warnings 0 . && prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+=== PRJ-UNIT (unit, required) PASS exit=0 ms=7977 ===
+COMMAND: npm run test:unit
+REASON: exit 0
+
+> el-deporte-rey-ai@0.0.0 test:unit
+> vitest run --project unit --project unit-web
+
+
+ RUN  v5.0.4 /Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-verify
+
+
+ Test Files  105 passed (105)
+      Tests  1906 passed (1906)
+   Start at  12:00:04
+   Duration  7.05s (tests 51%, environment 21%, import 17%, transform 9%, setup 2%)
+
+=== PRJ-INTEGRATION (integration, required) PASS exit=0 ms=12020 ===
+COMMAND: npm run test:integration
+REASON: exit 0
+
+> el-deporte-rey-ai@0.0.0 test:integration
+> vitest run --project integration
+
+
+ RUN  v5.0.4 /Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-verify
+
+
+ Test Files  30 passed (30)
+      Tests  430 passed (430)
+   Start at  12:00:11
+   Duration  11.78s (tests 86%, import 9%, transform 4%, setup 1%)
+
+=== PRJ-CONTRACT (contract, required) PASS exit=0 ms=2951 ===
+COMMAND: npm run test:contract
+REASON: exit 0
+
+> el-deporte-rey-ai@0.0.0 test:contract
+> vitest run --project contract
+
+
+ RUN  v5.0.4 /Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-verify
+
+
+ Test Files  4 passed (4)
+      Tests  465 passed (465)
+   Start at  12:00:23
+   Duration  2.69s (tests 91%, import 4%, transform 3%, setup 1%)
+
+=== PRJ-BUILD (build, required) PASS exit=0 ms=1249 ===
+COMMAND: npm run build
+REASON: exit 0
+
+> el-deporte-rey-ai@0.0.0 build
+> npm run build --workspaces --if-present
+
+
+> @edr/server@0.0.0 build
+> tsc -b
+
+
+> @edr/web@0.0.0 build
+> vite build
+
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 318 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                           0.45 kB │ gzip:   0.28 kB
+dist/assets/EvidenceTable-Bxdd_pGi.css    3.29 kB │ gzip:   0.99 kB
+dist/assets/brand-bWcEcPyc.css            3.31 kB │ gzip:   1.09 kB
+dist/assets/projects-Cr7COfyc.css         3.51 kB │ gzip:   1.05 kB
+dist/assets/history-A0uurjXW.css          3.59 kB │ gzip:   1.02 kB
+dist/assets/imports-Cs_9gSff.css          3.83 kB │ gzip:   1.10 kB
+dist/assets/index-yTM_qEz3.css            4.54 kB │ gzip:   1.49 kB
+dist/assets/review-BsJp5BaE.css           5.14 kB │ gzip:   1.37 kB
+dist/assets/copy-CTWqsk8M.js              7.29 kB │ gzip:   2.65 kB
+dist/assets/EvidenceTable-h8ttpZTT.js    12.42 kB │ gzip:   4.33 kB
+dist/assets/facts-CCKNEOKk.js            12.91 kB │ gzip:   4.06 kB
+dist/assets/brand-ClO4dZKb.js            17.05 kB │ gzip:   5.72 kB
+dist/assets/history-Cx4Dgui1.js          24.78 kB │ gzip:   6.82 kB
+dist/assets/projects-Dpz4iVJF.js         25.62 kB │ gzip:   6.53 kB
+dist/assets/review-C4XPSDyS.js           33.52 kB │ gzip:  10.15 kB
+dist/assets/imports-BSqnkXXs.js          53.40 kB │ gzip:  14.32 kB
+dist/assets/index-RRVTbce4.js           451.53 kB │ gzip: 139.50 kB
+
+✓ built in 657ms
+
+> @edr/contracts@0.0.0 build
+> tsc -b
+
+=== PRJ-E2E (e2e, required) PASS exit=0 ms=3582 ===
+COMMAND: npm run test:e2e
+REASON: exit 0
+
+> el-deporte-rey-ai@0.0.0 test:e2e
+> npm run build && node e2e/run.mjs --grep-invert @a11y
+
+
+> el-deporte-rey-ai@0.0.0 build
+> npm run build --workspaces --if-present
+
+
+> @edr/server@0.0.0 build
+> tsc -b
+
+
+> @edr/web@0.0.0 build
+> vite build
+
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 318 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                           0.45 kB │ gzip:   0.28 kB
+dist/assets/EvidenceTable-Bxdd_pGi.css    3.29 kB │ gzip:   0.99 kB
+dist/assets/brand-bWcEcPyc.css            3.31 kB │ gzip:   1.09 kB
+dist/assets/projects-Cr7COfyc.css         3.51 kB │ gzip:   1.05 kB
+dist/assets/history-A0uurjXW.css          3.59 kB │ gzip:   1.02 kB
+dist/assets/imports-Cs_9gSff.css          3.83 kB │ gzip:   1.10 kB
+dist/assets/index-yTM_qEz3.css            4.54 kB │ gzip:   1.49 kB
+dist/assets/review-BsJp5BaE.css           5.14 kB │ gzip:   1.37 kB
+dist/assets/copy-CTWqsk8M.js              7.29 kB │ gzip:   2.65 kB
+dist/assets/EvidenceTable-h8ttpZTT.js    12.42 kB │ gzip:   4.33 kB
+dist/assets/facts-CCKNEOKk.js            12.91 kB │ gzip:   4.06 kB
+dist/assets/brand-ClO4dZKb.js            17.05 kB │ gzip:   5.72 kB
+dist/assets/history-Cx4Dgui1.js          24.78 kB │ gzip:   6.82 kB
+dist/assets/projects-Dpz4iVJF.js         25.62 kB │ gzip:   6.53 kB
+dist/assets/review-C4XPSDyS.js           33.52 kB │ gzip:  10.15 kB
+dist/assets/imports-BSqnkXXs.js          53.40 kB │ gzip:  14.32 kB
+dist/assets/index-RRVTbce4.js           451.53 kB │ gzip: 139.50 kB
+
+✓ built in 130ms
+
+> @edr/contracts@0.0.0 build
+> tsc -b
+
+[e2e] Ensuring Chromium in .cache/ms-playwright (downloaded on first use only).
+[e2e] Configuration generated from fixtures/config/demo-manual.config.json in a temporary directory: sources demo-a, demo-b, stub AI provider.
+[e2e] Starting the built server entry (apps/server/dist/src/main.js).
+[e2e] Server listening on http://127.0.0.1:4310.
+
+Running 5 tests using 1 worker
+
+  ✓  1 [chromium] › e2e/tests/harness.spec.ts:13:3 › End-to-end harness › forwards no credential or live-test variable (34ms)
+  ✓  2 [chromium] › e2e/tests/harness.spec.ts:21:3 › End-to-end harness › uses the project-local browser cache (8ms)
+  ✓  3 [chromium] › e2e/tests/harness.spec.ts:25:3 › End-to-end harness › serves the application on the loopback address (16ms)
+  ✓  4 [chromium] › e2e/tests/smoke.spec.ts:12:3 › Application shell (R-235) › opens on the project list without login (405ms)
+  ✓  5 [chromium] › e2e/tests/smoke.spec.ts:31:3 › Application shell (R-235) › shows no login, account or sign-in element (205ms)
+
+  5 passed (1.9s)
+[e2e] Server stopped and temporary directory removed.
+
+=== PRJ-AUDIT (security-audit, required) PASS exit=0 ms=793 ===
+COMMAND: npm audit --audit-level=high
+REASON: exit 0
+# npm audit report
+
+fflate  0.7.0 - 0.7.4
+Severity: moderate
+fflate unzipSync can enter an infinite loop when parsing malformed ZIP64 archives - https://github.com/advisories/GHSA-px8p-9vwx-vf98
+fix available via `npm audit fix --force`
+Will install satori@0.32.0, which is a breaking change
+node_modules/fflate
+  satori  >=0.33.0
+  Depends on vulnerable versions of fflate
+  node_modules/satori
+
+2 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
