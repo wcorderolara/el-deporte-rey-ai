@@ -1089,6 +1089,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-45 | MEDIUM | T50 note carried to the T52 brief: run every sample of `fixtures/manual/invalid/` (T23) through the real import pipeline and assert the expected record, field and problem from `fixtures/manual/_manifest.json`; T50 covered each error class with inline generated cases because the fixtures were not in its base | reopen T50 | low | MED-05; T50 report |
 | OD-46 | MEDIUM | SOT-1: the root `engines.node` range `>=22.22.2 <23` is accepted as meeting OD-30 together with `.nvmrc` 22.22.2 (exact) and `engine-strict` in .npmrc; no exact pin in engines | tighten engines to 22.22.2 via the owner of package.json (T43) | low (one-line change) | MED-03; T26 report; PO notified |
 | OD-47 | MEDIUM | T30 interpretations confirmed: LOW-4 `facts.subject` also stores the canonical value of each evidence observation (contract subject plus an evidence list) so evidence is served as contract FactValue while observations keep source-local keys (T29 format); LOW-9 the latest completed full run is status completed and kind full (as T31) | canonical IDs in observations | low (JSON content, no column change) | MED-04; T30 report; data-model.md updated at close; PO notified |
+| OD-48 | MEDIUM | T33 risk 3: removing the just-written brand file that no row references after a failed insert or a lost concurrent duplicate race is cleanup, not deletion of a registered asset or history (OD-08 stands); T33 risk 2 (about 200 MiB peak memory decoding a 4096 x 4096 image, multiplied by parallel uploads) carried to T47 to note under PD-16 single-operator use | leave orphan files | low | MED-04; T33 report |
 
 ## Conflicts
 
@@ -1364,6 +1365,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T15:47:50Z | - | OD-47 recorded (T30 LOW-4 and LOW-9 confirmed) | T30 report |
 | 2026-10-28T15:48:20Z | T30 | Status DONE | integration commit 6f4019d; evidence/T30-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T15:48:39Z | T41 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-28T15:52:02Z | - | OD-48 recorded (orphan-file cleanup allowed; decode memory note to T47) | T33 report |
 
 ## Recovery log
 
