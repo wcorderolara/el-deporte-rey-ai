@@ -79,7 +79,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T45 | Architecture conformance review | IMPL | architect | T14, T26, T42, T43, T44, T52 | PENDING | 0 | - | - |
 | T46 | Security evidence pack | VERIFY | qa-engineer | T45 | PENDING | 0 | - | - |
 | T47 | Security delta validation | VERIFY | security-reviewer | T46 | PENDING | 0 | - | - |
-| T49 | FootballDataProvider adapter, request budget, projection cache, live tests and capability probe script | IMPL | backend-developer | T21, T23 | PENDING | 0 | - | - |
+| T49 | FootballDataProvider adapter, request budget, projection cache, live tests and capability probe script | IMPL | backend-developer | T21, T23 | IN_PROGRESS | 1 | - | - |
 | T50 | Manual data import module and ManualDataProvider | IMPL | backend-developer | T18, T19, T20, T21 | DONE | 1 | b972c53 | `docs/work-items/WI-1/evidence/T50-gates.txt` |
 | T51 | Manual import UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 70c6f98 | `docs/work-items/WI-1/evidence/T51-gates.txt` |
 | T52 | Integration tests: data modes, catalogue, manual import and credentials | IMPL | qa-engineer | T23, T27, T29, T30, T41, T49, T50 | PENDING | 0 | - | - |
@@ -1344,6 +1344,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T15:38:09Z | T26 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T15:39:10Z | - | OD-45 recorded (fixture-driven invalid manual samples carried to T52) | T50 report |
 | 2026-10-28T15:39:39Z | T50 | Status DONE | integration commit b972c53; evidence/T50-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T15:39:57Z | T49 | Status IN_PROGRESS (attempt 1); agent launched (PD-15 option A and PD-16 conditions apply) | orch next SELECT |
 
 ## Recovery log
 
