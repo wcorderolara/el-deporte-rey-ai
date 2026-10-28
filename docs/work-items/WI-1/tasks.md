@@ -91,7 +91,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T58 | Research run invalidates final approvals | IMPL | backend-developer | T37 | DONE | 1 | 4bdfd2c | `docs/work-items/WI-1/evidence/T58-gates-2.txt` |
 | T59 | football-data adapter and probe corrections (FU-1, FU-2, FU-4, FU-5) | IMPL | backend-developer | T14 | DONE | 1 | 7845e6f | `docs/work-items/WI-1/evidence/T59-gates.txt` |
 | T60 | Security check of the probe diagnostics (FU-2) | VERIFY | security-reviewer | T59 | DONE | 1 | 7120696 | `docs/work-items/WI-1/evidence/T60-gates.txt` |
-| T61 | Second capability probe run (FU-3) | IMPL | Orchestrator | T60 | IN_PROGRESS | 1 | - | - |
+| T61 | Second capability probe run (FU-3) | IMPL | Orchestrator | T60 | DONE | 1 | 406b62f | `docs/work-items/WI-1/evidence/T61-gates.txt` |
 | T62 | Provider research addendum and architecture corrections (FU-3, FU-6, FU-7) | IMPL | architect | T61 | PENDING | 0 | - | - |
 | T63 | Requirements corrections from the provider research (FU-7) | IMPL | product-manager | T14 | DONE | 1 | f6226fe | `docs/work-items/WI-1/evidence/T63-gates.txt` |
 | T64 | Explicit timeouts for workflow-heavy ingestion tests | IMPL | qa-engineer | T52 | DONE | 1 | 4bda364 | `docs/work-items/WI-1/evidence/T64-gates.txt` |
@@ -1221,6 +1221,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: (PD-24, PD-16) the T53 procedure with these changes: the Product Owner places the free-plan token in `.env.local` (mode 0600) of the T61 worktree and starts the run from a terminal with a script the Orchestrator prepares (`npm run probe:football-data -- --candidates CL,ELC,PD,BL1,SA,FL1 --out docs/work-items/WI-1/research/football-data-capabilities-2.md`, console output to `.cache/probe-output.log`, the `.cache` directory created beforehand); at most 30 requests; the Orchestrator checks the token line with a count only; the `--require-token` marker scan of the research folder and the console log runs before anything is read, with its output in a temporary file outside the repository; the console log is never read; then `.env.local` and the log are deleted and the scan output is recorded with `orch evidence write` as `T61-marker-scan-real.txt`. On a scan failure the findings file is not committed and a possible credential exposure is reported to the Product Owner.
 - Acceptance criteria: R-259, R-281
 - Verification: `orch evidence check docs/work-items/WI-1/evidence/T61-marker-scan-real.txt --work-item 'WI-1' --task 'T61' --at .` -> exit 0, header RESULT: PASS, recorded output contains `real token checked: yes` ; `node scripts/security-checks.mjs marker-scan docs/work-items/WI-1/research` -> exit 0 ; `node scripts/security-checks.mjs hygiene` -> exit 0 ; `orch validate --work-item 'WI-1' --at .` -> exit 0
+- Result (Orchestrator task): second live run completed on 2026-10-28 under PD-16 and PD-24 and the T60 conditions C1 to C8 (token placed by the Product Owner in `.env.local` of the T61 worktree, set to mode 0600 by the Orchestrator while the probe ran; probe started by the Product Owner from a terminal with `--candidates CL,ELC,PD,BL1,SA,FL1`; C1 checked: no change since 3313782 to the reviewed files). Probe: 27 requests of at most 30, all status 200, no 429, outcome completed. Findings committed at 572525b (`research/football-data-capabilities-2.md`): CL league-phase matchday 1 refused by domain validation at `/teams/29/name` (shared team-name rule, T10-F06 and the `TeamName` contract pattern; FU-6 shared-rule case); ELC, PD, BL1, SA and FL1 matchday 1 complete with standings; largest season match list 537320 bytes, within the 1 MiB `stageDiscovery` limit (C8); knockout standings `unknown` (FU-1).
+- Orchestrator verification: `orch evidence check docs/work-items/WI-1/evidence/T61-marker-scan-real.txt` exit 0 RESULT PASS, recorded output contains `real token checked: yes` and findings 0 (23 files: research folder including the new findings file, and the console log, before anything was read); `marker-scan docs/work-items/WI-1/research` exit 0; `hygiene` exit 0; `orch validate --work-item 'WI-1' --at .` exit 0; console log deleted unread and `.env.local` deleted (C3, C4); C7 checked (ordinary key names, reviewed diagnostic format); worktree clean; 2026-10-28.
+- Decisions: none above LOW. The steps followed the T61 scope and the T60 conditions without deviation, except that the Product Owner's `.env.local` was created with mode 0644 and set to 0600 by the Orchestrator during the run.
+- Human interventions: 1 (the Product Owner placed the token file and started the probe from a terminal).
+- Agent usage: Orchestrator task, no agent launched.
+- Integration commit(s): 406b62f (merge --no-ff of task/WI-1/T61). Affected gates at 406b62f: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T61-gates.txt, the evidence file of this task).
 
 ### T62: Provider research addendum and architecture corrections (FU-3, FU-6, FU-7)
 - Kind: IMPL
@@ -1785,6 +1791,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T21:23:17Z | T60 | Status DONE | integration commit 8efe25c; evidence/T60-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T21:24:06Z | T61 | Status IN_PROGRESS (attempt 1); Orchestrator task; waits for the Product Owner to place the token (PD-24) | orch next SELECT |
 | 2026-10-28T21:36:30Z | T67 | Status DONE | integration commit 02f4a42; evidence/T67-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
+| 2026-10-28T21:41:24Z | T61 | Status DONE | integration commit 406b62f; evidence/T61-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
 
 ## Recovery log
 
