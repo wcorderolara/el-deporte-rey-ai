@@ -69,7 +69,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T35 | Visual QA stage | IMPL | backend-developer | T30, T34 | DONE | 1 | f7ae5c3 | `docs/work-items/WI-1/evidence/T35-gates.txt` |
 | T36 | Brand assets and templates UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | e457fc8 | `docs/work-items/WI-1/evidence/T36-gates.txt` |
 | T37 | Review module: approval state machine, regeneration, final approval | IMPL | backend-developer | T32, T35 | DONE | 1 | 5126445 | `docs/work-items/WI-1/evidence/T37-gates.txt` |
-| T38 | Export, history and traceability module | IMPL | backend-developer | T37 | PENDING | 0 | - | - |
+| T38 | Export, history and traceability module | IMPL | backend-developer | T37 | IN_PROGRESS | 1 | - | - |
 | T39 | Review UI: preview, per-item approval, regeneration, final approval | IMPL | frontend-developer | T16, T20 | DONE | 1 | 34e9569 | `docs/work-items/WI-1/evidence/T39-gates.txt` |
 | T40 | Export, history and traceability UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 9c7f249 | `docs/work-items/WI-1/evidence/T40-gates.txt` |
 | T41 | Integration tests: platform, research and verification | IMPL | qa-engineer | T19, T22, T23, T29, T30 | DONE | 2 | fec71d3, aa37fef | `docs/work-items/WI-1/evidence/T41-gates-2.txt` |
@@ -88,7 +88,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T55 | Security checks: accepted-advisory option for audit-report | IMPL | qa-engineer | T41 | DONE | 1 | f63dbb2 | `docs/work-items/WI-1/evidence/T55-gates.txt` |
 | T56 | Migration 0002: capitalized_tokens in qa_results | IMPL | backend-developer | T18, T35 | DONE | 1 | ef115d4 | `docs/work-items/WI-1/evidence/T56-gates.txt` |
 | T57 | Counterpart resolution keeps the source failure code | IMPL | backend-developer | T54 | DONE | 1 | b9f9f24 | `docs/work-items/WI-1/evidence/T57-gates.txt` |
-| T58 | Research run invalidates final approvals | IMPL | backend-developer | T37 | PENDING | 0 | - | - |
+| T58 | Research run invalidates final approvals | IMPL | backend-developer | T37 | IN_PROGRESS | 1 | - | - |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58 | PENDING | 0 | - | - |
 
 ## Tasks
@@ -1539,6 +1539,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T18:09:56Z | T58 | Task added (OD-57); status PENDING | T37 risk 1 |
 | 2026-10-28T18:09:56Z | T42 | Depends on extended by T58 (OD-57) | OD-57 |
 | 2026-10-28T18:09:56Z | T48 | Depends on extended by T58 (OD-57) | OD-57 |
+| 2026-10-28T18:10:05Z | T38 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
+| 2026-10-28T18:10:06Z | T58 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 
 ## Recovery log
 
