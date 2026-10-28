@@ -61,7 +61,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T27 | Projects module and workflow runner | IMPL | backend-developer | T18, T19, T20, T21 | DONE | 1 | 833f585 | `docs/work-items/WI-1/evidence/T27-gates.txt` |
 | T28 | Projects UI: list, create, detail and run progress | IMPL | frontend-developer | T16, T20 | DONE | 1 | 4cefeba | `docs/work-items/WI-1/evidence/T28-gates.txt` |
 | T29 | Research stage | IMPL | backend-developer | T21, T27 | IN_PROGRESS | 1 | - | - |
-| T30 | Verification stage: two-source rule, disputes, team identity | IMPL | backend-developer | T21, T27 | PENDING | 0 | - | - |
+| T30 | Verification stage: two-source rule, disputes, team identity | IMPL | backend-developer | T21, T27 | IN_PROGRESS | 1 | - | - |
 | T31 | Facts and verification UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 63d83cd | `docs/work-items/WI-1/evidence/T31-gates.txt` |
 | T32 | Content stage: structure, AI drafting, fact placeholders, content checks | IMPL | backend-developer | T22, T27 | PENDING | 0 | - | - |
 | T33 | Brand asset registry | IMPL | backend-developer | T27 | PENDING | 0 | - | - |
@@ -1294,6 +1294,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T14:25:59Z | T27 | Status DONE | integration commit 833f585; evidence/T27-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T14:26:24Z | T29 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T14:29:08Z | T51 | Status DONE | integration commit 70c6f98; evidence/T51-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T14:29:30Z | T30 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 
 ## Recovery log
 
