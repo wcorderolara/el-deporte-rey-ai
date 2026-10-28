@@ -57,7 +57,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T23 | Synthetic fixture scenarios | IMPL | qa-engineer | T21, T22 | DONE | 1 | 5c73712 | `docs/work-items/WI-1/evidence/T23-gates.txt` |
 | T24 | End-to-end and accessibility test harness | IMPL | qa-engineer | T16, T19 | DONE | 1 | 8ff8fbf | `docs/work-items/WI-1/evidence/T24-gates.txt` |
 | T25 | Project gates, local-environment settings and contract declaration | IMPL | Orchestrator | T15, T16, T19, T20, T24 | DONE | 1 | da9a37c | `docs/work-items/WI-1/evidence/T25-gates.txt` |
-| T26 | Source of truth: exact versions, contract hash, gate and environment notes | IMPL | architect | T12, T25 | IN_PROGRESS | 1 | - | - |
+| T26 | Source of truth: exact versions, contract hash, gate and environment notes | IMPL | architect | T12, T25 | DONE | 1 | 4419d2d | `docs/work-items/WI-1/evidence/T26-gates.txt` |
 | T27 | Projects module and workflow runner | IMPL | backend-developer | T18, T19, T20, T21 | DONE | 1 | 833f585 | `docs/work-items/WI-1/evidence/T27-gates.txt` |
 | T28 | Projects UI: list, create, detail and run progress | IMPL | frontend-developer | T16, T20 | DONE | 1 | 4cefeba | `docs/work-items/WI-1/evidence/T28-gates.txt` |
 | T29 | Research stage | IMPL | backend-developer | T21, T27 | DONE | 1 | 328c6ef | `docs/work-items/WI-1/evidence/T29-gates.txt` |
@@ -680,6 +680,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: section 1 exact Node.js and dependency versions from the integrated `package-lock.json`; section 6 the declared `http-api` contract and its SHA-256 (planning.md section 3 item 5); section 7 notes for the gates configured by T25, including that live tests and the capability probe are manual and never gates; section 9 open items updated (including `architecture-delta.md` section 11.8).
 - Acceptance criteria: -
 - Verification: `orch validate --work-item 'WI-1' --at .` -> exit 0 ; `orch contracts check --at .` -> exit 0
+- Agent result: PASS (files only; agent has no shell), base d14bea5.
+- Orchestrator verification: task commit 8257bdd (Orchestrator commit of agent file); `orch worktree verify-ownership` exit 0 (1 changed, 0 outside); diff limited to sections 1, 6, 7 and 9; `orch validate --at .` exit 0; `orch contracts check --at .` exit 0 (http-api MATCH); main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-4 (Node pin recorded as it is, SOT-1 raised and decided by OD-46; open item IDs SOT-1 to SOT-5; dependency tables per workspace from the integrated lock file; gate IDs only with a reference to the configuration). Open items updated (U-09, 11.13.3-a and the dependency part of U-02 closed; SOT-2 PD-18 confirmation, SOT-3 ajv move, SOT-4 fflate revisit, SOT-5 data-model update at close added).
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 128958; duration 4 minutes.
+- Integration commit(s): 4419d2d (merge --no-ff of task/WI-1/T26). Affected gates at 4419d2d: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T26-gates.txt, the evidence file of this task).
 
 ### T27: Projects module and workflow runner
 - Kind: IMPL
@@ -1347,6 +1353,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T15:39:39Z | T50 | Status DONE | integration commit b972c53; evidence/T50-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T15:39:57Z | T49 | Status IN_PROGRESS (attempt 1); agent launched (PD-15 option A and PD-16 conditions apply) | orch next SELECT |
 | 2026-10-28T15:42:13Z | - | OD-46 recorded (engines range accepted with exact .nvmrc) | T26 SOT-1 |
+| 2026-10-28T15:42:52Z | T26 | Status DONE | integration commit 4419d2d; evidence/T26-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
