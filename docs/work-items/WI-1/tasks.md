@@ -55,7 +55,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T21 | Sports-data provider port, payload validation and fixture adapter | IMPL | backend-developer | T17, T20 | IN_PROGRESS | 1 | - | - |
 | T22 | AI provider port, stub adapter and OpenAI-compatible adapter | IMPL | backend-developer | T17 | DONE | 1 | 89fa98d | `docs/work-items/WI-1/evidence/T22-gates.txt` |
 | T23 | Synthetic fixture scenarios | IMPL | qa-engineer | T21, T22 | PENDING | 0 | - | - |
-| T24 | End-to-end and accessibility test harness | IMPL | qa-engineer | T16, T19 | PENDING | 0 | - | - |
+| T24 | End-to-end and accessibility test harness | IMPL | qa-engineer | T16, T19 | IN_PROGRESS | 1 | - | - |
 | T25 | Project gates, local-environment settings and contract declaration | IMPL | Orchestrator | T15, T16, T19, T20, T24 | PENDING | 0 | - | - |
 | T26 | Source of truth: exact versions, contract hash, gate and environment notes | IMPL | architect | T12, T25 | PENDING | 0 | - | - |
 | T27 | Projects module and workflow runner | IMPL | backend-developer | T18, T19, T20, T21 | PENDING | 0 | - | - |
@@ -70,7 +70,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T36 | Brand assets and templates UI | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
 | T37 | Review module: approval state machine, regeneration, final approval | IMPL | backend-developer | T32, T35 | PENDING | 0 | - | - |
 | T38 | Export, history and traceability module | IMPL | backend-developer | T37 | PENDING | 0 | - | - |
-| T39 | Review UI: preview, per-item approval, regeneration, final approval | IMPL | frontend-developer | T16, T20 | PENDING | 0 | - | - |
+| T39 | Review UI: preview, per-item approval, regeneration, final approval | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
 | T40 | Export, history and traceability UI | IMPL | frontend-developer | T16, T20 | PENDING | 0 | - | - |
 | T41 | Integration tests: platform, research and verification | IMPL | qa-engineer | T19, T22, T23, T29, T30 | PENDING | 0 | - | - |
 | T42 | Integration tests: content, rendering, visual QA, approval, export, history | IMPL | qa-engineer | T32, T33, T34, T35, T37, T38, T41 | PENDING | 0 | - | - |
@@ -1227,6 +1227,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T00:36:03Z | T36 | Agent interrupted by the usage limit; uncommitted work preserved in the task worktree; same agent resumed | task-notification rate_limit 429 |
 | 2026-10-28T01:38:52Z | T28 | Status DONE | integration commit 4cefeba; evidence/T28-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T04:15:05Z | T19 | Status DONE | integration commit acaa2da; evidence/T19-gates.txt PASS; merged-state typecheck, lint, unit 704, integration 75, contract 465 |
+| 2026-10-28T04:31:39Z | T24 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-28T04:31:39Z | T39 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 
 ## Recovery log
 
