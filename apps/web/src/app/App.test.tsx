@@ -2,7 +2,7 @@
  * Application shell and route table: the app opens directly on the project list with no login, account or sign-in
  * element (R-235), and every feature route lazily loads its stub.
  */
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -72,7 +72,10 @@ describe('App shell (R-235)', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Importaciones manuales' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Importaciones manuales' }).getAttribute('aria-current')).toBe('page');
     expect(screen.getByRole('link', { name: 'Proyectos' }).getAttribute('aria-current')).toBeNull();
-    expect(document.activeElement).toBe(screen.getByRole('main'));
+    // Focus moves to the main content in an effect after the new page renders (OD-58).
+    await waitFor(() => {
+      expect(document.activeElement).toBe(screen.getByRole('main'));
+    });
   });
 });
 
