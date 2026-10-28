@@ -997,6 +997,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-37 | MEDIUM | Re-plan: T19 also owns the root `package.json` (created by T15, DONE) to make `dev:api` run with `EDR_CONFIG=config/dev.config.json`, so the T19 Host and Origin guards accept the Vite dev server on 127.0.0.1:5173 (T10-F02); no other script changes | T25 owns it | low | MED-05; T17 file request |
 | OD-38 | MEDIUM | OD-26 contract shape confirmed: QA check `capitalized_tokens` (severity warning) with closed details `{ tokens: string[] }` (each at most 64 characters) and nullable acknowledgedAt; acknowledgeQaWarnings keeps `maxItems: 1` (widening later is additive under PD-11) | open details; maxItems 2 | low | MED-01 (covered by OD-23 pre-release scope); T20 E-2; PO notified |
 | OD-39 | MEDIUM | T20 E-1: `@readme/openapi-parser` cannot import as installed (legacy-peer-deps hoists ajv-draft-04 next to ESLint's ajv 6); the test-only resolve hook in `apps/server/test/contract/support/contract-document.ts` is accepted for now; re-plan: T43 also owns the root `package.json` and `package-lock.json` to add `ajv` 8.20.0 to the root devDependencies and remove the hook (T43 starts after T19, which owns package.json until DONE) | change .npmrc legacy-peer-deps | low | MED-02, MED-05; T20 report |
+| OD-40 | MEDIUM | T31 note carried to the T30 brief: `listFacts` must return `blockReason` for blocked VERIFIED facts (`publication_permission_unconfirmed`, R-078) and MANUALLY_APPROVED facts (`manually_approved_not_publishable`, PD-17), so the facts page shows the PD-17 and PD-18 blocks; T41 checks it | UI derives blocks itself | low | MED-05; T31 report |
 
 ## Conflicts
 
@@ -1229,6 +1230,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T04:15:05Z | T19 | Status DONE | integration commit acaa2da; evidence/T19-gates.txt PASS; merged-state typecheck, lint, unit 704, integration 75, contract 465 |
 | 2026-10-28T04:31:39Z | T24 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T04:31:39Z | T39 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-28T05:32:23Z | - | OD-40 recorded (blockReason in listFacts carried to the T30 brief) | T31 report |
 
 ## Recovery log
 
