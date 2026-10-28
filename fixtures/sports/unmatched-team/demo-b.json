@@ -1,0 +1,348 @@
+{
+  "simulate": null,
+  "competitions": [
+    {
+      "localKey": "liga-demo",
+      "name": "Liga Demo",
+      "areaName": "País Sintético",
+      "seasons": [
+        {
+          "id": "2026",
+          "label": "2026/27",
+          "current": true,
+          "startDate": "2026-08-15",
+          "endDate": "2027-05-23",
+          "startYear": 2026,
+          "stages": [
+            {
+              "id": "temporada-regular",
+              "name": "Temporada Regular",
+              "order": 1,
+              "standings": "expected",
+              "wholeStage": null,
+              "matchdays": {
+                "1": {
+                  "competition": {"name":"Liga Demo"},
+                  "season": {"label":"2026/27"},
+                  "stage": {"name":"Temporada Regular","matchday":1,"totalMatchdays":30},
+                  "teams": [
+                    {"teamKey":"b-01","name":"Deportivo Arenisca","aliases":[],"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/team/b-01"},
+                    {"teamKey":"b-02","name":"Club Pinar del Eco","aliases":[],"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/team/b-02"},
+                    {"teamKey":"b-03","name":"Atlético Bruma","aliases":[],"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/team/b-03"},
+                    {"teamKey":"b-04","name":"Sociedad Roca Azul","aliases":[],"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/team/b-04"},
+                    {"teamKey":"b-05","name":"Unión Cerro Dorado","aliases":[],"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/team/b-05"},
+                    {"teamKey":"b-06","name":"Brisamar Royal Club","aliases":[],"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/team/b-06"},
+                    {"teamKey":"b-07","name":"CF Las Garzas","aliases":[],"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/team/b-07"},
+                    {"teamKey":"b-08","name":"Estudiantes de Valcorvo","aliases":[],"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/team/b-08"},
+                    {"teamKey":"b-09","name":"Ferroviario Ocaso","aliases":[],"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/team/b-09"},
+                    {"teamKey":"b-10","name":"Independiente Lomaclara","aliases":[],"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/team/b-10"},
+                    {"teamKey":"b-11","name":"Juventud Sierraplata","aliases":[],"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/team/b-11"},
+                    {"teamKey":"b-12","name":"Mineros de Vetaroja","aliases":[],"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/team/b-12"},
+                    {"teamKey":"b-13","name":"Obreros Puertofrío","aliases":[],"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/team/b-13"},
+                    {"teamKey":"b-14","name":"Rayo Montenublo","aliases":[],"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/team/b-14"},
+                    {"teamKey":"b-15","name":"Tranviarios Calizar","aliases":[],"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/team/b-15"},
+                    {"teamKey":"b-16","name":"Universitario Robleda","aliases":[],"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/team/b-16"}
+                  ],
+                  "matches": [
+                    {
+                      "matchKey": "ld26-1-01",
+                      "homeTeamKey": "b-01",
+                      "awayTeamKey": "b-16",
+                      "kickoff": "2026-08-15T17:45:00Z",
+                      "status": "finished",
+                      "score": {"home":1,"away":0},
+                      "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/match/01"
+                    },
+                    {
+                      "matchKey": "ld26-1-02",
+                      "homeTeamKey": "b-15",
+                      "awayTeamKey": "b-02",
+                      "kickoff": "2026-08-15T20:00:00Z",
+                      "status": "finished",
+                      "score": {"home":2,"away":3},
+                      "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/match/02"
+                    },
+                    {
+                      "matchKey": "ld26-1-03",
+                      "homeTeamKey": "b-03",
+                      "awayTeamKey": "b-14",
+                      "kickoff": "2026-08-15T17:45:00Z",
+                      "status": "finished",
+                      "score": {"home":2,"away":2},
+                      "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/match/03"
+                    },
+                    {
+                      "matchKey": "ld26-1-04",
+                      "homeTeamKey": "b-13",
+                      "awayTeamKey": "b-04",
+                      "kickoff": "2026-08-15T20:00:00Z",
+                      "status": "finished",
+                      "score": {"home":2,"away":4},
+                      "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/match/04"
+                    },
+                    {
+                      "matchKey": "ld26-1-05",
+                      "homeTeamKey": "b-05",
+                      "awayTeamKey": "b-12",
+                      "kickoff": "2026-08-16T17:45:00Z",
+                      "status": "finished",
+                      "score": {"home":2,"away":4},
+                      "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/match/05"
+                    },
+                    {
+                      "matchKey": "ld26-1-06",
+                      "homeTeamKey": "b-11",
+                      "awayTeamKey": "b-06",
+                      "kickoff": "2026-08-16T20:00:00Z",
+                      "status": "finished",
+                      "score": {"home":1,"away":2},
+                      "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/match/06"
+                    },
+                    {
+                      "matchKey": "ld26-1-07",
+                      "homeTeamKey": "b-07",
+                      "awayTeamKey": "b-10",
+                      "kickoff": "2026-08-16T17:45:00Z",
+                      "status": "finished",
+                      "score": {"home":3,"away":1},
+                      "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/match/07"
+                    },
+                    {
+                      "matchKey": "ld26-1-08",
+                      "homeTeamKey": "b-09",
+                      "awayTeamKey": "b-08",
+                      "kickoff": "2026-08-16T20:00:00Z",
+                      "status": "finished",
+                      "score": {"home":0,"away":2},
+                      "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/match/08"
+                    }
+                  ],
+                  "standings": {
+                    "available": true,
+                    "asOf": "2026-08-17T06:00:00Z",
+                    "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings",
+                    "rows": [
+                      {
+                        "position": 1,
+                        "teamKey": "b-12",
+                        "played": 1,
+                        "won": 1,
+                        "drawn": 0,
+                        "lost": 0,
+                        "goalsFor": 4,
+                        "goalsAgainst": 2,
+                        "goalDifference": 2,
+                        "points": 3,
+                        "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings/1"
+                      },
+                      {
+                        "position": 2,
+                        "teamKey": "b-04",
+                        "played": 1,
+                        "won": 1,
+                        "drawn": 0,
+                        "lost": 0,
+                        "goalsFor": 4,
+                        "goalsAgainst": 2,
+                        "goalDifference": 2,
+                        "points": 3,
+                        "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings/2"
+                      },
+                      {
+                        "position": 3,
+                        "teamKey": "b-07",
+                        "played": 1,
+                        "won": 1,
+                        "drawn": 0,
+                        "lost": 0,
+                        "goalsFor": 3,
+                        "goalsAgainst": 1,
+                        "goalDifference": 2,
+                        "points": 3,
+                        "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings/3"
+                      },
+                      {
+                        "position": 4,
+                        "teamKey": "b-08",
+                        "played": 1,
+                        "won": 1,
+                        "drawn": 0,
+                        "lost": 0,
+                        "goalsFor": 2,
+                        "goalsAgainst": 0,
+                        "goalDifference": 2,
+                        "points": 3,
+                        "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings/4"
+                      },
+                      {
+                        "position": 5,
+                        "teamKey": "b-02",
+                        "played": 1,
+                        "won": 1,
+                        "drawn": 0,
+                        "lost": 0,
+                        "goalsFor": 3,
+                        "goalsAgainst": 2,
+                        "goalDifference": 1,
+                        "points": 3,
+                        "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings/5"
+                      },
+                      {
+                        "position": 6,
+                        "teamKey": "b-06",
+                        "played": 1,
+                        "won": 1,
+                        "drawn": 0,
+                        "lost": 0,
+                        "goalsFor": 2,
+                        "goalsAgainst": 1,
+                        "goalDifference": 1,
+                        "points": 3,
+                        "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings/6"
+                      },
+                      {
+                        "position": 7,
+                        "teamKey": "b-01",
+                        "played": 1,
+                        "won": 1,
+                        "drawn": 0,
+                        "lost": 0,
+                        "goalsFor": 1,
+                        "goalsAgainst": 0,
+                        "goalDifference": 1,
+                        "points": 3,
+                        "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings/7"
+                      },
+                      {
+                        "position": 8,
+                        "teamKey": "b-03",
+                        "played": 1,
+                        "won": 0,
+                        "drawn": 1,
+                        "lost": 0,
+                        "goalsFor": 2,
+                        "goalsAgainst": 2,
+                        "goalDifference": 0,
+                        "points": 1,
+                        "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings/8"
+                      },
+                      {
+                        "position": 9,
+                        "teamKey": "b-14",
+                        "played": 1,
+                        "won": 0,
+                        "drawn": 1,
+                        "lost": 0,
+                        "goalsFor": 2,
+                        "goalsAgainst": 2,
+                        "goalDifference": 0,
+                        "points": 1,
+                        "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings/9"
+                      },
+                      {
+                        "position": 10,
+                        "teamKey": "b-15",
+                        "played": 1,
+                        "won": 0,
+                        "drawn": 0,
+                        "lost": 1,
+                        "goalsFor": 2,
+                        "goalsAgainst": 3,
+                        "goalDifference": -1,
+                        "points": 0,
+                        "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings/10"
+                      },
+                      {
+                        "position": 11,
+                        "teamKey": "b-11",
+                        "played": 1,
+                        "won": 0,
+                        "drawn": 0,
+                        "lost": 1,
+                        "goalsFor": 1,
+                        "goalsAgainst": 2,
+                        "goalDifference": -1,
+                        "points": 0,
+                        "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings/11"
+                      },
+                      {
+                        "position": 12,
+                        "teamKey": "b-16",
+                        "played": 1,
+                        "won": 0,
+                        "drawn": 0,
+                        "lost": 1,
+                        "goalsFor": 0,
+                        "goalsAgainst": 1,
+                        "goalDifference": -1,
+                        "points": 0,
+                        "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings/12"
+                      },
+                      {
+                        "position": 13,
+                        "teamKey": "b-13",
+                        "played": 1,
+                        "won": 0,
+                        "drawn": 0,
+                        "lost": 1,
+                        "goalsFor": 2,
+                        "goalsAgainst": 4,
+                        "goalDifference": -2,
+                        "points": 0,
+                        "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings/13"
+                      },
+                      {
+                        "position": 14,
+                        "teamKey": "b-05",
+                        "played": 1,
+                        "won": 0,
+                        "drawn": 0,
+                        "lost": 1,
+                        "goalsFor": 2,
+                        "goalsAgainst": 4,
+                        "goalDifference": -2,
+                        "points": 0,
+                        "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings/14"
+                      },
+                      {
+                        "position": 15,
+                        "teamKey": "b-10",
+                        "played": 1,
+                        "won": 0,
+                        "drawn": 0,
+                        "lost": 1,
+                        "goalsFor": 1,
+                        "goalsAgainst": 3,
+                        "goalDifference": -2,
+                        "points": 0,
+                        "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings/15"
+                      },
+                      {
+                        "position": 16,
+                        "teamKey": "b-09",
+                        "played": 1,
+                        "won": 0,
+                        "drawn": 0,
+                        "lost": 1,
+                        "goalsFor": 0,
+                        "goalsAgainst": 2,
+                        "goalDifference": -2,
+                        "points": 0,
+                        "ref": "fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/standings/16"
+                      }
+                    ]
+                  },
+                  "context": [
+                    {"type":"matchday_of_total","matchday":1,"totalMatchdays":30,"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/context/matchday"},
+                    {"type":"teams_in_table","count":16,"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/context/teams"},
+                    {"type":"matches_in_selection","count":8,"ref":"fixture:unmatched-team/demo-b.json#liga-demo/2026/temporada-regular/1/context/matches"}
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

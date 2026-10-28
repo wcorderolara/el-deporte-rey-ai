@@ -1,0 +1,55 @@
+{
+  "dataDir": "data",
+  "display": {"utcOffsetMinutes":-360},
+  "format": {"width":1080,"height":1350,"maxSlidesPerCarousel":20},
+  "standingsRowsPerSlide": 12,
+  "publicationMode": "manual",
+  "providers": {
+    "sports": {
+      "sources": [
+        {
+          "id": "demo-a",
+          "name": "Synthetic source A",
+          "mode": "DEMO_DATA",
+          "enabled": true,
+          "role": "primary",
+          "accepted": true,
+          "independenceGroup": "demo-a",
+          "officialPublication": false,
+          "publicationPermission": "not_applicable",
+          "adapter": "fixture",
+          "options": {"scenario":"default"}
+        },
+        {
+          "id": "demo-b",
+          "name": "Synthetic source B",
+          "mode": "DEMO_DATA",
+          "enabled": true,
+          "role": "verification",
+          "accepted": true,
+          "independenceGroup": "demo-b",
+          "officialPublication": true,
+          "publicationPermission": "not_applicable",
+          "adapter": "fixture",
+          "options": {"scenario":"default"}
+        },
+        {
+          "id": "manual",
+          "name": "Operator import",
+          "mode": "MANUAL_DATA",
+          "enabled": true,
+          "role": "primary",
+          "accepted": false,
+          "independenceGroup": "manual",
+          "officialPublication": false,
+          "publicationPermission": "not_applicable",
+          "adapter": "manual",
+          "options": {}
+        }
+      ]
+    },
+    "ai": {"adapter":"stub","options":{"scenario":"default"}}
+  },
+  "verificationPolicy": {"manuallyApprovedPublication":"allowed_without_accepted_source","livePublicationPermissionRule":"every_supporting_source"},
+  "catalogue": {"linksFile":"fixtures/config/demo.catalogue.json"}
+}

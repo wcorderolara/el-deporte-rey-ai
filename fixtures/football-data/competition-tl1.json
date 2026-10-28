@@ -1,0 +1,16 @@
+{
+  "request": {"method":"GET","path":"/v4/competitions/TL1","query":{}},
+  "status": 200,
+  "headers": {"X-API-Version":"v4","X-Authenticated-Client":"edr-test-client-marker-0000","X-RequestCounter-Reset":"60","X-RequestsAvailable":"8"},
+  "body": {
+    "area": {"id":9078,"name":"Synthetic Republic","code":"SYR","flag":"https://crests.invalid/areas/9078.svg"},
+    "id": 9901,
+    "name": "Liga Sintética del Norte",
+    "code": "TL1",
+    "type": "LEAGUE",
+    "emblem": "https://crests.invalid/competitions/9901.png",
+    "currentSeason": {"id":8901,"startDate":"2026-08-08","endDate":"2027-05-16","currentMatchday":2,"winner":null},
+    "seasons": [{"id":8901,"startDate":"2026-08-08","endDate":"2027-05-16","currentMatchday":2,"winner":null}],
+    "lastUpdated": "2026-10-26T04:00:00Z"
+  }
+}

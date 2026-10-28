@@ -1,0 +1,4 @@
+{
+  "links": [{"id":"copa-mixta","name":"Copa Mixta","reference":false,"bindings":[{"sourceId":"demo-a","competitionRef":"copa-demo"},{"sourceId":"football-data","competitionRef":"cl"}]}],
+  "restrictToLinks": false
+}

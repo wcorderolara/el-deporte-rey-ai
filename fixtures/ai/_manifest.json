@@ -1,0 +1,83 @@
+{
+  "description": "Stub AI fixtures (fixtures/ai/<scenario>.json, parseAiStubFixture). Texts are keyed by slide type; without a fixture file the stub builds its placeholder-only draft. Invisible characters are written as JSON escapes. Each content-check fixture names the flag it must raise (architecture.md section 8.3).",
+  "fixtures": [
+    {"file":"invented-score.json","scenario":"invented-score","expectFlag":"UNVERIFIED_NUMBER","field":"caption","purpose":"caption with an invented score"},
+    {
+      "file": "translated-team-name.json",
+      "scenario": "translated-team-name",
+      "expectFlag": "NON_OFFICIAL_TEAM_NAME",
+      "field": "headline",
+      "sportsScenario": "accented-names",
+      "purpose": "headline with the translated name of Atlético Río Ébano (alias in the accented-names scenario, R-237)"
+    },
+    {
+      "file": "abbreviated-team-name.json",
+      "scenario": "abbreviated-team-name",
+      "expectFlag": "NON_OFFICIAL_TEAM_NAME",
+      "field": "headline",
+      "sportsScenario": "accented-names",
+      "purpose": "headline with an abbreviated name of Atlético Río Ébano (R-237)"
+    },
+    {"file":"bypass-fullwidth-digits.json","scenario":"bypass-fullwidth-digits","expectFlag":"UNVERIFIED_NUMBER","field":"headline","bypassClass":true,"purpose":"fullwidth digit (U+FF13)"},
+    {
+      "file": "bypass-other-script-digits.json",
+      "scenario": "bypass-other-script-digits",
+      "expectFlag": "UNVERIFIED_NUMBER",
+      "field": "headline",
+      "bypassClass": true,
+      "purpose": "Arabic-Indic digit (U+0663) and Devanagari digit (U+0969)"
+    },
+    {
+      "file": "bypass-superscript-digits.json",
+      "scenario": "bypass-superscript-digits",
+      "expectFlag": "UNVERIFIED_NUMBER",
+      "field": "headline",
+      "bypassClass": true,
+      "purpose": "superscript digits (U+00B3, U+00B2)"
+    },
+    {"file":"bypass-circled-numbers.json","scenario":"bypass-circled-numbers","expectFlag":"UNVERIFIED_NUMBER","field":"headline","bypassClass":true,"purpose":"circled numbers (U+2462, U+246B)"},
+    {
+      "file": "bypass-number-words.json",
+      "scenario": "bypass-number-words",
+      "expectFlag": "UNVERIFIED_NUMBER",
+      "field": "headline",
+      "bypassClass": true,
+      "purpose": "cardinal number words above twenty (es and en)"
+    },
+    {"file":"bypass-ordinal-words.json","scenario":"bypass-ordinal-words","expectFlag":"UNVERIFIED_NUMBER","field":"headline","bypassClass":true,"purpose":"ordinal words (es and en)"},
+    {
+      "file": "bypass-multiplier-words.json",
+      "scenario": "bypass-multiplier-words",
+      "expectFlag": "UNVERIFIED_NUMBER",
+      "field": "headline",
+      "bypassClass": true,
+      "purpose": "multiplier and collective number words"
+    },
+    {
+      "file": "bypass-zero-width-split.json",
+      "scenario": "bypass-zero-width-split",
+      "expectFlag": "FORBIDDEN_CONTENT",
+      "field": "headline",
+      "bypassClass": true,
+      "purpose": "digits split by zero-width characters (U+200B, U+200C, U+200D); the format-character pre-check fires first"
+    },
+    {
+      "file": "bypass-bidi-split.json",
+      "scenario": "bypass-bidi-split",
+      "expectFlag": "FORBIDDEN_CONTENT",
+      "field": "headline",
+      "bypassClass": true,
+      "purpose": "digits split by bidi isolate and override characters (U+2066, U+2069, U+202E, U+202C)"
+    },
+    {
+      "file": "bypass-cyrillic-homoglyph.json",
+      "scenario": "bypass-cyrillic-homoglyph",
+      "expectFlag": "NON_OFFICIAL_TEAM_NAME",
+      "field": "headline",
+      "bypassClass": true,
+      "purpose": "Cyrillic e (U+0435) inside the official name Real Brisamar: mixed-script token"
+    },
+    {"file":"unavailable.json","scenario":"unavailable","expectFailure":"unavailable","purpose":"AI provider unavailable"},
+    {"file":"invalid-json.json","scenario":"invalid-json","expectFailure":"ai_response_invalid","purpose":"AI response that is not JSON"}
+  ]
+}

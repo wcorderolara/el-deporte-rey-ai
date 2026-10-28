@@ -1,0 +1,13 @@
+competition_id,competition_name,season_id,season_label,stage_id,stage_name,stage_order,matchday,home_team,away_team,kickoff,status,home_score,away_score,scorer
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,1,Club Maizal,Estrella Trigal,2026-08-01T17:45:00Z,finished,0,4,edr-person-marker-scorer-01
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,1,Juventud Arrozal,Atlético Cafetal,2026-08-01T20:00:00Z,finished,3,3,edr-person-marker-scorer-02
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,1,Deportivo Cacaotal,Sporting Algodonal,2026-08-02T17:45:00Z,finished,3,3,edr-person-marker-scorer-03
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,1,Real Cañaveral,Unión Platanar,2026-08-02T20:00:00Z,finished,1,1,edr-person-marker-scorer-04
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,2,Juventud Arrozal,Club Maizal,2026-08-08T17:45:00Z,finished,1,4,edr-person-marker-scorer-05
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,2,Estrella Trigal,Sporting Algodonal,2026-08-08T20:00:00Z,finished,1,4,edr-person-marker-scorer-06
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,2,Real Cañaveral,Atlético Cafetal,2026-08-09T17:45:00Z,finished,1,4,edr-person-marker-scorer-07
+liga-manual,Liga Manual Sintética,2026,2026/27,torneo-apertura,Torneo Apertura,1,2,Deportivo Cacaotal,Unión Platanar,2026-08-09T20:00:00Z,finished,1,4,edr-person-marker-scorer-08
+liga-manual,Liga Manual Sintética,2026,2026/27,cuartos-de-final,Cuartos de Final,2,,Atlético Cafetal,Real Cañaveral,2026-08-22T17:45:00Z,finished,2,4,edr-person-marker-scorer-09
+liga-manual,Liga Manual Sintética,2026,2026/27,cuartos-de-final,Cuartos de Final,2,,Sporting Algodonal,Juventud Arrozal,2026-08-22T20:00:00Z,finished,2,3,edr-person-marker-scorer-10
+liga-manual,Liga Manual Sintética,2026,2026/27,cuartos-de-final,Cuartos de Final,2,,Unión Platanar,Deportivo Cacaotal,2026-08-23T17:45:00Z,finished,2,0,edr-person-marker-scorer-11
+liga-manual,Liga Manual Sintética,2026,2026/27,cuartos-de-final,Cuartos de Final,2,,Estrella Trigal,Club Maizal,2026-08-23T20:00:00Z,finished,2,1,edr-person-marker-scorer-12

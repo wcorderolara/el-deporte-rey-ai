@@ -1,0 +1,25 @@
+{
+  "request": {"method":"GET","path":"/v4/competitions/CL","query":{}},
+  "status": 200,
+  "headers": {"X-API-Version":"v4","X-Authenticated-Client":"edr-test-client-marker-0000","X-RequestCounter-Reset":"60","X-RequestsAvailable":"8"},
+  "body": {
+    "area": {"id":9077,"name":"Synthetic Continent","code":"SYC","flag":null},
+    "id": 2001,
+    "name": "Copa Continental Sintética",
+    "code": "CL",
+    "type": "CUP",
+    "emblem": "https://crests.invalid/competitions/2001.png",
+    "currentSeason": {"id":8802,"startDate":"2026-09-15","endDate":"2027-05-29","currentMatchday":2,"winner":null},
+    "seasons": [
+      {"id":8802,"startDate":"2026-09-15","endDate":"2027-05-29","currentMatchday":2,"winner":null},
+      {
+        "id": 8801,
+        "startDate": "2025-09-16",
+        "endDate": "2026-05-30",
+        "currentMatchday": 8,
+        "winner": {"id":5029,"name":"Corsarios Islabruma","shortName":"Islabruma","tla":"CIS","crest":"https://crests.invalid/teams/5029.png"}
+      }
+    ],
+    "lastUpdated": "2026-10-26T04:00:00Z"
+  }
+}

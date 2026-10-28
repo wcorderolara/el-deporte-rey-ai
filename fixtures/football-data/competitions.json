@@ -1,0 +1,35 @@
+{
+  "request": {"method":"GET","path":"/v4/competitions","query":{}},
+  "status": 200,
+  "headers": {"X-API-Version":"v4","X-Authenticated-Client":"edr-test-client-marker-0000","X-RequestCounter-Reset":"60","X-RequestsAvailable":"9"},
+  "body": {
+    "count": 2,
+    "filters": {},
+    "competitions": [
+      {
+        "id": 2001,
+        "area": {"id":9077,"name":"Synthetic Continent","code":"SYC","flag":null},
+        "name": "Copa Continental Sintética",
+        "code": "CL",
+        "type": "CUP",
+        "emblem": "https://crests.invalid/competitions/2001.png",
+        "plan": "TIER_ONE",
+        "currentSeason": {"id":8802,"startDate":"2026-09-15","endDate":"2027-05-29","currentMatchday":2,"winner":null},
+        "numberOfAvailableSeasons": 2,
+        "lastUpdated": "2026-10-26T04:00:00Z"
+      },
+      {
+        "id": 9901,
+        "area": {"id":9078,"name":"Synthetic Republic","code":"SYR","flag":"https://crests.invalid/areas/9078.svg"},
+        "name": "Liga Sintética del Norte",
+        "code": "TL1",
+        "type": "LEAGUE",
+        "emblem": "https://crests.invalid/competitions/9901.png",
+        "plan": "TIER_ONE",
+        "currentSeason": {"id":8901,"startDate":"2026-08-08","endDate":"2027-05-16","currentMatchday":2,"winner":null},
+        "numberOfAvailableSeasons": 1,
+        "lastUpdated": "2026-10-26T04:00:00Z"
+      }
+    ]
+  }
+}
