@@ -76,9 +76,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T42 | Integration tests: content, rendering, visual QA, approval, export, history | IMPL | qa-engineer | T32, T33, T34, T35, T37, T38, T41, T56, T58 | DONE | 1 | db84eda | `docs/work-items/WI-1/evidence/T42-gates.txt` |
 | T43 | Contract conformance tests | IMPL | qa-engineer | T20, T38, T41, T50 | DONE | 1 | cb16a73 | `docs/work-items/WI-1/evidence/T43-gates.txt` |
 | T44 | End-to-end and accessibility journeys | IMPL | qa-engineer | T23, T24, T28, T29, T31, T36, T38, T39, T40, T50, T51 | DONE | 1 | d3222a7 | `docs/work-items/WI-1/evidence/T44-gates.txt` |
-| T45 | Architecture conformance review | IMPL | architect | T14, T26, T42, T43, T44, T52, T59, T62, T63, T65 | PENDING | 0 | - | - |
+| T45 | Architecture conformance review | IMPL | architect | T14, T26, T42, T43, T44, T52, T59, T62, T63, T65, T66 | PENDING | 0 | - | - |
 | T46 | Security evidence pack | VERIFY | qa-engineer | T45 | PENDING | 0 | - | - |
-| T47 | Security delta validation | VERIFY | security-reviewer | T46 | PENDING | 0 | - | - |
+| T47 | Security delta validation | VERIFY | security-reviewer | T46, T67 | PENDING | 0 | - | - |
 | T49 | FootballDataProvider adapter, request budget, projection cache, live tests and capability probe script | IMPL | backend-developer | T21, T23 | DONE | 2 | 7dba63d | `docs/work-items/WI-1/evidence/T49-gates.txt` |
 | T50 | Manual data import module and ManualDataProvider | IMPL | backend-developer | T18, T19, T20, T21 | DONE | 1 | b972c53 | `docs/work-items/WI-1/evidence/T50-gates.txt` |
 | T51 | Manual import UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 70c6f98 | `docs/work-items/WI-1/evidence/T51-gates.txt` |
@@ -96,7 +96,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T63 | Requirements corrections from the provider research (FU-7) | IMPL | product-manager | T14 | IN_PROGRESS | 1 | - | - |
 | T64 | Explicit timeouts for workflow-heavy ingestion tests | IMPL | qa-engineer | T52 | DONE | 1 | 4bda364 | `docs/work-items/WI-1/evidence/T64-gates.txt` |
 | T65 | Localized import error and fact reason texts | IMPL | frontend-developer | T44 | IN_PROGRESS | 1 | - | - |
-| T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65 | PENDING | 0 | - | - |
+| T66 | Localized trace reasons and shared banner cleanup | IMPL | frontend-developer | T65 | PENDING | 0 | - | - |
+| T67 | Load-robust SC-05 linear-time test | IMPL | qa-engineer | T50 | PENDING | 0 | - | - |
+| T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65, T66, T67 | PENDING | 0 | - | - |
 
 ## Tasks
 
@@ -978,7 +980,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 ### T45: Architecture conformance review
 - Kind: IMPL
 - Agent: architect
-- Depends on: T14, T26, T42, T43, T44, T52, T59, T62, T63, T65
+- Depends on: T14, T26, T42, T43, T44, T52, T59, T62, T63, T65, T66
 - Files owned: `docs/work-items/WI-1/architecture/conformance-review.md`
 - Scope: review of the integrated code and configuration against this architecture: competition, target format (dimensions, maximum slides) and publication mode are configuration or data, not stage logic (R-226); the schema and code hold no player or person entity or attribute and no user-account entity (R-233); one ingestion interface and no provider-specific, mode-specific or competition-specific branch in research, verification or later stages (R-268); the shared domain schemas and the contract are provider-neutral (R-288); the provider-identifier lint rule is present, its seeded test passes, its exemptions are limited to adapters and the probe script, and no inline disable directive exists in core code (`noInlineConfig`, T11H-F15) (R-289, R-139); the provider research and findings record cover pricing, coverage, reliability, redistribution and licensing, rate limits, freshness and attribution per candidate, development and tests need no purchased service, and nothing was purchased, subscribed to or upgraded (R-242, R-281); R-103, R-109 and R-137 (no provider-specific feature beyond the capability); deviations listed as findings with the owning task.
 - Acceptance criteria: R-226, R-233, R-242, R-268, R-281, R-288, R-289
@@ -1024,7 +1026,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 ### T47: Security delta validation
 - Kind: VERIFY
 - Agent: security-reviewer
-- Depends on: T46
+- Depends on: T46, T67
 - Files owned: `docs/work-items/WI-1/evidence/T47-security-validation.txt`, `docs/work-items/WI-1/security/T47-security-validation.md`
 - Scope: delta validation of the implemented system against the security delta of `architecture-delta.md` sections 4 and 11.4, the T10 design review and the T11H review addendum, using the code and the T46 evidence pack: every control V-01 to V-29 of `docs/work-items/WI-1/security/design-review.md` section 9 (TB-1 local service including development mode, TB-2 and TB-3 providers and AI, TB-4 and TB-5 files, TB-6 secrets, TB-7 supply chain, the contract); V-30 as amended by T11G (the recorded U-03 decision PD-10 and the recorded SC-05 isolation decision for FootballDataProvider and the manual input types, and their conditions); every control and observation the T11H addendum adds; the T11G controls of section 11.4: credential handling (header only, redaction, fail-closed startup, token absent from configuration, cache, database, logs, test output, evidence, probe findings and bundle), rate limiting (budget, header-driven waits, bounded retries, no retry of 400, 401, 403 and 404), cache contents (validated projections only), CSV and JSON import limits, the static provider-identifier check, person-field dropping and rejection, import originals served as attachments, demonstration labels; the design-time assumptions NV-1 to NV-6 of section 10 against the pinned versions, the review of moderate advisories from [audit-full], the status of every should-fix finding T10-F04 to T10-F18 and of the observations T10-A1-01 to T10-A1-06 in the tasks that carry them. T11H (`docs/work-items/WI-1/security/design-review-change-1.md` section 10, with the evidence named there): V-13a (AI data block holds only schema-validated values, never `sourceRef`, `declaredSource` or `fileName`); V-30 as amended by T11H (the SC-05 isolation decision E-13, recorded as PD-15, before T49 and T50 started, and the identity re-raise decision E-14, recorded as PD-16, before any real token was configured and before T53's live run, from the requirements decision register, the source of truth (SC-05, SC-08) and the tracker Decisions and Event log start times of T49, T50 and T53), and the PD-16 conditions (`docs/local-setup.md` states them; no committed configuration other than `config/live.config.json` enables a LIVE_DATA source; T53's record states a free-plan token); V-31 to V-36 (credential sourcing, transmission with origin pinning, absence from logs, errors and responses, test and tooling hygiene including `--require-token`, browser, probe and T53 with T53's recorded `real token checked: yes` output or the "probe not run" statement); V-37 to V-42 (real provider response handling, errors and retries with the boolean-only `X-Authenticated-Client` use, budget with header bounds, priority, single-flight and bounded waiters, cache, egress with the stage-discovery cap at most 2 MiB and backed by T53's sizes, catalogue routes answering 404 without provider requests); V-43 to V-49 (import route, base64 transfer and UTF-8 encoding rule, CSV parser with the adversarial corpus and linear-time test, JSON duplicate keys and depth, form size before write, person data and value-free errors, semantic and team-key rules, application atomicity and byte-identical originals, original download headers and file name); V-50 to V-53 (manual approval, configuration-only policies with the values decided by PD-17 and PD-18 (AD-38: refused `allowed_labelled` and `any_supporting_source`, marked-link startup rule, `publicationPermission` `unconfirmed` for the football-data source and `confirmed` only with a decision ID, no committed marked link), source independence under OD-24, demonstration labelling); the T11H-F17 production condition triggered by PD-17 for operator-attested content: the pinned team names of AD-38 item 4, the disposition of U-28 and, if a flag was adopted, its implementation, and a re-review of TB-3 and TB-8 for the operator-attested publication path with the configured AI (stub or local in WI-1), answering the question of `architecture-delta.md` section 11.13.4; V-54 (the SC-05 conditions of the T11H review section 6.3: no new parser dependency or native decoder in `package.json` and the lock file, no new input format, caps within limits, and that a failed linear-time test led to the option B fallback re-plan); V-55 (promoted contract equals the re-accepted `1.0.0-proposed.2` with the T11H-F01 correction except `info.version`; mutating operations; neutrality; lint rule without inline disables); the design-time assumptions NV-7 to NV-12 (T53 findings, T50 and T51 tests, `app.ts`); the status of every should-fix finding T11H-F03 to T11H-F15 and T11H-F20 and of the verify-in-T47 findings T11H-F12 and T11H-F16 in the tasks that carry them; the residuals R9 to R15 recorded as open, and the production condition of T11H-F17 recorded as met or open for the operator-attested path (as assessed above) and open for LIVE_DATA. Findings with severity and classification; missing evidence marked NOT VERIFIED with the exact command. Verdict PASS or FAIL in the evidence file (header of `templates/evidence-header.txt`, `VALIDATED_HEAD` from the brief).
 - Acceptance criteria: R-234, R-235, R-263, R-280
@@ -1256,10 +1258,28 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Acceptance criteria: R-416
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:e2e` -> exit 0 ; `npm run test:a11y` -> exit 0
 
+### T66: Localized trace reasons and shared banner cleanup
+- Kind: IMPL
+- Agent: frontend-developer
+- Depends on: T65
+- Files owned: `apps/web/src/features/history/**`, `apps/web/src/ui/ErrorBanner.tsx`, `apps/web/src/ui/ErrorBanner.test.tsx`
+- Scope: (OD-64, R-416) ESC-1: the trace page shows the fact reason through T65's `factReasonText` from `apps/web/src/features/facts/reasonText.ts` (localized, `lang` attribute) instead of the server `fact.reason`; ESC-2: the shared ErrorBanner no longer renders import errors with "Archivo n" and the server message: remove its unused import-error table, or reuse T65's record and detail texts, whichever keeps every current caller correct; tests for both; text-only rendering. No contract or server change, no new dependency.
+- Acceptance criteria: R-416
+- Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:e2e` -> exit 0 ; `npm run test:a11y` -> exit 0
+
+### T67: Load-robust SC-05 linear-time test
+- Kind: IMPL
+- Agent: qa-engineer
+- Depends on: T50
+- Files owned: `apps/server/src/modules/imports/timing.test.ts`
+- Scope: (OD-64, PD-15, SC-05) the linear-time test compares median parse times at 64 KiB and 512 KiB with `MAX_RATIO` 24 (linear about 8, quadratic about 64) and failed once under parallel load (ratio 32.0). Make the measurement robust to load without raising `MAX_RATIO` and without weakening the linear-versus-quadratic distinction, for example interleaved small and large runs, more samples with the minimum or a trimmed statistic per size, warm-up, and a bounded retry of the whole comparison only when the small measurement is noisy; every input shape of the current test kept; a seeded quadratic parser in the test must still fail. No product code change.
+- Acceptance criteria: -
+- Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0
+
 ### T48: Final gate run
 - Kind: VERIFY
 - Agent: qa-engineer
-- Depends on: T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65
+- Depends on: T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65, T66, T67
 - Files owned: `docs/work-items/WI-1/evidence/T48-gates.txt`
 - Scope: run every final gate (project gates of T25 and the four framework-mandatory gates) at a clean, committed integration HEAD in the verify worktree, without `FOOTBALL_DATA_API_TOKEN` in the environment, and report each gate PASS, FAIL or NOT RUN with command, exit code and counts. Last VERIFY task of the work item.
 - Acceptance criteria: -
@@ -1356,6 +1376,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-61 | MEDIUM | T43 observations: O-1, a `contentBase64` that breaks its schema is answered 400 IMPORT_REJECTED (`encoding_invalid`, `too_large`) as the createImport description and provider-ports 1.6 specify, not VALIDATION_FAILED; both are declared 400 responses, the specific rule wins and the test asserts it; O-2, the configured LIVE source id `football-data` and name `football-data.org` returned as `sourceId`, `sourceName` and catalogue IDs are configuration data allowed by AD-31, not provider identifiers under R-288, while the provider host, provider codes, numeric IDs and field names stay forbidden; T45 confirms both in the conformance review | O-1 VALIDATION_FAILED (contract description change); O-2 rename the configured source | low | MED-05; T43 report |
 | OD-62 | MEDIUM | Load-sensitive timeouts: `apps/server/test/integration/ingestion/data-modes.test.ts` (R-268 downstream stages) and `multi-competition.test.ts` (T52) run the full workflow under the 5 s default timeout and time out under parallel load (T43 run and Orchestrator verification of T43, load average about 12; both pass alone and on rerun); new task T64 (qa-engineer) gives their workflow-heavy tests an explicit timeout as T42 did (WORKFLOW_TEST_TIMEOUT 60 s) without changing any assertion; T48 depends on T64 | raise the global integration timeout in the Vitest configuration (affects every suite) | low | MED-05; T43 report; T43 verification log |
 | OD-63 | MEDIUM | T44 findings: F-1 (the import error table labels a CSV row record as "Archivo n" instead of a row) and F-2 (server English texts shown under the Spanish UI: import error `message` details and fact `reason` texts; R-416 Spanish default) are routed to new task T65 (frontend-developer), which renders localized text from the closed codes the contract already provides (`ImportError.problem` and `record`; fact `status`, `unverifiedReason` and `blockReason`) in Spanish and English, keeping the server text available only where no closed code covers it; no contract or server change; F-3 (the export page lists the caption before the slides, following the API order) needs no change; T45 and T48 depend on T65 | translate on the server (contract change); leave English texts | low | MED-05; T44 report |
+| OD-64 | MEDIUM | T65 follow-ups: ESC-1 (the trace page `apps/web/src/features/history/TracePage.tsx` still shows the English server fact reason, same finding as F-2) and ESC-2 (the unused import-error table of the shared `apps/web/src/ui/ErrorBanner.tsx` still labels records "Archivo n" and renders the server message) go to new task T66 (frontend-developer); the SC-05 linear-time test `apps/server/src/modules/imports/timing.test.ts` (T50, PD-15) failed once under load (ratio 32.0 above the bound 24; passes alone and on rerun) and goes to new task T67 (qa-engineer), which makes the measurement robust to load without raising the bound or weakening the linear-versus-quadratic distinction, the change being re-checked by T47 as a security-control test; T45 depends on T66; T47 and T48 on T67; T48 on T66 | raise the bound (weakens SC-05); leave the flake | low | MED-05; T65 report |
 
 ## Conflicts
 
@@ -1717,6 +1738,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T20:51:14Z | T64 | Status DONE | integration commit 4bda364; evidence/T64-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T20:51:25Z | T65 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T21:05:55Z | T59 | Status DONE | integration commit 7845e6f; evidence/T59-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T21:06:24Z | - | OD-64 recorded | T65 report |
+| 2026-10-28T21:06:24Z | T66 | Task added (OD-64); status PENDING | T65 ESC-1, ESC-2 |
+| 2026-10-28T21:06:24Z | T67 | Task added (OD-64); status PENDING | T65 timing observation |
+| 2026-10-28T21:06:24Z | T45 | Depends on extended by T66 (OD-64) | OD-64 |
+| 2026-10-28T21:06:24Z | T47 | Depends on extended by T67 (OD-64) | OD-64 |
+| 2026-10-28T21:06:24Z | T48 | Depends on extended by T66, T67 (OD-64) | OD-64 |
 
 ## Recovery log
 
