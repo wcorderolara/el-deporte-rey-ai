@@ -94,7 +94,7 @@
     "manuallyApprovedPublication": "allowed_without_accepted_source",
     "livePublicationPermissionRule": "every_supporting_source"
   },
-  "catalogue": { "linksFile": "config/catalogue.json" },
+  "catalogue": { "linksFile": "config/live.catalogue.json" },
   "languagesFile": "config/languages.json",
   "brandFile": "config/brand.json"
 }

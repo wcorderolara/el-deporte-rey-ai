@@ -5,6 +5,9 @@
  * unconfirmed without a decision, leaves the stage-discovery override unset, and adds only the pinned origin to the
  * egress allow-list. It holds no token.
  */
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { loadConfig } from '../../../../platform/config/index.js';
@@ -17,6 +20,20 @@ import { projectRootDir } from './test/replay.js';
 function liveConfig() {
   return loadConfig({ rootDir: projectRootDir(), env: { EDR_CONFIG: 'config/live.config.json' } });
 }
+
+function readJson(file: string): { links: unknown[] } & Record<string, unknown> {
+  return JSON.parse(readFileSync(join(projectRootDir(), file), 'utf8')) as { links: unknown[] } & Record<
+    string,
+    unknown
+  >;
+}
+
+const CL_LINK = {
+  id: 'uefa-champions-league',
+  name: 'UEFA Champions League',
+  reference: true,
+  bindings: [{ sourceId: 'football-data', competitionRef: 'cl' }],
+};
 
 describe('config/live.config.json', () => {
   it('loads with the configuration rules and holds DEMO_DATA, MANUAL_DATA and the enabled LIVE_DATA source', () => {
@@ -77,5 +94,43 @@ describe('config/live.config.json', () => {
 
   it('adds only the pinned origin to the egress allow-list', () => {
     expect(buildEgressAllowList(liveConfig()).origins).toEqual([PINNED_ORIGIN]);
+  });
+
+  it('binds the reference competition by its local key in config/live.catalogue.json (OD-51)', () => {
+    const config = liveConfig();
+    const link = config.catalogue.getLink('uefa-champions-league');
+    expect(link).toMatchObject({
+      name: 'UEFA Champions League',
+      reference: true,
+      noAcceptedPublicSource: false,
+      bindings: [{ sourceId: 'football-data', competitionRef: 'cl' }],
+    });
+    expect(config.catalogue.links.map((item) => item.id)).toEqual(['copa-demo', 'liga-demo', 'uefa-champions-league']);
+  });
+
+  it('copies the links of config/catalogue.json unchanged and adds only the reference link', () => {
+    const live = readJson('config/live.catalogue.json');
+    const base = readJson('config/catalogue.json');
+    expect(live.links).toEqual([...base.links, CL_LINK]);
+    expect(live['restrictToLinks']).toBe(base['restrictToLinks']);
+  });
+
+  it.each(['config/app.config.json', 'config/dev.config.json'])(
+    '%s still loads with config/catalogue.json and no LIVE_DATA link',
+    (file) => {
+      expect(readJson(file)['catalogue']).toEqual({ linksFile: 'config/catalogue.json' });
+      const config = loadConfig({ rootDir: projectRootDir(), env: { EDR_CONFIG: file } });
+      expect(config.catalogue.links.map((item) => item.id)).toEqual(['copa-demo', 'liga-demo']);
+      expect(config.providers.sports.sources.some((source) => source.mode === 'LIVE_DATA')).toBe(false);
+    },
+  );
+
+  it('names the test-only adapter kind test-live in no committed configuration', () => {
+    const dir = join(projectRootDir(), 'config');
+    const files = readdirSync(dir).filter((name) => name.endsWith('.json'));
+    expect(files).toContain('live.catalogue.json');
+    for (const name of files) {
+      expect(readFileSync(join(dir, name), 'utf8')).not.toContain('test-live');
+    }
   });
 });

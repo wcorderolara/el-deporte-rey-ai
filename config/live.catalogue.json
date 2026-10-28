@@ -1,0 +1,46 @@
+{
+  "links": [
+    {
+      "id": "copa-demo",
+      "name": "Copa Demo",
+      "reference": true,
+      "bindings": [
+        {
+          "sourceId": "demo-a",
+          "competitionRef": "copa-demo"
+        },
+        {
+          "sourceId": "demo-b",
+          "competitionRef": "copa-demo"
+        }
+      ]
+    },
+    {
+      "id": "liga-demo",
+      "name": "Liga Demo",
+      "reference": false,
+      "bindings": [
+        {
+          "sourceId": "demo-a",
+          "competitionRef": "liga-demo"
+        },
+        {
+          "sourceId": "demo-b",
+          "competitionRef": "liga-demo"
+        }
+      ]
+    },
+    {
+      "id": "uefa-champions-league",
+      "name": "UEFA Champions League",
+      "reference": true,
+      "bindings": [
+        {
+          "sourceId": "football-data",
+          "competitionRef": "cl"
+        }
+      ]
+    }
+  ],
+  "restrictToLinks": false
+}
