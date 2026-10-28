@@ -81,7 +81,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T47 | Security delta validation | VERIFY | security-reviewer | T46 | PENDING | 0 | - | - |
 | T49 | FootballDataProvider adapter, request budget, projection cache, live tests and capability probe script | IMPL | backend-developer | T21, T23 | PENDING | 0 | - | - |
 | T50 | Manual data import module and ManualDataProvider | IMPL | backend-developer | T18, T19, T20, T21 | PENDING | 0 | - | - |
-| T51 | Manual import UI | IMPL | frontend-developer | T16, T20 | PENDING | 0 | - | - |
+| T51 | Manual import UI | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
 | T52 | Integration tests: data modes, catalogue, manual import and credentials | IMPL | qa-engineer | T23, T27, T29, T30, T41, T49, T50 | PENDING | 0 | - | - |
 | T53 | Capability probe run and football-data.org findings | IMPL | Orchestrator | T13, T41, T49 | PENDING | 0 | - | - |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53 | PENDING | 0 | - | - |
@@ -1249,6 +1249,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T06:38:50Z | - | Environment: host sleep interrupted agents (T31, T36 twice); caffeinate -i started (MED-06), but sleep from lid or system cannot be prevented by the Orchestrator; reported to the PO | pmset log Sleep Service Back to Sleep |
 | 2026-10-28T10:28:02Z | - | OD-41 recorded (no-store for brand files and previews, carried to T33 and T34) | T36 report |
 | 2026-10-28T10:28:05Z | T36 | Status DONE | integration commit e457fc8; evidence/T36-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T10:28:21Z | T51 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 
 ## Recovery log
 
