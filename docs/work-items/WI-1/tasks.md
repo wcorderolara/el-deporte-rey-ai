@@ -76,7 +76,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T42 | Integration tests: content, rendering, visual QA, approval, export, history | IMPL | qa-engineer | T32, T33, T34, T35, T37, T38, T41, T56, T58 | DONE | 1 | db84eda | `docs/work-items/WI-1/evidence/T42-gates.txt` |
 | T43 | Contract conformance tests | IMPL | qa-engineer | T20, T38, T41, T50 | DONE | 1 | cb16a73 | `docs/work-items/WI-1/evidence/T43-gates.txt` |
 | T44 | End-to-end and accessibility journeys | IMPL | qa-engineer | T23, T24, T28, T29, T31, T36, T38, T39, T40, T50, T51 | DONE | 1 | d3222a7 | `docs/work-items/WI-1/evidence/T44-gates.txt` |
-| T45 | Architecture conformance review | IMPL | architect | T14, T26, T42, T43, T44, T52, T59, T62, T63, T65, T66 | IN_PROGRESS | 1 | - | - |
+| T45 | Architecture conformance review | IMPL | architect | T14, T26, T42, T43, T44, T52, T59, T62, T63, T65, T66 | DONE | 1 | 8d2a62f | `docs/work-items/WI-1/evidence/T45-gates.txt` |
 | T46 | Security evidence pack | VERIFY | qa-engineer | T45 | PENDING | 0 | - | - |
 | T47 | Security delta validation | VERIFY | security-reviewer | T46, T67 | PENDING | 0 | - | - |
 | T49 | FootballDataProvider adapter, request budget, projection cache, live tests and capability probe script | IMPL | backend-developer | T21, T23 | DONE | 2 | 7dba63d | `docs/work-items/WI-1/evidence/T49-gates.txt` |
@@ -985,6 +985,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: review of the integrated code and configuration against this architecture: competition, target format (dimensions, maximum slides) and publication mode are configuration or data, not stage logic (R-226); the schema and code hold no player or person entity or attribute and no user-account entity (R-233); one ingestion interface and no provider-specific, mode-specific or competition-specific branch in research, verification or later stages (R-268); the shared domain schemas and the contract are provider-neutral (R-288); the provider-identifier lint rule is present, its seeded test passes, its exemptions are limited to adapters and the probe script, and no inline disable directive exists in core code (`noInlineConfig`, T11H-F15) (R-289, R-139); the provider research and findings record cover pricing, coverage, reliability, redistribution and licensing, rate limits, freshness and attribution per candidate, development and tests need no purchased service, and nothing was purchased, subscribed to or upgraded (R-242, R-281); R-103, R-109 and R-137 (no provider-specific feature beyond the capability); deviations listed as findings with the owning task.
 - Acceptance criteria: R-226, R-233, R-242, R-268, R-281, R-288, R-289
 - Verification: `orch scan models docs/work-items/WI-1/architecture/conformance-review.md` -> exit 0 ; `orch validate --work-item 'WI-1' --at .` -> exit 0
+- Agent result: PASS (the agent has no shell; the Orchestrator committed the review on its behalf with the agent's commit message). R-226, R-233, R-242, R-268, R-281, R-288, R-289 (with R-139, T11H-F15) PASS, R-103, R-109, R-137 conform, with code and test references and the gate evidence `evidence/T62-gates.txt`; OD-61 O-1 and O-2 confirmed as designed (catalogue IDs of unlinked LIVE competitions end in the provider-code slug by design, CR-07); PD-26 recorded as an accepted limitation; findings CR-01 to CR-06 all LOW, none needed before acceptance (CR-01, CR-02 unused copy and CSS; CR-03 duplicated version view in export; CR-04 brand preview fixed size; CR-05 architecture wording; CR-06 PD-21 to PD-26 not yet in the source of truth and the research documents); observations CR-07 to CR-09.
+- Orchestrator verification: `orch scan models docs/work-items/WI-1/architecture/conformance-review.md` exit 0; `orch validate --work-item 'WI-1' --at .` exit 0; ownership against the integration tracker; main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-4 (latest full gate run as evidence; reading of "no mode-specific branch"; OD-61 O-2 covering the provider-code slug; local severity scale and IDs). Findings routed by OD-65.
+- Human interventions: 0.
+- Agent usage: launches 1.
+- Integration commit(s): 8d2a62f (merge --no-ff of task/WI-1/T45). Affected gates at 8d2a62f: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T45-gates.txt, the evidence file of this task).
 
 ### T46: Security evidence pack
 - Kind: VERIFY
@@ -1806,6 +1812,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T21:58:11Z | - | E-16 raised (DR-6, U-32) | T62 report |
 | 2026-10-28T22:01:21Z | - | E-16 answered by the Product Owner verbatim: "Keep rule now, widen later"; recorded as PD-26; FU-9 to FU-15 deferred to the next work item | Product Owner 2026-10-28 |
 | 2026-10-28T22:01:31Z | T45 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
+| 2026-10-28T22:14:41Z | T45 | Status DONE | integration commit 8d2a62f; evidence/T45-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
 
 ## Recovery log
 
