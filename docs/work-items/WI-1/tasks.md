@@ -96,7 +96,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T63 | Requirements corrections from the provider research (FU-7) | IMPL | product-manager | T14 | DONE | 1 | f6226fe | `docs/work-items/WI-1/evidence/T63-gates.txt` |
 | T64 | Explicit timeouts for workflow-heavy ingestion tests | IMPL | qa-engineer | T52 | DONE | 1 | 4bda364 | `docs/work-items/WI-1/evidence/T64-gates.txt` |
 | T65 | Localized import error and fact reason texts | IMPL | frontend-developer | T44 | DONE | 1 | 77bf965 | `docs/work-items/WI-1/evidence/T65-gates.txt` |
-| T66 | Localized trace reasons and shared banner cleanup | IMPL | frontend-developer | T65 | IN_PROGRESS | 1 | - | - |
+| T66 | Localized trace reasons and shared banner cleanup | IMPL | frontend-developer | T65 | DONE | 1 | 052a1fe | `docs/work-items/WI-1/evidence/T66-gates.txt` |
 | T67 | Load-robust SC-05 linear-time test | IMPL | qa-engineer | T50 | IN_PROGRESS | 1 | - | - |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65, T66, T67 | PENDING | 0 | - | - |
 
@@ -1278,6 +1278,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: (OD-64, R-416) ESC-1: the trace page shows the fact reason through T65's `factReasonText` from `apps/web/src/features/facts/reasonText.ts` (localized, `lang` attribute) instead of the server `fact.reason`; ESC-2: the shared ErrorBanner no longer renders import errors with "Archivo n" and the server message: remove its unused import-error table, or reuse T65's record and detail texts, whichever keeps every current caller correct; tests for both; text-only rendering. No contract or server change, no new dependency.
 - Acceptance criteria: R-416
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:e2e` -> exit 0 ; `npm run test:a11y` -> exit 0
+- Agent result: PASS at 9b9413a (npm ci --offline 0; typecheck 0; lint 0; test:unit 0, 2137 tests; test:e2e 0, 13 passed; test:a11y 0, 18 passed). ESC-1: the trace page shows `factReasonText` (localized, `lang`, server text only for an unverified fact without a reason code, marked `lang="en"`); manually approved never called verified (PD-17). ESC-2: the unused import-error table removed from the shared ErrorBanner (no caller passes an import rejection to it; all callers checked); tests for both, hostile strings stay text.
+- Orchestrator verification: ownership against the integration tracker, re-run of npm ci --offline, typecheck, lint, test:unit, test:integration, test:e2e, test:a11y in the task worktree (port 4346; see verification log); main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-4 (reason row always shown; optional `language` prop defaulting to `UI_LANGUAGE`; table removed rather than reused, keeping `ui/` independent of `features/`; block reason row keeps the closed-code Spanish label). Notes for T45: `errorCopy.importErrorLocation` in `apps/web/src/ui/copy.ts` and the `.tableWrapper` and `.table` classes in `ErrorBanner.module.css` are now unused (lint passes).
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 66884; duration 4 minutes.
+- Integration commit(s): 052a1fe (merge --no-ff of task/WI-1/T66). Affected gates at 052a1fe: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T66-gates.txt, the evidence file of this task).
 
 ### T67: Load-robust SC-05 linear-time test
 - Kind: IMPL
@@ -1761,6 +1767,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T21:11:33Z | T60 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T21:11:33Z | T66 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T21:11:33Z | T67 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
+| 2026-10-28T21:19:56Z | T66 | Status DONE | integration commit 052a1fe; evidence/T66-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
