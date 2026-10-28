@@ -1303,7 +1303,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Orchestrator acceptance (PD-25): ownership against the integration tracker; main working tree unchanged; affected gates on the merged state; verification lines not re-run after the PASS report; 2026-10-28.
 - Decisions: LOW-1 to LOW-6 (minimum instead of median; asymmetric steadiness rule with STEADY_SPREAD 1.5 and MAX_RETRIES 2; more warm-up and samples, alternating order; 60 s per-test timeout; two-shape positive control; print tags). Notes for T47 (security-control test change, OD-64): inflation hitting every small sample equally is ruled out by interleaving, not by the steadiness check; 24 remains the SC-05 bound. The agent's CPU-load processes outlived one run and were stopped by PID; none remained.
 - Human interventions: 0.
-- Agent usage: launches 1.
+- Agent usage: launches 1; tokens 78135; duration 18 minutes.
 - Integration commit(s): 02f4a42 (merge --no-ff of task/WI-1/T67). Affected gates at 02f4a42: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-BUILD PASS, PRJ-E2E PASS (evidence/T67-gates.txt, the evidence file of this task).
 
 ### T48: Final gate run
