@@ -1,10 +1,17 @@
 /**
- * Stub of the `features/review` route created by T16; the feature task replaces this file. The default export is the
- * feature's root component (see `app/routes.tsx` for the mount point and the nested-route contract).
+ * Review feature (T39), mounted at "/projects/:projectId/review/*" by `app/routes.tsx`. The feature declares its own
+ * nested routes: the review of the project's active draft at the index, and a not-found page for any other address.
+ * The default export is the feature's root component.
  */
-import { FeaturePlaceholder } from '../../app/pages';
-import { featureCopy } from '../../ui';
+import { Route, Routes } from 'react-router';
+
+import { ReviewNotFound, ReviewPage } from './ReviewPage';
 
 export default function ReviewFeature() {
-  return <FeaturePlaceholder title={featureCopy.review} />;
+  return (
+    <Routes>
+      <Route index element={<ReviewPage />} />
+      <Route path="*" element={<ReviewNotFound />} />
+    </Routes>
+  );
 }
