@@ -73,7 +73,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T39 | Review UI: preview, per-item approval, regeneration, final approval | IMPL | frontend-developer | T16, T20 | DONE | 1 | 34e9569 | `docs/work-items/WI-1/evidence/T39-gates.txt` |
 | T40 | Export, history and traceability UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 9c7f249 | `docs/work-items/WI-1/evidence/T40-gates.txt` |
 | T41 | Integration tests: platform, research and verification | IMPL | qa-engineer | T19, T22, T23, T29, T30 | DONE | 2 | fec71d3, aa37fef | `docs/work-items/WI-1/evidence/T41-gates-2.txt` |
-| T42 | Integration tests: content, rendering, visual QA, approval, export, history | IMPL | qa-engineer | T32, T33, T34, T35, T37, T38, T41, T56 | PENDING | 0 | - | - |
+| T42 | Integration tests: content, rendering, visual QA, approval, export, history | IMPL | qa-engineer | T32, T33, T34, T35, T37, T38, T41, T56, T58 | PENDING | 0 | - | - |
 | T43 | Contract conformance tests | IMPL | qa-engineer | T20, T38, T41, T50 | PENDING | 0 | - | - |
 | T44 | End-to-end and accessibility journeys | IMPL | qa-engineer | T23, T24, T28, T29, T31, T36, T38, T39, T40, T50, T51 | PENDING | 0 | - | - |
 | T45 | Architecture conformance review | IMPL | architect | T14, T26, T42, T43, T44, T52 | PENDING | 0 | - | - |
@@ -88,7 +88,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T55 | Security checks: accepted-advisory option for audit-report | IMPL | qa-engineer | T41 | DONE | 1 | f63dbb2 | `docs/work-items/WI-1/evidence/T55-gates.txt` |
 | T56 | Migration 0002: capitalized_tokens in qa_results | IMPL | backend-developer | T18, T35 | DONE | 1 | ef115d4 | `docs/work-items/WI-1/evidence/T56-gates.txt` |
 | T57 | Counterpart resolution keeps the source failure code | IMPL | backend-developer | T54 | DONE | 1 | b9f9f24 | `docs/work-items/WI-1/evidence/T57-gates.txt` |
-| T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57 | PENDING | 0 | - | - |
+| T58 | Research run invalidates final approvals | IMPL | backend-developer | T37 | PENDING | 0 | - | - |
+| T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58 | PENDING | 0 | - | - |
 
 ## Tasks
 
@@ -913,7 +914,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 ### T42: Integration tests: content, rendering, visual QA, approval, export, history
 - Kind: IMPL
 - Agent: qa-engineer
-- Depends on: T32, T33, T34, T35, T37, T38, T41, T56
+- Depends on: T32, T33, T34, T35, T37, T38, T41, T56, T58
 - Files owned: `apps/server/test/integration/delivery/**`
 - Scope: API-level tests on DEMO_DATA fixture scenarios of both fixture competitions for the active acceptance criteria R-206 to R-221 (R-285 replacing R-210), R-228, R-231, R-232, R-236 to R-238, R-240, R-254, R-255, R-269 and R-271 as worded in `requirements.md` section 7, including: blocked approval naming the fact while unaffected content stays approvable; invented-number and non-official-name flags; provenance labels in stored content; structure and split; a carousel without standings for a knockout stage passing visual QA and the same approval and export rules (R-285); missing standings never derived (R-254); incomplete matchdays with every status left out of result slides (R-255); single-source content (verification source disabled) drafted and its approval refused naming the fact (R-271); template consistency and template change; no-asset carousel; deterministic numeric text; each seeded QA defect; export refusal and success; demonstration band and manifest flag (R-269); regeneration scope; export files; no publication path and no network during export; history and reopen; traceability; brand asset reuse across projects; Spanish default and English project; 1080 x 1350; final approval refusal and success. Also (OD-56) the parts T52 left BLOCKED on visual QA, approval, export and traceability: R-268 (visual QA on LIVE_DATA and MANUAL_DATA content), R-271, R-272, R-278, R-287 and R-290 (approval, export and trace of content from each data mode), and the stored `capitalized_tokens` warning after T56 (OD-26, OD-38).
 - Acceptance criteria: R-206, R-207, R-208, R-209, R-211, R-212, R-213, R-214, R-216, R-217, R-218, R-219, R-220, R-221, R-228, R-231, R-232, R-236, R-237, R-238, R-240, R-254, R-255, R-269, R-271, R-285
@@ -1121,10 +1122,19 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Agent usage: launches 1; tokens 112636; duration 7 minutes.
 - Integration commit(s): b9f9f24 (merge --no-ff of task/WI-1/T57). Affected gates at b9f9f24: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-AUDIT PASS (evidence/T57-gates.txt, the evidence file of this task).
 
+### T58: Research run invalidates final approvals
+- Kind: IMPL
+- Agent: backend-developer
+- Depends on: T37
+- Files owned: `apps/server/src/workflow/**`
+- Scope: (OD-57, T37 risk 1) `architecture.md` section 11.2 states that any regeneration, new draft or research run makes a final approval invalid (stored `final_approvals.invalidated_at`); content (new draft, regeneration), verification (revocation) and review (withdrawal, startup) already invalidate, but starting a research run does not, so a run that fails before the content stage leaves the previous final approval valid. When a workflow run that includes the research stage is created, set `invalidated_at` on every valid final approval of the project's carousels in the same synchronous `BEGIN IMMEDIATE` transaction as the run row (T10-F15; bound parameters of constant SQL, T10-F14); runs without research (if any) leave them unchanged. Tests: a valid final approval becomes invalid as soon as a research run starts, including a run that then fails at research or verification (DEMO_DATA `simulate` failure scenarios); export eligibility follows the stored state; no double invalidation changes an already invalidated time. No contract or data-model change, no new dependency.
+- Acceptance criteria: -
+- Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:integration` -> exit 0
+
 ### T48: Final gate run
 - Kind: VERIFY
 - Agent: qa-engineer
-- Depends on: T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57
+- Depends on: T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58
 - Files owned: `docs/work-items/WI-1/evidence/T48-gates.txt`
 - Scope: run every final gate (project gates of T25 and the four framework-mandatory gates) at a clean, committed integration HEAD in the verify worktree, without `FOOTBALL_DATA_API_TOKEN` in the environment, and report each gate PASS, FAIL or NOT RUN with command, exit code and counts. Last VERIFY task of the work item.
 - Acceptance criteria: -
@@ -1210,6 +1220,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-54 | MEDIUM | T34 note carried to the T42 and T52 briefs: `apps/server/src/providers/sports/adapters/football-data/test/replay.ts`, `apps/server/src/modules/imports/test/support.ts` and `apps/server/src/platform/config/config.test.ts` still name the unbundled synthetic fonts; any new workflow test that reaches rendering must use the bundled font roles of config/brand.json (OD-52) or the shared synthetic brand of providers/sports/test/synthetic.ts | edit those files now | low | MED-05; T34 attempt 2 report |
 | OD-55 | MEDIUM | T46 step 15 runs `node scripts/security-checks.mjs audit-report --accept GHSA-px8p-9vwx-vf98=OD-33` (T55 option): the moderate fflate advisory accepted by OD-33 is printed as accepted with its decision ID and nothing else is accepted, so the evidence pack can pass without weakening the check | keep the command without `--accept` (step can never pass while OD-33 holds) | low | MED-05; T55 report |
 | OD-56 | MEDIUM | Re-plan for the T35, T52 and T54 reports: new task T56 (backend-developer) adds migration 0002 rebuilding `qa_results` so `check_name` accepts `capitalized_tokens` (T35 E-1, option a; schema change above LOW per the migration runner rule; enum widening only, no security impact) and updates data-model.md; new task T57 (backend-developer) keeps the SourceError code through `catalogue.resolveCounterpart` (T54 escalation); T42 takes T52's BLOCKED parts (R-268, R-271, R-272, R-278, R-287, R-290) and depends on T56; T48 depends on T56 and T57 | (b) leave the check unstored and drop the warning from the record; (c) edit 0001 (refused: applied migrations are immutable) | low | MED-05; T35, T52, T54 reports |
+| OD-57 | MEDIUM | T37 risk 1: starting a research run does not invalidate final approvals (architecture.md 11.2 requires it); new task T58 (backend-developer, owner of `apps/server/src/workflow/**`) invalidates them in the run-creation transaction; T42 and T48 depend on T58 | leave invalidation to the content stage (a failed run keeps a stale final approval valid) | low | MED-05; T37 report |
 
 ## Conflicts
 
@@ -1524,6 +1535,10 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T18:00:31Z | T57 | Status DONE | integration commit b9f9f24; evidence/T57-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T18:01:47Z | T56 | Status DONE | integration commit ef115d4; evidence/T56-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T18:09:36Z | T37 | Status DONE | integration commit 5126445; evidence/T37-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T18:09:56Z | - | OD-57 recorded | T37 report |
+| 2026-10-28T18:09:56Z | T58 | Task added (OD-57); status PENDING | T37 risk 1 |
+| 2026-10-28T18:09:56Z | T42 | Depends on extended by T58 (OD-57) | OD-57 |
+| 2026-10-28T18:09:56Z | T48 | Depends on extended by T58 (OD-57) | OD-57 |
 
 ## Recovery log
 
