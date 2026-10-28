@@ -92,7 +92,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T59 | football-data adapter and probe corrections (FU-1, FU-2, FU-4, FU-5) | IMPL | backend-developer | T14 | DONE | 1 | 7845e6f | `docs/work-items/WI-1/evidence/T59-gates.txt` |
 | T60 | Security check of the probe diagnostics (FU-2) | VERIFY | security-reviewer | T59 | DONE | 1 | 7120696 | `docs/work-items/WI-1/evidence/T60-gates.txt` |
 | T61 | Second capability probe run (FU-3) | IMPL | Orchestrator | T60 | DONE | 1 | 406b62f | `docs/work-items/WI-1/evidence/T61-gates.txt` |
-| T62 | Provider research addendum and architecture corrections (FU-3, FU-6, FU-7) | IMPL | architect | T61 | PENDING | 0 | - | - |
+| T62 | Provider research addendum and architecture corrections (FU-3, FU-6, FU-7) | IMPL | architect | T61 | IN_PROGRESS | 1 | - | - |
 | T63 | Requirements corrections from the provider research (FU-7) | IMPL | product-manager | T14 | DONE | 1 | f6226fe | `docs/work-items/WI-1/evidence/T63-gates.txt` |
 | T64 | Explicit timeouts for workflow-heavy ingestion tests | IMPL | qa-engineer | T52 | DONE | 1 | 4bda364 | `docs/work-items/WI-1/evidence/T64-gates.txt` |
 | T65 | Localized import error and fact reason texts | IMPL | frontend-developer | T44 | DONE | 1 | 77bf965 | `docs/work-items/WI-1/evidence/T65-gates.txt` |
@@ -1792,6 +1792,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T21:24:06Z | T61 | Status IN_PROGRESS (attempt 1); Orchestrator task; waits for the Product Owner to place the token (PD-24) | orch next SELECT |
 | 2026-10-28T21:36:30Z | T67 | Status DONE | integration commit 02f4a42; evidence/T67-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
 | 2026-10-28T21:41:24Z | T61 | Status DONE | integration commit 406b62f; evidence/T61-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
+| 2026-10-28T21:41:37Z | T62 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 
 ## Recovery log
 
