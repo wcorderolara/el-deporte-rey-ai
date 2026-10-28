@@ -17,58 +17,8 @@ import {
 import { beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { isObject, loadContract, type JsonObject, type JsonValue } from './support/contract-document.js';
-
-/**
- * Provider identifiers and provider field names that must not appear (R-288 examples, R-289): the provider name and
- * host, the credential header, the reference competition's code, numeric ID and name, and provider response fields.
- */
-const FORBIDDEN: readonly RegExp[] = [
-  /football/i,
-  /x-auth/i,
-  /\bCL\b/,
-  /\b2001\b/,
-  /champions/i,
-  /\bcrest\b/i,
-  /\btla\b/i,
-  /playedGames/i,
-  /utcDate/i,
-  /X-Requests/i,
-  /X-RequestCounter/i,
-  /X-Authenticated-Client/i,
-  /lastUpdated/i,
-  /winner/i,
-  /fullTime/i,
-  /halfTime/i,
-  /\breferees?\b/i,
-];
-
-/** Every key and every string value of a JSON tree, with its location. */
-function texts(value: JsonValue, where = '', found: { where: string; text: string }[] = []) {
-  if (typeof value === 'string') {
-    found.push({ where, text: value });
-  } else if (Array.isArray(value)) {
-    value.forEach((item, index) => texts(item, `${where}/${index}`, found));
-  } else if (isObject(value)) {
-    for (const [key, entry] of Object.entries(value)) {
-      found.push({ where: `${where}/${key} (key)`, text: key });
-      texts(entry, `${where}/${key}`, found);
-    }
-  }
-  return found;
-}
-
-function violations(value: JsonValue): string[] {
-  const result: string[] = [];
-  for (const { where, text } of texts(value)) {
-    for (const pattern of FORBIDDEN) {
-      if (pattern.test(text)) {
-        result.push(`${where}: ${pattern.source}`);
-      }
-    }
-  }
-  return result;
-}
+import { loadContract, type JsonObject, type JsonValue } from './support/contract-document.js';
+import { violations } from './support/neutrality.js';
 
 let document: JsonObject;
 

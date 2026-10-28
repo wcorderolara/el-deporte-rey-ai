@@ -1,7 +1,9 @@
 /**
  * Contract tests of the declared HTTP contract document `contracts/http-api.openapi.yaml`: it parses and validates as
  * OpenAPI 3.1 at version 1.0.0, declares the local request protection on every operation (AD-14, T10-F17,
- * T10-A1-01), has no publication operation (R-219) and carries the OD-26 visual-QA warning check.
+ * T10-A1-01), has no publication operation (R-219), carries the OD-26 visual-QA warning check, equals the accepted
+ * proposal except `info.version`, descriptions and that recorded addition (V-29), and closes every fact value and QA
+ * detail schema (T10-F17).
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 
@@ -10,10 +12,13 @@ import {
   contractOperations,
   isObject,
   loadContract,
+  loadDocument,
+  PROPOSAL_PATH,
   validateContract,
   validateDocument,
   type ContractOperation,
   type JsonObject,
+  type JsonValue,
 } from './support/contract-document.js';
 
 let document: JsonObject;
@@ -182,5 +187,113 @@ describe('OD-26 visual-QA warning check', () => {
       'schema',
     );
     expect(child(body, 'properties', 'checks', 'items').enum).toEqual(['style_consistency', 'capitalized_tokens']);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------
+// V-29: the promoted contract equals the accepted proposal except info.version (and the recorded OD-26 addition)
+// ---------------------------------------------------------------------------------------------------------------
+
+/** A copy without `description` members and without `info.version`. */
+function normative(value: JsonValue): JsonValue {
+  if (Array.isArray(value)) {
+    return value.map(normative);
+  }
+  if (isObject(value)) {
+    const result: JsonObject = {};
+    for (const [key, entry] of Object.entries(value)) {
+      if (key !== 'description') {
+        result[key] = normative(entry);
+      }
+    }
+    return result;
+  }
+  return value;
+}
+
+/** JSON-pointer-like paths at which two documents differ, with the kind of difference. */
+function differences(left: JsonValue | undefined, right: JsonValue | undefined, path = ''): string[] {
+  if (JSON.stringify(left) === JSON.stringify(right)) {
+    return [];
+  }
+  if (left === undefined) {
+    return [`${path}: added`];
+  }
+  if (right === undefined) {
+    return [`${path}: removed`];
+  }
+  if (Array.isArray(left) && Array.isArray(right)) {
+    const result: string[] = [];
+    for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
+      result.push(...differences(left[index], right[index], `${path}/${String(index)}`));
+    }
+    return result;
+  }
+  if (isObject(left) && isObject(right)) {
+    const keys = [...new Set([...Object.keys(left), ...Object.keys(right)])];
+    return keys.flatMap((key) =>
+      differences(left[key], right[key], `${path}/${key.replace(/~/g, '~0').replace(/\//g, '~1')}`),
+    );
+  }
+  return [`${path}: changed`];
+}
+
+describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () => {
+  it('differs from the accepted proposal only in info.version, descriptions and the OD-26 warning check', async () => {
+    const proposal = await loadDocument(PROPOSAL_PATH);
+    expect(child(proposal, 'info').version).toBe('1.0.0-proposed.2');
+    const promoted = structuredClone(document);
+    const accepted = structuredClone(proposal);
+    delete child(promoted, 'info').version;
+    delete child(accepted, 'info').version;
+    const ack = '/paths/~1carousels~1{carouselId}~1elements~1{elementId}~1qa-acknowledgements/post';
+    expect(differences(normative(accepted), normative(promoted))).toEqual([
+      `${ack}/requestBody/content/application~1json/schema/properties/checks/items/enum/1: added`,
+      '/components/schemas/QaResult/oneOf/5: added',
+    ]);
+  });
+
+  it('finds a change outside those (the comparison is effective)', async () => {
+    const proposal = await loadDocument(PROPOSAL_PATH);
+    const changed = structuredClone(proposal);
+    child(changed, 'components', 'schemas', 'Uuid').maxLength = 37;
+    expect(differences(normative(proposal), normative(changed))).toEqual([
+      '/components/schemas/Uuid/maxLength: changed',
+    ]);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------
+// Closed per-kind fact values and per-check QA details (T10-F17)
+// ---------------------------------------------------------------------------------------------------------------
+
+describe('closed fact values and QA details (T10-F17)', () => {
+  it('closes every fact value schema, every context item variant and every QA check variant with its details', () => {
+    const schemas = child(document, 'components', 'schemas');
+    const values = [
+      'MatchTeamsValue',
+      'MatchKickoffValue',
+      'MatchStatusValue',
+      'MatchScoreValue',
+      'StandingRowValue',
+      'MatchdayInfoValue',
+      'TeamOfficialNameValue',
+    ];
+    for (const name of values) {
+      expect(child(schemas, name).additionalProperties, name).toBe(false);
+    }
+    for (const variant of child(schemas, 'ContextItemValue').oneOf as JsonObject[]) {
+      expect(variant.additionalProperties).toBe(false);
+    }
+    const kinds = (child(schemas, 'FactKindValue').oneOf as JsonObject[]).map(
+      (variant) => child(variant, 'properties', 'kind').const,
+    );
+    expect(kinds).toEqual(child(schemas, 'FactKind').enum);
+    expect(child(schemas, 'Fact').unevaluatedProperties).toBe(false);
+    for (const variant of child(schemas, 'QaResult').oneOf as JsonObject[]) {
+      const check = String(child(variant, 'properties', 'check').const);
+      expect(variant.additionalProperties, check).toBe(false);
+      expect(child(variant, 'properties', 'details').additionalProperties, check).toBe(false);
+    }
   });
 });
