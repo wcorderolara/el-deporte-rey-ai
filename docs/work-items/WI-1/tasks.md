@@ -85,7 +85,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T52 | Integration tests: data modes, catalogue, manual import and credentials | IMPL | qa-engineer | T23, T27, T29, T30, T41, T49, T50 | IN_PROGRESS | 1 | - | - |
 | T53 | Capability probe run and football-data.org findings | IMPL | Orchestrator | T13, T41, T49 | IN_PROGRESS | 1 | - | - |
 | T54 | Verification fixes: dispute outcome rule and unavailable consultation record | IMPL | backend-developer | T30, T41 | IN_PROGRESS | 1 | - | - |
-| T55 | Security checks: accepted-advisory option for audit-report | IMPL | qa-engineer | T41 | IN_PROGRESS | 1 | - | - |
+| T55 | Security checks: accepted-advisory option for audit-report | IMPL | qa-engineer | T41 | DONE | 1 | f63dbb2 | `docs/work-items/WI-1/evidence/T55-gates.txt` |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55 | PENDING | 0 | - | - |
 
 ## Tasks
@@ -1058,6 +1058,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: `audit-report` exits 1 when an advisory reaches a watched package, including GHSA-px8p-9vwx-vf98 (fflate via satori) already accepted by OD-33, so the T46 evidence pack could never pass. Add an explicit accepted-advisory option (for example `--accept <GHSA-id>=<decision-id>`, repeatable) that marks an advisory accepted only when a decision ID is given, prints `ACCEPTED <GHSA-id> by <decision-id>` per accepted advisory, still fails on any advisory not accepted and on any high or critical one, and never accepts by default; positive and negative tests; no other behaviour change.
 - Acceptance criteria: -
 - Verification: `npm ci` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0
+- Agent result: PASS at 14d7b67 (npm ci 0; lint 0; test:unit 0, 1745 tests; security-checks tests 75; `audit-report --accept GHSA-px8p-9vwx-vf98=OD-33` on the real tree exit 0, findings 0, RESULT PASS; without --accept exit 1 as before); nothing accepted by default, high or critical never accepted, stale or malformed acceptances fail; output without --accept byte-identical to T41's.
+- Orchestrator verification: ownership against the integration tracker, re-run of npm ci --offline, typecheck, lint, test:unit, test:integration in the task worktree (see verification log); main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-5 (via-chain acceptance only when every GHSA is accepted; acceptance only if every occurrence is moderate or low; usage errors before reading the audit; ID patterns; extra lines only with --accept). T46 command updated by OD-55.
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 83834; duration 5 minutes.
+- Integration commit(s): f63dbb2 (merge --no-ff of task/WI-1/T55). Affected gates at f63dbb2: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-LINT PASS, PRJ-UNIT PASS (evidence/T55-gates.txt, the evidence file of this task).
 
 ### T48: Final gate run
 - Kind: VERIFY
@@ -1444,6 +1450,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T16:27:01Z | T35 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T16:27:01Z | T52 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T16:27:51Z | T53 | Status IN_PROGRESS (attempt 1); Orchestrator working; the probe needs network access to the provider, which the Orchestrator shell does not have; PO asked to run it or to have it recorded as not run | orch next SELECT |
+| 2026-10-28T17:45:17Z | T55 | Status DONE | integration commit f63dbb2; evidence/T55-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
