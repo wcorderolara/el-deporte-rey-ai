@@ -77,7 +77,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T43 | Contract conformance tests | IMPL | qa-engineer | T20, T38, T41, T50 | DONE | 1 | cb16a73 | `docs/work-items/WI-1/evidence/T43-gates.txt` |
 | T44 | End-to-end and accessibility journeys | IMPL | qa-engineer | T23, T24, T28, T29, T31, T36, T38, T39, T40, T50, T51 | DONE | 1 | d3222a7 | `docs/work-items/WI-1/evidence/T44-gates.txt` |
 | T45 | Architecture conformance review | IMPL | architect | T14, T26, T42, T43, T44, T52, T59, T62, T63, T65, T66 | DONE | 1 | 8d2a62f | `docs/work-items/WI-1/evidence/T45-gates.txt` |
-| T46 | Security evidence pack | VERIFY | qa-engineer | T45 | PENDING | 0 | - | - |
+| T46 | Security evidence pack | VERIFY | qa-engineer | T45 | IN_PROGRESS | 1 | - | - |
 | T47 | Security delta validation | VERIFY | security-reviewer | T46, T67 | PENDING | 0 | - | - |
 | T49 | FootballDataProvider adapter, request budget, projection cache, live tests and capability probe script | IMPL | backend-developer | T21, T23 | DONE | 2 | 7dba63d | `docs/work-items/WI-1/evidence/T49-gates.txt` |
 | T50 | Manual data import module and ManualDataProvider | IMPL | backend-developer | T18, T19, T20, T21 | DONE | 1 | b972c53 | `docs/work-items/WI-1/evidence/T50-gates.txt` |
@@ -98,7 +98,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T65 | Localized import error and fact reason texts | IMPL | frontend-developer | T44 | DONE | 1 | 77bf965 | `docs/work-items/WI-1/evidence/T65-gates.txt` |
 | T66 | Localized trace reasons and shared banner cleanup | IMPL | frontend-developer | T65 | DONE | 1 | 052a1fe | `docs/work-items/WI-1/evidence/T66-gates.txt` |
 | T67 | Load-robust SC-05 linear-time test | IMPL | qa-engineer | T50 | DONE | 1 | 02f4a42 | `docs/work-items/WI-1/evidence/T67-gates.txt` |
-| T68 | Source of truth and architecture records at close | IMPL | architect | T45 | PENDING | 0 | - | - |
+| T68 | Source of truth and architecture records at close | IMPL | architect | T45 | IN_PROGRESS | 1 | - | - |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65, T66, T67, T68 | PENDING | 0 | - | - |
 
 ## Tasks
@@ -1827,6 +1827,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T22:15:21Z | - | OD-65 recorded | T45 report |
 | 2026-10-28T22:15:21Z | T68 | Task added (OD-65); status PENDING | T45 CR-06 |
 | 2026-10-28T22:15:21Z | T48 | Depends on extended by T68 (OD-65) | OD-65 |
+| 2026-10-28T22:15:35Z | T46 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
+| 2026-10-28T22:15:35Z | T68 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 
 ## Recovery log
 
