@@ -193,11 +193,11 @@ export const VERSION_1: ManualVersion = {
   },
 };
 
-/** `count` synthetic import errors, as the server reports them (no imported values, T11H-F12). */
+/** `count` synthetic import errors of a CSV file, as the server reports them (row numbers; no values, T11H-F12). */
 export function importErrors(count: number): ImportError[] {
   return Array.from({ length: count }, (_, index) => ({
     location: 'file' as const,
-    record: `row ${index + 2}`,
+    record: String(index + 2),
     field: index % 2 === 0 ? 'home_score' : 'status',
     problem: index % 2 === 0 ? ('finished_without_score' as const) : ('type_invalid' as const),
     message: index % 2 === 0 ? 'A finished match needs a score' : 'Value has an invalid type',

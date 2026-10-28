@@ -74,16 +74,28 @@ test.describe('Manual import journey (MANUAL_DATA)', () => {
     const errors = rejected.getByRole('table', { name: '3 errores en la importación' });
     const errorRows = errors.getByRole('row').filter({ hasNot: page.getByRole('columnheader') });
     await expect(errorRows).toHaveCount(3);
-    const expectedErrors: [string, string, string][] = [
-      ['3', 'home_score', 'Tipo de valor no válido'],
-      ['4', 'kickoff', 'Falta un valor obligatorio'],
-      ['6', 'away_score', 'Tipo de valor no válido'],
+    // Records by kind (CSV row) and details from the closed problem code in Spanish (OD-63, R-416).
+    const expectedErrors: [string, string, string, string][] = [
+      [
+        '3',
+        'home_score',
+        'Tipo de valor no válido',
+        'El valor de «home_score» no tiene el tipo o el formato esperado.',
+      ],
+      ['4', 'kickoff', 'Falta un valor obligatorio', 'Falta el valor obligatorio de «kickoff».'],
+      [
+        '6',
+        'away_score',
+        'Tipo de valor no válido',
+        'El valor de «away_score» no tiene el tipo o el formato esperado.',
+      ],
     ];
-    for (const [index, [row, field, problem]] of expectedErrors.entries()) {
+    for (const [index, [row, field, problem, detail]] of expectedErrors.entries()) {
       const cells = errorRows.nth(index).getByRole('cell');
-      await expect(cells.nth(0)).toHaveText(new RegExp(`^Archivo\\s+${row}$`));
+      await expect(cells.nth(0)).toHaveText(new RegExp(`^Fila\\s+${row}$`));
       await expect(cells.nth(1)).toHaveText(field);
       await expect(cells.nth(2)).toHaveText(problem);
+      await expect(cells.nth(3)).toHaveText(detail);
     }
     // Nothing from the rejected import is stored.
     await expect(history.getByRole('rowheader')).toHaveCount(appliedBefore);

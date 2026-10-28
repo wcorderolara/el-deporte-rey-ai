@@ -16,6 +16,8 @@ import type {
   SourceRole,
 } from '@edr/contracts';
 
+import { blockReasonTable } from './reasonText';
+
 type Run = RunListResponse['runs'][number];
 
 export const factsCopy = {
@@ -100,13 +102,8 @@ export const publicationCopy = {
     'aceptada. El contenido que use este dato se etiqueta como atestiguado por el operador.',
 } as const;
 
-export const blockReasonLabel: Record<BlockReason, string> = {
-  not_verified: 'el dato no está verificado.',
-  manually_approved_not_publishable:
-    'la aprobación manual solo permite publicar en competiciones configuradas sin fuente pública aceptada, y esta ' +
-    'competición no lo está.',
-  publication_permission_unconfirmed: 'permiso de republicación no confirmado.',
-};
+/** BlockReason in Spanish; the Spanish and English tables are in `reasonText.ts` (OD-63). */
+export const blockReasonLabel: Record<BlockReason, string> = blockReasonTable.es;
 
 export const evidenceCopy = {
   caption: 'Evidencia por fuente',
