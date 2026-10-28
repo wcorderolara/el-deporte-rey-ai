@@ -1208,6 +1208,11 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-27T22:23:33Z | T31 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-27T22:31:13Z | T22 | Status DONE | integration commit 89fa98d; evidence/T22-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-27T22:31:22Z | T36 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-28T00:36:02Z | T19 | Agent interrupted by the usage limit; uncommitted work preserved in the task worktree; same agent resumed | task-notification rate_limit 429 |
+| 2026-10-28T00:36:02Z | T21 | Agent interrupted by the usage limit; uncommitted work preserved in the task worktree; same agent resumed | task-notification rate_limit 429 |
+| 2026-10-28T00:36:02Z | T28 | Agent interrupted by the usage limit; uncommitted work preserved in the task worktree; same agent resumed | task-notification rate_limit 429 |
+| 2026-10-28T00:36:03Z | T31 | Agent interrupted by the usage limit; uncommitted work preserved in the task worktree; same agent resumed | task-notification rate_limit 429 |
+| 2026-10-28T00:36:03Z | T36 | Agent interrupted by the usage limit; uncommitted work preserved in the task worktree; same agent resumed | task-notification rate_limit 429 |
 
 ## Recovery log
 
