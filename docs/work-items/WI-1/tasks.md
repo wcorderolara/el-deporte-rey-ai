@@ -95,7 +95,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T62 | Provider research addendum and architecture corrections (FU-3, FU-6, FU-7) | IMPL | architect | T61 | PENDING | 0 | - | - |
 | T63 | Requirements corrections from the provider research (FU-7) | IMPL | product-manager | T14 | IN_PROGRESS | 1 | - | - |
 | T64 | Explicit timeouts for workflow-heavy ingestion tests | IMPL | qa-engineer | T52 | DONE | 1 | 4bda364 | `docs/work-items/WI-1/evidence/T64-gates.txt` |
-| T65 | Localized import error and fact reason texts | IMPL | frontend-developer | T44 | PENDING | 0 | - | - |
+| T65 | Localized import error and fact reason texts | IMPL | frontend-developer | T44 | IN_PROGRESS | 1 | - | - |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65 | PENDING | 0 | - | - |
 
 ## Tasks
@@ -1709,6 +1709,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T20:49:55Z | T45 | Depends on extended by T65 (OD-63) | OD-63 |
 | 2026-10-28T20:49:55Z | T48 | Depends on extended by T65 (OD-63) | OD-63 |
 | 2026-10-28T20:51:14Z | T64 | Status DONE | integration commit 4bda364; evidence/T64-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T20:51:25Z | T65 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 
 ## Recovery log
 
