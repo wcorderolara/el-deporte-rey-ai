@@ -63,7 +63,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T29 | Research stage | IMPL | backend-developer | T21, T27 | DONE | 1 | 328c6ef | `docs/work-items/WI-1/evidence/T29-gates.txt` |
 | T30 | Verification stage: two-source rule, disputes, team identity | IMPL | backend-developer | T21, T27 | DONE | 1 | 6f4019d | `docs/work-items/WI-1/evidence/T30-gates.txt` |
 | T31 | Facts and verification UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 63d83cd | `docs/work-items/WI-1/evidence/T31-gates.txt` |
-| T32 | Content stage: structure, AI drafting, fact placeholders, content checks | IMPL | backend-developer | T22, T27 | IN_PROGRESS | 1 | - | - |
+| T32 | Content stage: structure, AI drafting, fact placeholders, content checks | IMPL | backend-developer | T22, T27 | IN_PROGRESS | 2 | - | - |
 | T33 | Brand asset registry | IMPL | backend-developer | T27 | DONE | 1 | 982c722 | `docs/work-items/WI-1/evidence/T33-gates.txt` |
 | T34 | Rendering stage and carousel templates | IMPL | backend-developer | T27, T33 | IN_PROGRESS | 1 | - | - |
 | T35 | Visual QA stage | IMPL | backend-developer | T30, T34 | PENDING | 0 | - | - |
@@ -1096,6 +1096,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-46 | MEDIUM | SOT-1: the root `engines.node` range `>=22.22.2 <23` is accepted as meeting OD-30 together with `.nvmrc` 22.22.2 (exact) and `engine-strict` in .npmrc; no exact pin in engines | tighten engines to 22.22.2 via the owner of package.json (T43) | low (one-line change) | MED-03; T26 report; PO notified |
 | OD-47 | MEDIUM | T30 interpretations confirmed: LOW-4 `facts.subject` also stores the canonical value of each evidence observation (contract subject plus an evidence list) so evidence is served as contract FactValue while observations keep source-local keys (T29 format); LOW-9 the latest completed full run is status completed and kind full (as T31) | canonical IDs in observations | low (JSON content, no column change) | MED-04; T30 report; data-model.md updated at close; PO notified |
 | OD-48 | MEDIUM | T33 risk 3: removing the just-written brand file that no row references after a failed insert or a lost concurrent duplicate race is cleanup, not deletion of a registered asset or history (OD-08 stands); T33 risk 2 (about 200 MiB peak memory decoding a 4096 x 4096 image, multiplied by parallel uploads) carried to T47 to note under PD-16 single-operator use | leave orphan files | low | MED-04; T33 report |
+| OD-49 | MEDIUM | T32 follow-ups: (1) T32 attempt 2 re-wires content publishability to T30's exported `publishability()` (no duplicated PD-17/PD-18 rules) and uses T23's committed fixtures/ai; the integration branch is merged into task/WI-1/T32 (new ownership base); (2) T34, T35 and T37 consume T32's stored text layout (ElementTextSchema, ElementSubjectSchema; standings fact segments hold row cells as text, position and points placeholders single values) and T37 knows content and regeneration write final_approvals.invalidated_at; (3) the strict number-word reading (un, una, one, segundo, cuarto flagged) stays for the MVP (stub AI); revisit before a real model is used, since relaxing it weakens a content check | accept the duplicated interim function | low | MED-05, MED-04; T32 report; PO notified |
 
 ## Conflicts
 
@@ -1374,6 +1375,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T15:52:02Z | - | OD-48 recorded (orphan-file cleanup allowed; decode memory note to T47) | T33 report |
 | 2026-10-28T15:52:33Z | T33 | Status DONE | integration commit 982c722; evidence/T33-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T15:52:52Z | T34 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-28T15:59:36Z | T32 | Attempt 1 (280911c) reported PASS with an interim duplicate of the T30 publishability rules; correction attempt 2: re-wire to T30 publishability() and use T23 fixtures/ai; integration merged into the task branch (MED-05) | T32 report escalations |
+| 2026-10-28T15:59:36Z | - | OD-49 recorded (T32 re-wire, layout notes to T34, T35, T37; strict number words kept for the MVP) | T32 report |
 
 ## Recovery log
 
