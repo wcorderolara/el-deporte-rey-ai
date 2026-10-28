@@ -1004,6 +1004,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-38 | MEDIUM | OD-26 contract shape confirmed: QA check `capitalized_tokens` (severity warning) with closed details `{ tokens: string[] }` (each at most 64 characters) and nullable acknowledgedAt; acknowledgeQaWarnings keeps `maxItems: 1` (widening later is additive under PD-11) | open details; maxItems 2 | low | MED-01 (covered by OD-23 pre-release scope); T20 E-2; PO notified |
 | OD-39 | MEDIUM | T20 E-1: `@readme/openapi-parser` cannot import as installed (legacy-peer-deps hoists ajv-draft-04 next to ESLint's ajv 6); the test-only resolve hook in `apps/server/test/contract/support/contract-document.ts` is accepted for now; re-plan: T43 also owns the root `package.json` and `package-lock.json` to add `ajv` 8.20.0 to the root devDependencies and remove the hook (T43 starts after T19, which owns package.json until DONE) | change .npmrc legacy-peer-deps | low | MED-02, MED-05; T20 report |
 | OD-40 | MEDIUM | T31 note carried to the T30 brief: `listFacts` must return `blockReason` for blocked VERIFIED facts (`publication_permission_unconfirmed`, R-078) and MANUALLY_APPROVED facts (`manually_approved_not_publishable`, PD-17), so the facts page shows the PD-17 and PD-18 blocks; T41 checks it | UI derives blocks itself | low | MED-05; T31 report |
+| OD-41 | MEDIUM | T36 note carried to the T33 and T34 briefs: brand asset files and template previews are served with `Cache-Control: no-store` (or without caching validators) so the UI shows refreshed previews after an asset is activated or deactivated; no cache-busting query parameter (not in the contract) | add a query parameter (contract change) | low | MED-05; T36 report |
 
 ## Conflicts
 
@@ -1240,6 +1241,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T05:32:26Z | T31 | Status DONE | integration commit 63d83cd; evidence/T31-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T06:38:50Z | T40 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T06:38:50Z | - | Environment: host sleep interrupted agents (T31, T36 twice); caffeinate -i started (MED-06), but sleep from lid or system cannot be prevented by the Orchestrator; reported to the PO | pmset log Sleep Service Back to Sleep |
+| 2026-10-28T10:28:02Z | - | OD-41 recorded (no-store for brand files and previews, carried to T33 and T34) | T36 report |
 
 ## Recovery log
 
