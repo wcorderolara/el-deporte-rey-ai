@@ -250,10 +250,11 @@ const BRAND: Json = {
   handle: '@SyntheticBrand',
   provisional: true,
   palette: { primary: '#5B2A86', primaryDark: '#2E1145', accent: '#D4AF37', secondary: '#1F4FB8', light: '#FFFFFF' },
+  // The bundled font roles of config/brand.json (assets/fonts, OD-52), so that workflow tests can render slides.
   fonts: {
-    heading: { family: 'Heading Sans', weight: 800 },
-    body: { family: 'Body Sans', weight: 400 },
-    numeric: { family: 'Body Sans', weight: 700 },
+    heading: { family: 'Montserrat', weight: 800 },
+    body: { family: 'Inter', weight: 400 },
+    numeric: { family: 'Inter', weight: 700 },
   },
 };
 
