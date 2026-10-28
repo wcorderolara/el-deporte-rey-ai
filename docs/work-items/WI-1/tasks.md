@@ -1030,6 +1030,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-40 | MEDIUM | T31 note carried to the T30 brief: `listFacts` must return `blockReason` for blocked VERIFIED facts (`publication_permission_unconfirmed`, R-078) and MANUALLY_APPROVED facts (`manually_approved_not_publishable`, PD-17), so the facts page shows the PD-17 and PD-18 blocks; T41 checks it | UI derives blocks itself | low | MED-05; T31 report |
 | OD-41 | MEDIUM | T36 note carried to the T33 and T34 briefs: brand asset files and template previews are served with `Cache-Control: no-store` (or without caching validators) so the UI shows refreshed previews after an asset is activated or deactivated; no cache-busting query parameter (not in the contract) | add a query parameter (contract change) | low | MED-05; T36 report |
 | OD-42 | MEDIUM | T39 note carried to the T37 brief: `ElementVersion.imageUrl` must equal the relative path of the contract operation getSlideImage (`/api/v1/element-versions/{versionId}/image`); the review UI builds image addresses from that operation and uses imageUrl only as an existence flag | UI uses imageUrl directly | low | MED-05; T39 report |
+| OD-43 | MEDIUM | T27 escalation: operator match exclusions for a redraft are stored in `workflow_runs.config_snapshot` under `parameters.excludedMatchKeys` (null when a run does not change exclusions), read by T32 through `RunRepository.parameters(runId)` / `RunParametersSchema` in `apps/server/src/workflow/index.ts`; no DDL change; data-model.md is updated at close (configuration-update task) | nullable column via a new migration | low (additive JSON field) | MED-04, MED-05; T27 report; PO notified |
 
 ## Conflicts
 
@@ -1277,6 +1278,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T10:33:14Z | - | OD-42 recorded (imageUrl equals getSlideImage path, carried to T37) | T39 report |
 | 2026-10-28T10:33:16Z | T39 | Status DONE | integration commit 34e9569; evidence/T39-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T11:09:08Z | T24 | Agent report PASS (7 tests against the T19 seam server); standard checks re-run PASS (ownership 8/0, typecheck, lint, unit 704, integration 75); integrated at 8ff8fbf; merged-state test:e2e and test:a11y exit 1: real server startup refuses because fixtures/sports scenario files for demo-a and demo-b do not exist yet (T23 in progress); stays IN_PROGRESS until re-run after T23 | merged-T24 e2e and a11y logs |
+| 2026-10-28T14:25:19Z | - | OD-43 recorded (exclusions stored in config_snapshot parameters; carried to T32) | T27 escalation |
 
 ## Recovery log
 
