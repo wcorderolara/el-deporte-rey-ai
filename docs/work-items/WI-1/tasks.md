@@ -65,7 +65,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T31 | Facts and verification UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 63d83cd | `docs/work-items/WI-1/evidence/T31-gates.txt` |
 | T32 | Content stage: structure, AI drafting, fact placeholders, content checks | IMPL | backend-developer | T22, T27 | DONE | 2 | 9630543 | `docs/work-items/WI-1/evidence/T32-gates.txt` |
 | T33 | Brand asset registry | IMPL | backend-developer | T27 | DONE | 1 | 982c722 | `docs/work-items/WI-1/evidence/T33-gates.txt` |
-| T34 | Rendering stage and carousel templates | IMPL | backend-developer | T27, T33 | IN_PROGRESS | 1 | - | - |
+| T34 | Rendering stage and carousel templates | IMPL | backend-developer | T27, T33 | IN_PROGRESS | 2 | - | - |
 | T35 | Visual QA stage | IMPL | backend-developer | T30, T34 | PENDING | 0 | - | - |
 | T36 | Brand assets and templates UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | e457fc8 | `docs/work-items/WI-1/evidence/T36-gates.txt` |
 | T37 | Review module: approval state machine, regeneration, final approval | IMPL | backend-developer | T32, T35 | PENDING | 0 | - | - |
@@ -84,8 +84,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T51 | Manual import UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 70c6f98 | `docs/work-items/WI-1/evidence/T51-gates.txt` |
 | T52 | Integration tests: data modes, catalogue, manual import and credentials | IMPL | qa-engineer | T23, T27, T29, T30, T41, T49, T50 | PENDING | 0 | - | - |
 | T53 | Capability probe run and football-data.org findings | IMPL | Orchestrator | T13, T41, T49 | PENDING | 0 | - | - |
-| T54 | Verification fixes: dispute outcome rule and unavailable consultation record | IMPL | backend-developer | T30, T41 | PENDING | 0 | - | - |
-| T55 | Security checks: accepted-advisory option for audit-report | IMPL | qa-engineer | T41 | PENDING | 0 | - | - |
+| T54 | Verification fixes: dispute outcome rule and unavailable consultation record | IMPL | backend-developer | T30, T41 | IN_PROGRESS | 1 | - | - |
+| T55 | Security checks: accepted-advisory option for audit-report | IMPL | qa-engineer | T41 | IN_PROGRESS | 1 | - | - |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55 | PENDING | 0 | - | - |
 
 ## Tasks
@@ -798,7 +798,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Kind: IMPL
 - Agent: backend-developer
 - Depends on: T27, T33
-- Files owned: `apps/server/src/modules/rendering/**`, `assets/fonts/**`
+- Files owned: `apps/server/src/modules/rendering/**`, `assets/fonts/**`, `apps/server/src/modules/projects/projects.int.test.ts`, `apps/server/src/providers/sports/test/synthetic.ts`
 - Scope: `architecture.md` section 9 (revised by T11G): OFL fonts with licence files (provisional, OD-07); versioned templates cover, match-result (two empty badge slots), standings (any number of rows given to it, "as of" text), closing, none assuming a competition, a table size, a stage name or the presence of standings; brand palette roles only; brand logo and mascot slots rendered only when an active asset exists; team, competition and stage names as text; the demonstration band on every slide of a DEMO_DATA project (OD-21, AD-33); text layout with measurement and overflow flags; render model; Satori and resvg rendering to PNG at the configured size; template registry and preview routes. Unit tests: identical numeric text and identical PNG hash for two renders of the same input (R-213), exact official names, 1080 x 1350 output (R-238), complete slides with no assets and empty badge slots (R-212, R-231), shared layout and palette across two selections and a template version change applying to later carousels (R-211), a complete carousel without standings slides (R-285), the demonstration band present on DEMO_DATA slides and absent otherwise (R-269). Security design review items: render inputs as data only (T10-F09): image slots receive only `data:` URIs built from stored asset bytes, no `loadAdditionalAsset`, resvg with `font.loadSystemFonts: false`, `fontFiles` from `assets/fonts/` only and no resources directory; a test rendering text with `<`, `>`, `&`, `"`, `]]>` and `</text><image href=...>` asserts a valid PNG and a well-formed SVG with no added element; a test that rendering opens no socket (network guard); renders created with the exclusive flag under a realpath-checked data directory from validated UUIDs (T10-F13); template previews cached by template version, active brand-asset hashes and language (T10-F04).
 - Acceptance criteria: R-211, R-212, R-213, R-225, R-231, R-238, R-269, R-285
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:integration` -> exit 0
@@ -1137,6 +1137,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-49 | MEDIUM | T32 follow-ups: (1) T32 attempt 2 re-wires content publishability to T30's exported `publishability()` (no duplicated PD-17/PD-18 rules) and uses T23's committed fixtures/ai; the integration branch is merged into task/WI-1/T32 (new ownership base); (2) T34, T35 and T37 consume T32's stored text layout (ElementTextSchema, ElementSubjectSchema; standings fact segments hold row cells as text, position and points placeholders single values) and T37 knows content and regeneration write final_approvals.invalidated_at; (3) the strict number-word reading (un, una, one, segundo, cuarto flagged) stays for the MVP (stub AI); revisit before a real model is used, since relaxing it weakens a content check | accept the duplicated interim function | low | MED-05, MED-04; T32 report; PO notified |
 | OD-50 | MEDIUM | Re-plan for T41 findings: new task T54 (backend-developer) fixes T30 defects F-01 (dispute outcome same_source vs no_match) and F-02 (unavailable consultation not stored in the dispute record) and makes the T41 assertion exact; new task T55 (qa-engineer) adds an explicit accepted-advisory option naming a decision ID to `security-checks.mjs audit-report` (OD-33 acceptance of GHSA-px8p-9vwx-vf98), so T46 can produce PASS evidence without weakening the check; T48 depends on both | reopen T30 and T41 | low | MED-05; T41 report |
 | OD-51 | MEDIUM | T49 escalation: the live configuration gets its own catalogue `config/live.catalogue.json` (the demo links of config/catalogue.json plus a reference link "UEFA Champions League" binding football-data `cl`), and `config/live.config.json` points to it; app.config.json and dev.config.json keep config/catalogue.json; T49 owns the new file (attempt 2). T49 note for T47: the config loader repeats a refused secret-like key's name in its error (low risk) | add the link to config/catalogue.json (breaks configs without football-data) | low | MED-05, MED-04; T49 report |
+| OD-52 | MEDIUM | U-02 fonts: bundle under assets/fonts/ the OFL 1.1 font files Montserrat-ExtraBold.ttf (heading, Montserrat 9.000, sha256 5cf0a23133ccce35f9e115b8dbbf90434201827bc2465d12f9d91bbf02cf9466), Inter-Regular.ttf (body, Inter 4.001, sha256 a414b48aa577ef2c62ebb135341ddeef33ee26a4f5dc9f787f93c1aab08ebb50) and Inter-Bold.ttf (numeric, sha256 fbe825cbfc749317f57a1433d3905aa9d3f388732fd29b8e8a36f34845e3bc3e), copied unmodified from the npm packages @expo-google-fonts/montserrat 0.4.2 and @expo-google-fonts/inter 0.4.2 (registry only; no dependency added), with their licence texts; files pinned by SHA-256 in fonts.ts; no system fonts | system fonts; add the packages as dependencies | low | MED-03; T34 report; OD-07 provisional brand values; PO notified |
+| OD-53 | MEDIUM | Re-plan: T34 attempt 2 (integration branch merged into task/WI-1/T34) also owns `apps/server/src/modules/projects/projects.int.test.ts` (T27, DONE) and `apps/server/src/providers/sports/test/synthetic.ts` (T21, DONE) to align them with a registered rendering stage (the stage_not_available test must use a stage no module registers) and with bundled font roles in the synthetic brand, so the merged state passes; no product behaviour change | separate follow-up task | low | MED-05; T34 trial merge (2 integration failures) |
 
 ## Conflicts
 
@@ -1426,6 +1428,10 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T16:16:55Z | - | OD-50 and OD-51 recorded | T41 and T49 reports |
 | 2026-10-28T16:21:31Z | T41 | Status DONE | integration commit aa37fef; evidence/T41-gates-2.txt PASS (9 of 9) |
 | 2026-10-28T16:22:22Z | T49 | Status DONE | integration commit 7dba63d; evidence/T49-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T16:22:44Z | - | OD-52 (fonts) and OD-53 (T34 owns two DONE-task test inputs) recorded | T34 report and trial merge |
+| 2026-10-28T16:22:44Z | T34 | Attempt 1 (16dd9d0) verified standalone (ownership 35/0; unit 1489, integration 205, contract 465, build 0); trial merge with integration: 2 integration failures (projects stage_not_available premise; synthetic brand fonts); correction attempt 2 (OD-53); Files owned extended | trial merge in verify worktree |
+| 2026-10-28T16:22:44Z | T54 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-28T16:22:44Z | T55 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 
 ## Recovery log
 
