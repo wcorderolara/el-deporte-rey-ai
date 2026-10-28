@@ -1,12 +1,14 @@
 /**
- * Test-only support of the content tests: synthetic facts and inputs, stub AI fixture files in a temporary project
- * root (texts equivalent to the T23 `fixtures/ai/` bypass fixtures), and an in-memory migrated database with
+ * Test-only support of the content tests: synthetic facts and inputs, the stub AI provider over the committed T23
+ * fixtures (`fixtures/ai/`, read through their manifest), and an in-memory migrated database with
  * synthetic sources, a project, a run and stored facts. Every team, competition and value is invented; nothing opens
  * a connection. Not used by production code.
  */
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { z } from 'zod';
 
 import type { AppContainer, Clock } from '../../../container.js';
 import type { AppConfig } from '../../../platform/config/index.js';
@@ -206,129 +208,55 @@ export function contentInput(facts: Facts, overrides: Partial<ContentInput> = {}
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// Stub AI fixtures (equivalent to the T23 fixtures under fixtures/ai/)
+// Stub AI fixtures: the committed T23 fixtures under fixtures/ai/ (read through their manifest)
 // ---------------------------------------------------------------------------------------------------------------
+
+/** The repository root, under which the stub adapter reads `fixtures/ai/<scenario>.json`. */
+export const REPO_ROOT = fileURLToPath(new URL('../../../../../../', import.meta.url));
+
+const AiManifestSchema = z.object({
+  fixtures: z.array(
+    z.object({
+      file: z.string(),
+      scenario: z.string(),
+      expectFlag: z.enum(['UNVERIFIED_NUMBER', 'NON_OFFICIAL_TEAM_NAME', 'FORBIDDEN_CONTENT']).optional(),
+      field: z.enum(['headline', 'description', 'caption']).optional(),
+      bypassClass: z.boolean().optional(),
+      expectFailure: z.string().optional(),
+    }),
+  ),
+});
 
 export interface AiFixtureCase {
   readonly scenario: string;
   readonly expectFlag: 'UNVERIFIED_NUMBER' | 'NON_OFFICIAL_TEAM_NAME' | 'FORBIDDEN_CONTENT';
-  readonly field: 'headline' | 'caption';
-  readonly document: unknown;
+  readonly field: 'headline' | 'description' | 'caption';
+  /** True for the T10-F05 bypass classes. */
+  readonly bypassClass: boolean;
 }
 
-const matchSlide = (headline: string, description: string): unknown => ({
-  slides: { match_result: { headline, description } },
-});
+/** Every content-check case of `fixtures/ai/_manifest.json`, with the flag and field the manifest states. */
+export const AI_FIXTURE_CASES: readonly AiFixtureCase[] = AiManifestSchema.parse(
+  JSON.parse(readFileSync(path.join(REPO_ROOT, 'fixtures', 'ai', '_manifest.json'), 'utf8')),
+).fixtures.flatMap((entry) =>
+  entry.expectFlag === undefined || entry.field === undefined
+    ? []
+    : [
+        {
+          scenario: entry.scenario,
+          expectFlag: entry.expectFlag,
+          field: entry.field,
+          bypassClass: entry.bypassClass === true,
+        },
+      ],
+);
 
-/** One case per T10-F05 bypass class plus the invented score and the translated and abbreviated names. */
-export const AI_FIXTURE_CASES: readonly AiFixtureCase[] = [
-  {
-    scenario: 'invented-score',
-    expectFlag: 'UNVERIFIED_NUMBER',
-    field: 'caption',
-    document: {
-      slides: { cover: { headline: 'Resumen de la jornada', description: 'Lo más destacado' } },
-      caption: '¡Goleada! El líder ganó 4-0 y sigue invicto',
-    },
-  },
-  {
-    scenario: 'translated-team-name',
-    expectFlag: 'NON_OFFICIAL_TEAM_NAME',
-    field: 'headline',
-    document: matchSlide('Ebony River Athletic se impone', 'Crónica del partido'),
-  },
-  {
-    scenario: 'abbreviated-team-name',
-    expectFlag: 'NON_OFFICIAL_TEAM_NAME',
-    field: 'headline',
-    document: matchSlide('At. Río Ébano se impone', 'Crónica del partido'),
-  },
-  {
-    scenario: 'bypass-fullwidth-digits',
-    expectFlag: 'UNVERIFIED_NUMBER',
-    field: 'headline',
-    document: matchSlide('Victoria por \uFF13 goles', 'Partido resuelto con autoridad'),
-  },
-  {
-    scenario: 'bypass-other-script-digits',
-    expectFlag: 'UNVERIFIED_NUMBER',
-    field: 'headline',
-    document: matchSlide('Victoria por \u0663 goles', 'Partido resuelto por \u0969 goles'),
-  },
-  {
-    scenario: 'bypass-superscript-digits',
-    expectFlag: 'UNVERIFIED_NUMBER',
-    field: 'headline',
-    document: matchSlide('Remontada de \u00B3 goles', 'Ventaja de \u00B2 goles al descanso'),
-  },
-  {
-    scenario: 'bypass-circled-numbers',
-    expectFlag: 'UNVERIFIED_NUMBER',
-    field: 'headline',
-    document: matchSlide('Ganó por \u2462 goles', 'Suma \u246B puntos'),
-  },
-  {
-    scenario: 'bypass-number-words',
-    expectFlag: 'UNVERIFIED_NUMBER',
-    field: 'headline',
-    document: matchSlide('Ya suma veintitrés puntos', 'Forty-two goals this season'),
-  },
-  {
-    scenario: 'bypass-ordinal-words',
-    expectFlag: 'UNVERIFIED_NUMBER',
-    field: 'headline',
-    document: matchSlide('Tercera victoria seguida', 'Their third straight win'),
-  },
-  {
-    scenario: 'bypass-multiplier-words',
-    expectFlag: 'UNVERIFIED_NUMBER',
-    field: 'headline',
-    document: matchSlide('Doblete y triplete en una tarde de media docena', 'A hat-trick and a treble'),
-  },
-  {
-    scenario: 'bypass-zero-width-split',
-    expectFlag: 'FORBIDDEN_CONTENT',
-    field: 'headline',
-    document: matchSlide('Ganó 1\u200B0 a cero', 'Marcador 2\u200C\u200D1'),
-  },
-  {
-    scenario: 'bypass-bidi-split',
-    expectFlag: 'FORBIDDEN_CONTENT',
-    field: 'headline',
-    document: matchSlide('Marcador 1\u20662\u2069 final', 'Resultado \u202E12\u202C'),
-  },
-  {
-    scenario: 'bypass-cyrillic-homoglyph',
-    expectFlag: 'NON_OFFICIAL_TEAM_NAME',
-    field: 'headline',
-    document: matchSlide('R\u0435al Brisamar gana en casa', 'Crónica del partido'),
-  },
-];
-
-/** A temporary project root holding `fixtures/ai/<scenario>.json` files. */
-export interface AiFixtureRoot {
-  readonly rootDir: string;
-  write(scenario: string, document: unknown): void;
-  provider(scenario: string): StubAiTextProvider;
-  remove(): void;
-}
-
-export function createAiFixtureRoot(): AiFixtureRoot {
-  const rootDir = mkdtempSync(path.join(tmpdir(), 'edr-content-'));
-  const directory = path.join(rootDir, 'fixtures', 'ai');
-  mkdirSync(directory, { recursive: true });
-  return {
-    rootDir,
-    write(scenario, document) {
-      writeFileSync(path.join(directory, `${scenario}.json`), JSON.stringify(document), 'utf8');
-    },
-    provider(scenario) {
-      return createStubAiProvider({ scenario }, { paths: { rootDir } });
-    },
-    remove() {
-      rmSync(rootDir, { recursive: true, force: true });
-    },
-  };
+/**
+ * The stub provider over the committed fixtures. A scenario without a fixture file (for example `built-in`) gives
+ * the stub's deterministic placeholder-only draft.
+ */
+export function aiProvider(scenario: string): StubAiTextProvider {
+  return createStubAiProvider({ scenario }, { paths: { rootDir: REPO_ROOT } });
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -460,7 +388,8 @@ export function dbFixture(config: AppConfig = testConfig(), project: ProjectOpti
             runId,
             fact.factKey,
             fact.kind,
-            JSON.stringify(fact.subject),
+            // The verification stage stores the contract subject plus the evidence values (T30).
+            JSON.stringify({ ...fact.subject, evidence: [] }),
             fact.status === 'verified' ? 'verified' : 'unverified',
             fact.unverifiedReason,
             fact.value === null ? null : JSON.stringify(fact.value),

@@ -146,6 +146,24 @@ function parseJson(text: string | null): unknown {
   return text === null ? null : (JSON.parse(text) as unknown);
 }
 
+/**
+ * The contract subject of a stored fact (`matchKey`, `teamId`, `contextIndex`). The verification stage also stores
+ * the canonical value of each evidence observation in `facts.subject` (T30); those entries are not part of the facts
+ * view and never reach the content stage input or the AI request. Values are validated by the stage input schema.
+ */
+function contractSubject(stored: unknown): unknown {
+  if (typeof stored !== 'object' || stored === null || Array.isArray(stored)) {
+    return stored;
+  }
+  const subject: Record<string, unknown> = {};
+  for (const key of ['matchKey', 'teamId', 'contextIndex'] as const) {
+    if (Object.hasOwn(stored, key)) {
+      subject[key] = (stored as Record<string, unknown>)[key];
+    }
+  }
+  return subject;
+}
+
 /** The new draft rows (IDs and times chosen by the caller). */
 export interface NewDraft {
   readonly id: string;
@@ -199,7 +217,7 @@ export class ContentRepository {
         id: row.id,
         factKey: row.fact_key,
         kind: row.kind,
-        subject: parseJson(row.subject),
+        subject: contractSubject(parseJson(row.subject)),
         status:
           row.status === 'unverified' && row.manual_eligible === 1 && row.manual_action === 'approved'
             ? 'manually_approved'

@@ -5,7 +5,7 @@
  * (T10-F06 injection-rejected, R-232), the blocked overlay (R-271 with both permission states, OD-29; R-272), and the
  * regeneration of one element (R-217). Synthetic data only; no network.
  */
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import type { StageContext } from '../module-kit.js';
 import { buildDraftPrompt } from '../../providers/ai/index.js';
@@ -21,30 +21,17 @@ import {
 import { ElementTextSchema } from './schemas.js';
 import { createContentStage } from './stage.js';
 import {
-  type AiFixtureRoot,
   type DbFixture,
   Facts,
   PROJECT_ID,
-  createAiFixtureRoot,
+  aiProvider,
   dbFixture,
   leagueFacts,
   nextId,
   testConfig,
 } from './test/support.js';
 
-let root: AiFixtureRoot;
 let fixture: DbFixture | null = null;
-
-beforeAll(() => {
-  root = createAiFixtureRoot();
-  root.write('translated-team-name', {
-    slides: { match_result: { headline: 'Ebony River Athletic se impone', description: 'Crónica del partido' } },
-  });
-});
-
-afterAll(() => {
-  root.remove();
-});
 
 afterEach(() => {
   fixture?.close();
@@ -60,9 +47,9 @@ function context(
   scenario = 'built-in',
 ): {
   ctx: StageContext;
-  ai: ReturnType<AiFixtureRoot['provider']>;
+  ai: ReturnType<typeof aiProvider>;
 } {
-  const ai = root.provider(scenario);
+  const ai = aiProvider(scenario);
   return {
     ctx: { runId, projectId: PROJECT_ID, runKind, container: db.container(ai), signal: new AbortController().signal },
     ai,
@@ -542,7 +529,7 @@ describe('regeneration of one element (R-217)', () => {
         "INSERT INTO final_approvals (id, carousel_id, version_set, version_set_sha256, approved_at, invalidated_at) VALUES (?, ?, '[]', ?, ?, NULL)",
       )
       .run([nextId(), target.carousel_id, 'c'.repeat(64), '2026-10-28T11:00:00.000Z']);
-    const ai = root.provider('translated-team-name');
+    const ai = aiProvider('translated-team-name');
     const result = await regenerateElement(
       { ...db.container(ai), aiProvider: ai },
       target.id,
@@ -577,7 +564,7 @@ describe('regeneration of one element (R-217)', () => {
   it('regenerates the caption and its hashtags', async () => {
     const db = await drafted();
     const caption = elementOf(db, 'caption');
-    const ai = root.provider('built-in');
+    const ai = aiProvider('built-in');
     const result = await regenerateElement(db.container(ai), caption.id, new AbortController().signal, {
       newId: nextId,
     });
@@ -594,7 +581,7 @@ describe('regeneration of one element (R-217)', () => {
   it('refuses a stale preparation, a superseded draft and an unknown element', async () => {
     const db = await drafted();
     const target = elementOf(db, 'cover');
-    const ai = root.provider('built-in');
+    const ai = aiProvider('built-in');
     const container = db.container(ai);
     const first = await prepareElementRegeneration(container, target.id, new AbortController().signal);
     const second = await prepareElementRegeneration(container, target.id, new AbortController().signal);

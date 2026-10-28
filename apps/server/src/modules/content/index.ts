@@ -31,7 +31,7 @@ export {
   type PublishabilityFunction,
   type PublishabilityVerdict,
   blockedOverlay,
-  storedFactsPublishability,
+  verificationPublishability,
 } from './publishability.js';
 export {
   ElementRegenerationRefused,

@@ -4,34 +4,16 @@
  * supersedes the draft; an AI failure fails the stage with its closed code and stores no draft. Research,
  * verification, rendering and visual QA are test doubles; the AI provider is the stub. Synthetic data only.
  */
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { type AnyStage, WorkflowRunner } from '../../workflow/index.js';
 import { type StageCall, fakeStage } from '../../workflow/test/support.js';
 import type { StageContext } from '../module-kit.js';
 
 import { serverModule } from './index.js';
-import {
-  type AiFixtureRoot,
-  type DbFixture,
-  PROJECT_ID,
-  createAiFixtureRoot,
-  dbFixture,
-  leagueFacts,
-  nextId,
-} from './test/support.js';
+import { type DbFixture, PROJECT_ID, aiProvider, dbFixture, leagueFacts, nextId } from './test/support.js';
 
-let root: AiFixtureRoot;
 let fixture: DbFixture | null = null;
-
-beforeAll(() => {
-  root = createAiFixtureRoot();
-  root.write('unavailable', { slides: {}, simulate: 'unavailable' });
-});
-
-afterAll(() => {
-  root.remove();
-});
 
 afterEach(() => {
   fixture?.close();
@@ -66,7 +48,7 @@ function runner(db: DbFixture, scenario: string): { runner: WorkflowRunner; call
   ];
   return {
     runner: new WorkflowRunner({
-      container: db.container(root.provider(scenario)),
+      container: db.container(aiProvider(scenario)),
       stages: () => stages,
       newId: nextId,
     }),
