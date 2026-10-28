@@ -2,9 +2,12 @@
 //
 // - Environment filtering: provider credentials and live-test switches never reach the server, the Playwright runner,
 //   its workers or the browser (T10-F11, AD-30, R-257, R-258).
-// - Generated configuration: the DEMO_DATA fixture sources and the stub AI adapter, bound to 127.0.0.1 on the
-//   verification port, with Host and Origin allow-lists listing exactly that port (architecture.md section 12.1).
-//   Written to a temporary directory outside the repository; the committed configuration files are only read.
+// - Generated configuration: the DEMO_DATA fixture sources, the MANUAL_DATA import source and the stub AI adapter,
+//   bound to 127.0.0.1 on the verification port, with Host and Origin allow-lists listing exactly that port
+//   (architecture.md section 12.1). Written to a temporary directory outside the repository; the committed
+//   configuration files are only read. A journey that needs another DEMO_DATA scenario (a simulated source failure,
+//   a source missing a match) overrides `options.scenario` of named fixture sources; the scenario files are the
+//   committed ones under `fixtures/sports/`.
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -23,11 +26,10 @@ export const LOOPBACK_HOST = '127.0.0.1';
 export const BASE_CONFIG_CANDIDATES = ['fixtures/config/demo-manual.config.json', 'config/app.config.json'];
 
 /**
- * Data modes of the sources kept from the base configuration. MANUAL_DATA is left out until the manual adapter is
- * integrated (T50): with its T21 stub enabled, startup stops with "adapter not available" (Orchestrator note for T24).
- * Add 'MANUAL_DATA' here once T50 is integrated. LIVE_DATA is never kept: no run can reach a provider.
+ * Data modes of the sources kept from the base configuration: the DEMO_DATA fixture sources and the MANUAL_DATA
+ * import source (OD-44, after T50). LIVE_DATA is never kept: no run can reach a provider.
  */
-export const INCLUDED_MODES = Object.freeze(['DEMO_DATA']);
+export const INCLUDED_MODES = Object.freeze(['DEMO_DATA', 'MANUAL_DATA']);
 
 /** AI provider of every run: the deterministic stub (no network). */
 export const AI_PROVIDER = Object.freeze({ adapter: 'stub', options: Object.freeze({ scenario: 'default' }) });
@@ -76,13 +78,38 @@ export function enabledSources(document) {
   return Array.isArray(sources) ? sources.filter((source) => source?.enabled === true) : [];
 }
 
+/** Scenario names accepted by the fixture adapter (`fixtures/sports/<scenario>/`). */
+export const SCENARIO_PATTERN = /^[a-z0-9-]{1,60}$/;
+
 /**
- * The configuration document of the run: the base document reduced to its enabled sources of `INCLUDED_MODES`, the
- * stub AI provider, and the server bound to 127.0.0.1 on `port` with Host and Origin allow-lists of exactly that port.
- * Refuses a base without an enabled DEMO_DATA primary source.
+ * Sources with the DEMO_DATA scenario overrides applied: `scenarios` maps a source ID to the scenario of its
+ * `options.scenario`. Refuses an override for a source that is not an included DEMO_DATA source, or a scenario name
+ * the fixture adapter does not accept.
  */
-export function serverConfigDocument(base, port) {
-  const sources = enabledSources(base).filter((source) => INCLUDED_MODES.includes(source.mode));
+export function withScenarios(sources, scenarios = {}) {
+  for (const [sourceId, scenario] of Object.entries(scenarios)) {
+    if (!sources.some((source) => source.id === sourceId && source.mode === 'DEMO_DATA')) {
+      throw new Error(`No included DEMO_DATA source '${sourceId}' to set the scenario of.`);
+    }
+    if (typeof scenario !== 'string' || !SCENARIO_PATTERN.test(scenario)) {
+      throw new Error(`The scenario of '${sourceId}' must match ${String(SCENARIO_PATTERN)}.`);
+    }
+  }
+  return sources.map((source) =>
+    Object.hasOwn(scenarios, source.id)
+      ? { ...source, options: { ...source.options, scenario: scenarios[source.id] } }
+      : source,
+  );
+}
+
+/**
+ * The configuration document of the run: the base document reduced to its enabled sources of `INCLUDED_MODES` (with
+ * the `scenarios` overrides of `withScenarios`), the stub AI provider, and the server bound to 127.0.0.1 on `port`
+ * with Host and Origin allow-lists of exactly that port. Refuses a base without an enabled DEMO_DATA primary source.
+ */
+export function serverConfigDocument(base, port, scenarios = {}) {
+  const included = enabledSources(base).filter((source) => INCLUDED_MODES.includes(source.mode));
+  const sources = withScenarios(included, scenarios);
   if (!sources.some((source) => source.mode === 'DEMO_DATA' && source.role === 'primary')) {
     throw new Error('The base configuration has no enabled DEMO_DATA primary source.');
   }
@@ -102,16 +129,21 @@ export function serverConfigDocument(base, port) {
 
 /**
  * Creates the temporary run directory (outside the repository) with the generated configuration and an empty data
- * directory location. Returns the paths, the server environment variables and `remove`.
+ * directory location. Returns the paths, the server environment variables, `configure` (rewrites the configuration
+ * with other scenario overrides, for a restart on the same data directory) and `remove`.
  */
-export function prepareRunDirectory(rootDir, port) {
+export function prepareRunDirectory(rootDir, port, scenarios = {}) {
   const source = baseConfigPath(rootDir);
   const base = JSON.parse(readFileSync(resolve(rootDir, source), 'utf8'));
-  const document = serverConfigDocument(base, port);
   const dir = mkdtempSync(join(tmpdir(), 'edr-e2e-'));
   const configFile = join(dir, 'app.config.json');
   const dataDir = join(dir, 'data');
-  writeFileSync(configFile, `${JSON.stringify(document, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
+  const configure = (overrides = {}) => {
+    const document = serverConfigDocument(base, port, overrides);
+    writeFileSync(configFile, `${JSON.stringify(document, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
+    return document;
+  };
+  const document = configure(scenarios);
   return {
     dir,
     source,
@@ -119,20 +151,9 @@ export function prepareRunDirectory(rootDir, port) {
     configFile,
     dataDir,
     serverVariables: { EDR_CONFIG: configFile, EDR_DATA_DIR: dataDir, EDR_PORT: String(port) },
+    configure,
     remove: () => rmSync(dir, { recursive: true, force: true }),
   };
-}
-
-/** Text of the T15 sports-data stub, which throws on startup until T21 is integrated. */
-export const SPORTS_STUB_MARKER = 'sports-data sources are not available yet';
-
-/**
- * True while the built sports-data entry point is still the T15 stub, so the real server cannot start. Remove this
- * check and the seam launcher once T21 is integrated.
- */
-export function sportsProviderIsStub(rootDir) {
-  const file = resolve(rootDir, 'apps/server/dist/src/providers/sports/index.js');
-  return existsSync(file) && readFileSync(file, 'utf8').includes(SPORTS_STUB_MARKER);
 }
 
 /** Paths of the build output the harness needs. */

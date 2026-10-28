@@ -4,9 +4,9 @@
 // 1. installs Chromium (Chrome for Testing, run in new headless mode) on first use into `.cache/ms-playwright` under
 //    the project (never host-wide; the first run needs network access to the browser download host, which is tooling
 //    access). The headless shell is not used: axe's color-contrast rule never completes in it (Playwright 1.64);
-// 2. writes a configuration with the DEMO_DATA fixture sources and the stub AI adapter (MANUAL_DATA is added after
-//    T50, see e2e/support/harness.mjs), bound to 127.0.0.1 on the verification port (4310, or `E2E_PORT`), into a
-//    temporary directory outside the repository, with a temporary data directory;
+// 2. writes a configuration with the DEMO_DATA fixture sources, the MANUAL_DATA import source and the stub AI adapter
+//    (e2e/support/harness.mjs), bound to 127.0.0.1 on the verification port (4310, or `E2E_PORT`), into a temporary
+//    directory outside the repository, with a temporary data directory;
 // 3. starts the built server on that configuration and waits for its health route;
 // 4. runs Playwright with the remaining arguments (e2e/playwright.config.ts);
 // 5. stops the server and removes the temporary directory, whatever the outcome.
@@ -15,7 +15,6 @@
 // server is started without `--env-file`, so `.env.local` is never read (T10-F11, AD-30, R-257, R-258).
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import net from 'node:net';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -26,15 +25,11 @@ import {
   buildOutput,
   childEnvironment,
   prepareRunDirectory,
-  sportsProviderIsStub,
 } from './support/harness.mjs';
+import { SERVER_LOG_LINES, assertPortFree, startServer, stopServer, waitForHealth } from './support/server.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PLAYWRIGHT_CLI = resolve(ROOT, 'node_modules/@playwright/test/cli.js');
-const SEAM_SERVER = resolve(ROOT, 'e2e/support/seam-server.mjs');
-const STARTUP_TIMEOUT_MS = 30_000;
-const STOP_TIMEOUT_MS = 10_000;
-const SERVER_LOG_LINES = 200;
 
 function log(message) {
   process.stdout.write(`[e2e] ${message}\n`);
@@ -56,23 +51,6 @@ function readPort() {
   return port;
 }
 
-/** Resolves when `port` can be bound on the loopback address; rejects naming the port otherwise. */
-function assertPortFree(port) {
-  return new Promise((done, reject) => {
-    const probe = net.createServer();
-    probe.once('error', (error) => {
-      reject(
-        new Error(
-          `Port ${String(port)} on ${LOOPBACK_HOST} is not available (${error.code ?? 'error'}). Identify the process ` +
-            `(lsof -nP -iTCP:${String(port)} -sTCP:LISTEN); stop it only if it is this project's own server, or ` +
-            'set E2E_PORT to a spare port.',
-        ),
-      );
-    });
-    probe.listen(port, LOOPBACK_HOST, () => probe.close(() => done()));
-  });
-}
-
 function installChromium(env) {
   log(`Ensuring Chromium in ${BROWSERS_DIRECTORY} (downloaded on first use only).`);
   const result = spawnSync(process.execPath, [PLAYWRIGHT_CLI, 'install', '--no-shell', '--no-progress', 'chromium'], {
@@ -86,62 +64,6 @@ function installChromium(env) {
         'browser download host (tooling access).',
     );
   }
-}
-
-function startServer(env, useSeam) {
-  const { serverEntry } = buildOutput(ROOT);
-  const args = useSeam
-    ? ['--disable-warning=ExperimentalWarning', SEAM_SERVER, ROOT]
-    : ['--disable-warning=ExperimentalWarning', serverEntry];
-  const child = spawn(process.execPath, args, { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'] });
-  const lines = [];
-  const keep = (chunk) => {
-    for (const line of chunk.toString('utf8').split('\n')) {
-      if (line.trim() !== '') {
-        lines.push(line);
-        if (lines.length > SERVER_LOG_LINES) {
-          lines.shift();
-        }
-      }
-    }
-  };
-  child.stdout.on('data', keep);
-  child.stderr.on('data', keep);
-  const exited = new Promise((done) => child.once('exit', (code, signal) => done({ code, signal })));
-  return { child, lines, exited };
-}
-
-async function waitForHealth(baseUrl, server) {
-  const deadline = Date.now() + STARTUP_TIMEOUT_MS;
-  let stopped = null;
-  void server.exited.then((status) => {
-    stopped = status;
-  });
-  while (Date.now() < deadline) {
-    if (stopped !== null) {
-      throw new Error(`The server exited during startup (exit code ${String(stopped.code)}).`);
-    }
-    try {
-      const response = await fetch(`${baseUrl}/api/v1/health`, { signal: AbortSignal.timeout(2_000) });
-      if (response.ok) {
-        return;
-      }
-    } catch {
-      // not listening yet
-    }
-    await new Promise((done) => setTimeout(done, 200));
-  }
-  throw new Error(`The server did not answer its health route within ${String(STARTUP_TIMEOUT_MS / 1000)} s.`);
-}
-
-async function stopServer(server) {
-  if (server.child.exitCode !== null || server.child.signalCode !== null) {
-    return;
-  }
-  server.child.kill('SIGTERM');
-  const timer = setTimeout(() => server.child.kill('SIGKILL'), STOP_TIMEOUT_MS);
-  await server.exited;
-  clearTimeout(timer);
 }
 
 function runPlaywright(env, args) {
@@ -192,17 +114,8 @@ async function run() {
       `Configuration generated from ${runDir.source} in a temporary directory: sources ` +
         `${runDir.sourceIds.join(', ')}, stub AI provider.`,
     );
-    const useSeam = sportsProviderIsStub(ROOT);
-    if (useSeam) {
-      log(
-        'NOTICE: the built sports-data provider is still the T15 stub (T21 pending), so the server entry cannot start. ' +
-          'Starting the same built server through the T19 test seam (e2e/support/seam-server.mjs) with an empty ' +
-          'sports-data source registry.',
-      );
-    } else {
-      log('Starting the built server entry (apps/server/dist/src/main.js).');
-    }
-    server = startServer(childEnvironment(process.env, runDir.serverVariables), useSeam);
+    log('Starting the built server entry (apps/server/dist/src/main.js).');
+    server = startServer(ROOT, childEnvironment(process.env, runDir.serverVariables));
     try {
       await waitForHealth(baseUrl, server);
     } catch (error) {
@@ -218,7 +131,6 @@ async function run() {
       childEnvironment(process.env, {
         PLAYWRIGHT_BROWSERS_PATH: browsersPath,
         E2E_BASE_URL: baseUrl,
-        E2E_SERVER_MODE: useSeam ? 'seam' : 'entry',
       }),
       process.argv.slice(2),
     );
