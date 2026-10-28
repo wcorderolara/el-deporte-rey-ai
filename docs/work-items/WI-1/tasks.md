@@ -1910,3 +1910,22 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 ## Metrics
 
 Filled at close (/Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orchestrate/workflows/measurement.md). Unavailable values are written NOT RECORDED, never estimated.
+
+| Metric | Value |
+|--------|-------|
+| Total tasks | 84 |
+| Completed tasks | 84 |
+| Autonomously completed tasks | 62 |
+| Autonomy rate | 73.8% |
+| Human interventions | NOT RECORDED |
+| PO decisions | 26 |
+| Correction attempts | 20 |
+| Agent launches | NOT RECORDED |
+| Duration | 31 h 52 min |
+| Agent duration | NOT RECORDED |
+| Token usage | NOT RECORDED |
+| Quality-gate results | NOT RECORDED |
+| Tests executed and passed | NOT RECORDED |
+| Open security findings by severity | NOT RECORDED |
+| Escalations | 16 |
+| Defects found in PO acceptance | NOT RECORDED |
