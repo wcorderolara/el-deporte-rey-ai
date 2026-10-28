@@ -467,16 +467,23 @@ export function storedQa(fixture: DbFixture, runId: string) {
   }));
 }
 
+/** `check_name` lists of `qa_results`: migration 0001 (five names) and migration 0002 (adds `capitalized_tokens`). */
+const QA_CHECK_NAME_LISTS = {
+  1: "('data_match', 'team_names', 'text_fit', 'style_consistency', 'dimensions')",
+  2: "('data_match', 'team_names', 'text_fit', 'style_consistency', 'dimensions', 'capitalized_tokens')",
+} as const;
+
 /**
- * Rebuilds `qa_results` with `capitalized_tokens` in its check-name constraint (the schema change OD-26 needs; the
- * migration is outside this module). Test databases only, before any result is stored.
+ * Rebuilds an empty `qa_results` with the check-name list of migration 0001 or 0002, every other column and
+ * constraint as migrated. Test databases only, before any result is stored (the rows are not copied).
  */
-export function acceptCapitalizedTokens(fixture: DbFixture): void {
+export function qaResultsAsOfMigration(fixture: DbFixture, version: 1 | 2): void {
   const statements = [
     'PRAGMA foreign_keys = OFF',
     'CREATE TABLE qa_results_next (id TEXT PRIMARY KEY, ' +
       'element_version_id TEXT NOT NULL REFERENCES element_versions, check_name TEXT NOT NULL CHECK (check_name IN ' +
-      "('data_match', 'team_names', 'text_fit', 'style_consistency', 'dimensions', 'capitalized_tokens')), " +
+      QA_CHECK_NAME_LISTS[version] +
+      '), ' +
       "outcome TEXT NOT NULL CHECK (outcome IN ('pass', 'fail')), " +
       "severity TEXT NOT NULL CHECK (severity IN ('blocking', 'warning')), " +
       'details TEXT NOT NULL CHECK (json_valid(details)), acknowledged_at TEXT NULL, created_at TEXT NOT NULL, ' +
@@ -488,4 +495,12 @@ export function acceptCapitalizedTokens(fixture: DbFixture): void {
   for (const statement of statements) {
     fixture.db.prepare(statement).run();
   }
+}
+
+/**
+ * Rebuilds `qa_results` with `capitalized_tokens` in its check-name constraint. Since migration 0002 (OD-56) the
+ * migrated schema already accepts it, so this only empties the table; kept for tests written before 0002.
+ */
+export function acceptCapitalizedTokens(fixture: DbFixture): void {
+  qaResultsAsOfMigration(fixture, 2);
 }

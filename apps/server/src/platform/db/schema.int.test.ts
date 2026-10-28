@@ -1,12 +1,17 @@
 /**
- * Schema tests of migration `0001_initial.sql` on a temporary database (removed after the run).
+ * Schema tests of the migrated schema (`0001_initial.sql`, then `0002_qa_capitalized_tokens.sql`, which rebuilds
+ * `qa_results` with the `capitalized_tokens` check name; OD-56) on a temporary database (removed after the run).
  *
  * 1. R-233 schema test (data-model.md section 5; T10-F21; R-112, R-113, R-119, R-280): every table, column and index
  *    name is listed through `sqlite_master` and `pragma_table_info` and none matches the excluded-data pattern
  *    (player-level, person, user, account, session and credential names). Positive controls show the scan finds
  *    such names.
  * 2. Structure: the tables, columns, foreign keys and indexes of data-model.md sections 3 and 4 (as revised by
- *    T11G), all tables STRICT.
+ *    T11G and T56), all tables STRICT; no table left over from the rebuild of migration 0002; the `qa_results`
+ *    check-name list and its UNIQUE (element_version_id, check_name).
+ *
+ * The R-233 scan covers table, column and index names. `capitalized_tokens` (a check-name value) and the migration
+ * name `qa_capitalized_tokens` (a `schema_migrations` value) are values, not schema names.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import os from 'node:os';
@@ -383,7 +388,45 @@ describe('R-233 schema test: no player-level, person, user-account or credential
   });
 });
 
-describe('structure of migration 0001_initial.sql', () => {
+describe('structure of the migrated schema (0001_initial.sql, 0002_qa_capitalized_tokens.sql)', () => {
+  it('is at version 2', () => {
+    expect(
+      db
+        .prepare<{ version: number; name: string }>('SELECT version, name FROM schema_migrations ORDER BY version')
+        .all(),
+    ).toEqual([
+      { version: 1, name: 'initial' },
+      { version: 2, name: 'qa_capitalized_tokens' },
+    ]);
+  });
+
+  it('qa_results accepts the six QA check names (OD-26, OD-56) and keeps one result per version and check', () => {
+    const row = db
+      .prepare<{ sql: string }>("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'qa_results'")
+      .get();
+    const list = /check_name IN \(([^)]*)\)/.exec(row?.sql ?? '')?.[1] ?? '';
+    expect(list.split(',').map((name) => name.trim())).toEqual([
+      "'data_match'",
+      "'team_names'",
+      "'text_fit'",
+      "'style_consistency'",
+      "'dimensions'",
+      "'capitalized_tokens'",
+    ]);
+    const unique = db
+      .prepare<{ name: string }>(
+        "SELECT name FROM pragma_index_list('qa_results') WHERE origin = 'u' AND \"unique\" = 1",
+      )
+      .all()
+      .map((index) =>
+        db
+          .prepare<{ name: string }>('SELECT name FROM pragma_index_info(?) ORDER BY seqno')
+          .all([index.name])
+          .map((column) => column.name),
+      );
+    expect(unique).toEqual([['element_version_id', 'check_name']]);
+  });
+
   it('has exactly the tables of data-model.md section 3, all STRICT', () => {
     const tables = db
       .prepare<{ name: string; strict: number }>(
