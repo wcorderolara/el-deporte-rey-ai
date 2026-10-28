@@ -76,7 +76,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T42 | Integration tests: content, rendering, visual QA, approval, export, history | IMPL | qa-engineer | T32, T33, T34, T35, T37, T38, T41, T56, T58 | DONE | 1 | db84eda | `docs/work-items/WI-1/evidence/T42-gates.txt` |
 | T43 | Contract conformance tests | IMPL | qa-engineer | T20, T38, T41, T50 | DONE | 1 | cb16a73 | `docs/work-items/WI-1/evidence/T43-gates.txt` |
 | T44 | End-to-end and accessibility journeys | IMPL | qa-engineer | T23, T24, T28, T29, T31, T36, T38, T39, T40, T50, T51 | DONE | 1 | d3222a7 | `docs/work-items/WI-1/evidence/T44-gates.txt` |
-| T45 | Architecture conformance review | IMPL | architect | T14, T26, T42, T43, T44, T52, T59, T62, T63 | PENDING | 0 | - | - |
+| T45 | Architecture conformance review | IMPL | architect | T14, T26, T42, T43, T44, T52, T59, T62, T63, T65 | PENDING | 0 | - | - |
 | T46 | Security evidence pack | VERIFY | qa-engineer | T45 | PENDING | 0 | - | - |
 | T47 | Security delta validation | VERIFY | security-reviewer | T46 | PENDING | 0 | - | - |
 | T49 | FootballDataProvider adapter, request budget, projection cache, live tests and capability probe script | IMPL | backend-developer | T21, T23 | DONE | 2 | 7dba63d | `docs/work-items/WI-1/evidence/T49-gates.txt` |
@@ -95,7 +95,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T62 | Provider research addendum and architecture corrections (FU-3, FU-6, FU-7) | IMPL | architect | T61 | PENDING | 0 | - | - |
 | T63 | Requirements corrections from the provider research (FU-7) | IMPL | product-manager | T14 | IN_PROGRESS | 1 | - | - |
 | T64 | Explicit timeouts for workflow-heavy ingestion tests | IMPL | qa-engineer | T52 | IN_PROGRESS | 1 | - | - |
-| T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64 | PENDING | 0 | - | - |
+| T65 | Localized import error and fact reason texts | IMPL | frontend-developer | T44 | PENDING | 0 | - | - |
+| T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65 | PENDING | 0 | - | - |
 
 ## Tasks
 
@@ -977,7 +978,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 ### T45: Architecture conformance review
 - Kind: IMPL
 - Agent: architect
-- Depends on: T14, T26, T42, T43, T44, T52, T59, T62, T63
+- Depends on: T14, T26, T42, T43, T44, T52, T59, T62, T63, T65
 - Files owned: `docs/work-items/WI-1/architecture/conformance-review.md`
 - Scope: review of the integrated code and configuration against this architecture: competition, target format (dimensions, maximum slides) and publication mode are configuration or data, not stage logic (R-226); the schema and code hold no player or person entity or attribute and no user-account entity (R-233); one ingestion interface and no provider-specific, mode-specific or competition-specific branch in research, verification or later stages (R-268); the shared domain schemas and the contract are provider-neutral (R-288); the provider-identifier lint rule is present, its seeded test passes, its exemptions are limited to adapters and the probe script, and no inline disable directive exists in core code (`noInlineConfig`, T11H-F15) (R-289, R-139); the provider research and findings record cover pricing, coverage, reliability, redistribution and licensing, rate limits, freshness and attribution per candidate, development and tests need no purchased service, and nothing was purchased, subscribed to or upgraded (R-242, R-281); R-103, R-109 and R-137 (no provider-specific feature beyond the capability); deviations listed as findings with the owning task.
 - Acceptance criteria: R-226, R-233, R-242, R-268, R-281, R-288, R-289
@@ -1234,10 +1235,19 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Acceptance criteria: -
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:integration` -> exit 0
 
+### T65: Localized import error and fact reason texts
+- Kind: IMPL
+- Agent: frontend-developer
+- Depends on: T44
+- Files owned: `apps/web/src/features/imports/**`, `apps/web/src/features/facts/**`, `e2e/tests/manual-import.spec.ts`
+- Scope: (OD-63, R-416) F-1: the import error table labels each record by its kind (CSV row number as a row, JSON pointer, form field, or the whole file) instead of "Archivo n" for a CSV row; F-2: the import error detail and the fact reason are rendered from the closed codes the contract provides (`ImportError.problem`, `record`, `field`; fact `status`, `unverifiedReason`, `blockReason`) with Spanish and English texts following the project or UI language, never inventing a value; the server's English `message` or `reason` is shown only where no closed code covers the case; texts render as text only (T10 controls); unit tests for every `problem` value and every reason combination in both languages; update only the text expectations of `e2e/tests/manual-import.spec.ts` if they change. No contract or server change, no new dependency.
+- Acceptance criteria: R-416
+- Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:e2e` -> exit 0 ; `npm run test:a11y` -> exit 0
+
 ### T48: Final gate run
 - Kind: VERIFY
 - Agent: qa-engineer
-- Depends on: T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64
+- Depends on: T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65
 - Files owned: `docs/work-items/WI-1/evidence/T48-gates.txt`
 - Scope: run every final gate (project gates of T25 and the four framework-mandatory gates) at a clean, committed integration HEAD in the verify worktree, without `FOOTBALL_DATA_API_TOKEN` in the environment, and report each gate PASS, FAIL or NOT RUN with command, exit code and counts. Last VERIFY task of the work item.
 - Acceptance criteria: -
@@ -1333,6 +1343,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-60 | MEDIUM | Re-plan for the T14 follow-ups under PD-21 to PD-24: T59 (backend-developer) applies FU-1 (standings expectation of knockout stages), FU-2 (probe diagnostics: failing validation path as field names and indices only, egress refusal kind, resource kind of each failure, `--candidates`), FU-4 (`stageDiscovery` 1 MiB in `config/live.config.json`, within the reviewed 2 MiB bound) and FU-5 (anonymous client marker); T60 (security-reviewer) checks that no value can reach the probe findings or console through FU-2 before any live run; T61 (Orchestrator) runs the second probe under PD-24; T62 (architect) writes the addendum to `provider-research.md` from T61, names the CL failing rule and the FU-6 fix with its level (a mapping fix is re-planned; a shared-rule change is escalated), and applies FU-7 to `provider-ports.md` section 1.4 and `architecture-delta.md` section 11.10; T63 (product-manager) applies FU-7 to R-316 and the source notes of R-312 to R-314; FU-8 waits for the PD-18 reply and is outside WI-1 unless it arrives; T45 depends on T59, T62, T63; T48 on T59 to T63 | fold FU-1 to FU-5 into T45; skip the second run | low | MED-05; T14 report; PD-21 to PD-24 |
 | OD-61 | MEDIUM | T43 observations: O-1, a `contentBase64` that breaks its schema is answered 400 IMPORT_REJECTED (`encoding_invalid`, `too_large`) as the createImport description and provider-ports 1.6 specify, not VALIDATION_FAILED; both are declared 400 responses, the specific rule wins and the test asserts it; O-2, the configured LIVE source id `football-data` and name `football-data.org` returned as `sourceId`, `sourceName` and catalogue IDs are configuration data allowed by AD-31, not provider identifiers under R-288, while the provider host, provider codes, numeric IDs and field names stay forbidden; T45 confirms both in the conformance review | O-1 VALIDATION_FAILED (contract description change); O-2 rename the configured source | low | MED-05; T43 report |
 | OD-62 | MEDIUM | Load-sensitive timeouts: `apps/server/test/integration/ingestion/data-modes.test.ts` (R-268 downstream stages) and `multi-competition.test.ts` (T52) run the full workflow under the 5 s default timeout and time out under parallel load (T43 run and Orchestrator verification of T43, load average about 12; both pass alone and on rerun); new task T64 (qa-engineer) gives their workflow-heavy tests an explicit timeout as T42 did (WORKFLOW_TEST_TIMEOUT 60 s) without changing any assertion; T48 depends on T64 | raise the global integration timeout in the Vitest configuration (affects every suite) | low | MED-05; T43 report; T43 verification log |
+| OD-63 | MEDIUM | T44 findings: F-1 (the import error table labels a CSV row record as "Archivo n" instead of a row) and F-2 (server English texts shown under the Spanish UI: import error `message` details and fact `reason` texts; R-416 Spanish default) are routed to new task T65 (frontend-developer), which renders localized text from the closed codes the contract already provides (`ImportError.problem` and `record`; fact `status`, `unverifiedReason` and `blockReason`) in Spanish and English, keeping the server text available only where no closed code covers it; no contract or server change; F-3 (the export page lists the caption before the slides, following the API order) needs no change; T45 and T48 depend on T65 | translate on the server (contract change); leave English texts | low | MED-05; T44 report |
 
 ## Conflicts
 
@@ -1687,6 +1698,10 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T20:45:27Z | T63 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T20:45:27Z | T64 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T20:49:27Z | T44 | Status DONE | integration commit d3222a7; evidence/T44-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T20:49:55Z | - | OD-63 recorded | T44 report |
+| 2026-10-28T20:49:55Z | T65 | Task added (OD-63); status PENDING | T44 findings F-1, F-2 |
+| 2026-10-28T20:49:55Z | T45 | Depends on extended by T65 (OD-63) | OD-63 |
+| 2026-10-28T20:49:55Z | T48 | Depends on extended by T65 (OD-63) | OD-63 |
 
 ## Recovery log
 
