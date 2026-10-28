@@ -60,7 +60,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T26 | Source of truth: exact versions, contract hash, gate and environment notes | IMPL | architect | T12, T25 | PENDING | 0 | - | - |
 | T27 | Projects module and workflow runner | IMPL | backend-developer | T18, T19, T20, T21 | DONE | 1 | 833f585 | `docs/work-items/WI-1/evidence/T27-gates.txt` |
 | T28 | Projects UI: list, create, detail and run progress | IMPL | frontend-developer | T16, T20 | DONE | 1 | 4cefeba | `docs/work-items/WI-1/evidence/T28-gates.txt` |
-| T29 | Research stage | IMPL | backend-developer | T21, T27 | IN_PROGRESS | 1 | - | - |
+| T29 | Research stage | IMPL | backend-developer | T21, T27 | DONE | 1 | 328c6ef | `docs/work-items/WI-1/evidence/T29-gates.txt` |
 | T30 | Verification stage: two-source rule, disputes, team identity | IMPL | backend-developer | T21, T27 | IN_PROGRESS | 1 | - | - |
 | T31 | Facts and verification UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 63d83cd | `docs/work-items/WI-1/evidence/T31-gates.txt` |
 | T32 | Content stage: structure, AI drafting, fact placeholders, content checks | IMPL | backend-developer | T22, T27 | PENDING | 0 | - | - |
@@ -701,6 +701,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: research stage per `module-kit.ts` through the source registry only (no adapter import and no branch on mode, provider or competition, R-268): `fetchSelection` of the project's source with its opaque selection reference; one `retrievals` row per resource with source, mode, time, cache use, outcome and closed failure (AD-34); observations for every match, team, standings row and context item with source, mode, import version, reference and retrieval time (R-024, R-287); standings unavailability recorded on the run with its reason, nothing derived (R-254); provider failures mapped to stage failures with the closed codes (`access_refused` shown as "provider access refused", `not_available`, `rate_limited`, `unavailable`, `timeout`, `invalid`, `no_data`, `bad_request`); never store a stripped field. Unit tests of the pure core with inline fixture inputs in isolation (R-225), including a selection without standings and a MANUAL_DATA selection with an import version.
 - Acceptance criteria: R-202, R-204, R-224, R-225, R-232, R-254, R-268, R-287
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:integration` -> exit 0
+- Agent result: PASS at ddbaaba after one interruption (usage limit, resumed) (npm ci 0; typecheck 0; lint 0; test:unit 0, 1092 tests; test:integration 0, 128 tests; npm audit --audit-level=high 0, 2 moderate per OD-33).
+- Orchestrator verification: `orch worktree verify-ownership` exit 0 (9 changed, 0 outside); re-run in the task worktree at ddbaaba: npm ci --offline 0, typecheck 0, lint 0, test:unit 0 (63 files, 1092 tests), test:integration 0 (8 files, 128 tests); main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-8 (observation key and value format exported for T30, sent to T30 in flight; one retrievals row per selection; failed retrieval stored then StageFailure; missing, disabled or mode-mismatched source fails without a retrieval row; UTC retrieved_at; cancellation as interrupted; standings asOf not stored in rows; empty selection is not no_data). data-model.md still mentions an https URL for observations.source_ref; AD-36 and the shared schema forbid URLs and win (doc fix at close). No new dependency.
+- Human interventions: 0.
+- Agent usage: launches 2 (one resume); tokens 244430; duration NOT RECORDED (interrupted run).
+- Integration commit(s): 328c6ef (merge --no-ff of task/WI-1/T29). Affected gates at 328c6ef: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T29-gates.txt, the evidence file of this task).
 
 ### T30: Verification stage: two-source rule, disputes, team identity
 - Kind: IMPL
@@ -1299,6 +1305,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T15:31:51Z | T29 | Agent interrupted by the usage limit; uncommitted work preserved in the task worktree; same agent resumed | task-notification rate_limit 429 |
 | 2026-10-28T15:31:51Z | T30 | Agent interrupted by the usage limit; uncommitted work preserved in the task worktree; same agent resumed | task-notification rate_limit 429 |
 | 2026-10-28T15:31:51Z | T50 | Agent interrupted by the usage limit; uncommitted work preserved in the task worktree; same agent resumed | task-notification rate_limit 429 |
+| 2026-10-28T15:33:09Z | T29 | Status DONE | integration commit 328c6ef; evidence/T29-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
