@@ -1275,6 +1275,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | E-12 | T11F | HIGH decision: confirm conflict C-3 resolution (generic stages supersede league-phase-only, PD-09) (precedence.md: level 1 conflict) | 2026-10-27 | 2026-10-27 (PD-20) |
 | E-13 | T11H | HIGH decision: SC-05 isolation of untrusted-input processing for FootballDataProvider responses and for the JSON, CSV and form imports (HIGH-03; reviewer recommends option A for both, with conditions) | 2026-10-27 | 2026-10-27 (PD-15) |
 | E-14 | T11H | HIGH decision: identity-model re-raise for the real credential (T10-F19, Q5): any local process can spend the token request budget through the login-less API (HIGH-03; reviewer recommends option A) | 2026-10-27 | 2026-10-27 (PD-16) |
+| E-15 | T14 | HIGH decisions batched for the Product Owner from `provider-research.md` section 9: DR-1 secondary verification source (R-432), DR-2 costs needing authorization (R-111), DR-4 fallback without an automated official source (U-08), and consent to a second probe run with the free-plan token (FU-3, PD-16) needed to diagnose the CL league-phase refusal; DR-3 (PD-18 permission request) is a Product Owner action | 2026-10-28 | - |
 
 ## Event log (append-only)
 
@@ -1579,6 +1580,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T18:28:17Z | T43 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T18:28:17Z | T44 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T18:36:52Z | T14 | Status DONE | integration commit 7c5f279; evidence/T14-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T18:37:04Z | - | E-15 raised (DR-1, DR-2, DR-4, FU-3 consent) | T14 report |
 
 ## Recovery log
 
