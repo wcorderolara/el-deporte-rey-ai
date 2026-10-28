@@ -98,7 +98,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T65 | Localized import error and fact reason texts | IMPL | frontend-developer | T44 | DONE | 1 | 77bf965 | `docs/work-items/WI-1/evidence/T65-gates.txt` |
 | T66 | Localized trace reasons and shared banner cleanup | IMPL | frontend-developer | T65 | DONE | 1 | 052a1fe | `docs/work-items/WI-1/evidence/T66-gates.txt` |
 | T67 | Load-robust SC-05 linear-time test | IMPL | qa-engineer | T50 | DONE | 1 | 02f4a42 | `docs/work-items/WI-1/evidence/T67-gates.txt` |
-| T68 | Source of truth and architecture records at close | IMPL | architect | T45 | IN_PROGRESS | 1 | - | - |
+| T68 | Source of truth and architecture records at close | IMPL | architect | T45 | DONE | 1 | 916673a | `docs/work-items/WI-1/evidence/T68-gates.txt` |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65, T66, T67, T68 | PENDING | 0 | - | - |
 
 ## Tasks
@@ -1339,6 +1339,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: (OD-65, T45 CR-06; source-of-truth section 10) record PD-21 to PD-26 in the decision register (section 3) with their sources; update the business rules and security constraints they touch (PD-23 official-publication consultation not automated; PD-26 TeamName rule kept, such selections refused whole and never altered); update section 1 (root `ajv` 8.20.0, OD-39) and section 6 (contract unchanged at 1.0.0); open items (section 9): close or update U-08 (PD-23), U-11 (OD-59: limit 20 confirmed, API publishing JPEG only, manual PNG upload UNVERIFIED), U-18 (PD-21), U-19, U-20, U-22, U-23 (T53, T61, T62), SOT-3 (T43), SOT-5 (record the run parameters in `data-model.md`), and add the deferred items: TeamName widening FU-9 to FU-15 (PD-26, next work item), T60-F01, F03 and F06 probe hardening, FU-8 attribution text after the PD-18 reply, CR-01 to CR-05 (OD-65); reflect PD-26 in `provider-research.md` section 13 and `architecture-delta.md` section 11.14.6 (U-31, U-32 closed by PD-26). Reference, do not restate (section 10).
 - Acceptance criteria: -
 - Verification: `orch scan models .orchestrate/source-of-truth.md` -> exit 0 ; `orch scan models docs/work-items/WI-1/architecture/provider-research.md` -> exit 0 ; `orch validate --work-item 'WI-1' --at .` -> exit 0
+- Agent result: PASS (the agent has no shell; the Orchestrator committed the four files on its behalf with the agent's commit message). Source of truth: PD-21 to PD-26 in the decision register with the tracker's source text; BR-19 and SC-09 (PD-26); BR-02, BR-05, BR-13, SC-03, SC-08 updated; section 1 (root `ajv` 8.20.0), section 6 (contract unchanged at 1.0.0), section 7 (probe runs T53, T61); open items closed (U-02, U-08, U-18, U-19, U-22, U-23, U-31, U-32, SOT-1, SOT-3, SOT-5) and added (U-33, FU-9 to FU-15, T60-F01, F03, F06, FU-8, CR-01 to CR-05, SOT-6); `data-model.md` run snapshot and OD-43 parameters, OD-47 `facts.subject`, AD-36 `source_ref`; PD-26 outcome in `provider-research.md` section 13 and `architecture-delta.md` section 11.14.
+- Orchestrator verification: `orch scan models` on `.orchestrate/source-of-truth.md` and `provider-research.md` exit 0; `orch validate --work-item 'WI-1' --at .` exit 0; ownership against the integration tracker; main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-7 (source cells word for word; section 3 points to the tracker for OD-01 to OD-66; PD-26 as BR-19 and SC-09; closed-item convention; U-02 and SOT-1 also closed; data-model corrections; outcome blocks kept with history). Escalation SOT-6 decided by OD-66 (accepted as built).
+- Human interventions: 0.
+- Agent usage: launches 1.
+- Integration commit(s): 916673a (merge --no-ff of task/WI-1/T68). Affected gates at 916673a: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T68-gates.txt, the evidence file of this task).
 
 ### T48: Final gate run
 - Kind: VERIFY
@@ -1839,6 +1845,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T22:22:47Z | T46 | Status DONE | integration commit c0ee884; evidence/T46-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
 | 2026-10-28T22:23:02Z | T47 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T22:25:04Z | - | OD-66 recorded (SOT-6 accepted as built) | T68 report |
+| 2026-10-28T22:26:44Z | T68 | Status DONE | integration commit 916673a; evidence/T68-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
 
 ## Recovery log
 
