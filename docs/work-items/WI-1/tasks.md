@@ -90,7 +90,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T57 | Counterpart resolution keeps the source failure code | IMPL | backend-developer | T54 | DONE | 1 | b9f9f24 | `docs/work-items/WI-1/evidence/T57-gates.txt` |
 | T58 | Research run invalidates final approvals | IMPL | backend-developer | T37 | DONE | 1 | 4bdfd2c | `docs/work-items/WI-1/evidence/T58-gates-2.txt` |
 | T59 | football-data adapter and probe corrections (FU-1, FU-2, FU-4, FU-5) | IMPL | backend-developer | T14 | DONE | 1 | 7845e6f | `docs/work-items/WI-1/evidence/T59-gates.txt` |
-| T60 | Security check of the probe diagnostics (FU-2) | VERIFY | security-reviewer | T59 | IN_PROGRESS | 1 | - | - |
+| T60 | Security check of the probe diagnostics (FU-2) | VERIFY | security-reviewer | T59 | DONE | 1 | 8efe25c | `docs/work-items/WI-1/evidence/T60-gates.txt` |
 | T61 | Second capability probe run (FU-3) | IMPL | Orchestrator | T60 | PENDING | 0 | - | - |
 | T62 | Provider research addendum and architecture corrections (FU-3, FU-6, FU-7) | IMPL | architect | T61 | PENDING | 0 | - | - |
 | T63 | Requirements corrections from the provider research (FU-7) | IMPL | product-manager | T14 | DONE | 1 | f6226fe | `docs/work-items/WI-1/evidence/T63-gates.txt` |
@@ -1206,6 +1206,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: (OD-60, PD-24) before any second live run, review T59's probe and adapter changes (`apps/server/scripts/football-data-probe.ts`, `apps/server/src/providers/sports/adapters/football-data/**`, `config/live.config.json`) against T11H-F02, T11H-F04, T11H-F20 and the T10 controls: confirm that the failing validation path, refusal kind and resource kind cannot carry any value (team name, score, header value, URL, token) to the findings file or the console, that `--candidates` accepts only closed competition codes and cannot raise the 30-request cap, and that the 1 MiB `stageDiscovery` limit stays within the reviewed bound; verdict PASS or FAIL with findings.
 - Acceptance criteria: -
 - Verification: `orch validate --work-item 'WI-1' --at .` -> exit 0 ; the review file states verdict PASS
+- Agent result: PASS (the agent has no shell; the Orchestrator committed the review on its behalf with the agent's commit message). Delta validation of T59 at 7845e6f against T11H-F02, T11H-F04, T11H-F20 and Q8 and the T10 logging controls: no value can leave through the diagnostics (paths from Zod issue keys and indices reduced to declared field names, indices and `*` in the adapter and again in the probe; closed refusal kind, stage and resource kind; console fixed lines only); `--candidates` closed and the 30-request cap holds; 1 MiB within the 2 MiB bound; the `--require-token` marker scan is a sufficient backstop under conditions C1 to C8. Findings T60-F01 (LOW, pre-existing: a token-shaped key name could be printed on the "Dropped keys" line; caught by the exact-match scan and condition C7; hardening recommended later), T60-F02 (INFO), T60-F03 (LOW, long paths cut at 120 characters), T60-F04 (1 MiB is a forecast), T60-F05 (client header value relies on code and tests), T60-F06 (LOW, path reduction safe only while no diagnostic schema is keyed by input data). `Verdict: PASS`.
+- Orchestrator verification: `orch validate --work-item 'WI-1' --at .` exit 0; the review file states `Verdict: PASS`; ownership against the integration tracker; main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-3 (delta validation scope; finding IDs; unchanged outputs listed as context). Conditions C1 to C8 bind T61.
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 141264; duration 6 minutes.
+- Integration commit(s): 8efe25c (merge --no-ff of task/WI-1/T60). Affected gates at 8efe25c: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T60-gates.txt, the evidence file of this task).
 
 ### T61: Second capability probe run (FU-3)
 - Kind: IMPL
@@ -1770,6 +1776,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T21:11:33Z | T67 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T21:19:56Z | T66 | Status DONE | integration commit 052a1fe; evidence/T66-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T21:20:15Z | - | PD-25 recorded (no task-worktree re-run after a PASS report; ownership, main-tree check and merged-state gates kept) | Product Owner 2026-10-28 |
+| 2026-10-28T21:23:17Z | T60 | Status DONE | integration commit 8efe25c; evidence/T60-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
