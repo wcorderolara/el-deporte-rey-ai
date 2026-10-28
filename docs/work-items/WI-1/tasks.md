@@ -80,7 +80,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T46 | Security evidence pack | VERIFY | qa-engineer | T45 | PENDING | 0 | - | - |
 | T47 | Security delta validation | VERIFY | security-reviewer | T46 | PENDING | 0 | - | - |
 | T49 | FootballDataProvider adapter, request budget, projection cache, live tests and capability probe script | IMPL | backend-developer | T21, T23 | PENDING | 0 | - | - |
-| T50 | Manual data import module and ManualDataProvider | IMPL | backend-developer | T18, T19, T20, T21 | PENDING | 0 | - | - |
+| T50 | Manual data import module and ManualDataProvider | IMPL | backend-developer | T18, T19, T20, T21 | IN_PROGRESS | 1 | - | - |
 | T51 | Manual import UI | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
 | T52 | Integration tests: data modes, catalogue, manual import and credentials | IMPL | qa-engineer | T23, T27, T29, T30, T41, T49, T50 | PENDING | 0 | - | - |
 | T53 | Capability probe run and football-data.org findings | IMPL | Orchestrator | T13, T41, T49 | PENDING | 0 | - | - |
@@ -1266,6 +1266,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T10:30:17Z | T21 | Status DONE | integration commit 03a6a6e; evidence/T21-gates.txt PASS; merged-state checks pass |
 | 2026-10-28T10:30:30Z | T23 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T10:30:30Z | T27 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-28T10:32:33Z | T50 | Status IN_PROGRESS (attempt 1); agent launched (PD-15 option A conditions apply) | orch next SELECT |
 
 ## Recovery log
 
