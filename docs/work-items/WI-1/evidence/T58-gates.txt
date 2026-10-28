@@ -1,0 +1,1181 @@
+TASK: WI-1-T58
+RESULT: FAIL
+VALIDATED_HEAD: 4bdfd2ca961ea915c845525623b81c3133a7c173
+DATE: 2026-10-28T18:21:51Z
+COMMAND: orch gates run --work-item WI-1 --task T58 --set affected
+SUMMARY: 10 PASS / 1 FAIL / 0 NOT RUN; required not passing: PRJ-UNIT
+--- output ---
+CONFIG: .orchestrate/config.json
+CONFIG_SOURCE: committed@4bdfd2ca961e
+CONFIG_SHA256: b5516f6e3e0b316e4e1ede3d3e5a661d8c0533011b296f2709b3468becad8f67
+SET: affected
+
+=== FW-TRACKER (framework, required) PASS exit=0 ms=2742 ===
+COMMAND: builtin:tracker
+REASON: orch tracker check exited 0
+Tracker docs/work-items/WI-1/tasks.md on 4bdfd2ca961ea915c845525623b81c3133a7c173
+  T00  IMPL   recorded=DONE                                 commits 1176f8c; verified by T02                                                           => DONE
+  T01  IMPL   recorded=DONE                                 commits dd9499e; verified by T02                                                           => DONE
+  T02  VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T02-requirements-check.txt @ c68b058; validated 17f => DONE
+  T03  IMPL   recorded=DONE                                 commits f4ccb0c; verified by T08                                                           => DONE
+  T04  IMPL   recorded=DONE                                 commits 01a71a7; verified by T08                                                           => DONE
+  T05  IMPL   recorded=DONE                                 commits d93cbb1; verified by T07                                                           => DONE
+  T06  IMPL   recorded=DONE                                 commits 32d60da; verified by T07                                                           => DONE
+  T07  VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T07-validate.txt @ f648f85; validated e1459cb72dd59 => DONE
+  T08  VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T08-requirements-check.txt @ 70befa9; validated 5ec => DONE
+  T09  IMPL   recorded=DONE                                 commits f017460,41af5ee; verified by T11                                                   => DONE
+  T10  IMPL   recorded=DONE                                 commits 3ac5b85,c1c0e2c; verified by T11                                                   => DONE
+  T11A IMPL   recorded=DONE                                 commits 266b29d; verified by T11D                                                          => DONE
+  T11B IMPL   recorded=DONE                                 commits 380780f; verified by T11D                                                          => DONE
+  T11C IMPL   recorded=DONE                                 commits 16013be; verified by T11D                                                          => DONE
+  T11D VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T11D-validate.txt @ d98a135; validated 8373bcba3d62 => DONE
+  T11  VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T11-plan-check.txt @ 53e02a7; validated a05778d34c6 => DONE
+  T11E IMPL   recorded=DONE                                 commits 4757d4e,19bfba9; verified by T11I                                                  => DONE
+  T11F IMPL   recorded=DONE                                 commits 1715e21; verified by T11I                                                          => DONE
+  T11G IMPL   recorded=DONE                                 commits bf7dd40,58e906a,b468d07; verified by T11J                                          => DONE
+  T11H IMPL   recorded=DONE                                 commits 89c721d,1f65fda; verified by T11J                                                  => DONE
+  T11I VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T11I-requirements-check.txt @ 3a2f8c9; validated 23 => DONE
+  T11K IMPL   recorded=DONE                                 commits 7bc11e2; verified by T11N                                                          => DONE
+  T11L IMPL   recorded=DONE                                 commits 966a599; verified by T11N                                                          => DONE
+  T11N VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T11N-validate.txt @ 18491cd; validated ce746e477651 => DONE
+  T11J VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T11J-plan-check.txt @ 91e93b4; validated 076fd8ef01 => DONE
+  T12  IMPL   recorded=DONE                                 commits 6d8830e; verified by docs/work-items/WI-1/evidence/T12-gates.txt                   => DONE
+  T13  IMPL   recorded=DONE                                 commits 70906b2; verified by docs/work-items/WI-1/evidence/T13-gates.txt                   => DONE
+  T14  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => PENDING
+  T15  IMPL   recorded=DONE                                 commits 93a4795; verified by docs/work-items/WI-1/evidence/T15-gates.txt                   => DONE
+  T16  IMPL   recorded=DONE                                 commits cf0716e; verified by docs/work-items/WI-1/evidence/T16-gates.txt                   => DONE
+  T17  IMPL   recorded=DONE                                 commits b0b58d2; verified by docs/work-items/WI-1/evidence/T17-gates.txt                   => DONE
+  T18  IMPL   recorded=DONE                                 commits 20d92b2; verified by docs/work-items/WI-1/evidence/T18-gates.txt                   => DONE
+  T19  IMPL   recorded=DONE                                 commits acaa2da; verified by docs/work-items/WI-1/evidence/T19-gates.txt                   => DONE
+  T20  IMPL   recorded=DONE                                 commits 6911bed; verified by docs/work-items/WI-1/evidence/T20-gates.txt                   => DONE
+  T21  IMPL   recorded=DONE                                 commits 03a6a6e; verified by docs/work-items/WI-1/evidence/T21-gates.txt                   => DONE
+  T22  IMPL   recorded=DONE                                 commits 89fa98d; verified by docs/work-items/WI-1/evidence/T22-gates.txt                   => DONE
+  T23  IMPL   recorded=DONE                                 commits 5c73712; verified by docs/work-items/WI-1/evidence/T23-gates.txt                   => DONE
+  T24  IMPL   recorded=DONE                                 commits 8ff8fbf; verified by docs/work-items/WI-1/evidence/T24-gates.txt                   => DONE
+  T25  IMPL   recorded=DONE                                 commits da9a37c; verified by docs/work-items/WI-1/evidence/T25-gates.txt                   => DONE
+  T26  IMPL   recorded=DONE                                 commits 4419d2d; verified by docs/work-items/WI-1/evidence/T26-gates.txt                   => DONE
+  T27  IMPL   recorded=DONE                                 commits 833f585; verified by docs/work-items/WI-1/evidence/T27-gates.txt                   => DONE
+  T28  IMPL   recorded=DONE                                 commits 4cefeba; verified by docs/work-items/WI-1/evidence/T28-gates.txt                   => DONE
+  T29  IMPL   recorded=DONE                                 commits 328c6ef; verified by docs/work-items/WI-1/evidence/T29-gates.txt                   => DONE
+  T30  IMPL   recorded=DONE                                 commits 6f4019d; verified by docs/work-items/WI-1/evidence/T30-gates.txt                   => DONE
+  T31  IMPL   recorded=DONE                                 commits 63d83cd; verified by docs/work-items/WI-1/evidence/T31-gates.txt                   => DONE
+  T32  IMPL   recorded=DONE                                 commits 9630543; verified by docs/work-items/WI-1/evidence/T32-gates.txt                   => DONE
+  T33  IMPL   recorded=DONE                                 commits 982c722; verified by docs/work-items/WI-1/evidence/T33-gates.txt                   => DONE
+  T34  IMPL   recorded=DONE                                 commits 7e96f23; verified by docs/work-items/WI-1/evidence/T34-gates.txt                   => DONE
+  T35  IMPL   recorded=DONE                                 commits f7ae5c3; verified by docs/work-items/WI-1/evidence/T35-gates.txt                   => DONE
+  T36  IMPL   recorded=DONE                                 commits e457fc8; verified by docs/work-items/WI-1/evidence/T36-gates.txt                   => DONE
+  T37  IMPL   recorded=DONE                                 commits 5126445; verified by docs/work-items/WI-1/evidence/T37-gates.txt                   => DONE
+  T38  IMPL   recorded=IN_PROGRESS                          task branch ahead=0; worktree dirty=7                                                      => IN_PROGRESS (interrupted)
+  T39  IMPL   recorded=DONE                                 commits 34e9569; verified by docs/work-items/WI-1/evidence/T39-gates.txt                   => DONE
+  T40  IMPL   recorded=DONE                                 commits 9c7f249; verified by docs/work-items/WI-1/evidence/T40-gates.txt                   => DONE
+  T41  IMPL   recorded=DONE                                 commits fec71d3,aa37fef; verified by docs/work-items/WI-1/evidence/T41-gates-2.txt         => DONE
+  T42  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T43  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T44  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T45  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T46  VERIFY recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T47  VERIFY recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T49  IMPL   recorded=DONE                                 commits 7dba63d; verified by docs/work-items/WI-1/evidence/T49-gates.txt                   => DONE
+  T50  IMPL   recorded=DONE                                 commits b972c53; verified by docs/work-items/WI-1/evidence/T50-gates.txt                   => DONE
+  T51  IMPL   recorded=DONE                                 commits 70c6f98; verified by docs/work-items/WI-1/evidence/T51-gates.txt                   => DONE
+  T52  IMPL   recorded=DONE                                 commits 4621738; verified by docs/work-items/WI-1/evidence/T52-gates.txt                   => DONE
+  T53  IMPL   recorded=DONE                                 commits e6a34fc; verified by docs/work-items/WI-1/evidence/T53-gates.txt                   => DONE
+  T54  IMPL   recorded=DONE                                 commits d002b9d; verified by docs/work-items/WI-1/evidence/T54-gates.txt                   => DONE
+  T55  IMPL   recorded=DONE                                 commits f63dbb2; verified by docs/work-items/WI-1/evidence/T55-gates.txt                   => DONE
+  T56  IMPL   recorded=DONE                                 commits ef115d4; verified by docs/work-items/WI-1/evidence/T56-gates.txt                   => DONE
+  T57  IMPL   recorded=DONE                                 commits b9f9f24; verified by docs/work-items/WI-1/evidence/T57-gates.txt                   => DONE
+  T58  IMPL   recorded=IN_PROGRESS                          task branch ahead=0; worktree dirty=0                                                      => PENDING
+  T48  VERIFY recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+STATE: open
+RESULT: PASS (0 violations)
+
+=== FW-CONFIG (framework, required) PASS exit=0 ms=88 ===
+COMMAND: builtin:config
+REASON: orch validate --section config,policy,agents,models exited 0
+SECTION config: PASS
+SECTION policy: PASS
+SECTION agents: PASS
+SECTION models: PASS
+  NOTE 156 file(s) scanned
+RESULT: PASS (0 violation(s), 0 warning(s))
+
+=== PRJ-INSTALL (other, required) PASS exit=0 ms=2392 ===
+COMMAND: npm ci
+REASON: exit 0
+
+added 304 packages, and audited 308 packages in 2s
+
+2 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+=== PRJ-TYPECHECK (typecheck, required) PASS exit=0 ms=6947 ===
+COMMAND: npm run typecheck
+REASON: exit 0
+
+> el-deporte-rey-ai@0.0.0 typecheck
+> tsc -b tsconfig.json && npm run typecheck --workspaces --if-present
+
+
+> @edr/web@0.0.0 typecheck
+> tsc -p tsconfig.json && tsc -p tsconfig.node.json
+
+=== PRJ-LINT (lint, required) PASS exit=0 ms=6309 ===
+COMMAND: npm run lint
+REASON: exit 0
+
+> el-deporte-rey-ai@0.0.0 lint
+> eslint --max-warnings 0 . && prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+=== PRJ-UNIT (unit, required) FAIL exit=1 ms=8847 ===
+COMMAND: npm run test:unit
+REASON: exit 1
+
+> el-deporte-rey-ai@0.0.0 test:unit
+> vitest run --project unit --project unit-web
+
+
+ RUN  v5.0.4 /Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-verify
+
+ ❯ |unit-web| apps/web/src/app/App.test.tsx (13 tests | 1 failed) 599ms
+   ❯ App shell (R-235) (4)
+     × navigates with the main navigation, marks the current page and moves focus to the main content 159ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| apps/web/src/app/App.test.tsx > App shell (R-235) > navigates with the main navigation, marks the current page and moves focus to the main content
+AssertionError: expected <a class="_navLink_0f334e" …(3)></a> to be <main id="main-content" …(2)>…(2)</main> // Object.is equality
+
+- Expected
++ Received
+
+- <main
+-   class="_main_87ceb9"
+-   id="main-content"
+-   tabindex="-1"
+- >
+-   <p
+-     class="_status_0f334e"
+-     role="status"
+-   />
+-   <section
+-     aria-labelledby="imports-title"
+-   >
+-     <h1
+-       id="imports-title"
++ <a
++   aria-current="page"
++   class="_navLink_0f334e"
++   data-discover="true"
++   href="/imports"
+  >
+    Importaciones manuales
+-     </h1>
+-     <p>
+-       Importe datos manuales (MANUAL_DATA) de competiciones sin fuente pública: un archivo JSON o CSV, o el formulario. El servidor valida cada importación completa: si un registro tiene un error, se rechaza toda la importación, se informan todos los errores y no se guarda nada.
+-     </p>
+-     <p
+-       class="_notice_d2c55e"
+-     >
+-       Solo se importan datos de equipos y de competición. Los campos con datos de personas (jugadores, goleadores, árbitros, entrenadores, plantillas) se rechazan.
+-     </p>
+-     <p
+-       class="_notice_d2c55e"
+-     >
+-       Los marcadores y las clasificaciones que falten no se completan ni se calculan: un partido finalizado necesita su marcador.
+-     </p>
+-     <p
+-       class="_notice_d2c55e"
+-     >
+-       Para corregir datos, vuelva a importarlos: cada selección importada se guarda como una versión nueva y las versiones anteriores y los originales se conservan. Las importaciones no se borran.
+-     </p>
+-     <p
+-       aria-label="Avisos de la página de importaciones"
+-       aria-live="polite"
+-       class="_status_d2c55e"
+-       role="status"
+-     />
+-     <fieldset
+-       class="_fieldset_d2c55e"
+-     >
+-       <legend
+-         class="_legend_d2c55e"
+-       >
+-         Forma de importar
+-       </legend>
+-       <div
+-         class="_options_d2c55e"
+-       >
+-         <label
+-           class="_option_d2c55e"
+-         >
+-           <input
+-             checked=""
+-             name="_r_0_-channel"
+-             type="radio"
+-             value="file"
+-           />
+-           Archivo JSON o CSV
+-         </label>
+-         <label
+-           class="_option_d2c55e"
+-         >
+-           <input
+-             name="_r_0_-channel"
+-             type="radio"
+-             value="form"
+-           />
+-           Formulario
+-         </label>
+-       </div>
+-     </fieldset>
+-     <div>
+-       <section
+-         aria-labelledby="_r_1_-heading"
+-         class="_section_d2c55e"
+-       >
+-         <h2
+-           id="_r_1_-heading"
+-         >
+-           Importar un archivo
+-         </h2>
+-         <form
+-           aria-labelledby="_r_1_-heading"
+-           class="_form_d2c55e"
+-           novalidate=""
+-         >
+-           <div
+-             class="_field_d2c55e"
+-           >
+-             <label
+-               class="_label_d2c55e"
+-               for="_r_1_-file"
+-             >
+-               Archivo
+-             </label>
+-             <p
+-               class="_hint_d2c55e"
+-               id="_r_1_-file-hint"
+-             >
+-               Archivo .json o .csv en UTF-8, de hasta 512 KiB (524 288 bytes). Se envía exactamente como está, sin convertirlo. El nombre admite letras, números, espacios, puntos, guiones, guiones bajos y paréntesis.
+-             </p>
+-             <input
+-               accept=".json,.csv,application/json,text/csv"
+-               aria-describedby="_r_1_-file-hint"
+-               class="_input_d2c55e"
+-               id="_r_1_-file"
+-               required=""
+-               type="file"
+-             />
+-           </div>
+-           <details>
+-             <summary>
+-               Formatos aceptados
+-             </summary>
+-             <p>
+-               JSON: un documento con el formato «edr-manual-import/1».
+-             </p>
+-             <p>
+-               CSV de partidos, con esta fila de encabezado:
+-             </p>
+-             <code
+-               class="_layout_d2c55e"
+-               translate="no"
+-             >
+-               competition_id,competition_name,season_id,season_label,stage_id,stage_name,stage_order,matchday,home_team,away_team,kickoff,status,home_score,away_score
+-             </code>
+-             <p>
+-               CSV de clasificación, con esta fila de encabezado:
+-             </p>
+-             <code
+-               class="_layout_d2c55e"
+-               translate="no"
+-             >
+-               competition_id,competition_name,season_id,season_label,stage_id,stage_name,stage_order,matchday,as_of,position,team,played,won,drawn,lost,goals_for,goals_against,goal_difference,points
+-             </code>
+-           </details>
+-           <div
+-             class="_field_d2c55e"
+-           >
+-             <label
+-               class="_label_d2c55e"
+-               for="_r_1_-source"
+-             >
+-               Fuente declarada (opcional)
+-             </label>
+-             <p
+-               class="_hint_d2c55e"
+-               id="_r_1_-source-hint"
+-             >
+-               De dónde provienen los datos, hasta 80 caracteres. Se guarda como texto.
+-             </p>
+-             <input
+-               aria-describedby="_r_1_-source-hint"
+-               autocomplete="off"
+-               class="_input_d2c55e"
+-               id="_r_1_-source"
+-               maxlength="80"
+-               type="text"
+-               value=""
+-             />
+-           </div>
+-           <button
+-             aria-busy="false"
+-             class="_button_d2c55e"
+-             type="submit"
+-           >
+-             Importar archivo
+-           </button>
+-         </form>
+-       </section>
+-     </div>
+-     <div
+-       hidden=""
+-     >
+-       <section
+-         aria-labelledby="_r_2_-heading"
+-         class="_section_d2c55e"
+-       >
+-         <h2
+-           id="_r_2_-heading"
+-         >
+-           Introducir datos con el formulario
+-         </h2>
+-         <p>
+-           El formulario crea una importación de una selección: una fase completa o una jornada, con sus equipos, partidos y, si la tiene, su clasificación. Las comprobaciones de esta página son solo una ayuda; el servidor vuelve a validarlo todo.
+-         </p>
+-         <p
+-           class="_hint_d2c55e"
+-         >
+-           Los campos sin «(opcional)» son obligatorios.
+-         </p>
+-         <form
+-           aria-labelledby="_r_2_-heading"
+-           class="_form_d2c55e"
+-           novalidate=""
+-         >
+-           <fieldset
+-             class="_fieldset_d2c55e"
+-           >
+-             <legend
+-               class="_legend_d2c55e"
+-             >
+-               Competición
+-             </legend>
+-             <p
+-               class="_hint_d2c55e"
+-             >
+-               Identificador: minúsculas sin acentos, números y guiones, hasta 64 caracteres (por ejemplo «liga-sintetica»). Use el mismo identificador en todas las importaciones de la misma competición.
+-             </p>
+-             <div
+-               class="_fields_d2c55e"
+-             >
+-               <div
+-                 class="_field_d2c55e"
+-               >
+-                 <label
+-                   class="_label_d2c55e"
+-                   for="_r_2_-competitionId"
+-                 >
+-                   Identificador de la competición
+-                 </label>
+-                 <input
+-                   autocomplete="off"
+-                   class="_input_d2c55e"
+-                   id="_r_2_-competitionId"
+-                   maxlength="64"
+-                   required=""
+-                   type="text"
+-                   value=""
+-                 />
+-               </div>
+-               <div
+-                 class="_field_d2c55e"
+-               >
+-                 <label
+-                   class="_label_d2c55e"
+-                   for="_r_2_-competitionName"
+-                 >
+-                   Nombre de la competición
+-                 </label>
+-                 <input
+-                   autocomplete="off"
+-                   class="_input_d2c55e"
+-                   id="_r_2_-competitionName"
+-                   maxlength="80"
+-                   required=""
+-                   type="text"
+-                   value=""
+-                 />
+-               </div>
+-               <div
+-                 class="_field_d2c55e"
+-               >
+-                 <label
+-                   class="_label_d2c55e"
+-                   for="_r_2_-areaName"
+-                 >
+-                   País o región (opcional)
+-                 </label>
+-                 <input
+-                   autocomplete="off"
+-                   class="_input_d2c55e"
+-                   id="_r_2_-areaName"
+-                   maxlength="80"
+-                   type="text"
+-                   value=""
+-                 />
+-               </div>
+-             </div>
+-           </fieldset>
+-           <fieldset
+-             class="_fieldset_d2c55e"
+-           >
+-             <legend
+-               class="_legend_d2c55e"
+-             >
+-               Temporada
+-             </legend>
+-             <div
+-               class="_fields_d2c55e"
+-             >
+-               <div
+-                 class="_field_d2c55e"
+-               >
+-                 <label
+-                   class="_label_d2c55e"
+-                   for="_r_2_-seasonId"
+-                 >
+-                   Identificador de la temporada
+-                 </label>
+-                 <input
+-                   autocomplete="off"
+-                   class="_input_d2c55e"
+-                   id="_r_2_-seasonId"
+-                   maxlength="64"
+-                   required=""
+-                   type="text"
+-                   value=""
+-                 />
+-               </div>
+-               <div
+-                 class="_field_d2c55e"
+-               >
+-                 <label
+-                   class="_label_d2c55e"
+-                   for="_r_2_-seasonLabel"
+-                 >
+-                   Nombre de la temporada
+-                 </label>
+-                 <input
+-                   autocomplete="off"
+-                   class="_input_d2c55e"
+-                   id="_r_2_-seasonLabel"
+-                   maxlength="80"
+-                   required=""
+-                   type="text"
+-                   value=""
+-                 />
+-               </div>
+-             </div>
+-           </fieldset>
+-           <fieldset
+-             class="_fieldset_d2c55e"
+-           >
+-             <legend
+-               class="_legend_d2c55e"
+-             >
+-               Fase
+-             </legend>
+-             <div
+-               class="_fields_d2c55e"
+-             >
+-               <div
+-                 class="_field_d2c55e"
+-               >
+-                 <label
+-                   class="_label_d2c55e"
+-                   for="_r_2_-stageId"
+-                 >
+-                   Identificador de la fase
+-                 </label>
+-                 <input
+-                   autocomplete="off"
+-                   class="_input_d2c55e"
+-                   id="_r_2_-stageId"
+-                   maxlength="64"
+-                   required=""
+-                   type="text"
+-                   value=""
+-                 />
+-               </div>
+-               <div
+-                 class="_field_d2c55e"
+-               >
+-                 <label
+-                   class="_label_d2c55e"
+-                   for="_r_2_-stageName"
+-                 >
+-                   Nombre de la fase
+-                 </label>
+-                 <input
+-                   autocomplete="off"
+-                   class="_input_d2c55e"
+-                   id="_r_2_-stageName"
+-                   maxlength="80"
+-                   required=""
+-                   type="text"
+-                   value=""
+-                 />
+-               </div>
+-               <div
+-                 class="_field_d2c55e"
+-               >
+-                 <label
+-                   class="_label_d2c55e"
+-                   for="_r_2_-stageOrder"
+-                 >
+-                   Orden de la fase en la temporada
+-                 </label>
+-                 <input
+-                   aria-describedby="_r_2_-stageOrder-hint"
+-                   autocomplete="off"
+-                   class="_input_d2c55e"
+-                   id="_r_2_-stageOrder"
+-                   inputmode="numeric"
+-                   max="99"
+-                   min="1"
+-                   required=""
+-                   step="1"
+-                   type="number"
+-                   value="1"
+-                 />
+-                 <p
+-                   class="_hint_d2c55e"
+-                   id="_r_2_-stageOrder-hint"
+-                 >
+-                   Número del 1 al 99.
+-                 </p>
+-               </div>
+-             </div>
+-             <fieldset
+-               class="_fieldset_d2c55e"
+-             >
+-               <legend
+-                 class="_legend_d2c55e"
+-               >
+-                 Alcance de la selección
+-               </legend>
+-               <div
+-                 class="_options_d2c55e"
+-               >
+-                 <label
+-                   class="_option_d2c55e"
+-                 >
+-                   <input
+-                     checked=""
+-                     name="_r_2_-scope"
+-                     type="radio"
+-                     value="matchday"
+-                   />
+-                   Una jornada
+-                 </label>
+-                 <label
+-                   class="_option_d2c55e"
+-                 >
+-                   <input
+-                     name="_r_2_-scope"
+-                     type="radio"
+-                     value="stage"
+-                   />
+-                   La fase completa (sin jornadas)
+-                 </label>
+-               </div>
+-               <div
+-                 class="_field_d2c55e"
+-               >
+-                 <label
+-                   class="_label_d2c55e"
+-                   for="_r_2_-matchday"
+-                 >
+-                   Número de jornada
+-                 </label>
+-                 <input
+-                   aria-describedby="_r_2_-matchday-hint"
+-                   autocomplete="off"
+-                   class="_input_d2c55e"
+-                   id="_r_2_-matchday"
+-                   inputmode="numeric"
+-                   max="999"
+-                   min="1"
+-                   required=""
+-                   step="1"
+-                   type="number"
+-                   value=""
+-                 />
+-                 <p
+-                   class="_hint_d2c55e"
+-                   id="_r_2_-matchday-hint"
+-                 >
+-                   Número del 1 al 999.
+-                 </p>
+-               </div>
+-             </fieldset>
+-           </fieldset>
+-           <fieldset
+-             class="_fieldset_d2c55e"
+-           >
+-             <legend
+-               class="_legend_d2c55e"
+-             >
+-               Equipos
+-             </legend>
+-             <p
+-               class="_hint_d2c55e"
+-             >
+-               Entre 2 y 64 equipos, con su nombre oficial. La clave de cada equipo se calcula a partir del nombre con la misma regla que las importaciones CSV.
+-             </p>
+-             <ul
+-               class="_list_d2c55e"
+-             >
+-               <li
+-                 class="_teamRow_d2c55e"
+-               >
+-                 <div
+-                   class="_field_d2c55e"
+-                 >
+-                   <label
+-                     class="_label_d2c55e"
+-                     for="_r_2_-team-r1-name"
+-                   >
+-                     Nombre del equipo 1
+-                   </label>
+-                   <input
+-                     autocomplete="off"
+-                     class="_input_d2c55e"
+-                     id="_r_2_-team-r1-name"
+-                     maxlength="64"
+-                     required=""
+-                     type="text"
+-                     value=""
+-                   />
+-                 </div>
+-                 <p
+-                   class="_teamKey_d2c55e"
+-                 >
+-                   Clave
+-                   :
+-                    
+-                   —
+-                 </p>
+-                 <button
+-                   class="_secondaryButton_d2c55e"
+-                   disabled=""
+-                   type="button"
+-                 >
+-                   Quitar el equipo 1
+-                 </button>
+-               </li>
+-               <li
+-                 class="_teamRow_d2c55e"
+-               >
+-                 <div
+-                   class="_field_d2c55e"
+-                 >
+-                   <label
+-                     class="_label_d2c55e"
+-                     for="_r_2_-team-r2-name"
+-                   >
+-                     Nombre del equipo 2
+-                   </label>
+-                   <input
+-                     autocomplete="off"
+-                     class="_input_d2c55e"
+-                     id="_r_2_-team-r2-name"
+-                     maxlength="64"
+-                     required=""
+-                     type="text"
+-                     value=""
+-                   />
+-                 </div>
+-                 <p
+-                   class="_teamKey_d2c55e"
+-                 >
+-                   Clave
+-                   :
+-                    
+-                   —
+-                 </p>
+-                 <button
+-                   class="_secondaryButton_d2c55e"
+-                   disabled=""
+-                   type="button"
+-                 >
+-                   Quitar el equipo 2
+-                 </button>
+-               </li>
+-             </ul>
+-             <button
+-               class="_secondaryButton_d2c55e"
+-               id="_r_2_-teams-add"
+-               type="button"
+-             >
+-               Añadir equipo
+-             </button>
+-           </fieldset>
+-           <fieldset
+-             class="_fieldset_d2c55e"
+-           >
+-             <legend
+-               class="_legend_d2c55e"
+-             >
+-               Partidos
+-             </legend>
+-             <p
+-               class="_hint_d2c55e"
+-             >
+-               Entre 1 y 64 partidos. La fecha y hora se indican en la hora local de este equipo y se envían en UTC.
+-             </p>
+-             <fieldset
+-               class="_row_d2c55e"
+-             >
+-               <legend
+-                 class="_legend_d2c55e"
+-               >
+-                 Partido 1
+-               </legend>
+-               <div
+-                 class="_fields_d2c55e"
+-               >
+-                 <div
+-                   class="_field_d2c55e"
+-                 >
+-                   <label
+-                     class="_label_d2c55e"
+-                     for="_r_2_-match-r3-home"
+-                   >
+-                     Equipo local
+-                   </label>
+-                   <select
+-                     class="_input_d2c55e"
+-                     id="_r_2_-match-r3-home"
+-                     required=""
+-                   >
+-                     <option
+-                       value=""
+-                     >
+-                       Elija un equipo
+-                     </option>
+-                     <option
+-                       value="r1"
+-                     >
+-                       Equipo 1 (sin nombre)
+-                     </option>
+-                     <option
+-                       value="r2"
+-                     >
+-                       Equipo 2 (sin nombre)
+-                     </option>
+-                   </select>
+-                 </div>
+-                 <div
+-                   class="_field_d2c55e"
+-                 >
+-                   <label
+-                     class="_label_d2c55e"
+-                     for="_r_2_-match-r3-away"
+-                   >
+-                     Equipo visitante
+-                   </label>
+-                   <select
+-                     class="_input_d2c55e"
+-                     id="_r_2_-match-r3-away"
+-                     required=""
+-                   >
+-                     <option
+-                       value=""
+-                     >
+-                       Elija un equipo
+-                     </option>
+-                     <option
+-                       value="r1"
+-                     >
+-                       Equipo 1 (sin nombre)
+-                     </option>
+-                     <option
+-                       value="r2"
+-                     >
+-                       Equipo 2 (sin nombre)
+-                     </option>
+-                   </select>
+-                 </div>
+-                 <div
+-                   class="_field_d2c55e"
+-                 >
+-                   <label
+-                     class="_label_d2c55e"
+-                     for="_r_2_-match-r3-kickoff"
+-                   >
+-                     Fecha y hora de inicio
+-                   </label>
+-                   <input
+-                     autocomplete="off"
+-                     class="_input_d2c55e"
+-                     id="_r_2_-match-r3-kickoff"
+-                     required=""
+-                     type="datetime-local"
+-                     value=""
+-                   />
+-                 </div>
+-                 <div
+-                   class="_field_d2c55e"
+-                 >
+-                   <label
+-                     class="_label_d2c55e"
+-                     for="_r_2_-match-r3-status"
+-                   >
+-                     Estado
+-                   </label>
+-                   <select
+-                     aria-describedby="_r_2_-match-r3-status-hint"
+-                     class="_input_d2c55e"
+-                     id="_r_2_-match-r3-status"
+-                     required=""
+-                   >
+-                     <option
+-                       value=""
+-                     >
+-                       Elija un estado
+-                     </option>
+-                     <option
+-                       value="scheduled"
+-                     >
+-                       Programado
+-                     </option>
+-                     <option
+-                       value="in_play"
+-                     >
+-                       En juego
+-                     </option>
+-                     <option
+-                       value="finished"
+-                     >
+-                       Finalizado
+-                     </option>
+-                     <option
+-                       value="postponed"
+-                     >
+-                       Aplazado
+-                     </option>
+-                     <option
+-                       value="suspended"
+-                     >
+-                       Suspendido
+-                     </option>
+-                     <option
+-                       value="cancelled"
+-                     >
+-                       Cancelado
+-                     </option>
+-                     <option
+-                       value="abandoned"
+-                     >
+-                       Abandonado
+-                     </option>
+-                     <option
+-                       value="awarded"
+-                     >
+-                       Resultado adjudicado por decisión administrativa
+-                     </option>
+-                   </select>
+-                   <p
+-                     class="_hint_d2c55e"
+-                     id="_r_2_-match-r3-status-hint"
+-                   >
+-                     Solo un partido finalizado lleva marcador.
+-                   </p>
+-                 </div>
+-               </div>
+-               <button
+-                 class="_secondaryButton_d2c55e"
+-                 disabled=""
+-                 type="button"
+-               >
+-                 Quitar el partido 1
+-               </button>
+-             </fieldset>
+-             <button
+-               class="_secondaryButton_d2c55e"
+-               id="_r_2_-matches-add"
+-               type="button"
+-             >
+-               Añadir partido
+-             </button>
+-           </fieldset>
+-           <fieldset
+-             class="_fieldset_d2c55e"
+-           >
+-             <legend
+-               class="_legend_d2c55e"
+-             >
+-               Clasificación (opcional)
+-             </legend>
+-             <p
+-               class="_hint_d2c55e"
+-             >
+-               Una fase sin clasificación es válida. Si la incluye, escriba todos los valores tal como los publica la competición; no se calculan.
+-             </p>
+-             <label
+-               class="_option_d2c55e"
+-             >
+-               <input
+-                 type="checkbox"
+-               />
+-               Incluir la clasificación de esta selección
+-             </label>
+-           </fieldset>
+-           <div
+-             class="_field_d2c55e"
+-           >
+-             <label
+-               class="_label_d2c55e"
+-               for="_r_2_-declaredSource"
+-             >
+-               Fuente declarada (opcional)
+-             </label>
+-             <input
+-               aria-describedby="_r_2_-declaredSource-hint"
+-               autocomplete="off"
+-               class="_input_d2c55e"
+-               id="_r_2_-declaredSource"
+-               maxlength="80"
+-               type="text"
+-               value=""
+-             />
+-             <p
+-               class="_hint_d2c55e"
+-               id="_r_2_-declaredSource-hint"
+-             >
+-               De dónde provienen los datos, hasta 80 caracteres. Se guarda como texto.
+-             </p>
+-           </div>
+-           <button
+-             aria-busy="false"
+-             class="_button_d2c55e"
+-             id="_r_2_-submit"
+-             type="submit"
+-           >
+-             Importar datos del formulario
+-           </button>
+-         </form>
+-       </section>
+-     </div>
+-     <section
+-       aria-labelledby="import-history-title"
+-       class="_section_d2c55e"
+-     >
+-       <h2
+-         id="import-history-title"
+-       >
+-         Historial de importaciones
+-       </h2>
+-       <p
+-         class="_notice_d2c55e"
+-       >
+-         Abra los originales descargados como texto (por ejemplo, en un editor de texto), no en una hoja de cálculo: una hoja de cálculo puede interpretar algunas celdas como fórmulas.
+-       </p>
+-       <p
+-         class="_hint_d2c55e"
+-       >
+-         El SHA-256 del original coincide con el del archivo importado.
+-       </p>
+-       <p
+-         aria-live="polite"
+-         role="status"
+-       >
+-         Cargando las importaciones…
+-       </p>
+-     </section>
+-   </section>
+- </main>
++ </a>
+
+ ❯ apps/web/src/app/App.test.tsx:75:36
+     73|     expect(screen.getByRole('link', { name: 'Importaciones manuales' }…
+     74|     expect(screen.getByRole('link', { name: 'Proyectos' }).getAttribut…
+     75|     expect(document.activeElement).toBe(screen.getByRole('main'));
+       |                                    ^
+     76|   });
+     77| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 107 passed (108)
+      Tests  1 failed | 1963 passed (1964)
+   Start at  12:21:25
+   Duration  7.98s (tests 52%, environment 20%, import 16%, transform 10%, setup 2%)
+
+=== PRJ-INTEGRATION (integration, required) PASS exit=0 ms=11680 ===
+COMMAND: npm run test:integration
+REASON: exit 0
+
+> el-deporte-rey-ai@0.0.0 test:integration
+> vitest run --project integration
+
+
+ RUN  v5.0.4 /Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-verify
+
+
+ Test Files  32 passed (32)
+      Tests  455 passed (455)
+   Start at  12:21:33
+   Duration  11.44s (tests 86%, import 9%, transform 4%, setup 1%)
+
+=== PRJ-CONTRACT (contract, required) PASS exit=0 ms=2504 ===
+COMMAND: npm run test:contract
+REASON: exit 0
+
+> el-deporte-rey-ai@0.0.0 test:contract
+> vitest run --project contract
+
+
+ RUN  v5.0.4 /Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-verify
+
+
+ Test Files  4 passed (4)
+      Tests  465 passed (465)
+   Start at  12:21:44
+   Duration  2.29s (tests 92%, import 4%, transform 3%, setup 1%)
+
+=== PRJ-BUILD (build, required) PASS exit=0 ms=976 ===
+COMMAND: npm run build
+REASON: exit 0
+
+> el-deporte-rey-ai@0.0.0 build
+> npm run build --workspaces --if-present
+
+
+> @edr/server@0.0.0 build
+> tsc -b
+
+
+> @edr/web@0.0.0 build
+> vite build
+
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 318 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                           0.45 kB │ gzip:   0.28 kB
+dist/assets/EvidenceTable-Bxdd_pGi.css    3.29 kB │ gzip:   0.99 kB
+dist/assets/brand-bWcEcPyc.css            3.31 kB │ gzip:   1.09 kB
+dist/assets/projects-Cr7COfyc.css         3.51 kB │ gzip:   1.05 kB
+dist/assets/history-A0uurjXW.css          3.59 kB │ gzip:   1.02 kB
+dist/assets/imports-Cs_9gSff.css          3.83 kB │ gzip:   1.10 kB
+dist/assets/index-yTM_qEz3.css            4.54 kB │ gzip:   1.49 kB
+dist/assets/review-BsJp5BaE.css           5.14 kB │ gzip:   1.37 kB
+dist/assets/copy-CTWqsk8M.js              7.29 kB │ gzip:   2.65 kB
+dist/assets/EvidenceTable-h8ttpZTT.js    12.42 kB │ gzip:   4.33 kB
+dist/assets/facts-CCKNEOKk.js            12.91 kB │ gzip:   4.06 kB
+dist/assets/brand-ClO4dZKb.js            17.05 kB │ gzip:   5.72 kB
+dist/assets/history-Cx4Dgui1.js          24.78 kB │ gzip:   6.82 kB
+dist/assets/projects-Dpz4iVJF.js         25.62 kB │ gzip:   6.53 kB
+dist/assets/review-C4XPSDyS.js           33.52 kB │ gzip:  10.15 kB
+dist/assets/imports-BSqnkXXs.js          53.40 kB │ gzip:  14.32 kB
+dist/assets/index-RRVTbce4.js           451.53 kB │ gzip: 139.50 kB
+
+✓ built in 407ms
+
+> @edr/contracts@0.0.0 build
+> tsc -b
+
+=== PRJ-E2E (e2e, required) PASS exit=0 ms=2874 ===
+COMMAND: npm run test:e2e
+REASON: exit 0
+
+> el-deporte-rey-ai@0.0.0 test:e2e
+> npm run build && node e2e/run.mjs --grep-invert @a11y
+
+
+> el-deporte-rey-ai@0.0.0 build
+> npm run build --workspaces --if-present
+
+
+> @edr/server@0.0.0 build
+> tsc -b
+
+
+> @edr/web@0.0.0 build
+> vite build
+
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 318 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                           0.45 kB │ gzip:   0.28 kB
+dist/assets/EvidenceTable-Bxdd_pGi.css    3.29 kB │ gzip:   0.99 kB
+dist/assets/brand-bWcEcPyc.css            3.31 kB │ gzip:   1.09 kB
+dist/assets/projects-Cr7COfyc.css         3.51 kB │ gzip:   1.05 kB
+dist/assets/history-A0uurjXW.css          3.59 kB │ gzip:   1.02 kB
+dist/assets/imports-Cs_9gSff.css          3.83 kB │ gzip:   1.10 kB
+dist/assets/index-yTM_qEz3.css            4.54 kB │ gzip:   1.49 kB
+dist/assets/review-BsJp5BaE.css           5.14 kB │ gzip:   1.37 kB
+dist/assets/copy-CTWqsk8M.js              7.29 kB │ gzip:   2.65 kB
+dist/assets/EvidenceTable-h8ttpZTT.js    12.42 kB │ gzip:   4.33 kB
+dist/assets/facts-CCKNEOKk.js            12.91 kB │ gzip:   4.06 kB
+dist/assets/brand-ClO4dZKb.js            17.05 kB │ gzip:   5.72 kB
+dist/assets/history-Cx4Dgui1.js          24.78 kB │ gzip:   6.82 kB
+dist/assets/projects-Dpz4iVJF.js         25.62 kB │ gzip:   6.53 kB
+dist/assets/review-C4XPSDyS.js           33.52 kB │ gzip:  10.15 kB
+dist/assets/imports-BSqnkXXs.js          53.40 kB │ gzip:  14.32 kB
+dist/assets/index-RRVTbce4.js           451.53 kB │ gzip: 139.50 kB
+
+✓ built in 117ms
+
+> @edr/contracts@0.0.0 build
+> tsc -b
+
+[e2e] Ensuring Chromium in .cache/ms-playwright (downloaded on first use only).
+[e2e] Configuration generated from fixtures/config/demo-manual.config.json in a temporary directory: sources demo-a, demo-b, stub AI provider.
+[e2e] Starting the built server entry (apps/server/dist/src/main.js).
+[e2e] Server listening on http://127.0.0.1:4310.
+
+Running 5 tests using 1 worker
+
+  ✓  1 [chromium] › e2e/tests/harness.spec.ts:13:3 › End-to-end harness › forwards no credential or live-test variable (33ms)
+  ✓  2 [chromium] › e2e/tests/harness.spec.ts:21:3 › End-to-end harness › uses the project-local browser cache (6ms)
+  ✓  3 [chromium] › e2e/tests/harness.spec.ts:25:3 › End-to-end harness › serves the application on the loopback address (12ms)
+  ✓  4 [chromium] › e2e/tests/smoke.spec.ts:12:3 › Application shell (R-235) › opens on the project list without login (283ms)
+  ✓  5 [chromium] › e2e/tests/smoke.spec.ts:31:3 › Application shell (R-235) › shows no login, account or sign-in element (201ms)
+
+  5 passed (1.4s)
+[e2e] Server stopped and temporary directory removed.
+
+=== PRJ-AUDIT (security-audit, required) PASS exit=0 ms=614 ===
+COMMAND: npm audit --audit-level=high
+REASON: exit 0
+# npm audit report
+
+fflate  0.7.0 - 0.7.4
+Severity: moderate
+fflate unzipSync can enter an infinite loop when parsing malformed ZIP64 archives - https://github.com/advisories/GHSA-px8p-9vwx-vf98
+fix available via `npm audit fix --force`
+Will install satori@0.32.0, which is a breaking change
+node_modules/fflate
+  satori  >=0.33.0
+  Depends on vulnerable versions of fflate
+  node_modules/satori
+
+2 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
