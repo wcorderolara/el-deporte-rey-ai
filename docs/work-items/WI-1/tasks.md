@@ -1082,6 +1082,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-44 | MEDIUM | Re-plan: T44 also owns `e2e/support/**` and `e2e/run.mjs` (created by T24, DONE) to add MANUAL_DATA to the e2e configuration (INCLUDED_MODES in e2e/support/harness.mjs, base fixtures/config/demo-manual.config.json) once T50 is integrated, and to remove the T19-seam fallback (e2e/support/seam-server.mjs and the stub detection), now inactive since T21 | separate follow-up task | low | MED-05; T24 report |
 | OD-45 | MEDIUM | T50 note carried to the T52 brief: run every sample of `fixtures/manual/invalid/` (T23) through the real import pipeline and assert the expected record, field and problem from `fixtures/manual/_manifest.json`; T50 covered each error class with inline generated cases because the fixtures were not in its base | reopen T50 | low | MED-05; T50 report |
 | OD-46 | MEDIUM | SOT-1: the root `engines.node` range `>=22.22.2 <23` is accepted as meeting OD-30 together with `.nvmrc` 22.22.2 (exact) and `engine-strict` in .npmrc; no exact pin in engines | tighten engines to 22.22.2 via the owner of package.json (T43) | low (one-line change) | MED-03; T26 report; PO notified |
+| OD-47 | MEDIUM | T30 interpretations confirmed: LOW-4 `facts.subject` also stores the canonical value of each evidence observation (contract subject plus an evidence list) so evidence is served as contract FactValue while observations keep source-local keys (T29 format); LOW-9 the latest completed full run is status completed and kind full (as T31) | canonical IDs in observations | low (JSON content, no column change) | MED-04; T30 report; data-model.md updated at close; PO notified |
 
 ## Conflicts
 
@@ -1354,6 +1355,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T15:39:57Z | T49 | Status IN_PROGRESS (attempt 1); agent launched (PD-15 option A and PD-16 conditions apply) | orch next SELECT |
 | 2026-10-28T15:42:13Z | - | OD-46 recorded (engines range accepted with exact .nvmrc) | T26 SOT-1 |
 | 2026-10-28T15:42:52Z | T26 | Status DONE | integration commit 4419d2d; evidence/T26-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T15:47:50Z | - | OD-47 recorded (T30 LOW-4 and LOW-9 confirmed) | T30 report |
 
 ## Recovery log
 
