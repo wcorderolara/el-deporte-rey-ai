@@ -56,7 +56,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T22 | AI provider port, stub adapter and OpenAI-compatible adapter | IMPL | backend-developer | T17 | DONE | 1 | 89fa98d | `docs/work-items/WI-1/evidence/T22-gates.txt` |
 | T23 | Synthetic fixture scenarios | IMPL | qa-engineer | T21, T22 | DONE | 1 | 5c73712 | `docs/work-items/WI-1/evidence/T23-gates.txt` |
 | T24 | End-to-end and accessibility test harness | IMPL | qa-engineer | T16, T19 | DONE | 1 | 8ff8fbf | `docs/work-items/WI-1/evidence/T24-gates.txt` |
-| T25 | Project gates, local-environment settings and contract declaration | IMPL | Orchestrator | T15, T16, T19, T20, T24 | PENDING | 0 | - | - |
+| T25 | Project gates, local-environment settings and contract declaration | IMPL | Orchestrator | T15, T16, T19, T20, T24 | IN_PROGRESS | 1 | - | - |
 | T26 | Source of truth: exact versions, contract hash, gate and environment notes | IMPL | architect | T12, T25 | PENDING | 0 | - | - |
 | T27 | Projects module and workflow runner | IMPL | backend-developer | T18, T19, T20, T21 | DONE | 1 | 833f585 | `docs/work-items/WI-1/evidence/T27-gates.txt` |
 | T28 | Projects UI: list, create, detail and run progress | IMPL | frontend-developer | T16, T20 | DONE | 1 | 4cefeba | `docs/work-items/WI-1/evidence/T28-gates.txt` |
@@ -64,7 +64,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T30 | Verification stage: two-source rule, disputes, team identity | IMPL | backend-developer | T21, T27 | IN_PROGRESS | 1 | - | - |
 | T31 | Facts and verification UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 63d83cd | `docs/work-items/WI-1/evidence/T31-gates.txt` |
 | T32 | Content stage: structure, AI drafting, fact placeholders, content checks | IMPL | backend-developer | T22, T27 | IN_PROGRESS | 1 | - | - |
-| T33 | Brand asset registry | IMPL | backend-developer | T27 | PENDING | 0 | - | - |
+| T33 | Brand asset registry | IMPL | backend-developer | T27 | IN_PROGRESS | 1 | - | - |
 | T34 | Rendering stage and carousel templates | IMPL | backend-developer | T27, T33 | PENDING | 0 | - | - |
 | T35 | Visual QA stage | IMPL | backend-developer | T30, T34 | PENDING | 0 | - | - |
 | T36 | Brand assets and templates UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | e457fc8 | `docs/work-items/WI-1/evidence/T36-gates.txt` |
@@ -1324,6 +1324,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T15:35:13Z | T24 | Status DONE | integration commit 8ff8fbf; evidence/T24-gates.txt PASS; test:e2e 5 and test:a11y 2 pass against the real server at 5c73712 |
 | 2026-10-28T15:35:13Z | - | OD-44 recorded (T44 owns e2e/support/** and e2e/run.mjs) | T24 report |
 | 2026-10-28T15:35:13Z | T44 | Files owned extended by OD-44 (e2e/support/**, e2e/run.mjs) | OD-44 |
+| 2026-10-28T15:35:50Z | T25 | Status IN_PROGRESS (attempt 1); Orchestrator working | orch next SELECT |
+| 2026-10-28T15:35:50Z | T33 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-28T15:35:50Z | - | Environment: the Orchestrator shell reaches the npm registry (plain npm ci and npm audit --audit-level=high exit 0 at 596e86e: 2 moderate, OD-33); general web access stays blocked | verify worktree run |
 
 ## Recovery log
 
