@@ -54,11 +54,11 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T20 | HTTP contract promotion and shared API schemas | IMPL | backend-developer | T15 | DONE | 2 | 6911bed | `docs/work-items/WI-1/evidence/T20-gates.txt` |
 | T21 | Sports-data provider port, payload validation and fixture adapter | IMPL | backend-developer | T17, T20 | DONE | 1 | 03a6a6e | `docs/work-items/WI-1/evidence/T21-gates.txt` |
 | T22 | AI provider port, stub adapter and OpenAI-compatible adapter | IMPL | backend-developer | T17 | DONE | 1 | 89fa98d | `docs/work-items/WI-1/evidence/T22-gates.txt` |
-| T23 | Synthetic fixture scenarios | IMPL | qa-engineer | T21, T22 | PENDING | 0 | - | - |
+| T23 | Synthetic fixture scenarios | IMPL | qa-engineer | T21, T22 | IN_PROGRESS | 1 | - | - |
 | T24 | End-to-end and accessibility test harness | IMPL | qa-engineer | T16, T19 | IN_PROGRESS | 1 | - | - |
 | T25 | Project gates, local-environment settings and contract declaration | IMPL | Orchestrator | T15, T16, T19, T20, T24 | PENDING | 0 | - | - |
 | T26 | Source of truth: exact versions, contract hash, gate and environment notes | IMPL | architect | T12, T25 | PENDING | 0 | - | - |
-| T27 | Projects module and workflow runner | IMPL | backend-developer | T18, T19, T20, T21 | PENDING | 0 | - | - |
+| T27 | Projects module and workflow runner | IMPL | backend-developer | T18, T19, T20, T21 | IN_PROGRESS | 1 | - | - |
 | T28 | Projects UI: list, create, detail and run progress | IMPL | frontend-developer | T16, T20 | DONE | 1 | 4cefeba | `docs/work-items/WI-1/evidence/T28-gates.txt` |
 | T29 | Research stage | IMPL | backend-developer | T21, T27 | PENDING | 0 | - | - |
 | T30 | Verification stage: two-source rule, disputes, team identity | IMPL | backend-developer | T21, T27 | PENDING | 0 | - | - |
@@ -1264,6 +1264,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T10:28:21Z | T51 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T10:28:53Z | T40 | Status DONE | integration commit 9c7f249; evidence/T40-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T10:30:17Z | T21 | Status DONE | integration commit 03a6a6e; evidence/T21-gates.txt PASS; merged-state checks pass |
+| 2026-10-28T10:30:30Z | T23 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-28T10:30:30Z | T27 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 
 ## Recovery log
 
