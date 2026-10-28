@@ -76,7 +76,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T42 | Integration tests: content, rendering, visual QA, approval, export, history | IMPL | qa-engineer | T32, T33, T34, T35, T37, T38, T41, T56, T58 | DONE | 1 | db84eda | `docs/work-items/WI-1/evidence/T42-gates.txt` |
 | T43 | Contract conformance tests | IMPL | qa-engineer | T20, T38, T41, T50 | DONE | 1 | cb16a73 | `docs/work-items/WI-1/evidence/T43-gates.txt` |
 | T44 | End-to-end and accessibility journeys | IMPL | qa-engineer | T23, T24, T28, T29, T31, T36, T38, T39, T40, T50, T51 | DONE | 1 | d3222a7 | `docs/work-items/WI-1/evidence/T44-gates.txt` |
-| T45 | Architecture conformance review | IMPL | architect | T14, T26, T42, T43, T44, T52, T59, T62, T63, T65, T66 | PENDING | 0 | - | - |
+| T45 | Architecture conformance review | IMPL | architect | T14, T26, T42, T43, T44, T52, T59, T62, T63, T65, T66 | IN_PROGRESS | 1 | - | - |
 | T46 | Security evidence pack | VERIFY | qa-engineer | T45 | PENDING | 0 | - | - |
 | T47 | Security delta validation | VERIFY | security-reviewer | T46, T67 | PENDING | 0 | - | - |
 | T49 | FootballDataProvider adapter, request budget, projection cache, live tests and capability probe script | IMPL | backend-developer | T21, T23 | DONE | 2 | 7dba63d | `docs/work-items/WI-1/evidence/T49-gates.txt` |
@@ -1805,6 +1805,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T21:57:59Z | T62 | Record corrected: the extra architecture-folder marker-scan was FAIL on pre-existing documented synthetic markers, not PASS | Orchestrator re-check |
 | 2026-10-28T21:58:11Z | - | E-16 raised (DR-6, U-32) | T62 report |
 | 2026-10-28T22:01:21Z | - | E-16 answered by the Product Owner verbatim: "Keep rule now, widen later"; recorded as PD-26; FU-9 to FU-15 deferred to the next work item | Product Owner 2026-10-28 |
+| 2026-10-28T22:01:31Z | T45 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 
 ## Recovery log
 
