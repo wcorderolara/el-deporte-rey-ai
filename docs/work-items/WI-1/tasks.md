@@ -63,7 +63,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T29 | Research stage | IMPL | backend-developer | T21, T27 | DONE | 1 | 328c6ef | `docs/work-items/WI-1/evidence/T29-gates.txt` |
 | T30 | Verification stage: two-source rule, disputes, team identity | IMPL | backend-developer | T21, T27 | IN_PROGRESS | 1 | - | - |
 | T31 | Facts and verification UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 63d83cd | `docs/work-items/WI-1/evidence/T31-gates.txt` |
-| T32 | Content stage: structure, AI drafting, fact placeholders, content checks | IMPL | backend-developer | T22, T27 | PENDING | 0 | - | - |
+| T32 | Content stage: structure, AI drafting, fact placeholders, content checks | IMPL | backend-developer | T22, T27 | IN_PROGRESS | 1 | - | - |
 | T33 | Brand asset registry | IMPL | backend-developer | T27 | PENDING | 0 | - | - |
 | T34 | Rendering stage and carousel templates | IMPL | backend-developer | T27, T33 | PENDING | 0 | - | - |
 | T35 | Visual QA stage | IMPL | backend-developer | T30, T34 | PENDING | 0 | - | - |
@@ -1306,6 +1306,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T15:31:51Z | T30 | Agent interrupted by the usage limit; uncommitted work preserved in the task worktree; same agent resumed | task-notification rate_limit 429 |
 | 2026-10-28T15:31:51Z | T50 | Agent interrupted by the usage limit; uncommitted work preserved in the task worktree; same agent resumed | task-notification rate_limit 429 |
 | 2026-10-28T15:33:09Z | T29 | Status DONE | integration commit 328c6ef; evidence/T29-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T15:33:39Z | T32 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 
 ## Recovery log
 
