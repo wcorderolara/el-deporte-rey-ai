@@ -1,0 +1,12 @@
+TASK: WI-1-T53
+RESULT: PASS
+VALIDATED_HEAD: 0c9dbcda640f97d83d4976563fe7e79ed0eb08e1
+DATE: 2026-10-28T18:19:06Z
+COMMAND: node --env-file-if-exists=.env.local scripts/security-checks.mjs marker-scan --require-token docs/work-items/WI-1/research .cache/probe-output.log
+SUMMARY: Real-token marker scan of the findings and console log before deletion: real token checked yes, findings 0
+--- output ---
+marker-scan: looks for: the synthetic marker token, the marker client value and the value of FOOTBALL_DATA_API_TOKEN
+files scanned: 22
+real token checked: yes
+marker-scan: findings: 0
+RESULT: PASS
