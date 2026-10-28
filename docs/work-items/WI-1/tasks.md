@@ -1343,7 +1343,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Orchestrator verification: `orch scan models` on `.orchestrate/source-of-truth.md` and `provider-research.md` exit 0; `orch validate --work-item 'WI-1' --at .` exit 0; ownership against the integration tracker; main working tree unchanged; 2026-10-28.
 - Decisions: LOW-1 to LOW-7 (source cells word for word; section 3 points to the tracker for OD-01 to OD-66; PD-26 as BR-19 and SC-09; closed-item convention; U-02 and SOT-1 also closed; data-model corrections; outcome blocks kept with history). Escalation SOT-6 decided by OD-66 (accepted as built).
 - Human interventions: 0.
-- Agent usage: launches 1.
+- Agent usage: launches 1; tokens 205913; duration 9 minutes.
 - Integration commit(s): 916673a (merge --no-ff of task/WI-1/T68). Affected gates at 916673a: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T68-gates.txt, the evidence file of this task).
 
 ### T48: Final gate run
