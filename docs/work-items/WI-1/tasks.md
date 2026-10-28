@@ -1075,6 +1075,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-43 | MEDIUM | T27 escalation: operator match exclusions for a redraft are stored in `workflow_runs.config_snapshot` under `parameters.excludedMatchKeys` (null when a run does not change exclusions), read by T32 through `RunRepository.parameters(runId)` / `RunParametersSchema` in `apps/server/src/workflow/index.ts`; no DDL change; data-model.md is updated at close (configuration-update task) | nullable column via a new migration | low (additive JSON field) | MED-04, MED-05; T27 report; PO notified |
 | OD-44 | MEDIUM | Re-plan: T44 also owns `e2e/support/**` and `e2e/run.mjs` (created by T24, DONE) to add MANUAL_DATA to the e2e configuration (INCLUDED_MODES in e2e/support/harness.mjs, base fixtures/config/demo-manual.config.json) once T50 is integrated, and to remove the T19-seam fallback (e2e/support/seam-server.mjs and the stub detection), now inactive since T21 | separate follow-up task | low | MED-05; T24 report |
 | OD-45 | MEDIUM | T50 note carried to the T52 brief: run every sample of `fixtures/manual/invalid/` (T23) through the real import pipeline and assert the expected record, field and problem from `fixtures/manual/_manifest.json`; T50 covered each error class with inline generated cases because the fixtures were not in its base | reopen T50 | low | MED-05; T50 report |
+| OD-46 | MEDIUM | SOT-1: the root `engines.node` range `>=22.22.2 <23` is accepted as meeting OD-30 together with `.nvmrc` 22.22.2 (exact) and `engine-strict` in .npmrc; no exact pin in engines | tighten engines to 22.22.2 via the owner of package.json (T43) | low (one-line change) | MED-03; T26 report; PO notified |
 
 ## Conflicts
 
@@ -1345,6 +1346,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T15:39:10Z | - | OD-45 recorded (fixture-driven invalid manual samples carried to T52) | T50 report |
 | 2026-10-28T15:39:39Z | T50 | Status DONE | integration commit b972c53; evidence/T50-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T15:39:57Z | T49 | Status IN_PROGRESS (attempt 1); agent launched (PD-15 option A and PD-16 conditions apply) | orch next SELECT |
+| 2026-10-28T15:42:13Z | - | OD-46 recorded (engines range accepted with exact .nvmrc) | T26 SOT-1 |
 
 ## Recovery log
 
