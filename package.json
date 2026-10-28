@@ -23,7 +23,7 @@
     "test:e2e": "npm run build && node e2e/run.mjs --grep-invert @a11y",
     "test:a11y": "npm run build && node e2e/run.mjs --grep @a11y",
     "dev": "npm run dev:api & npm run dev:web; wait",
-    "dev:api": "tsc -b apps/server && (tsc -b apps/server --watch --preserveWatchOutput & node --watch --env-file-if-exists=.env.local --disable-warning=ExperimentalWarning apps/server/dist/src/main.js)",
+    "dev:api": "tsc -b apps/server && (tsc -b apps/server --watch --preserveWatchOutput & EDR_CONFIG=config/dev.config.json node --watch --env-file-if-exists=.env.local --disable-warning=ExperimentalWarning apps/server/dist/src/main.js)",
     "dev:web": "npm run dev --workspace=apps/web",
     "start": "node --env-file-if-exists=.env.local --disable-warning=ExperimentalWarning apps/server/dist/src/main.js",
     "probe:football-data": "npm run build && node --env-file-if-exists=.env.local apps/server/dist/scripts/football-data-probe.js"
