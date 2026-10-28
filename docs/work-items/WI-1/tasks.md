@@ -78,7 +78,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T44 | End-to-end and accessibility journeys | IMPL | qa-engineer | T23, T24, T28, T29, T31, T36, T38, T39, T40, T50, T51 | DONE | 1 | d3222a7 | `docs/work-items/WI-1/evidence/T44-gates.txt` |
 | T45 | Architecture conformance review | IMPL | architect | T14, T26, T42, T43, T44, T52, T59, T62, T63, T65, T66 | DONE | 1 | 8d2a62f | `docs/work-items/WI-1/evidence/T45-gates.txt` |
 | T46 | Security evidence pack | VERIFY | qa-engineer | T45 | DONE | 1 | a0cc400 | `docs/work-items/WI-1/evidence/T46-gates.txt` |
-| T47 | Security delta validation | VERIFY | security-reviewer | T46, T67 | DONE | 1 | 040cbf7 | `docs/work-items/WI-1/evidence/T47-gates.txt` |
+| T47 | Security delta validation | VERIFY | security-reviewer | T46, T67 | DONE | 1 | 61f71b3 | `docs/work-items/WI-1/evidence/T47-gates.txt` |
 | T49 | FootballDataProvider adapter, request budget, projection cache, live tests and capability probe script | IMPL | backend-developer | T21, T23 | DONE | 2 | 7dba63d | `docs/work-items/WI-1/evidence/T49-gates.txt` |
 | T50 | Manual data import module and ManualDataProvider | IMPL | backend-developer | T18, T19, T20, T21 | DONE | 1 | b972c53 | `docs/work-items/WI-1/evidence/T50-gates.txt` |
 | T51 | Manual import UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 70c6f98 | `docs/work-items/WI-1/evidence/T51-gates.txt` |
@@ -1049,7 +1049,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Decisions: LOW-1 to LOW-3 (finding IDs; status vocabulary; T46 pack taken as evidence for BASE, confirmed by NV-REQ-1). T47-F01 (the T61 `.env.local` was 0644 before the Orchestrator set 0600 during the run; confirm no other OS account or rotate the token) is put to the Product Owner in the acceptance request.
 - Human interventions: 0.
 - Agent usage: launches 1; tokens 365170; duration 12 minutes.
-- Integration commit(s): 040cbf7 (merge --no-ff of task/WI-1/T47). Affected gates at 040cbf7: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T47-gates.txt, the evidence file of this task).
+- Integration commit(s): 040cbf7 (merge --no-ff of task/WI-1/T47); evidence commit 61f71b3 (VERIFY task: the tracker row names the commit holding the gate evidence). Affected gates at 040cbf7: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T47-gates.txt, the evidence file of this task).
 
 ### T49: FootballDataProvider adapter, request budget, projection cache, live tests and capability probe script
 - Kind: IMPL
