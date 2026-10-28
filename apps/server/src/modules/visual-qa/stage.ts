@@ -11,6 +11,10 @@
  * - `persist` records every result and `qa_status` in one transaction. A version checked or superseded in the
  *   meantime fails the stage with `run_superseded` and nothing is recorded.
  *
+ * The checks run and stored are those the `qa_results.check_name` constraint accepts (`storableChecks`): every
+ * contract check, `capitalized_tokens` included, since migration 0002 (OD-56). A contract check the constraint does
+ * not accept is logged (check name and run ID, no text) and neither run nor stored.
+ *
  * QA findings are results, not stage failures: a slide that fails a blocking check stays blocked until a regenerated
  * version passes (OD-09); a warning is acknowledged by the operator (review module, T37).
  *
@@ -18,7 +22,7 @@
  */
 import { randomUUID } from 'node:crypto';
 
-import { UuidSchema } from '@edr/contracts';
+import { QA_CHECKS, UuidSchema } from '@edr/contracts';
 
 import type { AppContainer } from '../../container.js';
 import { StageFailure } from '../../workflow/index.js';
@@ -134,13 +138,18 @@ function persistResults(container: AppContainer, output: VisualQaOutput, newId: 
   }
 }
 
-/** Logs (without any text) that a check could not be stored because the schema does not accept its name. */
+/**
+ * Logs (without any text) every contract check that is not stored because the schema does not accept its name. None
+ * after migration 0002; it guards a contract check added before the migration that lists it.
+ */
 function logUnstoredChecks(container: AppContainer, input: VisualQaInput, runId: string | null): void {
-  if (!input.checks.includes('capitalized_tokens')) {
-    container.logger.warn(
-      { runId, check: 'capitalized_tokens' },
-      'visual QA check not stored: the qa_results check_name constraint does not accept it',
-    );
+  for (const check of QA_CHECKS) {
+    if (!input.checks.includes(check)) {
+      container.logger.warn(
+        { runId, check },
+        'visual QA check not stored: the qa_results check_name constraint does not accept it',
+      );
+    }
   }
 }
 

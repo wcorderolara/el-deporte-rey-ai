@@ -11,7 +11,10 @@
  * latest applied one. A migration must not contain transaction control statements (`BEGIN`, `COMMIT`) or change
  * `PRAGMA foreign_keys` (which SQLite ignores inside a transaction).
  *
- * A schema change after `0001_initial.sql` is a new migration and a decision above LOW (schema change).
+ * A schema change after `0001_initial.sql` is a new migration and a decision above LOW (schema change). A change
+ * SQLite cannot make with `ALTER TABLE` (for example a CHECK constraint) rebuilds the table with the documented
+ * procedure (create the new table, copy the rows, drop the old table, rename) with foreign keys left on; it suits a
+ * table that no other table references, as `0002_qa_capitalized_tokens.sql` does for `qa_results` (OD-56).
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';

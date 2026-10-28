@@ -6,8 +6,10 @@
  *   or `warnings`), guarded by `qa_status = 'pending' AND superseded_at IS NULL`, so a checked version is never
  *   changed and a superseded version is never checked (R-406). Its results are inserted in the same transaction, one
  *   row per check (`UNIQUE (element_version_id, check_name)`), not acknowledged.
- * - Only the checks that the `qa_results.check_name` constraint of the migrated schema accepts are stored
- *   (`storableChecks`): migration 0001 does not list `capitalized_tokens` (OD-26 came after it).
+ * - Only the checks that the `qa_results.check_name` constraint of the migrated schema accepts are run and stored
+ *   (`storableChecks`). Since migration 0002 (OD-56) the constraint lists every check of the contract, including
+ *   `capitalized_tokens` (OD-26, OD-38), so every check is stored; a check added to the contract later is not run
+ *   until a migration adds its name, and the stage logs it.
  * - Every value is a bound parameter of constant SQL (T10-F14); JSON columns are validated with the module schemas.
  */
 import { QA_CHECKS, type QaCheck, type QaResult, LanguageSchema, SlideTypeSchema, UuidSchema } from '@edr/contracts';
@@ -173,7 +175,10 @@ export class VisualQaRepository {
     };
   }
 
-  /** The checks whose names the `qa_results.check_name` constraint of the schema accepts, in contract order. */
+  /**
+   * The checks whose names the `qa_results.check_name` constraint of the schema accepts, in contract order: every
+   * contract check after migration 0002.
+   */
   storableChecks(): QaCheck[] {
     const row = this.#db.prepare<{ sql: unknown }>(SQL.qaResultsTable).get();
     const ddl = typeof row?.sql === 'string' ? row.sql : '';

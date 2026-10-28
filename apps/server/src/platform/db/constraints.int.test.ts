@@ -1,6 +1,6 @@
 /**
- * Constraint tests of migration `0001_initial.sql` on a temporary database (removed after the run), with synthetic
- * team- and competition-level rows only.
+ * Constraint tests of the migrated schema (`0001_initial.sql`, `0002_qa_capitalized_tokens.sql`) on a temporary
+ * database (removed after the run), with synthetic team- and competition-level rows only.
  *
  * Each rule of data-model.md section 3 that the database enforces is shown to accept a valid row and to refuse the
  * invalid ones, with the constraint kind that refuses them:
@@ -11,7 +11,8 @@
  * - a disputed fact with a candidate value;
  * - manual eligibility on an ineligible status (AD-28, AD-38);
  * - an unknown data mode on every data-mode column (PD-13);
- * - the closed failure JSON columns (T10-F10), STRICT types, selection references and import metadata.
+ * - the closed failure JSON columns (T10-F10), STRICT types, selection references and import metadata;
+ * - the closed QA check names of `qa_results`, including `capitalized_tokens` (migration 0002; OD-26, OD-56).
  */
 import { randomUUID } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -48,6 +49,8 @@ const TABLES = [
   'content_drafts',
   'carousels',
   'elements',
+  'element_versions',
+  'qa_results',
   'final_approvals',
   'exports',
 ] as const;
@@ -631,5 +634,101 @@ describe('content elements', () => {
       () => insert('elements', { ...element, id: randomUUID(), kind: 'caption', position: 3, slide_type: 'cover' }),
       'check',
     );
+  });
+});
+
+describe('QA results (data-model.md section 3.3; OD-09, OD-26, OD-56)', () => {
+  /** The six check names of the contract QA check list (OD-38); 0002 adds the sixth. */
+  const CHECK_NAMES = [
+    'data_match',
+    'team_names',
+    'text_fit',
+    'style_consistency',
+    'dimensions',
+    'capitalized_tokens',
+  ] as const;
+
+  function versionRow(): Row {
+    const elementId = randomUUID();
+    insert('elements', {
+      id: elementId,
+      carousel_id: base.carousel,
+      kind: 'caption',
+      position: 100 + Math.floor(Math.random() * 1_000_000),
+      slide_type: null,
+      slide_key: 'caption',
+      subject: '{}',
+      current_version_id: null,
+    });
+    const id = randomUUID();
+    insert('element_versions', {
+      id,
+      element_id: elementId,
+      version_number: 1,
+      origin: 'generated',
+      text: '{"fields":[]}',
+      content_flags: '[]',
+      ai_adapter: 'stub',
+      template_id: null,
+      template_version: null,
+      render_model: null,
+      image_path: null,
+      image_sha256: null,
+      width: null,
+      height: null,
+      qa_status: 'pending',
+      created_at: NOW,
+      superseded_at: null,
+    });
+    return { id };
+  }
+
+  function qaRow(versionId: SqlValue, overrides: Row = {}): Row {
+    return {
+      id: randomUUID(),
+      element_version_id: versionId,
+      check_name: 'capitalized_tokens',
+      outcome: 'fail',
+      severity: 'warning',
+      details: '{"tokens":["Ezequiel"]}',
+      acknowledged_at: null,
+      created_at: NOW,
+      ...overrides,
+    };
+  }
+
+  it('accepts every check name of the contract, capitalized_tokens included', () => {
+    const version = versionRow()['id'] ?? null;
+    for (const checkName of CHECK_NAMES) {
+      insert('qa_results', qaRow(version, { check_name: checkName }));
+    }
+    expect(
+      db
+        .prepare<{ check_name: string }>(
+          'SELECT check_name FROM qa_results WHERE element_version_id = ? ORDER BY rowid',
+        )
+        .all([version])
+        .map((row) => row.check_name),
+    ).toEqual([...CHECK_NAMES]);
+  });
+
+  it('refuses an unknown check name, outcome or severity, invalid details and an unknown version', () => {
+    const version = versionRow()['id'] ?? null;
+    expectRefused(() => insert('qa_results', qaRow(version, { check_name: 'unknown_check' })), 'check');
+    expectRefused(() => insert('qa_results', qaRow(version, { check_name: 'Capitalized_Tokens' })), 'check');
+    expectRefused(() => insert('qa_results', qaRow(version, { check_name: 'person_names' })), 'check');
+    expectRefused(() => insert('qa_results', qaRow(version, { outcome: 'skipped' })), 'check');
+    expectRefused(() => insert('qa_results', qaRow(version, { severity: 'info' })), 'check');
+    expectRefused(() => insert('qa_results', qaRow(version, { details: 'not json' })), 'check');
+    // STRICT is kept by the rebuild of migration 0002: a BLOB is refused in a TEXT column.
+    expectRefused(() => insert('qa_results', qaRow(version, { created_at: new Uint8Array([1, 2]) })), 'datatype');
+    expectRefused(() => insert('qa_results', qaRow(randomUUID())), 'foreign_key');
+  });
+
+  it('keeps one result per version and check', () => {
+    const version = versionRow()['id'] ?? null;
+    insert('qa_results', qaRow(version));
+    expectRefused(() => insert('qa_results', qaRow(version, { outcome: 'pass' })), 'unique');
+    insert('qa_results', qaRow(versionRow()['id'] ?? null));
   });
 });
