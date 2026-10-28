@@ -59,7 +59,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T25 | Project gates, local-environment settings and contract declaration | IMPL | Orchestrator | T15, T16, T19, T20, T24 | PENDING | 0 | - | - |
 | T26 | Source of truth: exact versions, contract hash, gate and environment notes | IMPL | architect | T12, T25 | PENDING | 0 | - | - |
 | T27 | Projects module and workflow runner | IMPL | backend-developer | T18, T19, T20, T21 | PENDING | 0 | - | - |
-| T28 | Projects UI: list, create, detail and run progress | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
+| T28 | Projects UI: list, create, detail and run progress | IMPL | frontend-developer | T16, T20 | DONE | 1 | 4cefeba | `docs/work-items/WI-1/evidence/T28-gates.txt` |
 | T29 | Research stage | IMPL | backend-developer | T21, T27 | PENDING | 0 | - | - |
 | T30 | Verification stage: two-source rule, disputes, team identity | IMPL | backend-developer | T21, T27 | PENDING | 0 | - | - |
 | T31 | Facts and verification UI | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
@@ -668,6 +668,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: project list as the home page (history columns: title, competition, stage display and matchday, source with `DataModeBadge`, demonstration label, language, approval state, last export time); create form that assumes no single competition format (R-077): competition selector from the catalogue (reference competitions first, each entry with its sources and availability reasons), data source selector (selectable sources only, first available preselected, OD-16), season selector loaded on source choice, stage selector listing stages by the source's names with their matchday numbers or a whole-stage choice and a note when standings are not expected, listing provenance (retrieved at, cached, stale) and the rate-limit wait message (R-291), unavailable competitions and seasons shown with their reason (R-286), language selector defaulting to Spanish; submit disabled until competition, source, season and stage (and a matchday when the stage is not selectable as a whole) are chosen (R-243); project detail (competition, source and mode, season, stage and matchday, demonstration banner, language change, start run, per-stage status with failure reason and restart, links to facts, review, exports and, for MANUAL_DATA, the import page) polling the run while active; accessible names, labels and keyboard use. Component tests with a mocked API client, including a stage-based competition, a stage without standings, an unavailable competition and an exhausted budget.
 - Acceptance criteria: R-200, R-203, R-235, R-236, R-243, R-269, R-283, R-284, R-286, R-291
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run build` -> exit 0
+- Agent result: PASS at 14f8941 after one interruption (usage limit, resumed) (npm ci 0; typecheck 0; lint 0; test:unit 0, 488 tests, 37 projects tests; build 0; npm audit --audit-level=high 0, 2 moderate per OD-33).
+- Orchestrator verification: `orch worktree verify-ownership` exit 0 (20 changed, 0 outside); re-run in the task worktree at 14f8941: npm ci --offline 0, typecheck 0, lint 0, test:unit 0 (24 files, 488 tests), test:integration 0 (4 files, 60 tests), build 0 (Orchestrator build output removed afterwards); main working tree unchanged; 2026-10-27.
+- Decisions: LOW-1 to LOW-9 (feature root routing without src/app changes; detail h1 while loading; radio groups with availability reasons; season not preselected, whole stage preset; languages from the contract; redraft offered, server decides; 2 s polling; MANUAL_DATA note per OD-28 and BR-12; injected API context with real client over fake fetch). OD-36 done for apps/web/src/api/types.ts; its optional client.ts follow-up (parseProblem on the contract ProblemSchema) is not needed and not done. No new dependency.
+- Human interventions: 0.
+- Agent usage: launches 2 (one resume); tokens 238793; duration 49 minutes (including one slow test run on a loaded host).
+- Integration commit(s): 4cefeba (merge --no-ff of task/WI-1/T28). Affected gates at 4cefeba: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T28-gates.txt, the evidence file of this task).
 
 ### T29: Research stage
 - Kind: IMPL
@@ -1213,6 +1219,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T00:36:02Z | T28 | Agent interrupted by the usage limit; uncommitted work preserved in the task worktree; same agent resumed | task-notification rate_limit 429 |
 | 2026-10-28T00:36:03Z | T31 | Agent interrupted by the usage limit; uncommitted work preserved in the task worktree; same agent resumed | task-notification rate_limit 429 |
 | 2026-10-28T00:36:03Z | T36 | Agent interrupted by the usage limit; uncommitted work preserved in the task worktree; same agent resumed | task-notification rate_limit 429 |
+| 2026-10-28T01:38:52Z | T28 | Status DONE | integration commit 4cefeba; evidence/T28-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
