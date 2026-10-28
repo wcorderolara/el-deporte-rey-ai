@@ -68,7 +68,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T34 | Rendering stage and carousel templates | IMPL | backend-developer | T27, T33 | DONE | 2 | 7e96f23 | `docs/work-items/WI-1/evidence/T34-gates.txt` |
 | T35 | Visual QA stage | IMPL | backend-developer | T30, T34 | DONE | 1 | f7ae5c3 | `docs/work-items/WI-1/evidence/T35-gates.txt` |
 | T36 | Brand assets and templates UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | e457fc8 | `docs/work-items/WI-1/evidence/T36-gates.txt` |
-| T37 | Review module: approval state machine, regeneration, final approval | IMPL | backend-developer | T32, T35 | PENDING | 0 | - | - |
+| T37 | Review module: approval state machine, regeneration, final approval | IMPL | backend-developer | T32, T35 | IN_PROGRESS | 1 | - | - |
 | T38 | Export, history and traceability module | IMPL | backend-developer | T37 | PENDING | 0 | - | - |
 | T39 | Review UI: preview, per-item approval, regeneration, final approval | IMPL | frontend-developer | T16, T20 | DONE | 1 | 34e9569 | `docs/work-items/WI-1/evidence/T39-gates.txt` |
 | T40 | Export, history and traceability UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 9c7f249 | `docs/work-items/WI-1/evidence/T40-gates.txt` |
@@ -86,8 +86,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T53 | Capability probe run and football-data.org findings | IMPL | Orchestrator | T13, T41, T49 | IN_PROGRESS | 1 | - | - |
 | T54 | Verification fixes: dispute outcome rule and unavailable consultation record | IMPL | backend-developer | T30, T41 | DONE | 1 | d002b9d | `docs/work-items/WI-1/evidence/T54-gates.txt` |
 | T55 | Security checks: accepted-advisory option for audit-report | IMPL | qa-engineer | T41 | DONE | 1 | f63dbb2 | `docs/work-items/WI-1/evidence/T55-gates.txt` |
-| T56 | Migration 0002: capitalized_tokens in qa_results | IMPL | backend-developer | T18, T35 | PENDING | 0 | - | - |
-| T57 | Counterpart resolution keeps the source failure code | IMPL | backend-developer | T54 | PENDING | 0 | - | - |
+| T56 | Migration 0002: capitalized_tokens in qa_results | IMPL | backend-developer | T18, T35 | IN_PROGRESS | 1 | - | - |
+| T57 | Counterpart resolution keeps the source failure code | IMPL | backend-developer | T54 | IN_PROGRESS | 1 | - | - |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57 | PENDING | 0 | - | - |
 
 ## Tasks
@@ -1500,6 +1500,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T17:51:04Z | T42 | Depends on extended by T56; scope extended by T52 BLOCKED parts (OD-56) | OD-56 |
 | 2026-10-28T17:51:04Z | T46 | Step 15 command updated with --accept (OD-55) | OD-55 |
 | 2026-10-28T17:51:04Z | T48 | Depends on extended by T56, T57 (OD-56) | OD-56 |
+| 2026-10-28T17:51:30Z | T37 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
+| 2026-10-28T17:51:30Z | T56 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
+| 2026-10-28T17:51:30Z | T57 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 
 ## Recovery log
 
