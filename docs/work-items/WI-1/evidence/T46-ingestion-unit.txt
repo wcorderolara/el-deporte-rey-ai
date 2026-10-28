@@ -1,0 +1,20 @@
+TASK: WI-1-T46
+RESULT: PASS
+VALIDATED_HEAD: 9eaa8991260bd96de4054f38765e5b844e657a00
+DATE: 2026-10-28T22:19:12Z
+COMMAND: npm run test:unit -- apps/server/src/providers/sports apps/server/scripts apps/server/src/modules/imports apps/server/src/modules/verification
+SUMMARY: exit 0; 27 test files passed, 569 tests passed
+--- output ---
+
+> el-deporte-rey-ai@0.0.0 test:unit
+> vitest run --project unit --project unit-web apps/server/src/providers/sports apps/server/scripts apps/server/src/modules/imports apps/server/src/modules/verification
+
+
+ RUN  v5.0.4 /Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-T46
+
+
+ Test Files  27 passed (27)
+      Tests  569 passed (569)
+   Start at  16:19:04
+   Duration  3.95s (tests 55%, import 24%, transform 17%, setup 4%, worker 1%)
+

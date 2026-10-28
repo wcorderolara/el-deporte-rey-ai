@@ -1,0 +1,15 @@
+TASK: WI-1-T46
+RESULT: PASS
+VALIDATED_HEAD: 9eaa8991260bd96de4054f38765e5b844e657a00
+DATE: 2026-10-28T22:19:35Z
+COMMAND: node scripts/security-checks.mjs hygiene
+SUMMARY: exit 0; 856 tracked files, 0 tracked local files; .env.local, data/, .cache/ ignored; .env.example lists FOOTBALL_DATA_API_TOKEN empty; findings: 0
+--- output ---
+hygiene: checks: no tracked .env* other than .env.example, nothing tracked under data/ or .cache/; .env.local, data/ and .cache/ ignored by a .gitignore rule; .env.example tracked and naming FOOTBALL_DATA_API_TOKEN with an empty value
+hygiene: tracked files: 856; tracked local files: 0
+hygiene: ignored by a .gitignore rule: .env.local
+hygiene: ignored by a .gitignore rule: data/
+hygiene: ignored by a .gitignore rule: .cache/
+hygiene: .env.example lists FOOTBALL_DATA_API_TOKEN with an empty value
+hygiene: findings: 0
+RESULT: PASS
