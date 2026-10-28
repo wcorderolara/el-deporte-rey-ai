@@ -1581,6 +1581,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T18:28:17Z | T44 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T18:36:52Z | T14 | Status DONE | integration commit 7c5f279; evidence/T14-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T18:37:04Z | - | E-15 raised (DR-1, DR-2, DR-4, FU-3 consent) | T14 report |
+| 2026-10-28T20:31:31Z | T42 | Agent interrupted by the usage limit; resumed in the same worktree (attempt 1 continues) | agent rate-limit notification |
+| 2026-10-28T20:31:31Z | T43 | Agent interrupted by the usage limit; resumed in the same worktree (attempt 1 continues) | agent rate-limit notification |
+| 2026-10-28T20:31:31Z | T44 | Agent interrupted by the usage limit; resumed in the same worktree (attempt 1 continues) | agent rate-limit notification |
 
 ## Recovery log
 
