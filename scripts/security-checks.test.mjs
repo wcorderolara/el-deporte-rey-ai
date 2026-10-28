@@ -493,6 +493,255 @@ describe('audit-report (T10-F01, T10-F02, T10-F18)', () => {
   });
 });
 
+describe('audit-report --accept (OD-50, OD-33)', () => {
+  /** The advisory accepted by OD-33, in the shape npm audit reports it (fflate direct, satori through fflate). */
+  const OD33_ID = 'GHSA-px8p-9vwx-vf98';
+  const OTHER_ID = 'GHSA-2222-3333-4444';
+  const THIRD_ID = 'GHSA-5555-6666-7777';
+
+  function auditFile(vulnerabilities) {
+    const root = temporaryDirectory();
+    write(
+      root,
+      'audit.json',
+      JSON.stringify({
+        auditReportVersion: 2,
+        vulnerabilities,
+        metadata: { vulnerabilities: { info: 0, low: 0, moderate: 0, high: 0, critical: 0, total: 0 } },
+      }),
+    );
+    return root;
+  }
+
+  /** A package with its own advisory `id`. */
+  const direct = (name, severity, id) => ({
+    name,
+    severity,
+    via: [
+      {
+        source: 1,
+        name,
+        dependency: name,
+        title: `Synthetic ${severity} advisory of ${name}`,
+        url: `https://github.com/advisories/${id}`,
+        severity,
+        range: '<1.0.0',
+      },
+    ],
+    range: '<1.0.0',
+  });
+
+  /** A package affected only through the named dependencies. */
+  const through = (name, severity, via) => ({ name, severity, via, range: '>=0.1.0' });
+
+  const od33Report = () => ({
+    fflate: direct('fflate', 'moderate', OD33_ID),
+    satori: through('satori', 'moderate', ['fflate']),
+  });
+
+  function audit(vulnerabilities, ...accepts) {
+    return check(auditFile(vulnerabilities), [
+      'audit-report',
+      '--from-file',
+      'audit.json',
+      ...accepts.flatMap((value) => ['--accept', value]),
+    ]);
+  }
+
+  describe('positive', () => {
+    it('accepts the OD-33 advisory, including satori affected through fflate, and passes', () => {
+      const result = audit(od33Report(), `${OD33_ID}=OD-33`);
+      expect(result.status, result.output).toBe(0);
+      expect(result.output).toContain(`audit-report: ACCEPTED ${OD33_ID} by OD-33\n`);
+      expect(result.output).toContain(
+        `audit-report: advisory: package satori; severity moderate; via fflate; range >=0.1.0; accepted: ${OD33_ID} by OD-33\n`,
+      );
+      expect(result.output).toContain('advisory: package fflate; severity moderate');
+      expect(result.output).not.toContain('FINDING');
+      expect(result.output).toContain('audit-report: advisories listed: 2\n');
+      expect(result.output).toMatch(/audit-report: findings: 0\nRESULT: PASS\n$/);
+    });
+
+    it('accepts a low advisory of a watched package with a Product Owner decision ID', () => {
+      const result = audit({ vite: direct('vite', 'low', OTHER_ID) }, `${OTHER_ID}=PD-10`);
+      expect(result.status, result.output).toBe(0);
+      expect(result.output).toContain(`audit-report: ACCEPTED ${OTHER_ID} by PD-10\n`);
+    });
+
+    it('takes --accept repeatedly, one ACCEPTED line per accepted advisory', () => {
+      const result = audit(
+        { ...od33Report(), fastify: direct('fastify', 'moderate', OTHER_ID) },
+        `${OD33_ID}=OD-33`,
+        `${OTHER_ID}=OD-7`,
+      );
+      expect(result.status, result.output).toBe(0);
+      expect(result.output).toContain(`audit-report: ACCEPTED ${OD33_ID} by OD-33\n`);
+      expect(result.output).toContain(`audit-report: ACCEPTED ${OTHER_ID} by OD-7\n`);
+      expect(result.output.match(/ACCEPTED /g)).toHaveLength(2);
+    });
+
+    it('follows a dependency chain of several levels to the accepted advisory', () => {
+      const result = audit(
+        {
+          satori: through('satori', 'moderate', ['middle']),
+          middle: through('middle', 'moderate', ['fflate']),
+          fflate: direct('fflate', 'moderate', OD33_ID),
+        },
+        `${OD33_ID}=OD-33`,
+      );
+      expect(result.status, result.output).toBe(0);
+      expect(result.output).toContain(`ACCEPTED ${OD33_ID} by OD-33`);
+    });
+  });
+
+  describe('negative', () => {
+    it('accepts nothing by default: the OD-33 report fails and the output is unchanged', () => {
+      const result = audit(od33Report());
+      expect(result.status, result.output).toBe(1);
+      expect(result.output).toContain('FINDING advisory: package satori; severity moderate; via fflate');
+      expect(result.output).not.toMatch(/accept/i);
+      expect(result.output).toMatch(/audit-report: findings: 1\nRESULT: FAIL\n$/);
+    });
+
+    it('still fails on an advisory that is not accepted next to one that is', () => {
+      const result = audit({ ...od33Report(), fastify: direct('fastify', 'moderate', OTHER_ID) }, `${OD33_ID}=OD-33`);
+      expect(result.status, result.output).toBe(1);
+      expect(result.output).toContain(`ACCEPTED ${OD33_ID} by OD-33`);
+      expect(result.output).toContain('FINDING advisory: package fastify; severity moderate');
+      expect(result.output).toMatch(/audit-report: findings: 1\nRESULT: FAIL\n$/);
+    });
+
+    it.each([['high'], ['critical']])('refuses to accept a %s advisory even when it is listed', (severity) => {
+      const watched = audit(
+        { fflate: direct('fflate', severity, OD33_ID), satori: through('satori', severity, ['fflate']) },
+        `${OD33_ID}=OD-33`,
+      );
+      expect(watched.status, watched.output).toBe(1);
+      expect(watched.output).not.toContain('ACCEPTED');
+      expect(watched.output).toContain(
+        `FINDING acceptance refused: ${OD33_ID} (OD-33) has severity ${severity}; only moderate or low can be accepted`,
+      );
+      expect(watched.output).toContain(`FINDING advisory: package fflate; severity ${severity}`);
+      expect(watched.output).toContain(`FINDING advisory: package satori; severity ${severity}`);
+      expect(watched.output).toMatch(/RESULT: FAIL\n$/);
+
+      const unwatched = audit({ 'left-pad': direct('left-pad', severity, OTHER_ID) }, `${OTHER_ID}=OD-1`);
+      expect(unwatched.status, unwatched.output).toBe(1);
+      expect(unwatched.output).not.toContain('ACCEPTED');
+      expect(unwatched.output).toContain(`FINDING advisory: package left-pad; severity ${severity}`);
+    });
+
+    it('refuses an acceptance when one occurrence of the advisory is high, even if another is moderate', () => {
+      const result = audit(
+        {
+          fflate: direct('fflate', 'moderate', OD33_ID),
+          zlibish: direct('zlibish', 'high', OD33_ID),
+          satori: through('satori', 'moderate', ['fflate']),
+        },
+        `${OD33_ID}=OD-33`,
+      );
+      expect(result.status, result.output).toBe(1);
+      expect(result.output).not.toContain('ACCEPTED');
+      expect(result.output).toContain('acceptance refused');
+      expect(result.output).toContain('FINDING advisory: package satori');
+    });
+
+    it('fails when a watched package rests on an accepted and an unaccepted advisory', () => {
+      const result = audit(
+        {
+          fflate: direct('fflate', 'moderate', OD33_ID),
+          other: direct('other', 'low', THIRD_ID),
+          satori: through('satori', 'moderate', ['fflate', 'other']),
+        },
+        `${OD33_ID}=OD-33`,
+      );
+      expect(result.status, result.output).toBe(1);
+      expect(result.output).toContain(`ACCEPTED ${OD33_ID} by OD-33`);
+      expect(result.output).toContain('FINDING advisory: package satori; severity moderate; via fflate, other');
+    });
+
+    it('fails when the dependency chain of a watched package cannot be resolved to advisory IDs', () => {
+      const missingLink = audit(
+        { fflate: direct('fflate', 'moderate', OD33_ID), satori: through('satori', 'moderate', ['fflate', 'ghost']) },
+        `${OD33_ID}=OD-33`,
+      );
+      expect(missingLink.status, missingLink.output).toBe(1);
+      expect(missingLink.output).toContain('FINDING advisory: package satori');
+
+      const noGhsaUrl = direct('fflate', 'moderate', OD33_ID);
+      noGhsaUrl.via.push({ ...noGhsaUrl.via[0], url: 'https://www.npmjs.com/advisories/1164783' });
+      const unknownId = audit(
+        { fflate: noGhsaUrl, satori: through('satori', 'moderate', ['fflate']) },
+        `${OD33_ID}=OD-33`,
+      );
+      expect(unknownId.status, unknownId.output).toBe(1);
+      expect(unknownId.output).toContain('FINDING advisory: package satori');
+    });
+
+    it('fails on a stale acceptance naming an advisory absent from the report', () => {
+      const empty = audit({}, `${OD33_ID}=OD-33`);
+      expect(empty.status, empty.output).toBe(1);
+      expect(empty.output).toContain(`FINDING stale acceptance: ${OD33_ID} (OD-33) names no advisory in the report`);
+      expect(empty.output).not.toContain('ACCEPTED');
+
+      const extra = audit(od33Report(), `${OD33_ID}=OD-33`, `${OTHER_ID}=OD-2`);
+      expect(extra.status, extra.output).toBe(1);
+      expect(extra.output).toContain(`ACCEPTED ${OD33_ID} by OD-33`);
+      expect(extra.output).toContain(`FINDING stale acceptance: ${OTHER_ID} (OD-2)`);
+      expect(extra.output).toMatch(/audit-report: findings: 1\nRESULT: FAIL\n$/);
+    });
+
+    it.each([
+      ['no decision ID', OD33_ID],
+      ['an empty decision ID', `${OD33_ID}=`],
+      ['no advisory ID', '=OD-33'],
+      ['a decision ID without a number', `${OD33_ID}=OD-`],
+      ['a decision ID of another kind', `${OD33_ID}=AD-02`],
+      ['a lower-case decision ID', `${OD33_ID}=od-33`],
+      ['a decision ID with trailing text', `${OD33_ID}=OD-33 `],
+      ['two decision IDs', `${OD33_ID}=OD-33=OD-34`],
+      ['a lower-case advisory prefix', 'ghsa-px8p-9vwx-vf98=OD-33'],
+      ['a truncated advisory ID', 'GHSA-px8p-9vwx=OD-33'],
+      ['a CVE instead of a GHSA ID', 'CVE-2026-0001=OD-33'],
+      ['an empty value', ''],
+    ])('fails on a malformed --accept value with %s, before reading the report', (_name, value) => {
+      const result = audit(od33Report(), value);
+      expect(result.status, result.output).toBe(1);
+      expect(result.output).toContain('FINDING malformed --accept value');
+      expect(result.output).not.toContain('ACCEPTED');
+      expect(result.output).not.toContain('advisory: package');
+      expect(result.output).toMatch(/RESULT: FAIL\n$/);
+    });
+
+    it('fails when a valid --accept is combined with a malformed one', () => {
+      const result = audit(od33Report(), `${OD33_ID}=OD-33`, `${OTHER_ID}=`);
+      expect(result.status, result.output).toBe(1);
+      expect(result.output).toContain('FINDING malformed --accept value');
+      expect(result.output).not.toContain('ACCEPTED');
+    });
+
+    it('fails when the same advisory is accepted twice', () => {
+      const result = audit(od33Report(), `${OD33_ID}=OD-33`, `${OD33_ID}=OD-34`);
+      expect(result.status, result.output).toBe(1);
+      expect(result.output).toContain(`FINDING --accept given more than once for ${OD33_ID}`);
+      expect(result.output).not.toContain('ACCEPTED');
+    });
+
+    it.each([
+      ['--accept without a value', ['--accept']],
+      ['the --accept=value form', [`--accept=${OD33_ID}=OD-33`]],
+      ['an unknown option', ['--accept', `${OD33_ID}=OD-33`, '--force']],
+      ['--from-file given twice', ['--from-file', 'audit.json']],
+    ])('fails with the usage line on %s', (_name, extra) => {
+      const root = auditFile(od33Report());
+      const result = check(root, ['audit-report', '--from-file', 'audit.json', ...extra]);
+      expect(result.status, result.output).toBe(1);
+      expect(result.output).toContain('FINDING usage: audit-report');
+      expect(result.output).not.toContain('ACCEPTED');
+    });
+  });
+});
+
 describe('command line', () => {
   it('fails on an unknown subcommand', () => {
     const result = check(temporaryDirectory(), ['unknown']);

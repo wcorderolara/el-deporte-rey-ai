@@ -8,7 +8,9 @@
  *   secret-scan                       tracked files (git ls-files) of the repository at the current directory
  *   bundle-secrets [dir]              built web assets (default apps/web/dist)
  *   lockfile                          package-lock.json and .npmrc
- *   audit-report [--from-file <f>]    npm audit --json (or a saved report) with every advisory listed
+ *   audit-report [--from-file <f>] [--accept <GHSA-id>=<decision-id>]...
+ *                                     npm audit --json (or a saved report) with every advisory listed; an --accept
+ *                                     names a moderate or low advisory accepted by a tracker decision (OD-n, PD-n)
  *   hygiene                           tracked and ignored local files, .env.example
  *   marker-scan [--require-token] <paths...>
  *
@@ -467,7 +469,84 @@ function lockfile() {
 
 const BLOCKING_SEVERITIES = new Set(['high', 'critical']);
 
-/** Advisories of an `npm audit --json` report (auditReportVersion 2), one per package and advisory. */
+/** Severities an `--accept` may cover (OD-50): moderate and low only, never high or critical. */
+const ACCEPTABLE_SEVERITIES = new Set(['moderate', 'low']);
+
+/** A GitHub advisory ID, as npm prints it in advisory URLs. */
+const GHSA_ID_PATTERN = /^GHSA(?:-[0-9a-z]{4}){3}$/;
+
+/** An Orchestrator or Product Owner decision ID of the tracker (OD-33, PD-10). */
+const DECISION_ID_PATTERN = /^(?:OD|PD)-[0-9]{1,6}$/;
+
+/** The GHSA ID of an npm advisory URL (`https://github.com/advisories/GHSA-...`), or null. */
+export function ghsaIdOf(url) {
+  const match = /^https:\/\/github\.com\/advisories\/(GHSA(?:-[0-9a-z]{4}){3})$/.exec(String(url));
+  return match === null ? null : (match[1] ?? null);
+}
+
+/**
+ * Parses one `--accept` value `<GHSA-id>=<decision-id>`. Returns `{ id, decision }`, or null when the value is
+ * malformed (no `=`, an ID that is not a GHSA ID, an empty decision ID or one that is not OD-n or PD-n).
+ */
+export function parseAcceptance(value) {
+  const text = String(value);
+  const at = text.indexOf('=');
+  if (at < 0) {
+    return null;
+  }
+  const id = text.slice(0, at);
+  const decision = text.slice(at + 1);
+  if (!GHSA_ID_PATTERN.test(id) || !DECISION_ID_PATTERN.test(decision)) {
+    return null;
+  }
+  return { id, decision };
+}
+
+/**
+ * The GHSA IDs a package entry rests on, following `via` package names through the report (cycles skipped).
+ * `complete` is false when a link names a package absent from the report or an advisory without a GHSA URL, so
+ * that such an entry can never be accepted.
+ */
+function advisoryIdsThrough(vulnerabilities, names) {
+  const ids = new Set();
+  let complete = true;
+  const seen = new Set();
+  const pending = [...names];
+  while (pending.length > 0) {
+    const name = pending.pop();
+    if (seen.has(name)) {
+      continue;
+    }
+    seen.add(name);
+    const vulnerability = Object.hasOwn(vulnerabilities, name) ? vulnerabilities[name] : undefined;
+    const via = Array.isArray(vulnerability?.via) ? vulnerability.via : null;
+    if (via === null || via.length === 0) {
+      complete = false;
+      continue;
+    }
+    for (const item of via) {
+      if (typeof item === 'string') {
+        pending.push(item);
+      } else if (item !== null && typeof item === 'object') {
+        const id = ghsaIdOf(item.url ?? '');
+        if (id === null) {
+          complete = false;
+        } else {
+          ids.add(id);
+        }
+      } else {
+        complete = false;
+      }
+    }
+  }
+  return { ids: [...ids].sort(), complete: complete && ids.size > 0 };
+}
+
+/**
+ * Advisories of an `npm audit --json` report (auditReportVersion 2), one per package and advisory. Each carries
+ * the GHSA IDs it rests on (`ids`; its own for a direct advisory, those reached through `via` for a package
+ * affected through a dependency) and whether they are all known (`idsComplete`).
+ */
 export function advisoriesOf(audit) {
   const advisories = [];
   const vulnerabilities = audit !== null && typeof audit === 'object' ? audit.vulnerabilities : undefined;
@@ -479,25 +558,67 @@ export function advisoriesOf(audit) {
     const direct = via.filter((item) => item !== null && typeof item === 'object');
     const through = via.filter((item) => typeof item === 'string');
     if (direct.length === 0) {
+      const { ids, complete } = advisoryIdsThrough(vulnerabilities, through);
       advisories.push({
         packageName: name,
         severity: String(vulnerability?.severity ?? 'unknown'),
         title: `via ${through.join(', ') || 'unknown'}`,
         url: '',
         range: String(vulnerability?.range ?? ''),
+        direct: false,
+        ids,
+        idsComplete: complete,
       });
     }
     for (const item of direct) {
+      const id = ghsaIdOf(item.url ?? '');
       advisories.push({
         packageName: typeof item.name === 'string' ? item.name : name,
         severity: String(item.severity ?? vulnerability?.severity ?? 'unknown'),
         title: String(item.title ?? ''),
         url: String(item.url ?? ''),
         range: String(item.range ?? ''),
+        direct: true,
+        ids: id === null ? [] : [id],
+        idsComplete: id !== null,
       });
     }
   }
   return advisories;
+}
+
+/**
+ * The acceptances (`[id, decision]`) that cover an advisory, or null when it is not accepted: it must be moderate
+ * or low, rest on known GHSA IDs only, and every one of them must be accepted.
+ */
+export function acceptancesCovering(advisory, accepted) {
+  if (!ACCEPTABLE_SEVERITIES.has(advisory.severity) || !advisory.idsComplete || advisory.ids.length === 0) {
+    return null;
+  }
+  if (!advisory.ids.every((id) => accepted.has(id))) {
+    return null;
+  }
+  return advisory.ids.map((id) => [id, accepted.get(id)]);
+}
+
+/** Parses the `audit-report` arguments: `[--from-file <f>] [--accept <GHSA-id>=<decision-id>]...`. */
+function auditArguments(args) {
+  let fromFile;
+  const acceptValues = [];
+  let usage = false;
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg === '--from-file' && fromFile === undefined && i + 1 < args.length) {
+      fromFile = args[i + 1];
+      i += 1;
+    } else if (arg === '--accept' && i + 1 < args.length) {
+      acceptValues.push(args[i + 1]);
+      i += 1;
+    } else {
+      usage = true;
+    }
+  }
+  return { fromFile, acceptValues, usage };
 }
 
 /** True when an advisory fails the report: high or critical, or naming a watched package. */
@@ -507,15 +628,38 @@ export function isBlockingAdvisory(advisory) {
 
 function auditReport(args) {
   const report = new Report('audit-report');
-  const fromFile = args[0] === '--from-file' ? args[1] : undefined;
-  if (args.length > 0 && (fromFile === undefined || args.length !== 2)) {
-    report.finding('usage: audit-report [--from-file <npm audit --json output>]');
+  const { fromFile, acceptValues, usage } = auditArguments(args);
+  if (usage) {
+    report.finding('usage: audit-report [--from-file <npm audit --json output>] [--accept <GHSA-id>=<decision-id>]...');
+    return report.finish();
+  }
+  /** GHSA ID -> decision ID, as requested on the command line. Nothing is accepted by default. */
+  const requested = new Map();
+  for (const value of acceptValues) {
+    const acceptance = parseAcceptance(value);
+    if (acceptance === null) {
+      report.finding(
+        `malformed --accept value ${printablePath(String(value).slice(0, 80))} ` +
+          '(expected <GHSA-id>=<decision-id>, the decision ID as OD-n or PD-n)',
+      );
+    } else if (requested.has(acceptance.id)) {
+      report.finding(`--accept given more than once for ${acceptance.id}`);
+    } else {
+      requested.set(acceptance.id, acceptance.decision);
+    }
+  }
+  if (report.findings.length > 0) {
     return report.finish();
   }
   report.info(
     `source: ${fromFile === undefined ? 'npm audit --json (live)' : `saved report ${printablePath(fromFile)}`}; ` +
       `fails on high or critical, or on any advisory naming ${WATCHED_PACKAGES.join(', ')}`,
   );
+  if (requested.size > 0) {
+    report.info(
+      `acceptances requested (moderate or low only): ${[...requested].map(([id, decision]) => `${id} by ${decision}`).join(', ')}`,
+    );
+  }
   let text;
   if (fromFile === undefined) {
     const result = spawnSync('npm', ['audit', '--json'], {
@@ -559,16 +703,43 @@ function auditReport(args) {
       .join(', ');
     report.info(`npm summary: ${summary}`);
   }
+  // An acceptance applies only to an advisory present in the report whose every occurrence is moderate or low.
+  /** GHSA ID -> decision ID, for the acceptances that hold. */
+  const accepted = new Map();
+  /** @type {string[]} */
+  const refusals = [];
+  for (const [id, decision] of requested) {
+    const occurrences = advisories.filter((advisory) => advisory.direct && advisory.ids.includes(id));
+    if (occurrences.length === 0) {
+      refusals.push(`stale acceptance: ${id} (${decision}) names no advisory in the report`);
+    } else if (occurrences.some((advisory) => !ACCEPTABLE_SEVERITIES.has(advisory.severity))) {
+      const severities = [...new Set(occurrences.map((advisory) => advisory.severity))].join(', ');
+      refusals.push(
+        `acceptance refused: ${id} (${decision}) has severity ${severities}; only moderate or low can be accepted`,
+      );
+    } else {
+      accepted.set(id, decision);
+    }
+  }
   for (const advisory of advisories) {
     const blocking = isBlockingAdvisory(advisory);
     const line =
       `advisory: package ${advisory.packageName}; severity ${advisory.severity}; ${advisory.title}` +
       `${advisory.range === '' ? '' : `; range ${advisory.range}`}${advisory.url === '' ? '' : `; ${advisory.url}`}`;
-    if (blocking) {
+    const covering = accepted.size === 0 ? null : acceptancesCovering(advisory, accepted);
+    if (covering !== null) {
+      report.info(`${line}; accepted: ${covering.map(([id, decision]) => `${id} by ${decision}`).join(', ')}`);
+    } else if (blocking) {
       report.finding(line);
     } else {
       report.info(line);
     }
+  }
+  for (const [id, decision] of accepted) {
+    report.info(`ACCEPTED ${id} by ${decision}`);
+  }
+  for (const refusal of refusals) {
+    report.finding(refusal);
   }
   report.info(`advisories listed: ${String(advisories.length)}`);
   return report.finish();
