@@ -9,7 +9,7 @@
 | Contracts | none declared |
 | Authorization | Product Owner request of 2026-10-27 via orchestrate analyze: requirements analysis only, no implementation. No merge, push or deploy is authorized. |
 | Config sha256 | `6614e48a55c0252c3962656d71eeec2dd29d537309bb39828a6df78b01824354` |
-| Last gate run | final, T48 `evidence/T48-gates-2.txt` at 754fe2d: 15 PASS, 0 FAIL, 0 NOT RUN (2026-10-28) |
+| Last gate run | final (regression on `main` plus the configuration update), T70 `evidence/T70-gates.txt` at 7ef3db7: 15 PASS, 0 FAIL, 0 NOT RUN (2026-10-28) |
 | Work-item status | PO_ACCEPTANCE |
 
 Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orchestrate/workflows/task-tracking.md. Only the Orchestrator edits this file.
@@ -101,7 +101,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T68 | Source of truth and architecture records at close | IMPL | architect | T45 | DONE | 1 | 916673a | `docs/work-items/WI-1/evidence/T68-gates.txt` |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65, T66, T67, T68 | DONE | 1 | 73cb101 | `docs/work-items/WI-1/evidence/T48-gates-2.txt` |
 | T69 | Close: configuration update | IMPL | architect | T48 | DONE | 1 | 7569d12 | `docs/work-items/WI-1/evidence/T69-gates.txt` |
-| T70 | Close: regression on `main` | VERIFY | qa-engineer | T69 | IN_PROGRESS | 1 | - | - |
+| T70 | Close: regression on `main` | VERIFY | qa-engineer | T69 | DONE | 1 | e72ee4c | `docs/work-items/WI-1/evidence/T70-gates.txt` |
 
 ## Tasks
 
@@ -1392,6 +1392,11 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: (`closing.md` section 3) the final gates on the content of the default branch (merge 1, cefc4eb) plus the configuration update, at a clean, committed integration HEAD in the verify worktree, without `FOOTBALL_DATA_API_TOKEN` in the environment. Last VERIFY task of the work item.
 - Acceptance criteria: -
 - Verification: `orch gates run --work-item 'WI-1' --task 'T70' --set final --cwd '<VERIFY_WORKTREE>' --at '<INTEGRATION_WORKTREE>'` -> exit 0, every required gate PASS
+- Result: regression run by the Orchestrator (closing.md section 3 item 4) at 7ef3db7 (the content of `main` after merge 1, cefc4eb, plus T69), verify worktree committed and clean, no token or EDR_LIVE_TESTS in the environment: `orch gates run --set final` exit 0, 15 PASS, 0 FAIL, 0 NOT RUN (`evidence/T70-gates.txt`).
+- Orchestrator verification: evidence committed alone at e72ee4c; last VERIFY task of the work item; 2026-10-28.
+- Decisions: none.
+- Human interventions: 0.
+- Agent usage: Orchestrator task, no agent launched.
 
 ## Decisions
 
@@ -1895,6 +1900,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T23:10:30Z | T69 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T23:16:44Z | T69 | Status DONE | integration commit 7569d12; evidence/T69-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
 | 2026-10-28T23:16:59Z | T70 | Status IN_PROGRESS (attempt 1); regression on main content plus the configuration update, run by the Orchestrator per closing.md section 3 item 4 | orch next SELECT |
+| 2026-10-28T23:18:49Z | T70 | Status DONE | evidence/T70-gates.txt PASS at 7ef3db7 (commit e72ee4c) |
 
 ## Recovery log
 
