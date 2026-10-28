@@ -19,7 +19,7 @@
  * - A fact that involves an unmatched team is unverified `team_identity_unmatched` (RK-14).
  * - No rule here, and no operation anywhere, sets a fact to verified other than this decision (R-412).
  */
-import type { DataMode, FactKind, FactValue } from '@edr/contracts';
+import type { DataMode, FactKind, FactValue, FailureCode } from '@edr/contracts';
 
 export type UnverifiedReason =
   'awaiting_independent_verification' | 'disputed' | 'no_accepted_source' | 'team_identity_unmatched';
@@ -56,6 +56,11 @@ export interface RetrievalAttempt {
   readonly sourceId: string;
   /** Time of the attempt: the retrieval time when it succeeded, the failure time otherwise. */
   readonly attemptedAt: string;
+  /**
+   * Closed failure code of a failed or not-available attempt, as stored on its retrieval (OD-56); null or absent when
+   * the attempt succeeded. Never provider text (T10-F10).
+   */
+  readonly failureCode?: FailureCode | null;
 }
 
 export interface DecisionContext {
@@ -314,11 +319,14 @@ function disputed(
   if (official === undefined) {
     // The official publication was asked but gave no value for the key (failed, unavailable or no such value): the
     // consultation is recorded with its source and attempt time; with no attempt at all, none is recorded.
+    // A failed attempt names its closed source failure code, the code of its retrieval record (OD-56).
     const attempt = (ctx.attempts ?? []).find((entry) => isOfficialSource(entry.sourceId));
+    const failureText =
+      attempt?.failureCode === undefined || attempt.failureCode === null ? '' : ` (code ${attempt.failureCode})`;
     const unavailableText =
       attempt === undefined
         ? 'official publication unavailable'
-        : `official publication (${attempt.sourceId}) unavailable`;
+        : `official publication (${attempt.sourceId}) unavailable${failureText}`;
     return {
       status: 'unverified',
       unverifiedReason: 'disputed',

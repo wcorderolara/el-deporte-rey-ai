@@ -27,8 +27,8 @@ import {
   stubSource,
 } from '../test/synthetic.js';
 
-import type { SelectionRequest } from './catalogue.js';
-import { SourceError } from './errors.js';
+import { type CounterpartSourceFailure, type SelectionRequest, counterpartFailureCode } from './catalogue.js';
+import { SOURCE_ERROR_CODES, SourceError, availabilityReasonOf } from './errors.js';
 
 let root: FixtureRoot;
 let manual: StubAdapter;
@@ -543,5 +543,142 @@ describe('counterpart resolution', () => {
     expect(await reason(project)).toBe('competition_not_listed');
     root.write('default', 'demo-b', fixtureDocument([], 'unavailable'));
     expect(await reason(project)).toBe('source_unavailable');
+  });
+});
+
+describe('counterpart source failure (architecture.md 7.3, OD-56)', () => {
+  /** A synthetic secret-looking message: it must never leave the SourceError (T10-F10). */
+  const LEAK = 'Bearer synthetic-token https://provider.example.test/v4/competitions?key=abc provider body';
+
+  const selection: SelectionRequest = {
+    competitionId: 'copa-live',
+    sourceId: 'live-a',
+    seasonId: '2026',
+    stageId: 'fase-liga',
+    matchday: 2,
+  };
+
+  function liveSetup(): SourceRegistry {
+    live.documents.set('live-a', fixtureDocument([cup()]));
+    live.documents.set('live-b', fixtureDocument([cup()]));
+    return build(
+      [
+        stubSource('live-a', 'test-live', 'LIVE_DATA'),
+        stubSource('live-b', 'test-live', 'LIVE_DATA', { role: 'verification' }),
+      ],
+      {
+        links: [
+          link('copa-live', 'Copa Live', [
+            ['live-a', 'copa-sint'],
+            ['live-b', 'copa-sint'],
+          ]),
+        ],
+      },
+    );
+  }
+
+  const unavailableListing = (reason: string): unknown => ({
+    items: [],
+    availability: { available: false, reason },
+    retrievedAt: null,
+    fromCache: false,
+    stale: false,
+    retryAfterSeconds: null,
+  });
+
+  it('resolves when every counterpart listing answers (baseline of the cases below)', async () => {
+    const resolved = await liveSetup().catalogue.resolveCounterpart(selection, 'live-b', ctx());
+    expect(resolved).toMatchObject({ resolved: true, sourceId: 'live-b', stageId: 'fase-liga', matchday: 2 });
+  });
+
+  for (const method of ['listCompetitions', 'listSeasons', 'listStages'] as const) {
+    it.each(SOURCE_ERROR_CODES)(
+      `a ${method} SourceError %s keeps its code and HTTP status, without its text`,
+      async (code) => {
+        const registry = liveSetup();
+        live.overrides.set(`live-b/${method}`, new SourceError(code, LEAK, 'live-b', '/competitions', 418, 30));
+        const resolved = await registry.catalogue.resolveCounterpart(selection, 'live-b', ctx());
+        expect(resolved).toEqual({
+          resolved: false,
+          sourceId: 'live-b',
+          reason: 'source_unavailable',
+          failure: { kind: 'source_error', code, httpStatus: 418 },
+        });
+        if (!resolved.resolved && resolved.reason === 'source_unavailable') {
+          expect(counterpartFailureCode(resolved.failure)).toBe(code);
+        }
+        const serialized = JSON.stringify(resolved);
+        for (const fragment of ['Bearer', 'synthetic-token', 'https:', 'key=abc', 'provider body', '/competitions']) {
+          expect(serialized).not.toContain(fragment);
+        }
+      },
+    );
+  }
+
+  it('a SourceError of another source is re-attributed and keeps its code; an HTTP status outside 100-599 is null', async () => {
+    const registry = liveSetup();
+    live.overrides.set('live-b/listSeasons', new SourceError('timeout', LEAK, 'live-a', null, 700));
+    const resolved = await registry.catalogue.resolveCounterpart(selection, 'live-b', ctx());
+    expect(resolved).toEqual({
+      resolved: false,
+      sourceId: 'live-b',
+      reason: 'source_unavailable',
+      failure: { kind: 'source_error', code: 'timeout', httpStatus: null },
+    });
+  });
+
+  it('anything else an adapter throws is unavailable with no HTTP status and none of its text', async () => {
+    const registry = liveSetup();
+    live.overrides.set('live-b/listStages', new Error(LEAK));
+    const resolved = await registry.catalogue.resolveCounterpart(selection, 'live-b', ctx());
+    expect(resolved).toEqual({
+      resolved: false,
+      sourceId: 'live-b',
+      reason: 'source_unavailable',
+      failure: { kind: 'source_error', code: 'unavailable', httpStatus: null },
+    });
+    expect(JSON.stringify(resolved)).not.toContain('synthetic-token');
+  });
+
+  it.each([
+    ['subscription_restricted', 'not_available'],
+    ['not_found', 'not_available'],
+    ['access_refused', 'access_refused'],
+    ['rate_limited', 'rate_limited'],
+    ['not_provided', 'no_data'],
+    ['source_unavailable', 'unavailable'],
+  ] as const)('a listing that answered unavailable (%s) keeps its reason, code %s', async (reason, code) => {
+    for (const method of ['listCompetitions', 'listSeasons', 'listStages'] as const) {
+      const registry = liveSetup();
+      live.overrides.clear();
+      live.overrides.set(`live-b/${method}`, unavailableListing(reason));
+      const resolved = await registry.catalogue.resolveCounterpart(selection, 'live-b', ctx());
+      expect(resolved, method).toEqual({
+        resolved: false,
+        sourceId: 'live-b',
+        reason: 'source_unavailable',
+        failure: { kind: 'listing_unavailable', reason },
+      });
+      if (!resolved.resolved && resolved.reason === 'source_unavailable') {
+        expect(counterpartFailureCode(resolved.failure)).toBe(code);
+      }
+    }
+  });
+
+  it('the code of a listing reason is the inverse of availabilityReasonOf for every closed code', () => {
+    for (const code of SOURCE_ERROR_CODES) {
+      const error = new SourceError(code, 'synthetic', 'live-b');
+      const listing: CounterpartSourceFailure = { kind: 'listing_unavailable', reason: availabilityReasonOf(error) };
+      const back = counterpartFailureCode(listing);
+      // Transport and payload failures share the listing reason `source_unavailable`; the others round-trip.
+      expect(availabilityReasonOf(new SourceError(back, 'synthetic', 'live-b'))).toBe(listing.reason);
+    }
+  });
+
+  it("a failure of the selection's own source is not a counterpart source failure", async () => {
+    const registry = liveSetup();
+    live.overrides.set('live-a/listCompetitions', new SourceError('rate_limited', LEAK, 'live-a', null, 429));
+    const resolved = await registry.catalogue.resolveCounterpart(selection, 'live-b', ctx());
+    expect(resolved).toEqual({ resolved: false, sourceId: 'live-b', reason: 'selection_not_listed' });
   });
 });

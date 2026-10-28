@@ -16,10 +16,15 @@
  *   configurations, PD-19, PD-20).
  * - Every lookup keyed by adapter, link or derived values uses `Map` (T11H-F07). Source references are passed back to
  *   the issuing source unchanged and never parsed, compared or logged.
+ * - A counterpart source that fails one of its listings keeps its closed failure (the `SourceError` code and HTTP
+ *   status, or the availability reason of a listing that answered unavailable; architecture.md 7.3, OD-56): it is
+ *   never swallowed into a different code and carries no provider text, header, URL or token (T10-F10).
  */
+import type { SourceUnavailableReason } from '@edr/contracts';
+
 import type { CatalogueConfig, CatalogueLink } from '../../../platform/config/index.js';
 
-import { type SourceError, availabilityReasonOf, toSourceError } from './errors.js';
+import { type SourceError, type SourceErrorCode, availabilityReasonOf, toSourceError } from './errors.js';
 import type { SourceRegistry } from './registry.js';
 import type {
   Availability,
@@ -153,6 +158,16 @@ export type CounterpartFailureReason =
   | 'stage_not_matched'
   | 'matchday_not_matched';
 
+/**
+ * The closed failure of a counterpart source that did not answer one of its listings (architecture.md 7.3, OD-56;
+ * T10-F10): `source_error` when the adapter failed with a `SourceError` (its closed code and sanitized HTTP status),
+ * `listing_unavailable` when the listing answered unavailable (its availability reason). It never holds the error
+ * message, a provider body, a header, a URL or a token.
+ */
+export type CounterpartSourceFailure =
+  | { readonly kind: 'source_error'; readonly code: SourceErrorCode; readonly httpStatus: number | null }
+  | { readonly kind: 'listing_unavailable'; readonly reason: SourceUnavailableReason };
+
 export type CounterpartResolution =
   | {
       readonly resolved: true;
@@ -162,7 +177,43 @@ export type CounterpartResolution =
       readonly matchday: number | null;
       readonly selectionRef: SourceRef;
     }
-  | { readonly resolved: false; readonly sourceId: string; readonly reason: CounterpartFailureReason };
+  | {
+      readonly resolved: false;
+      readonly sourceId: string;
+      readonly reason: Exclude<CounterpartFailureReason, 'source_unavailable'>;
+    }
+  | {
+      readonly resolved: false;
+      readonly sourceId: string;
+      readonly reason: 'source_unavailable';
+      /** Why the source did not answer: kept as the source reported it (never a different code). */
+      readonly failure: CounterpartSourceFailure;
+    };
+
+/**
+ * The closed source failure code of a counterpart failure: the `SourceError` code itself, or, for a listing that
+ * answered unavailable, the code of its availability reason (the inverse of `availabilityReasonOf`: a subscription
+ * restriction or a missing item is `not_available`, `access_refused` and `rate_limited` stay themselves,
+ * `not_provided` is `no_data`, `source_unavailable` is `unavailable`).
+ */
+export function counterpartFailureCode(failure: CounterpartSourceFailure): SourceErrorCode {
+  if (failure.kind === 'source_error') {
+    return failure.code;
+  }
+  switch (failure.reason) {
+    case 'subscription_restricted':
+    case 'not_found':
+      return 'not_available';
+    case 'access_refused':
+      return 'access_refused';
+    case 'rate_limited':
+      return 'rate_limited';
+    case 'not_provided':
+      return 'no_data';
+    case 'source_unavailable':
+      return 'unavailable';
+  }
+}
 
 export interface CatalogueService {
   /** Merges the competitions of every enabled source (discovery). */
@@ -189,7 +240,13 @@ export interface CatalogueService {
 
 type Fetched<T> =
   | { readonly ok: true; readonly listing: Listing<T> }
-  | { readonly ok: false; readonly availability: Availability; readonly meta: ListingMeta };
+  | {
+      readonly ok: false;
+      readonly availability: Availability;
+      readonly meta: ListingMeta;
+      /** The closed failure behind the unavailability (OD-56): the source error, or the listing's own reason. */
+      readonly failure: CounterpartSourceFailure;
+    };
 
 const NO_META: ListingMeta = Object.freeze({
   retrievedAt: null,
@@ -207,12 +264,20 @@ function metaOf(listing: Listing<unknown>): ListingMeta {
   };
 }
 
-/** Calls a listing method; a failure or an unavailable listing becomes an availability with its reason. */
+/**
+ * Calls a listing method; a failure or an unavailable listing becomes an availability with its reason, and keeps its
+ * closed failure (the `SourceError` code and HTTP status, never the message; T10-F10).
+ */
 async function fetchListing<T>(sourceId: string, action: () => Promise<Listing<T>>): Promise<Fetched<T>> {
   try {
     const listing = await action();
     if (!listing.availability.available) {
-      return { ok: false, availability: listing.availability, meta: metaOf(listing) };
+      return {
+        ok: false,
+        availability: listing.availability,
+        meta: metaOf(listing),
+        failure: { kind: 'listing_unavailable', reason: listing.availability.reason },
+      };
     }
     return { ok: true, listing };
   } catch (error) {
@@ -221,6 +286,7 @@ async function fetchListing<T>(sourceId: string, action: () => Promise<Listing<T
       ok: false,
       availability: { available: false, reason: availabilityReasonOf(failure) },
       meta: { ...NO_META, retryAfterSeconds: failure.retryAfterSeconds },
+      failure: { kind: 'source_error', code: failure.code, httpStatus: failure.httpStatus },
     };
   }
 }
@@ -580,7 +646,17 @@ export function createCatalogueService(registry: SourceRegistry, links: Catalogu
     sourceId: string,
     ctx: IngestionContext,
   ): Promise<CounterpartResolution> {
-    const fail = (reason: CounterpartFailureReason): CounterpartResolution => ({ resolved: false, sourceId, reason });
+    const fail = (reason: Exclude<CounterpartFailureReason, 'source_unavailable'>): CounterpartResolution => ({
+      resolved: false,
+      sourceId,
+      reason,
+    });
+    const unavailable = (failure: CounterpartSourceFailure): CounterpartResolution => ({
+      resolved: false,
+      sourceId,
+      reason: 'source_unavailable',
+      failure,
+    });
 
     const link = links.getLink(selection.competitionId);
     if (link === undefined) {
@@ -627,7 +703,7 @@ export function createCatalogueService(registry: SourceRegistry, links: Catalogu
     // The same selection in the counterpart source.
     const targetCompetitions = await fetchListing(sourceId, () => target.listCompetitions(ctx));
     if (!targetCompetitions.ok) {
-      return fail('source_unavailable');
+      return unavailable(targetCompetitions.failure);
     }
     const targetCompetition = byKey(targetCompetitions.listing.items, (item) => item.localKey).get(targetKey);
     if (targetCompetition === undefined) {
@@ -635,7 +711,7 @@ export function createCatalogueService(registry: SourceRegistry, links: Catalogu
     }
     const targetSeasons = await fetchListing(sourceId, () => target.listSeasons(targetCompetition.ref, ctx));
     if (!targetSeasons.ok) {
-      return fail('source_unavailable');
+      return unavailable(targetSeasons.failure);
     }
     const { startYear, label } = ownSeason.season;
     const targetSeason = single(targetSeasons.listing.items, (season) =>
@@ -648,7 +724,7 @@ export function createCatalogueService(registry: SourceRegistry, links: Catalogu
       target.listStages(targetCompetition.ref, targetSeason.ref, ctx),
     );
     if (!targetStages.ok) {
-      return fail('source_unavailable');
+      return unavailable(targetStages.failure);
     }
     const aliasesInUse = link.stageAliases.has(selection.sourceId) || link.stageAliases.has(sourceId);
     let targetStage: SourceStage | undefined;
