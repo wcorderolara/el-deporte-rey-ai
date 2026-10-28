@@ -77,7 +77,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T43 | Contract conformance tests | IMPL | qa-engineer | T20, T38, T41, T50 | DONE | 1 | cb16a73 | `docs/work-items/WI-1/evidence/T43-gates.txt` |
 | T44 | End-to-end and accessibility journeys | IMPL | qa-engineer | T23, T24, T28, T29, T31, T36, T38, T39, T40, T50, T51 | DONE | 1 | d3222a7 | `docs/work-items/WI-1/evidence/T44-gates.txt` |
 | T45 | Architecture conformance review | IMPL | architect | T14, T26, T42, T43, T44, T52, T59, T62, T63, T65, T66 | DONE | 1 | 8d2a62f | `docs/work-items/WI-1/evidence/T45-gates.txt` |
-| T46 | Security evidence pack | VERIFY | qa-engineer | T45 | DONE | 1 | c0ee884 | `docs/work-items/WI-1/evidence/T46-gates.txt` |
+| T46 | Security evidence pack | VERIFY | qa-engineer | T45 | DONE | 1 | a0cc400 | `docs/work-items/WI-1/evidence/T46-gates.txt` |
 | T47 | Security delta validation | VERIFY | security-reviewer | T46, T67 | PENDING | 0 | - | - |
 | T49 | FootballDataProvider adapter, request budget, projection cache, live tests and capability probe script | IMPL | backend-developer | T21, T23 | DONE | 2 | 7dba63d | `docs/work-items/WI-1/evidence/T49-gates.txt` |
 | T50 | Manual data import module and ManualDataProvider | IMPL | backend-developer | T18, T19, T20, T21 | DONE | 1 | b972c53 | `docs/work-items/WI-1/evidence/T50-gates.txt` |
@@ -1034,7 +1034,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Decisions: LOW-1 and LOW-2 (each evidence file moved out of the tree right after writing so every later write and command ran on a clean tree, all 27 restored before the single commit; step 2 ran with `T46-install.txt` untracked and was kept). Notes for T47: the satori audit entry passes only through the same accepted GHSA (OD-33 coverage to confirm); step 25 ran 2 test files (to confirm they are the security-checks tests); an extra marker-scan of the 27 T46 files found 0; the tracker's Verification list has no line for `T46-registry-signatures.txt`.
 - Human interventions: 0.
 - Agent usage: launches 1.
-- Integration commit(s): c0ee884 (merge --no-ff of task/WI-1/T46). Affected gates at c0ee884: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T46-gates.txt, the evidence file of this task).
+- Integration commit(s): c0ee884 (merge --no-ff of task/WI-1/T46); evidence commit a0cc400 (VERIFY task: the tracker row names the commit holding the gate evidence). Affected gates at c0ee884: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T46-gates.txt, the evidence file of this task).
 
 ### T47: Security delta validation
 - Kind: VERIFY
