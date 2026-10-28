@@ -56,7 +56,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T22 | AI provider port, stub adapter and OpenAI-compatible adapter | IMPL | backend-developer | T17 | DONE | 1 | 89fa98d | `docs/work-items/WI-1/evidence/T22-gates.txt` |
 | T23 | Synthetic fixture scenarios | IMPL | qa-engineer | T21, T22 | DONE | 1 | 5c73712 | `docs/work-items/WI-1/evidence/T23-gates.txt` |
 | T24 | End-to-end and accessibility test harness | IMPL | qa-engineer | T16, T19 | DONE | 1 | 8ff8fbf | `docs/work-items/WI-1/evidence/T24-gates.txt` |
-| T25 | Project gates, local-environment settings and contract declaration | IMPL | Orchestrator | T15, T16, T19, T20, T24 | IN_PROGRESS | 1 | - | - |
+| T25 | Project gates, local-environment settings and contract declaration | IMPL | Orchestrator | T15, T16, T19, T20, T24 | DONE | 1 | da9a37c | `docs/work-items/WI-1/evidence/T25-gates.txt` |
 | T26 | Source of truth: exact versions, contract hash, gate and environment notes | IMPL | architect | T12, T25 | PENDING | 0 | - | - |
 | T27 | Projects module and workflow runner | IMPL | backend-developer | T18, T19, T20, T21 | DONE | 1 | 833f585 | `docs/work-items/WI-1/evidence/T27-gates.txt` |
 | T28 | Projects UI: list, create, detail and run progress | IMPL | frontend-developer | T16, T20 | DONE | 1 | 4cefeba | `docs/work-items/WI-1/evidence/T28-gates.txt` |
@@ -665,6 +665,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: add the project gates of `architecture-delta.md` section 7.2 with their exact commands, categories, `when`, `paths` (including `scripts/**` in PRJ-LINT and PRJ-UNIT, T11G notes of section 7.2, T10-A1-03), timeouts and reasons (after the scripts exist); no gate runs `test:live` or `probe:football-data`, and no gate environment contains `FOOTBALL_DATA_API_TOKEN` (R-135, R-258); set `localEnvironment.verificationPorts` (app 4310), `demoPorts` (app 4320) and `notes` (data directory recipe, project-local browser cache, network needs of `npm ci`, `npm audit` and the first browser download, sleep prevention for long e2e runs, LIVE_DATA optional with the token only in `.env.local` placed by the Product Owner); declare the `http-api` contract (`id` `http-api`, `kind` `http-api`, `path` `contracts/http-api.openapi.yaml`, `status` `current`, `sha256` reported by T20, no frozen snapshots) as accepted by the Orchestrator decision. No other key changes. Show the gate commands to the Product Owner before their first run (`quality-gates.md`).
 - Acceptance criteria: -
 - Verification: `orch validate --work-item 'WI-1' --at .` -> exit 0 ; `orch gates list --work-item 'WI-1' --set final --at .` -> exit 0 and every PRJ gate listed ; `orch contracts check --at .` -> exit 0
+- Agent result: n/a (Orchestrator task).
+- Orchestrator verification: added the 11 project gates of architecture-delta.md section 7.2 (PRJ-INSTALL, PRJ-TYPECHECK, PRJ-LINT incl. scripts/**, PRJ-UNIT incl. scripts/**, PRJ-INTEGRATION, PRJ-CONTRACT, PRJ-CONTRACT-ID builtin, PRJ-BUILD, PRJ-E2E, PRJ-A11Y, PRJ-AUDIT; required, affected and final), declared contract http-api (contracts/http-api.openapi.yaml, sha256 f4538151d084f4e328804f9a9eb4bc2ab104664f7527ef2aaaef146fd28225b1, current, no frozen snapshots; OD-14, OD-23), localEnvironment verificationPorts app 4310, demoPorts app 4320 and notes; task commit a9ff57b; `orch worktree verify-ownership` exit 0 (1 changed, 0 outside; protected path owned by name); `orch validate --at .` exit 0 (0 violations); `orch gates list --set final --at .` exit 0 (15 gates, every PRJ gate listed); `orch contracts check --at .` exit 0 (http-api MATCH); gate commands shown to the PO before their first run (quality-gates.md); 2026-10-28.
+- Decisions: none beyond the plan (no gate runs test:live or probe:football-data; no gate needs FOOTBALL_DATA_API_TOKEN).
+- Human interventions: 0.
+- Agent usage: NOT RECORDED (Orchestrator task).
+- Integration commit(s): da9a37c (merge --no-ff of task/WI-1/T25). Affected gates at da9a37c: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T25-gates.txt, the evidence file of this task).
 
 ### T26: Source of truth: exact versions, contract hash, gate and environment notes
 - Kind: IMPL
@@ -1327,6 +1333,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T15:35:50Z | T25 | Status IN_PROGRESS (attempt 1); Orchestrator working | orch next SELECT |
 | 2026-10-28T15:35:50Z | T33 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T15:35:50Z | - | Environment: the Orchestrator shell reaches the npm registry (plain npm ci and npm audit --audit-level=high exit 0 at 596e86e: 2 moderate, OD-33); general web access stays blocked | verify worktree run |
+| 2026-10-28T15:37:42Z | T25 | Status DONE | integration commit da9a37c; evidence/T25-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
