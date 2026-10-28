@@ -64,7 +64,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T30 | Verification stage: two-source rule, disputes, team identity | IMPL | backend-developer | T21, T27 | DONE | 1 | 6f4019d | `docs/work-items/WI-1/evidence/T30-gates.txt` |
 | T31 | Facts and verification UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 63d83cd | `docs/work-items/WI-1/evidence/T31-gates.txt` |
 | T32 | Content stage: structure, AI drafting, fact placeholders, content checks | IMPL | backend-developer | T22, T27 | IN_PROGRESS | 1 | - | - |
-| T33 | Brand asset registry | IMPL | backend-developer | T27 | IN_PROGRESS | 1 | - | - |
+| T33 | Brand asset registry | IMPL | backend-developer | T27 | DONE | 1 | 982c722 | `docs/work-items/WI-1/evidence/T33-gates.txt` |
 | T34 | Rendering stage and carousel templates | IMPL | backend-developer | T27, T33 | PENDING | 0 | - | - |
 | T35 | Visual QA stage | IMPL | backend-developer | T30, T34 | PENDING | 0 | - | - |
 | T36 | Brand assets and templates UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | e457fc8 | `docs/work-items/WI-1/evidence/T36-gates.txt` |
@@ -779,6 +779,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: brand routes of the contract: register (PNG or JPEG by signature, size and dimension caps, generated file name under `<dataDir>/brand-assets/`, duplicate detection by SHA-256), list, activate or deactivate, serve file with fixed content type and `nosniff`; kinds `brand_logo`, `mascot`, `decoration` only (no badge or competition mark, PD-03); lookup function for the renderer (active assets by kind). Unit and integration tests, including rejection of SVG, oversize and renamed non-image files. Security design review items (T10-F12, T10-F13): 5 MiB body limit on the upload route only and the route-specific `image/png` and `image/jpeg` content-type exception (T19 mechanisms); declared `Content-Type` must match the detected signature (415); dimensions read from the header (PNG `IHDR`, JPEG SOF markers with bounded marker scanning) before any decode; one decode at registration to reject corrupt or unsupported files; `label` printable only (contract pattern); files created with the exclusive flag under a realpath-checked data directory from a validated UUID; served with the stored MIME type, `nosniff`, `Content-Security-Policy: default-src 'none'; sandbox` and `Cross-Origin-Resource-Policy: same-origin`. Tests for each, including a content-type and signature mismatch and an oversize dimension in the header.
 - Acceptance criteria: R-228, R-231
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:integration` -> exit 0
+- Agent result: PASS at f5e6ade (npm ci 0; typecheck 0; lint 0; test:unit 0, 1221 tests; test:integration 0, 162 tests; test:contract 0, 465 tests; npm audit --audit-level=high 0, 2 moderate per OD-33). PD-15 controls for brand files: PNG/JPEG by signature, header-only dimension check before decode, 5 MiB and 4096 x 4096 caps, one resvg decode, exclusive 0600 writes in a 0700 directory, served with nosniff, sandbox CSP, CORP, Cache-Control no-store (OD-41) and a server-generated file name (T11H-F11).
+- Orchestrator verification: `orch worktree verify-ownership` exit 0 (13 changed, 0 outside); re-run in the task worktree at f5e6ade: npm ci --offline 0, typecheck 0, lint 0, test:unit 0, test:integration 0 (counts in the verification log); main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-8 (decode check by resvg render, fully transparent refused; status code mapping 400, 415, 413; new assets active, idempotent PATCH; registration order; write-then-insert with orphan cleanup (OD-48); inline serving headers; read path rebuilt and verified by hash; 409 detail with the existing asset ID). Integration point for T34 and T35: brandAssetLookup(container).activeAssets(kind) and readFile(id). No new dependency.
+- Human interventions: 0.
+- Agent usage: launches 1; tokens NOT RECORDED; duration NOT RECORDED (loaded host).
+- Integration commit(s): 982c722 (merge --no-ff of task/WI-1/T33). Affected gates at 982c722: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-AUDIT PASS (evidence/T33-gates.txt, the evidence file of this task).
 
 ### T34: Rendering stage and carousel templates
 - Kind: IMPL
@@ -1366,6 +1372,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T15:48:20Z | T30 | Status DONE | integration commit 6f4019d; evidence/T30-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T15:48:39Z | T41 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T15:52:02Z | - | OD-48 recorded (orphan-file cleanup allowed; decode memory note to T47) | T33 report |
+| 2026-10-28T15:52:33Z | T33 | Status DONE | integration commit 982c722; evidence/T33-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
