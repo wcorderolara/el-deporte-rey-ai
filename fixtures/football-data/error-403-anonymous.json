@@ -1,0 +1,6 @@
+{
+  "request": {"method":"GET","path":"/v4/competitions/CL/matches","query":{"season":"2026"}},
+  "status": 403,
+  "headers": {"X-API-Version":"v4","X-RequestCounter-Reset":"60","X-RequestsAvailable":"5"},
+  "body": {"error":"Synthetic error: the resource is restricted."}
+}

@@ -1,0 +1,6 @@
+{
+  "request": {"method":"GET","path":"/v4/competitions/CL/matches","query":{"season":"2026","matchday":"1"}},
+  "status": 429,
+  "headers": {"X-API-Version":"v4","X-Authenticated-Client":"edr-test-client-marker-0000","X-RequestCounter-Reset":"42","X-RequestsAvailable":"0"},
+  "body": {"error":"Synthetic error: too many requests."}
+}

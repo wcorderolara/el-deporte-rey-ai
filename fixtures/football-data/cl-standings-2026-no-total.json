@@ -1,0 +1,12 @@
+{
+  "request": {"method":"GET","path":"/v4/competitions/CL/standings","query":{"season":"2026","matchday":"1"}},
+  "status": 200,
+  "headers": {"X-API-Version":"v4","X-Authenticated-Client":"edr-test-client-marker-0000","X-RequestCounter-Reset":"60","X-RequestsAvailable":"5"},
+  "body": {
+    "filters": {"season":"2026","matchday":"1"},
+    "area": {"id":9077,"name":"Synthetic Continent","code":"SYC","flag":null},
+    "competition": {"id":2001,"name":"Copa Continental Sintética","code":"CL","type":"CUP","emblem":"https://crests.invalid/competitions/2001.png"},
+    "season": {"id":8802,"startDate":"2026-09-15","endDate":"2027-05-29","currentMatchday":2,"winner":null},
+    "standings": []
+  }
+}

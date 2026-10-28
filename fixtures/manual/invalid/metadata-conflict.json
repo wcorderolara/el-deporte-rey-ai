@@ -1,0 +1,28 @@
+{
+  "format": "edr-manual-import/1",
+  "competition": {"id":"liga-manual","name":"Liga Manual Renombrada","areaName":"República Sintética"},
+  "season": {"id":"2026","label":"2026/27"},
+  "selections": [
+    {
+      "stage": {"id":"cuartos-de-final","name":"Cuartos de Final","order":2},
+      "matchday": null,
+      "teams": [
+        {"key":"club-maizal","name":"Club Maizal"},
+        {"key":"atletico-cafetal","name":"Atlético Cafetal"},
+        {"key":"deportivo-cacaotal","name":"Deportivo Cacaotal"},
+        {"key":"union-platanar","name":"Unión Platanar"},
+        {"key":"real-canaveral","name":"Real Cañaveral"},
+        {"key":"sporting-algodonal","name":"Sporting Algodonal"},
+        {"key":"juventud-arrozal","name":"Juventud Arrozal"},
+        {"key":"estrella-trigal","name":"Estrella Trigal"}
+      ],
+      "matches": [
+        {"home":"atletico-cafetal","away":"real-canaveral","kickoff":"2026-08-22T17:45:00Z","status":"finished","score":{"home":2,"away":4}},
+        {"home":"sporting-algodonal","away":"juventud-arrozal","kickoff":"2026-08-22T20:00:00Z","status":"finished","score":{"home":2,"away":3}},
+        {"home":"union-platanar","away":"deportivo-cacaotal","kickoff":"2026-08-23T17:45:00Z","status":"finished","score":{"home":2,"away":0}},
+        {"home":"estrella-trigal","away":"club-maizal","kickoff":"2026-08-23T20:00:00Z","status":"finished","score":{"home":2,"away":1}}
+      ],
+      "standings": null
+    }
+  ]
+}

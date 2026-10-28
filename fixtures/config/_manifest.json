@@ -1,0 +1,40 @@
+{
+  "description": "Test configurations. Select one with EDR_CONFIG=fixtures/config/<file> from the project root (catalogue paths are relative to the project root); set options.scenario of the DEMO_DATA sources (and of live-secondary) to the scenario under test. Provider identifiers used by tests come only from these files and fixtures/football-data. No DEMO_DATA source is ever linked with a LIVE_DATA or MANUAL_DATA source (OD-24) except in the invalid configuration made to prove the startup refusal.",
+  "configs": [
+    {"file":"demo-only.config.json","valid":true,"purpose":"DEMO only: demo-a primary, demo-b verification and official publication; links copa-demo and liga-demo"},
+    {
+      "file": "demo-manual.config.json",
+      "valid": true,
+      "purpose": "DEMO plus manual (same sources as config/app.config.json); base of the e2e harness (T24). The manual adapter stops startup with \"adapter not available\" until T50 is integrated"
+    },
+    {
+      "file": "demo-official.config.json",
+      "valid": true,
+      "purpose": "DEMO with a separate official publication source demo-official (own independence group); for the disputed-resolved, disputed-unavailable and disputed-no-match scenarios"
+    },
+    {"file":"demo-unaccepted.config.json","valid":true,"purpose":"DEMO with demo-b configured accepted: false; for the unaccepted-source scenario"},
+    {
+      "file": "live.config.json",
+      "valid": true,
+      "purpose": "LIVE-shaped: the football-data adapter with its base URL and reference code CL, link copa-continental binding competition cl; needs FOOTBALL_DATA_API_TOKEN at startup (adapter T49)"
+    },
+    {
+      "file": "live-secondary.config.json",
+      "valid": true,
+      "needsTestSeam": "test-live",
+      "purpose": "LIVE-shaped plus the test-only LIVE_DATA source live-secondary (adapter kind test-live, registered only through the createSportsSources test seam, T41) in the verification role, accepted, own independence group, linked to the reference-shaped competition (R-256)"
+    },
+    {
+      "file": "invalid-shared-upstream.config.json",
+      "valid": false,
+      "expectProblem": "use the same adapter kind and base URL origin but different independence groups",
+      "purpose": "two football-data sources with one origin in different independence groups (OD-24 rule a)"
+    },
+    {
+      "file": "invalid-demo-live-link.config.json",
+      "valid": false,
+      "expectProblem": "binds the DEMO_DATA source 'demo-a' together with the LIVE_DATA or MANUAL_DATA source 'football-data'",
+      "purpose": "a catalogue link mixing a DEMO_DATA and a LIVE_DATA source (OD-24 rule b)"
+    }
+  ]
+}

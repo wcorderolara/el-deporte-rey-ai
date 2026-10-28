@@ -1,0 +1,101 @@
+{
+  "format": "edr-manual-import/1",
+  "competition": {"id":"liga-manual","name":"Liga Manual Sintética","areaName":"República Sintética"},
+  "season": {"id":"2026","label":"2026/27"},
+  "selections": [
+    {
+      "stage": {"id":"torneo-apertura","name":"Torneo Apertura","order":1},
+      "matchday": 1,
+      "teams": [
+        {"key":"club-maizal","name":"Club Maizal"},
+        {"key":"atletico-cafetal","name":"Atlético Cafetal"},
+        {"key":"deportivo-cacaotal","name":"Deportivo Cacaotal"},
+        {"key":"union-platanar","name":"Unión Platanar"},
+        {"key":"real-canaveral","name":"Real Cañaveral"},
+        {"key":"sporting-algodonal","name":"Sporting Algodonal"},
+        {"key":"juventud-arrozal","name":"Juventud Arrozal"},
+        {"key":"estrella-trigal","name":"Estrella Trigal"}
+      ],
+      "matches": [
+        {
+          "home": "club-maizal",
+          "away": "estrella-trigal",
+          "kickoff": "2026-08-01T17:45:00Z",
+          "status": "finished",
+          "score": {"home":0,"away":4},
+          "scorers": [{"team":"club-maizal","name":"edr-person-marker-scorer-01","minute":12}]
+        },
+        {"home":"juventud-arrozal","away":"atletico-cafetal","kickoff":"2026-08-01T20:00:00Z","status":"finished","score":{"home":3,"away":3}},
+        {"home":"deportivo-cacaotal","away":"sporting-algodonal","kickoff":"2026-08-02T17:45:00Z","status":"finished","score":{"home":3,"away":3}},
+        {"home":"real-canaveral","away":"union-platanar","kickoff":"2026-08-02T20:00:00Z","status":"finished","score":{"home":1,"away":1}}
+      ],
+      "standings": {
+        "asOf": "2026-08-03T06:00:00Z",
+        "rows": [
+          {"position":1,"team":"estrella-trigal","played":1,"won":1,"drawn":0,"lost":0,"goalsFor":4,"goalsAgainst":0,"goalDifference":4,"points":3},
+          {"position":2,"team":"atletico-cafetal","played":1,"won":0,"drawn":1,"lost":0,"goalsFor":3,"goalsAgainst":3,"goalDifference":0,"points":1},
+          {"position":3,"team":"deportivo-cacaotal","played":1,"won":0,"drawn":1,"lost":0,"goalsFor":3,"goalsAgainst":3,"goalDifference":0,"points":1},
+          {"position":4,"team":"juventud-arrozal","played":1,"won":0,"drawn":1,"lost":0,"goalsFor":3,"goalsAgainst":3,"goalDifference":0,"points":1},
+          {"position":5,"team":"sporting-algodonal","played":1,"won":0,"drawn":1,"lost":0,"goalsFor":3,"goalsAgainst":3,"goalDifference":0,"points":1},
+          {"position":6,"team":"real-canaveral","played":1,"won":0,"drawn":1,"lost":0,"goalsFor":1,"goalsAgainst":1,"goalDifference":0,"points":1},
+          {"position":7,"team":"union-platanar","played":1,"won":0,"drawn":1,"lost":0,"goalsFor":1,"goalsAgainst":1,"goalDifference":0,"points":1},
+          {"position":8,"team":"club-maizal","played":1,"won":0,"drawn":0,"lost":1,"goalsFor":0,"goalsAgainst":4,"goalDifference":-4,"points":0}
+        ]
+      }
+    },
+    {
+      "stage": {"id":"torneo-apertura","name":"Torneo Apertura","order":1},
+      "matchday": 2,
+      "teams": [
+        {"key":"club-maizal","name":"Club Maizal"},
+        {"key":"atletico-cafetal","name":"Atlético Cafetal"},
+        {"key":"deportivo-cacaotal","name":"Deportivo Cacaotal"},
+        {"key":"union-platanar","name":"Unión Platanar"},
+        {"key":"real-canaveral","name":"Real Cañaveral"},
+        {"key":"sporting-algodonal","name":"Sporting Algodonal"},
+        {"key":"juventud-arrozal","name":"Juventud Arrozal"},
+        {"key":"estrella-trigal","name":"Estrella Trigal"}
+      ],
+      "matches": [
+        {"home":"juventud-arrozal","away":"club-maizal","kickoff":"2026-08-08T17:45:00Z","status":"finished","score":{"home":1,"away":4}},
+        {"home":"estrella-trigal","away":"sporting-algodonal","kickoff":"2026-08-08T20:00:00Z","status":"finished","score":{"home":1,"away":4}},
+        {"home":"real-canaveral","away":"atletico-cafetal","kickoff":"2026-08-09T17:45:00Z","status":"finished","score":{"home":1,"away":4}},
+        {"home":"deportivo-cacaotal","away":"union-platanar","kickoff":"2026-08-09T20:00:00Z","status":"finished","score":{"home":1,"away":4}}
+      ],
+      "standings": {
+        "asOf": "2026-08-10T06:00:00Z",
+        "rows": [
+          {"position":1,"team":"atletico-cafetal","played":2,"won":1,"drawn":1,"lost":0,"goalsFor":7,"goalsAgainst":4,"goalDifference":3,"points":4},
+          {"position":2,"team":"sporting-algodonal","played":2,"won":1,"drawn":1,"lost":0,"goalsFor":7,"goalsAgainst":4,"goalDifference":3,"points":4},
+          {"position":3,"team":"union-platanar","played":2,"won":1,"drawn":1,"lost":0,"goalsFor":5,"goalsAgainst":2,"goalDifference":3,"points":4},
+          {"position":4,"team":"estrella-trigal","played":2,"won":1,"drawn":0,"lost":1,"goalsFor":5,"goalsAgainst":4,"goalDifference":1,"points":3},
+          {"position":5,"team":"club-maizal","played":2,"won":1,"drawn":0,"lost":1,"goalsFor":4,"goalsAgainst":5,"goalDifference":-1,"points":3},
+          {"position":6,"team":"deportivo-cacaotal","played":2,"won":0,"drawn":1,"lost":1,"goalsFor":4,"goalsAgainst":7,"goalDifference":-3,"points":1},
+          {"position":7,"team":"juventud-arrozal","played":2,"won":0,"drawn":1,"lost":1,"goalsFor":4,"goalsAgainst":7,"goalDifference":-3,"points":1},
+          {"position":8,"team":"real-canaveral","played":2,"won":0,"drawn":1,"lost":1,"goalsFor":2,"goalsAgainst":5,"goalDifference":-3,"points":1}
+        ]
+      }
+    },
+    {
+      "stage": {"id":"cuartos-de-final","name":"Cuartos de Final","order":2},
+      "matchday": null,
+      "teams": [
+        {"key":"club-maizal","name":"Club Maizal"},
+        {"key":"atletico-cafetal","name":"Atlético Cafetal"},
+        {"key":"deportivo-cacaotal","name":"Deportivo Cacaotal"},
+        {"key":"union-platanar","name":"Unión Platanar"},
+        {"key":"real-canaveral","name":"Real Cañaveral"},
+        {"key":"sporting-algodonal","name":"Sporting Algodonal"},
+        {"key":"juventud-arrozal","name":"Juventud Arrozal"},
+        {"key":"estrella-trigal","name":"Estrella Trigal"}
+      ],
+      "matches": [
+        {"home":"atletico-cafetal","away":"real-canaveral","kickoff":"2026-08-22T17:45:00Z","status":"finished","score":{"home":2,"away":4}},
+        {"home":"sporting-algodonal","away":"juventud-arrozal","kickoff":"2026-08-22T20:00:00Z","status":"finished","score":{"home":2,"away":3}},
+        {"home":"union-platanar","away":"deportivo-cacaotal","kickoff":"2026-08-23T17:45:00Z","status":"finished","score":{"home":2,"away":0}},
+        {"home":"estrella-trigal","away":"club-maizal","kickoff":"2026-08-23T20:00:00Z","status":"finished","score":{"home":2,"away":1}}
+      ],
+      "standings": null
+    }
+  ]
+}

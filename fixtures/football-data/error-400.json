@@ -1,0 +1,6 @@
+{
+  "request": {"method":"GET","path":"/v4/competitions/CL/matches","query":{"season":"2026","matchday":"99"}},
+  "status": 400,
+  "headers": {"X-API-Version":"v4","X-Authenticated-Client":"edr-test-client-marker-0000","X-RequestCounter-Reset":"60","X-RequestsAvailable":"5"},
+  "body": {"error":"Synthetic error: a filter value is not accepted."}
+}

@@ -1,0 +1,29 @@
+{
+  "request": {"method":"GET","path":"/v4/competitions/CL/matches","query":{"season":"2025","stage":"FINAL"}},
+  "status": 200,
+  "headers": {"X-API-Version":"v4","X-Authenticated-Client":"edr-test-client-marker-0000","X-RequestCounter-Reset":"60","X-RequestsAvailable":"6"},
+  "body": {
+    "filters": {"season":"2025","stage":"FINAL"},
+    "resultSet": {"count":1,"first":"2026-05-30","last":"2026-05-30","played":1},
+    "competition": {"id":2001,"name":"Copa Continental Sintética","code":"CL","type":"CUP","emblem":"https://crests.invalid/competitions/2001.png"},
+    "matches": [
+      {
+        "area": {"id":9077,"name":"Synthetic Continent","code":"SYC","flag":null},
+        "competition": {"id":2001,"name":"Copa Continental Sintética","code":"CL","type":"CUP","emblem":"https://crests.invalid/competitions/2001.png"},
+        "season": {"id":8801,"startDate":"2025-09-16","endDate":"2026-05-30","currentMatchday":8,"winner":null},
+        "id": 605101,
+        "utcDate": "2026-05-30T19:00:00Z",
+        "status": "FINISHED",
+        "matchday": null,
+        "stage": "FINAL",
+        "group": null,
+        "lastUpdated": "2026-05-30T23:30:00Z",
+        "homeTeam": {"id":5036,"name":"Vikingos Neblinar","shortName":"Neblinar","tla":"VNE","crest":"https://crests.invalid/teams/5036.png"},
+        "awayTeam": {"id":5029,"name":"Corsarios Islabruma","shortName":"Islabruma","tla":"CIS","crest":"https://crests.invalid/teams/5029.png"},
+        "score": {"winner":"AWAY_TEAM","duration":"REGULAR","fullTime":{"home":0,"away":3},"halfTime":{"home":0,"away":0}},
+        "odds": {"msg":"Synthetic odds message."},
+        "referees": [{"id":95101,"name":"edr-person-marker-referee-605101","type":"REFEREE","nationality":"Synthetic"}]
+      }
+    ]
+  }
+}
