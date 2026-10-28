@@ -89,12 +89,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T56 | Migration 0002: capitalized_tokens in qa_results | IMPL | backend-developer | T18, T35 | DONE | 1 | ef115d4 | `docs/work-items/WI-1/evidence/T56-gates.txt` |
 | T57 | Counterpart resolution keeps the source failure code | IMPL | backend-developer | T54 | DONE | 1 | b9f9f24 | `docs/work-items/WI-1/evidence/T57-gates.txt` |
 | T58 | Research run invalidates final approvals | IMPL | backend-developer | T37 | DONE | 1 | 4bdfd2c | `docs/work-items/WI-1/evidence/T58-gates-2.txt` |
-| T59 | football-data adapter and probe corrections (FU-1, FU-2, FU-4, FU-5) | IMPL | backend-developer | T14 | PENDING | 0 | - | - |
+| T59 | football-data adapter and probe corrections (FU-1, FU-2, FU-4, FU-5) | IMPL | backend-developer | T14 | IN_PROGRESS | 1 | - | - |
 | T60 | Security check of the probe diagnostics (FU-2) | VERIFY | security-reviewer | T59 | PENDING | 0 | - | - |
 | T61 | Second capability probe run (FU-3) | IMPL | Orchestrator | T60 | PENDING | 0 | - | - |
 | T62 | Provider research addendum and architecture corrections (FU-3, FU-6, FU-7) | IMPL | architect | T61 | PENDING | 0 | - | - |
-| T63 | Requirements corrections from the provider research (FU-7) | IMPL | product-manager | T14 | PENDING | 0 | - | - |
-| T64 | Explicit timeouts for workflow-heavy ingestion tests | IMPL | qa-engineer | T52 | PENDING | 0 | - | - |
+| T63 | Requirements corrections from the provider research (FU-7) | IMPL | product-manager | T14 | IN_PROGRESS | 1 | - | - |
+| T64 | Explicit timeouts for workflow-heavy ingestion tests | IMPL | qa-engineer | T52 | IN_PROGRESS | 1 | - | - |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64 | PENDING | 0 | - | - |
 
 ## Tasks
@@ -1677,6 +1677,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T20:31:31Z | T44 | Agent interrupted by the usage limit; resumed in the same worktree (attempt 1 continues) | agent rate-limit notification |
 | 2026-10-28T20:43:45Z | T43 | Status DONE | integration commit cb16a73; evidence/T43-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T20:45:12Z | T42 | Status DONE | integration commit db84eda; evidence/T42-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T20:45:27Z | T59 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
+| 2026-10-28T20:45:27Z | T63 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
+| 2026-10-28T20:45:27Z | T64 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 
 ## Recovery log
 
