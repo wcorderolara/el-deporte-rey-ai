@@ -97,7 +97,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T64 | Explicit timeouts for workflow-heavy ingestion tests | IMPL | qa-engineer | T52 | DONE | 1 | 4bda364 | `docs/work-items/WI-1/evidence/T64-gates.txt` |
 | T65 | Localized import error and fact reason texts | IMPL | frontend-developer | T44 | DONE | 1 | 77bf965 | `docs/work-items/WI-1/evidence/T65-gates.txt` |
 | T66 | Localized trace reasons and shared banner cleanup | IMPL | frontend-developer | T65 | DONE | 1 | 052a1fe | `docs/work-items/WI-1/evidence/T66-gates.txt` |
-| T67 | Load-robust SC-05 linear-time test | IMPL | qa-engineer | T50 | IN_PROGRESS | 1 | - | - |
+| T67 | Load-robust SC-05 linear-time test | IMPL | qa-engineer | T50 | DONE | 1 | 02f4a42 | `docs/work-items/WI-1/evidence/T67-gates.txt` |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65, T66, T67 | PENDING | 0 | - | - |
 
 ## Tasks
@@ -1299,6 +1299,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: (OD-64, PD-15, SC-05) the linear-time test compares median parse times at 64 KiB and 512 KiB with `MAX_RATIO` 24 (linear about 8, quadratic about 64) and failed once under parallel load (ratio 32.0). Make the measurement robust to load without raising `MAX_RATIO` and without weakening the linear-versus-quadratic distinction, for example interleaved small and large runs, more samples with the minimum or a trimmed statistic per size, warm-up, and a bounded retry of the whole comparison only when the small measurement is noisy; every input shape of the current test kept; a seeded quadratic parser in the test must still fail. No product code change.
 - Acceptance criteria: -
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0
+- Agent result: PASS at 864823e (npm ci --offline 0; typecheck 0; lint 0; test:unit 0 twice and once under 15 CPU-loop processes, 2136 tests; `timing.test.ts` 10 runs idle and 10 runs under 30 CPU-loop processes, all exit 0). Method: small and large runs interleaved with alternating order, 5 warm-up and 21 measured rounds, minimum sample per size, `MAX_RATIO` 24 unchanged; an attempt is conclusive when the small measurement is steady (pass) or the large one is (fail); at most 2 retries of an inconclusive attempt from fresh samples, the last counted; every corpus shape kept; seeded quadratic positive control (CSV and the JSON shape that failed) fails in every run (48 to 113). Real shapes 6.4 to 10.9, no retries.
+- Orchestrator acceptance (PD-25): ownership against the integration tracker; main working tree unchanged; affected gates on the merged state; verification lines not re-run after the PASS report; 2026-10-28.
+- Decisions: LOW-1 to LOW-6 (minimum instead of median; asymmetric steadiness rule with STEADY_SPREAD 1.5 and MAX_RETRIES 2; more warm-up and samples, alternating order; 60 s per-test timeout; two-shape positive control; print tags). Notes for T47 (security-control test change, OD-64): inflation hitting every small sample equally is ruled out by interleaving, not by the steadiness check; 24 remains the SC-05 bound. The agent's CPU-load processes outlived one run and were stopped by PID; none remained.
+- Human interventions: 0.
+- Agent usage: launches 1.
+- Integration commit(s): 02f4a42 (merge --no-ff of task/WI-1/T67). Affected gates at 02f4a42: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-BUILD PASS, PRJ-E2E PASS (evidence/T67-gates.txt, the evidence file of this task).
 
 ### T48: Final gate run
 - Kind: VERIFY
@@ -1778,6 +1784,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T21:20:15Z | - | PD-25 recorded (no task-worktree re-run after a PASS report; ownership, main-tree check and merged-state gates kept) | Product Owner 2026-10-28 |
 | 2026-10-28T21:23:17Z | T60 | Status DONE | integration commit 8efe25c; evidence/T60-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T21:24:06Z | T61 | Status IN_PROGRESS (attempt 1); Orchestrator task; waits for the Product Owner to place the token (PD-24) | orch next SELECT |
+| 2026-10-28T21:36:30Z | T67 | Status DONE | integration commit 02f4a42; evidence/T67-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
 
 ## Recovery log
 
