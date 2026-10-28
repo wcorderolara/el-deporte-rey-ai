@@ -9,8 +9,8 @@
 | Contracts | none declared |
 | Authorization | Product Owner request of 2026-10-27 via orchestrate analyze: requirements analysis only, no implementation. No merge, push or deploy is authorized. |
 | Config sha256 | `6614e48a55c0252c3962656d71eeec2dd29d537309bb39828a6df78b01824354` |
-| Last gate run | none yet |
-| Work-item status | FINAL_GATES |
+| Last gate run | final, T48 `evidence/T48-gates-2.txt` at 754fe2d: 15 PASS, 0 FAIL, 0 NOT RUN (2026-10-28) |
+| Work-item status | PO_ACCEPTANCE |
 
 Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orchestrate/workflows/task-tracking.md. Only the Orchestrator edits this file.
 
@@ -99,7 +99,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T66 | Localized trace reasons and shared banner cleanup | IMPL | frontend-developer | T65 | DONE | 1 | 052a1fe | `docs/work-items/WI-1/evidence/T66-gates.txt` |
 | T67 | Load-robust SC-05 linear-time test | IMPL | qa-engineer | T50 | DONE | 1 | 02f4a42 | `docs/work-items/WI-1/evidence/T67-gates.txt` |
 | T68 | Source of truth and architecture records at close | IMPL | architect | T45 | DONE | 1 | 916673a | `docs/work-items/WI-1/evidence/T68-gates.txt` |
-| T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65, T66, T67, T68 | IN_PROGRESS | 1 | - | - |
+| T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65, T66, T67, T68 | DONE | 1 | 73cb101 | `docs/work-items/WI-1/evidence/T48-gates-2.txt` |
 
 ## Tasks
 
@@ -1360,6 +1360,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: run every final gate (project gates of T25 and the four framework-mandatory gates) at a clean, committed integration HEAD in the verify worktree, without `FOOTBALL_DATA_API_TOKEN` in the environment, and report each gate PASS, FAIL or NOT RUN with command, exit code and counts. Last VERIFY task of the work item.
 - Acceptance criteria: -
 - Verification: `orch gates run --work-item 'WI-1' --task 'T48' --set final --cwd '<VERIFY_WORKTREE>'` -> exit 0, every required gate PASS
+- Agent result: first run FAIL at 74843ca (`evidence/T48-gates.txt`: 14 PASS, 1 FAIL, FW-AC on the superseded criteria R-201, R-210, R-239; not re-run to obtain a pass; escalated); after OD-67, second run PASS at 754fe2d (`evidence/T48-gates-2.txt`: 15 PASS, 0 FAIL, 0 NOT RUN; unit 2140, integration 511, contract 779, e2e 13, a11y 18; audit no high or critical); preconditions checked each time (no token or EDR_LIVE_TESTS, both worktrees clean, verify HEAD equal to the integration HEAD).
+- Orchestrator verification: `orch evidence check docs/work-items/WI-1/evidence/T48-gates-2.txt --work-item 'WI-1' --task 'T48' --at .` exit 0 RESULT PASS (run by the agent and reported); evidence committed at 73cb101; report `reports/final-gates.md`; 2026-10-28.
+- Decisions: none by the agent. OD-67 (Orchestrator) for FW-AC. Note: the evidence header's COMMAND line omits `--name gates-2` (written by the runner); FW-SECURITY reads T60, the latest security-reviewer VERIFY task in tracker order (PASS); the work item's delta validation is T47 (PASS).
+- Human interventions: 0.
+- Agent usage: launches 1 (resumed once for the second run); tokens 46386; duration 2 minutes for the second run.
+- Integration commit(s): none (VERIFY task; the gate runner writes the evidence in the integration worktree); evidence commits 73cb101 (gates-2) and 754fe2d (first run kept).
 
 ## Decisions
 
@@ -1856,6 +1862,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T22:37:57Z | T47 | Status DONE | integration commit 040cbf7; evidence/T47-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
 | 2026-10-28T22:38:25Z | T48 | Status IN_PROGRESS (attempt 1); work-item status FINAL_GATES (stage 5) | every other task DONE; orch next SELECT |
 | 2026-10-28T22:42:30Z | T48 | First final run FAIL (FW-AC: superseded R-201, R-210, R-239); evidence/T48-gates.txt kept; OD-67 recorded; T11F Acceptance criteria line names the three as superseded | T48 report |
+| 2026-10-28T22:45:34Z | T48 | Status DONE; work-item status PO_ACCEPTANCE (stage 6) | evidence/T48-gates-2.txt PASS at 754fe2d (commit 73cb101); T47 Verdict PASS |
 
 ## Recovery log
 
