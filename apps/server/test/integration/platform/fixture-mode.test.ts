@@ -7,9 +7,10 @@
  * - no http-api response carries the synthetic marker token or the dummy key, even when they are in the process
  *   environment given to the server.
  *
- * Stages that no module registers yet (content, rendering and visual QA at the time of writing) run as explicit
- * placeholders of the test support, so "end to end" covers the real research and verification stages and the
- * runner's full stage order; each test reports the placeholders it used.
+ * Every stage a module registers runs for real (research, verification and, since T32, content); a stage that no
+ * module registers yet runs as an explicit placeholder of the test support (`TestApp.placeholders`). The
+ * LIVE-shaped side of the swap uses the OpenAI-compatible adapter against a loopback fake endpoint
+ * (`startFakeAiServer`), so the run is deterministic and no request leaves the machine.
  */
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -25,15 +26,20 @@ import {
   expectNoNetworkViolations,
   expectNoProviderCredentials,
   fixtureConfigDocument,
-  freePort,
+  type FakeAiServer,
+  startFakeAiServer,
   startTestApp,
 } from '../../support/index.js';
 
 const apps: TestApp[] = [];
+const servers: FakeAiServer[] = [];
 
 afterEach(async () => {
   for (const app of apps.splice(0)) {
     await app.close();
+  }
+  for (const server of servers.splice(0)) {
+    await server.close();
   }
 });
 
@@ -91,7 +97,7 @@ describe('DEMO_DATA fixtures only: no provider request (R-241, R-222)', () => {
 
 describe('provider swap by configuration only (R-223)', () => {
   /** A configuration with a LIVE_DATA-shaped sports source and the OpenAI-compatible AI adapter. */
-  function liveShaped(aiPort: number): (document: Json) => void {
+  function liveShaped(aiBaseUrl: string): (document: Json) => void {
     return (document) => {
       document['providers'] = {
         sports: {
@@ -113,7 +119,7 @@ describe('provider swap by configuration only (R-223)', () => {
         },
         ai: {
           adapter: 'openai-compatible',
-          options: { baseUrl: `http://127.0.0.1:${String(aiPort)}/v1`, model: 'synthetic-model', timeoutMs: 2000 },
+          options: { baseUrl: aiBaseUrl, model: 'synthetic-model', timeoutMs: 5000 },
         },
       };
       delete document['catalogue'];
@@ -128,13 +134,18 @@ describe('provider swap by configuration only (R-223)', () => {
   }
 
   it('replacing the providers section with stubs is the only change, and the full workflow then runs end to end', async () => {
-    const aiPort = await freePort();
+    const ai = await startFakeAiServer();
+    servers.push(ai);
     let liveDocument: Json = {};
     let stubDocument: Json = {};
 
-    const live = await start({ base: 'demo-only', mutate: liveShaped(aiPort) });
+    const live = await start({ base: 'demo-only', mutate: liveShaped(ai.baseUrl) });
     liveDocument = live.config.document;
     expect(live.container.aiProvider.id).toBe('openai-compatible');
+    // The fake endpoint's loopback origin is the only egress origin, and only because the configuration names it.
+    expect([...buildEgressAllowList(live.container.config).origins].sort()).toEqual(
+      [`http://127.0.0.1:${String(ai.port)}`, 'https://live-secondary.invalid'].sort(),
+    );
     expect(live.container.sources.descriptors.map((source) => [source.id, source.mode])).toEqual([
       ['live-secondary', 'LIVE_DATA'],
     ]);
@@ -148,15 +159,25 @@ describe('provider swap by configuration only (R-223)', () => {
     expect(liveProject.dataMode).toBe('LIVE_DATA');
     const liveRun = await live.runWorkflow(liveProject.id);
     expect(liveRun.status, JSON.stringify(liveRun.failure)).toBe('completed');
+    expect(liveRun.stages.map((stage) => [stage.stage, stage.status])).toEqual(
+      FULL_ORDER.map((name) => [name, 'completed']),
+    );
     const liveFacts = await live.listFacts(liveProject.id, liveRun.id);
     // A single LIVE_DATA source cannot verify anything (R-055); the workflow still runs to the end.
     expect(liveFacts.dataMode).toBe('LIVE_DATA');
     expect(liveFacts.facts.every((fact) => fact.status === 'unverified')).toBe(true);
-    expect(live.egress.requests).toEqual([]);
+    // Egress only to the configured AI endpoint (drafting, when the content stage is real); never to a sports source.
+    expect(live.egress.requests.every((request) => request.url.startsWith(ai.baseUrl))).toBe(true);
+    expect(live.egress.requests.length).toBe(ai.requests.length);
+    expect(live.egress.requests.length).toBe(live.aiRequests.length);
+    if (!live.placeholders.includes('content')) {
+      expect(ai.requests.length).toBeGreaterThan(0);
+    }
 
+    const aiCallsAfterLive = ai.requests.length;
     const stub = await start({
       base: 'demo-only',
-      mutate: (document) => (liveShaped(aiPort)(document), stubbed(document)),
+      mutate: (document) => (liveShaped(ai.baseUrl)(document), stubbed(document)),
     });
     stubDocument = stub.config.document;
     expect(stub.container.aiProvider.id).toBe('stub');
@@ -171,6 +192,12 @@ describe('provider swap by configuration only (R-223)', () => {
     expect(facts.facts.length).toBeGreaterThan(0);
     expect(facts.facts.every((fact) => fact.status === 'verified')).toBe(true);
     expect(stub.egress.requests).toEqual([]);
+    if (!stub.placeholders.includes('content')) {
+      // The stub AI drafted the content, with no request to any endpoint.
+      expect(stub.aiRequests.length).toBeGreaterThan(0);
+    }
+    // The stub configuration never reaches the AI endpoint of the previous configuration.
+    expect(ai.requests.length).toBe(aiCallsAfterLive);
 
     // The two configurations differ only in the provider selection (and the catalogue links that name sources);
     // `server` and `dataDir` differ only because each test app has its own port and directory.

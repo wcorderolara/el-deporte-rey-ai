@@ -5,9 +5,9 @@
  * with a wrong key fails with a closed failure, and the key appears nowhere: not in the stored run, not in any API
  * response, not in the database and not in the log.
  *
- * The content stage is not delivered yet (T32), so the drafting call is made by a probe stage in the content
- * position that calls `container.aiProvider.generateDraft` exactly as a stage would; the failure is stored and
- * returned by the real workflow runner.
+ * Two variants: the real content stage (T32) drafting through the AI port, and a probe stage in the content position
+ * that calls `container.aiProvider.generateDraft` directly, so the thrown error itself can be inspected. In both the
+ * failure is stored and returned by the real workflow runner.
  */
 import { type IncomingMessage, type Server, type ServerResponse, createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -99,7 +99,7 @@ afterEach(async () => {
   }
 });
 
-async function setup(mode: Mode): Promise<{ t: TestApp; echo: EchoServer; caught: unknown[] }> {
+async function setup(mode: Mode, probe = true): Promise<{ t: TestApp; echo: EchoServer; caught: unknown[] }> {
   const echo = await echoServer(mode);
   cleanups.push(() => new Promise<void>((resolve) => echo.server.close(() => resolve())));
   const caught: unknown[] = [];
@@ -113,16 +113,18 @@ async function setup(mode: Mode): Promise<{ t: TestApp; echo: EchoServer; caught
         options: { baseUrl: `http://127.0.0.1:${String(echo.port)}/v1`, model: 'synthetic-model', timeoutMs: 5000 },
       };
     },
-    stageOverrides: {
-      content: probeStage('content', async (ctx) => {
-        try {
-          await ctx.container.aiProvider.generateDraft(sampleRequest(), { signal: ctx.signal });
-        } catch (error) {
-          caught.push(error);
-          throw error;
+    stageOverrides: probe
+      ? {
+          content: probeStage('content', async (ctx) => {
+            try {
+              await ctx.container.aiProvider.generateDraft(sampleRequest(), { signal: ctx.signal });
+            } catch (error) {
+              caught.push(error);
+              throw error;
+            }
+          }),
         }
-      }),
-    },
+      : {},
   });
   cleanups.push(() => t.close());
   return { t, echo, caught };
@@ -181,6 +183,50 @@ describe('wrong-key run with an echoing AI server (T10-F10)', () => {
         expect(response.body).not.toContain(WRONG_KEY);
         expect(response.body).not.toContain('Incorrect API key');
       }
+      expect(t.databaseText()).not.toContain(WRONG_KEY);
+      expect(t.log.text()).not.toContain(WRONG_KEY);
+      expectNoNetworkViolations();
+    },
+  );
+});
+
+describe('wrong-key run through the real content stage (T10-F10, T32)', () => {
+  it.each([
+    ['401 with the key echoed in the error body', 'unauthorized', { code: 'unavailable', httpStatus: 401 }],
+    [
+      '200 whose completion text echoes the key',
+      'echo-in-completion',
+      { code: 'ai_response_invalid', httpStatus: 200 },
+    ],
+  ] as const)(
+    '%s: the content stage fails closed and nothing stores or returns the key',
+    async (_name, mode, expected) => {
+      const { t, echo } = await setup(mode, false);
+      expect(t.placeholders).not.toContain('content');
+      const project = await t.createProject(LIGA_DEMO_MD1);
+      const run = await t.runWorkflow(project.id);
+
+      expect(echo.authorizations.length).toBeGreaterThan(0);
+      expect(echo.authorizations.every((value) => value === `Bearer ${WRONG_KEY}`)).toBe(true);
+      expect(t.aiRequests.length).toBeGreaterThan(0);
+      expect(t.egress.requests.every((request) => request.credentialHeader && !request.credentialInUrl)).toBe(true);
+
+      expect(run.status).toBe('failed');
+      expect(run.failure).toMatchObject({ code: expected.code, httpStatus: expected.httpStatus });
+      expect(run.stages.map((stage) => [stage.stage, stage.status])).toEqual([
+        ['research', 'completed'],
+        ['verification', 'completed'],
+        ['content', 'failed'],
+        ['rendering', 'skipped'],
+        ['visual_qa', 'skipped'],
+      ]);
+      const bodies = [
+        (await t.get(`/projects/${project.id}/runs/${run.id}`)).body,
+        (await t.get(`/projects/${project.id}`)).body,
+        (await t.get(`/projects/${project.id}/draft`)).body,
+      ].join('\n');
+      expect(bodies).not.toContain(WRONG_KEY);
+      expect(bodies).not.toContain('Incorrect API key');
       expect(t.databaseText()).not.toContain(WRONG_KEY);
       expect(t.log.text()).not.toContain(WRONG_KEY);
       expectNoNetworkViolations();
