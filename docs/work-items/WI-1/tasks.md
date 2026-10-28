@@ -67,7 +67,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T33 | Brand asset registry | IMPL | backend-developer | T27 | PENDING | 0 | - | - |
 | T34 | Rendering stage and carousel templates | IMPL | backend-developer | T27, T33 | PENDING | 0 | - | - |
 | T35 | Visual QA stage | IMPL | backend-developer | T30, T34 | PENDING | 0 | - | - |
-| T36 | Brand assets and templates UI | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
+| T36 | Brand assets and templates UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | e457fc8 | `docs/work-items/WI-1/evidence/T36-gates.txt` |
 | T37 | Review module: approval state machine, regeneration, final approval | IMPL | backend-developer | T32, T35 | PENDING | 0 | - | - |
 | T38 | Export, history and traceability module | IMPL | backend-developer | T37 | PENDING | 0 | - | - |
 | T39 | Review UI: preview, per-item approval, regeneration, final approval | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
@@ -758,6 +758,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: brand page: register an asset (kind among brand logo, mascot, decoration; label; PNG or JPEG file), list with preview, activate or deactivate; templates list with version, badge slots and preview image per language; no badge or competition-mark upload option. Component tests.
 - Acceptance criteria: R-228, R-231
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run build` -> exit 0
+- Agent result: PASS at 73e0bc9 after three interruptions (usage limit, host sleep twice; resumed) (npm ci 0; typecheck 0; lint 0; test:unit 0, 618 tests, brand 45; build 0; npm audit --audit-level=high 0, 2 moderate per OD-33).
+- Orchestrator verification: `orch worktree verify-ownership` exit 0 (14 changed, 0 outside); re-run in the task worktree at 73e0bc9: npm ci --offline 0, typecheck 0, lint 0, test:unit 0 (28 files, 618 tests), test:integration 0 (4 files, 60 tests), build 0 (Orchestrator build output removed); main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-5 (raw upload in brandApi.ts reusing the shared client's headers and error model; one preview language selector, es default; kind without default and contract Label check; feature-local useResource hook; authorized-assets notice without a checkbox). OD-41 concerns this task (preview caching routed to T33 and T34). No new dependency.
+- Human interventions: 0.
+- Agent usage: launches 4 (three resumes); tokens 154572; duration NOT RECORDED (interrupted runs).
+- Integration commit(s): e457fc8 (merge --no-ff of task/WI-1/T36). Affected gates at e457fc8: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T36-gates.txt, the evidence file of this task).
 
 ### T37: Review module: approval state machine, regeneration, final approval
 - Kind: IMPL
@@ -1242,6 +1248,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T06:38:50Z | T40 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T06:38:50Z | - | Environment: host sleep interrupted agents (T31, T36 twice); caffeinate -i started (MED-06), but sleep from lid or system cannot be prevented by the Orchestrator; reported to the PO | pmset log Sleep Service Back to Sleep |
 | 2026-10-28T10:28:02Z | - | OD-41 recorded (no-store for brand files and previews, carried to T33 and T34) | T36 report |
+| 2026-10-28T10:28:05Z | T36 | Status DONE | integration commit e457fc8; evidence/T36-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
