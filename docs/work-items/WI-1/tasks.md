@@ -73,7 +73,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T39 | Review UI: preview, per-item approval, regeneration, final approval | IMPL | frontend-developer | T16, T20 | DONE | 1 | 34e9569 | `docs/work-items/WI-1/evidence/T39-gates.txt` |
 | T40 | Export, history and traceability UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 9c7f249 | `docs/work-items/WI-1/evidence/T40-gates.txt` |
 | T41 | Integration tests: platform, research and verification | IMPL | qa-engineer | T19, T22, T23, T29, T30 | DONE | 2 | fec71d3, aa37fef | `docs/work-items/WI-1/evidence/T41-gates-2.txt` |
-| T42 | Integration tests: content, rendering, visual QA, approval, export, history | IMPL | qa-engineer | T32, T33, T34, T35, T37, T38, T41 | PENDING | 0 | - | - |
+| T42 | Integration tests: content, rendering, visual QA, approval, export, history | IMPL | qa-engineer | T32, T33, T34, T35, T37, T38, T41, T56 | PENDING | 0 | - | - |
 | T43 | Contract conformance tests | IMPL | qa-engineer | T20, T38, T41, T50 | PENDING | 0 | - | - |
 | T44 | End-to-end and accessibility journeys | IMPL | qa-engineer | T23, T24, T28, T29, T31, T36, T38, T39, T40, T50, T51 | PENDING | 0 | - | - |
 | T45 | Architecture conformance review | IMPL | architect | T14, T26, T42, T43, T44, T52 | PENDING | 0 | - | - |
@@ -86,7 +86,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T53 | Capability probe run and football-data.org findings | IMPL | Orchestrator | T13, T41, T49 | IN_PROGRESS | 1 | - | - |
 | T54 | Verification fixes: dispute outcome rule and unavailable consultation record | IMPL | backend-developer | T30, T41 | DONE | 1 | d002b9d | `docs/work-items/WI-1/evidence/T54-gates.txt` |
 | T55 | Security checks: accepted-advisory option for audit-report | IMPL | qa-engineer | T41 | DONE | 1 | f63dbb2 | `docs/work-items/WI-1/evidence/T55-gates.txt` |
-| T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55 | PENDING | 0 | - | - |
+| T56 | Migration 0002: capitalized_tokens in qa_results | IMPL | backend-developer | T18, T35 | PENDING | 0 | - | - |
+| T57 | Counterpart resolution keeps the source failure code | IMPL | backend-developer | T54 | PENDING | 0 | - | - |
+| T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57 | PENDING | 0 | - | - |
 
 ## Tasks
 
@@ -905,9 +907,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 ### T42: Integration tests: content, rendering, visual QA, approval, export, history
 - Kind: IMPL
 - Agent: qa-engineer
-- Depends on: T32, T33, T34, T35, T37, T38, T41
+- Depends on: T32, T33, T34, T35, T37, T38, T41, T56
 - Files owned: `apps/server/test/integration/delivery/**`
-- Scope: API-level tests on DEMO_DATA fixture scenarios of both fixture competitions for the active acceptance criteria R-206 to R-221 (R-285 replacing R-210), R-228, R-231, R-232, R-236 to R-238, R-240, R-254, R-255, R-269 and R-271 as worded in `requirements.md` section 7, including: blocked approval naming the fact while unaffected content stays approvable; invented-number and non-official-name flags; provenance labels in stored content; structure and split; a carousel without standings for a knockout stage passing visual QA and the same approval and export rules (R-285); missing standings never derived (R-254); incomplete matchdays with every status left out of result slides (R-255); single-source content (verification source disabled) drafted and its approval refused naming the fact (R-271); template consistency and template change; no-asset carousel; deterministic numeric text; each seeded QA defect; export refusal and success; demonstration band and manifest flag (R-269); regeneration scope; export files; no publication path and no network during export; history and reopen; traceability; brand asset reuse across projects; Spanish default and English project; 1080 x 1350; final approval refusal and success.
+- Scope: API-level tests on DEMO_DATA fixture scenarios of both fixture competitions for the active acceptance criteria R-206 to R-221 (R-285 replacing R-210), R-228, R-231, R-232, R-236 to R-238, R-240, R-254, R-255, R-269 and R-271 as worded in `requirements.md` section 7, including: blocked approval naming the fact while unaffected content stays approvable; invented-number and non-official-name flags; provenance labels in stored content; structure and split; a carousel without standings for a knockout stage passing visual QA and the same approval and export rules (R-285); missing standings never derived (R-254); incomplete matchdays with every status left out of result slides (R-255); single-source content (verification source disabled) drafted and its approval refused naming the fact (R-271); template consistency and template change; no-asset carousel; deterministic numeric text; each seeded QA defect; export refusal and success; demonstration band and manifest flag (R-269); regeneration scope; export files; no publication path and no network during export; history and reopen; traceability; brand asset reuse across projects; Spanish default and English project; 1080 x 1350; final approval refusal and success. Also (OD-56) the parts T52 left BLOCKED on visual QA, approval, export and traceability: R-268 (visual QA on LIVE_DATA and MANUAL_DATA content), R-271, R-272, R-278, R-287 and R-290 (approval, export and trace of content from each data mode), and the stored `capitalized_tokens` warning after T56 (OD-26, OD-38).
 - Acceptance criteria: R-206, R-207, R-208, R-209, R-211, R-212, R-213, R-214, R-216, R-217, R-218, R-219, R-220, R-221, R-228, R-231, R-232, R-236, R-237, R-238, R-240, R-254, R-255, R-269, R-271, R-285
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:integration` -> exit 0
 
@@ -958,7 +960,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
   12. `node scripts/security-checks.mjs lockfile` [lockfile: registry and integrity of every lock entry, `.npmrc` without token or alternate registry] (V-23, V-28).
   13. `npm ls fastify @fastify/static zod satori @resvg/resvg-js vite react react-dom` [versions] (V-07, V-28, NV-1).
   14. `npm audit --audit-level=high` [audit] (V-28).
-  15. `node scripts/security-checks.mjs audit-report` [audit-full: every advisory of any severity listed for T47's review of moderate advisories; fails on high or critical, or on any advisory for the security-relevant packages, Vite included] (V-07, V-28, NV-1).
+  15. `node scripts/security-checks.mjs audit-report --accept GHSA-px8p-9vwx-vf98=OD-33` [audit-full (OD-55; T55 option, the moderate fflate advisory accepted by OD-33 printed as `ACCEPTED`, nothing else accepted): every advisory of any severity listed for T47's review of moderate advisories; fails on high or critical, or on any advisory for the security-relevant packages, Vite included] (V-07, V-28, NV-1).
   16. `npm audit signatures` [registry-signatures] (V-28); evidence files take only PASS or FAIL, so when the registry does not support signatures no evidence file is written and the report states NOT RUN with the reason (never PASS).
   17. `git ls-files -- .env .env.local data .cache` [repo-hygiene: expected empty output] (V-23).
   18. `git check-ignore .env.local data/ .cache/` [ignore-rules] (V-23).
@@ -1083,10 +1085,28 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Agent usage: launches 1; tokens 83834; duration 5 minutes.
 - Integration commit(s): f63dbb2 (merge --no-ff of task/WI-1/T55). Affected gates at f63dbb2: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-LINT PASS, PRJ-UNIT PASS (evidence/T55-gates.txt, the evidence file of this task).
 
+### T56: Migration 0002: capitalized_tokens in qa_results
+- Kind: IMPL
+- Agent: backend-developer
+- Depends on: T18, T35
+- Files owned: `apps/server/migrations/0002_qa_capitalized_tokens.sql`, `apps/server/src/platform/db/**`, `apps/server/src/modules/visual-qa/**`, `docs/work-items/WI-1/architecture/data-model.md`
+- Scope: (OD-56, T35 escalation E-1) migration `0001_initial.sql` limits `qa_results.check_name` to five names, so the `capitalized_tokens` warning (OD-26, OD-38; already in the contract's QA check list) is computed but never stored. Add migration `0002_qa_capitalized_tokens.sql` that rebuilds `qa_results` (SQLite cannot alter a CHECK constraint: create the new table with the six names, copy every row, drop the old table, rename, recreate any index) with every other column, constraint and the `UNIQUE (element_version_id, check_name)` unchanged, inside the runner's transaction and foreign-key check; `0001_initial.sql` is never edited. Update `data-model.md` (the `qa_results` row and the migration list) and the db tests (schema test expectations; an upgrade test from 0001 with existing `qa_results` rows preserved byte for byte; the constraint accepts `capitalized_tokens` and still rejects an unknown name). In visual QA, `capitalized_tokens` is then stored by `storableChecks` with no logic change; update the repository and stage comments, keep or remove the unstored-check log only if it stays correct, and add an integration test that a version with an unlisted capitalized token stores a `capitalized_tokens` warning row and `qa_status` `warnings`. No contract change, no new dependency.
+- Acceptance criteria: -
+- Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:integration` -> exit 0
+
+### T57: Counterpart resolution keeps the source failure code
+- Kind: IMPL
+- Agent: backend-developer
+- Depends on: T54
+- Files owned: `apps/server/src/providers/sports/ingestion/catalogue.ts`, `apps/server/src/providers/sports/ingestion/catalogue.test.ts`, `apps/server/src/modules/verification/**`
+- Scope: (OD-56, T54 escalation) `catalogue.resolveCounterpart` turns every failed counterpart listing into the reason `source_unavailable` and drops the `SourceError` (code, HTTP status, retry-after) and the listing availability, so the verification stage records every such consultation as code `unavailable` (T54 LOW-3) even when the source answered, for example, `rate_limited`, `forbidden` or `timeout` (architecture.md 7.3: keep the SourceError code, no swallowing into a different code). Extend the `source_unavailable` failure of `CounterpartResolution` with the closed failure (the `SourceError` code and HTTP status from `fetchListing`, or the listing's availability reason when the listing answered unavailable) without any provider text, header or token, and make the verification stage record the dispute consultation and the failed retrieval with that code; the fact stays unverified. Tests: each failure code reaches the retrieval row and the dispute record; the other counterpart reasons stay `not_available`; T41 and T54 tests unchanged in meaning. No contract or data-model change, no new dependency.
+- Acceptance criteria: -
+- Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:integration` -> exit 0
+
 ### T48: Final gate run
 - Kind: VERIFY
 - Agent: qa-engineer
-- Depends on: T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55
+- Depends on: T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57
 - Files owned: `docs/work-items/WI-1/evidence/T48-gates.txt`
 - Scope: run every final gate (project gates of T25 and the four framework-mandatory gates) at a clean, committed integration HEAD in the verify worktree, without `FOOTBALL_DATA_API_TOKEN` in the environment, and report each gate PASS, FAIL or NOT RUN with command, exit code and counts. Last VERIFY task of the work item.
 - Acceptance criteria: -
@@ -1170,6 +1190,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-52 | MEDIUM | U-02 fonts: bundle under assets/fonts/ the OFL 1.1 font files Montserrat-ExtraBold.ttf (heading, Montserrat 9.000, sha256 5cf0a23133ccce35f9e115b8dbbf90434201827bc2465d12f9d91bbf02cf9466), Inter-Regular.ttf (body, Inter 4.001, sha256 a414b48aa577ef2c62ebb135341ddeef33ee26a4f5dc9f787f93c1aab08ebb50) and Inter-Bold.ttf (numeric, sha256 fbe825cbfc749317f57a1433d3905aa9d3f388732fd29b8e8a36f34845e3bc3e), copied unmodified from the npm packages @expo-google-fonts/montserrat 0.4.2 and @expo-google-fonts/inter 0.4.2 (registry only; no dependency added), with their licence texts; files pinned by SHA-256 in fonts.ts; no system fonts | system fonts; add the packages as dependencies | low | MED-03; T34 report; OD-07 provisional brand values; PO notified |
 | OD-53 | MEDIUM | Re-plan: T34 attempt 2 (integration branch merged into task/WI-1/T34) also owns `apps/server/src/modules/projects/projects.int.test.ts` (T27, DONE) and `apps/server/src/providers/sports/test/synthetic.ts` (T21, DONE) to align them with a registered rendering stage (the stage_not_available test must use a stage no module registers) and with bundled font roles in the synthetic brand, so the merged state passes; no product behaviour change | separate follow-up task | low | MED-05; T34 trial merge (2 integration failures) |
 | OD-54 | MEDIUM | T34 note carried to the T42 and T52 briefs: `apps/server/src/providers/sports/adapters/football-data/test/replay.ts`, `apps/server/src/modules/imports/test/support.ts` and `apps/server/src/platform/config/config.test.ts` still name the unbundled synthetic fonts; any new workflow test that reaches rendering must use the bundled font roles of config/brand.json (OD-52) or the shared synthetic brand of providers/sports/test/synthetic.ts | edit those files now | low | MED-05; T34 attempt 2 report |
+| OD-55 | MEDIUM | T46 step 15 runs `node scripts/security-checks.mjs audit-report --accept GHSA-px8p-9vwx-vf98=OD-33` (T55 option): the moderate fflate advisory accepted by OD-33 is printed as accepted with its decision ID and nothing else is accepted, so the evidence pack can pass without weakening the check | keep the command without `--accept` (step can never pass while OD-33 holds) | low | MED-05; T55 report |
+| OD-56 | MEDIUM | Re-plan for the T35, T52 and T54 reports: new task T56 (backend-developer) adds migration 0002 rebuilding `qa_results` so `check_name` accepts `capitalized_tokens` (T35 E-1, option a; schema change above LOW per the migration runner rule; enum widening only, no security impact) and updates data-model.md; new task T57 (backend-developer) keeps the SourceError code through `catalogue.resolveCounterpart` (T54 escalation); T42 takes T52's BLOCKED parts (R-268, R-271, R-272, R-278, R-287, R-290) and depends on T56; T48 depends on T56 and T57 | (b) leave the check unstored and drop the warning from the record; (c) edit 0001 (refused: applied migrations are immutable) | low | MED-05; T35, T52, T54 reports |
 
 ## Conflicts
 
@@ -1472,6 +1494,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T17:46:21Z | T54 | Status DONE | integration commit d002b9d; evidence/T54-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T17:47:31Z | T52 | Status DONE | integration commit 4621738; evidence/T52-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T17:48:49Z | T35 | Status DONE | integration commit f7ae5c3; evidence/T35-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T17:51:04Z | - | OD-55 and OD-56 recorded | T35, T52, T54, T55 reports |
+| 2026-10-28T17:51:04Z | T56 | Task added (OD-56); status PENDING | T35 escalation E-1 |
+| 2026-10-28T17:51:04Z | T57 | Task added (OD-56); status PENDING | T54 escalation |
+| 2026-10-28T17:51:04Z | T42 | Depends on extended by T56; scope extended by T52 BLOCKED parts (OD-56) | OD-56 |
+| 2026-10-28T17:51:04Z | T46 | Step 15 command updated with --accept (OD-55) | OD-55 |
+| 2026-10-28T17:51:04Z | T48 | Depends on extended by T56, T57 (OD-56) | OD-56 |
 
 ## Recovery log
 
