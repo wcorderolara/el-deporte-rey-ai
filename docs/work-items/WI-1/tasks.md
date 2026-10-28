@@ -57,7 +57,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T23 | Synthetic fixture scenarios | IMPL | qa-engineer | T21, T22 | DONE | 1 | 5c73712 | `docs/work-items/WI-1/evidence/T23-gates.txt` |
 | T24 | End-to-end and accessibility test harness | IMPL | qa-engineer | T16, T19 | DONE | 1 | 8ff8fbf | `docs/work-items/WI-1/evidence/T24-gates.txt` |
 | T25 | Project gates, local-environment settings and contract declaration | IMPL | Orchestrator | T15, T16, T19, T20, T24 | DONE | 1 | da9a37c | `docs/work-items/WI-1/evidence/T25-gates.txt` |
-| T26 | Source of truth: exact versions, contract hash, gate and environment notes | IMPL | architect | T12, T25 | PENDING | 0 | - | - |
+| T26 | Source of truth: exact versions, contract hash, gate and environment notes | IMPL | architect | T12, T25 | IN_PROGRESS | 1 | - | - |
 | T27 | Projects module and workflow runner | IMPL | backend-developer | T18, T19, T20, T21 | DONE | 1 | 833f585 | `docs/work-items/WI-1/evidence/T27-gates.txt` |
 | T28 | Projects UI: list, create, detail and run progress | IMPL | frontend-developer | T16, T20 | DONE | 1 | 4cefeba | `docs/work-items/WI-1/evidence/T28-gates.txt` |
 | T29 | Research stage | IMPL | backend-developer | T21, T27 | DONE | 1 | 328c6ef | `docs/work-items/WI-1/evidence/T29-gates.txt` |
@@ -1334,6 +1334,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T15:35:50Z | T33 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T15:35:50Z | - | Environment: the Orchestrator shell reaches the npm registry (plain npm ci and npm audit --audit-level=high exit 0 at 596e86e: 2 moderate, OD-33); general web access stays blocked | verify worktree run |
 | 2026-10-28T15:37:42Z | T25 | Status DONE | integration commit da9a37c; evidence/T25-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T15:38:09Z | T26 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 
 ## Recovery log
 
