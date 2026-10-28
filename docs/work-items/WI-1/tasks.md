@@ -72,7 +72,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T38 | Export, history and traceability module | IMPL | backend-developer | T37 | PENDING | 0 | - | - |
 | T39 | Review UI: preview, per-item approval, regeneration, final approval | IMPL | frontend-developer | T16, T20 | DONE | 1 | 34e9569 | `docs/work-items/WI-1/evidence/T39-gates.txt` |
 | T40 | Export, history and traceability UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 9c7f249 | `docs/work-items/WI-1/evidence/T40-gates.txt` |
-| T41 | Integration tests: platform, research and verification | IMPL | qa-engineer | T19, T22, T23, T29, T30 | IN_PROGRESS | 1 | - | - |
+| T41 | Integration tests: platform, research and verification | IMPL | qa-engineer | T19, T22, T23, T29, T30 | IN_PROGRESS | 2 | - | - |
 | T42 | Integration tests: content, rendering, visual QA, approval, export, history | IMPL | qa-engineer | T32, T33, T34, T35, T37, T38, T41 | PENDING | 0 | - | - |
 | T43 | Contract conformance tests | IMPL | qa-engineer | T20, T38, T41, T50 | PENDING | 0 | - | - |
 | T44 | End-to-end and accessibility journeys | IMPL | qa-engineer | T23, T24, T28, T29, T31, T36, T38, T39, T40, T50, T51 | PENDING | 0 | - | - |
@@ -1384,6 +1384,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T15:59:36Z | T32 | Attempt 1 (280911c) reported PASS with an interim duplicate of the T30 publishability rules; correction attempt 2: re-wire to T30 publishability() and use T23 fixtures/ai; integration merged into the task branch (MED-05) | T32 report escalations |
 | 2026-10-28T15:59:36Z | - | OD-49 recorded (T32 re-wire, layout notes to T34, T35, T37; strict number words kept for the MVP) | T32 report |
 | 2026-10-28T16:04:28Z | T32 | Status DONE | integration commit 9630543; evidence/T32-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T16:16:16Z | T41 | Integrated at fec71d3; affected gates FAIL: PRJ-INTEGRATION 1 of 275 failed (fixture-mode R-223 provider swap: with the real content stage (T32) the LIVE-shaped config uses openai-compatible without a reachable endpoint, run failed unavailable); task stays IN_PROGRESS; correction attempt 2 (integration merged into the task branch) | evidence/T41-gates.txt RESULT FAIL |
 
 ## Recovery log
 
