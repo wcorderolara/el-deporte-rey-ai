@@ -1,10 +1,18 @@
 /**
- * Stub of the `features/facts` route created by T16; the feature task replaces this file. The default export is the
- * feature's root component (see `app/routes.tsx` for the mount point and the nested-route contract).
+ * Facts and verification feature, mounted by the route table at `/projects/:projectId/runs/:runId/facts/*`
+ * (`app/routes.tsx`). Its nested routes are declared here: the index shows the facts of the run; any deeper address
+ * is not found.
  */
-import { FeaturePlaceholder } from '../../app/pages';
-import { featureCopy } from '../../ui';
+import { Route, Routes } from 'react-router';
+
+import { NotFoundPage } from '../../app/pages';
+import { FactsPage } from './FactsPage';
 
 export default function FactsFeature() {
-  return <FeaturePlaceholder title={featureCopy.facts} />;
+  return (
+    <Routes>
+      <Route index element={<FactsPage />} />
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
+  );
 }

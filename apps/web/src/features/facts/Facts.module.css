@@ -1,0 +1,235 @@
+/* Facts and verification view. Colours come from the shared variables (text contrast at least 4.5:1). */
+
+.intro {
+  margin: 0 0 0.75rem;
+  color: var(--edr-color-muted);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.toolbar p {
+  margin: 0;
+}
+
+.summary {
+  margin: 0 0 1rem;
+  font-weight: 600;
+}
+
+.section {
+  margin: 1.5rem 0;
+}
+
+.section h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+}
+
+.matchGroup {
+  margin: 1rem 0;
+  padding-left: 0.75rem;
+  border-left: 0.25rem solid var(--edr-color-border);
+}
+
+.matchGroup h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+}
+
+.factList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fact {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--edr-color-border);
+  border-radius: 0.25rem;
+  background: var(--edr-color-background);
+}
+
+/* MANUALLY_APPROVED: dashed, unlike any verified fact (never styled as verified). */
+.fact[data-status='manually_approved'] {
+  border-style: dashed;
+}
+
+.factHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+}
+
+.factTitle {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.factTitle:focus {
+  outline: 3px solid var(--edr-color-focus);
+  outline-offset: 2px;
+}
+
+.details {
+  margin: 0.5rem 0;
+}
+
+.details div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.5rem;
+}
+
+.details dt {
+  font-weight: 700;
+}
+
+.details dt::after {
+  content: ':';
+}
+
+.details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.blocked {
+  margin: 0.5rem 0;
+  padding: 0.25rem 0.5rem;
+  border-left: 0.25rem solid var(--edr-color-warning-text);
+  color: var(--edr-color-warning-text);
+  background: var(--edr-color-warning-surface);
+}
+
+.noBlock {
+  margin: 0.5rem 0;
+  color: var(--edr-color-muted);
+}
+
+.subheading {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 0.9375rem;
+}
+
+.tableWrapper {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+.table caption {
+  text-align: left;
+  font-weight: 700;
+  padding: 0.25rem 0;
+}
+
+.table th,
+.table td {
+  border: 1px solid var(--edr-color-border);
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  background: var(--edr-color-surface);
+}
+
+.dispute {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--edr-color-warning-text);
+  border-radius: 0.25rem;
+}
+
+.dispute p {
+  margin: 0.25rem 0;
+}
+
+.manual {
+  margin: 0.75rem 0 0;
+}
+
+.manual p {
+  margin: 0.25rem 0;
+}
+
+.unavailable {
+  color: var(--edr-color-muted);
+}
+
+.confirm {
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--edr-color-accent);
+  border-radius: 0.25rem;
+  background: var(--edr-color-surface);
+}
+
+.confirm h5 {
+  margin: 0 0 0.25rem;
+  font-size: 0.9375rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.button {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--edr-color-accent);
+  border-radius: 0.25rem;
+  color: var(--edr-color-background);
+  background: var(--edr-color-accent);
+  cursor: pointer;
+}
+
+.secondaryButton {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--edr-color-accent);
+  border-radius: 0.25rem;
+  color: var(--edr-color-accent);
+  background: var(--edr-color-background);
+  cursor: pointer;
+}
+
+.button:disabled,
+.secondaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.pageNote {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 0.25rem solid var(--edr-color-accent);
+  background: var(--edr-color-surface);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
