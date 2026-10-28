@@ -1,0 +1,21 @@
+TASK: WI-1-T47
+RESULT: PASS
+VALIDATED_HEAD: 899858cc5cc020f2d655eb24717ce8dca6227771
+DATE: 2026-10-28T22:36:04Z
+COMMAND: security-reviewer validation docs/work-items/WI-1/security/T47-security-validation.md (Verdict: PASS) with the Orchestrator checks NV-REQ-1 to NV-REQ-4
+SUMMARY: T47 verdict PASS; NV-REQ-1 empty diff; NV-REQ-2 PASS; NV-REQ-3 matches only in source maps, none in executable files; NV-REQ-4 no leftover copy
+--- output ---
+T47 security delta validation: review docs/work-items/WI-1/security/T47-security-validation.md at BASE 6bd794e
+Verdict: PASS
+--- NV-REQ-1: git diff --stat 9eaa8991260bd96de4054f38765e5b844e657a00 6bd794eeac441da67b586e9d40aa43c540c4902f -- apps packages scripts config fixtures e2e contracts package.json package-lock.json .npmrc eslint.config.mjs vitest.config.ts vitest.setup.ts
+exit=0 (empty output expected)
+--- NV-REQ-2: orch evidence check docs/work-items/WI-1/evidence/T46-registry-signatures.txt --work-item 'WI-1' --task 'T46' --at .
+RESULT: PASS (6 checks)
+exit=0
+--- NV-REQ-3: grep -rlE "unzipSync|unzip\(" node_modules/satori/dist node_modules/@shuding/opentype.js/dist
+/Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/../WI-1-T46/node_modules/@shuding/opentype.js/dist/opentype.module.js.map
+/Users/waltercordero/Documents/Training/el-deporte-rey-ai/.claude/worktrees/WI-1-integration/../WI-1-T46/node_modules/@shuding/opentype.js/dist/opentype.js.map
+exit=0 (1 = no file matched)
+--- NV-REQ-4: T53 worktree .cache contents
+probe-findings.md present: no
+--- NV-REQ-3 reading (Orchestrator): the two matches are source maps (`opentype.js.map`, `opentype.module.js.map`) that embed the original source of the bundled compression library; the executable files `opentype.js`, `opentype.min.js` and `opentype.module.js` and `satori/dist` contain no `unzipSync` or `unzip(` (grep over `*.js` exit 1), so no unzip path is present in executed code; consistent with the review's unreachability reading of OD-33 / SOT-4.
