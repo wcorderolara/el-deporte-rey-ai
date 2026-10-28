@@ -200,18 +200,32 @@ describe('disputes and the official publication (R-205, R-230)', () => {
       candidateValue: null,
       blockReason: 'not_verified',
     });
-    expect(fact.dispute).toMatchObject({ outcome: 'unavailable', resolvedValue: null });
+    // The dispute record stores the consultation: the source, the attempt time and the unavailability (7.3).
+    expect(fact.dispute).toMatchObject({
+      outcome: 'unavailable',
+      consultedSourceId: 'demo-official',
+      resolvedValue: null,
+    });
     expect(fact.reason).toMatch(/demo-a.*demo-b/);
     expect(fact.reason).toContain('unavailable');
-    // The consultation attempt is recorded as a failed retrieval of the official publication (AD-34).
+    expect(fact.reason).toContain('demo-official');
+    expect(fact.evidence.some((evidence) => evidence.sourceId === 'demo-official')).toBe(false);
+    // The consultation attempt is also a failed retrieval of the official publication with the source failure code
+    // of the simulated outage (`unavailable`), at the same time as the dispute's consultation (AD-34).
     const retrievals = v.t.container.db
-      .prepare<{ source_id: string; stage: string; outcome: string }>(
-        'SELECT source_id, stage, outcome FROM retrievals WHERE run_id = ? ORDER BY rowid',
+      .prepare<{ source_id: string; stage: string; outcome: string; retrieved_at: string; failure: string | null }>(
+        'SELECT source_id, stage, outcome, retrieved_at, failure FROM retrievals WHERE run_id = ? ORDER BY rowid',
       )
       .all([v.runId]);
     const official = retrievals.filter((row) => row.source_id === 'demo-official');
     expect(official).toHaveLength(1);
-    expect(official[0]?.outcome).not.toBe('ok');
+    expect(official[0]?.outcome).toBe('failed');
+    expect(JSON.parse(official[0]?.failure ?? 'null')).toMatchObject({
+      code: 'unavailable',
+      sourceId: 'demo-official',
+    });
+    expect(fact.dispute?.consultedAt).not.toBeNull();
+    expect(Date.parse(fact.dispute?.consultedAt ?? '')).toBe(Date.parse(official[0]?.retrieved_at ?? ''));
     await expectNoManualVerification(v, fact);
   });
 
@@ -226,9 +240,10 @@ describe('disputes and the official publication (R-205, R-230)', () => {
     });
     expect(fact.dispute?.consultedSourceId).toBe('demo-official');
     expect(fact.dispute?.resolvedValue).toBeNull();
-    // Continued dispute (R-423). The T23 manifest names the outcome no_match; T30 records same_source because the
-    // official publication is itself a counted, disagreeing source here (reported to the Orchestrator).
-    expect(['no_match', 'same_source']).toContain(fact.dispute?.outcome);
+    // Continued dispute (R-423): the official publication is an independent group (demo-official) and gives a third
+    // value matching neither disagreeing source, so the outcome is no_match (architecture.md 7.3; T23 manifest).
+    expect(fact.dispute?.outcome).toBe('no_match');
+    expect(fact.dispute?.consultedAt).not.toBeNull();
     expect(fact.dispute?.sourceValues.find((entry) => entry.sourceId === 'demo-official')?.value).toEqual({
       home: 2,
       away: 2,

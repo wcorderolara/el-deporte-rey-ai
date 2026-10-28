@@ -292,7 +292,14 @@ async function retrieveCounterpart(
       ctx,
     );
     if (!counterpart.resolved) {
-      record('not_available', { code: 'not_available', sourceId, path: null, httpStatus: null });
+      // A counterpart that cannot be resolved because the source failed is a failed attempt with the source failure
+      // code (`source_unavailable` is the catalogue's reason for an `unavailable` source, T21 `availabilityReasonOf`);
+      // a counterpart the source does not list or bind is `not_available`.
+      if (counterpart.reason === 'source_unavailable') {
+        record('failed', { code: 'unavailable', sourceId, path: null, httpStatus: null });
+      } else {
+        record('not_available', { code: 'not_available', sourceId, path: null, httpStatus: null });
+      }
       return;
     }
     const snapshot = await source.fetchSelection(counterpart.selectionRef as SourceRef, ctx);
@@ -357,6 +364,10 @@ function verify(input: VerificationInput, retrieved: Retrieved): VerifyResult {
     identityMap: input.identityMap,
     pinned: input.pinned,
     previousApprovals: input.previousApprovals,
+    attempts: retrieved.retrievals.map((retrieval) => ({
+      sourceId: retrieval.sourceId,
+      attemptedAt: retrieval.retrievedAt,
+    })),
   });
 }
 

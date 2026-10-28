@@ -184,6 +184,157 @@ describe('decision rule (section 7.3)', () => {
     expect(decision.dispute?.outcome).toBe('no_match');
   });
 
+  it('an independent official publication observed in verification gives a third value: no_match (R-230, R-423)', () => {
+    // T41 F-01: the official publication is a counted source of its own independence group; the other two groups
+    // disagree on their own, so it is an independent arbiter and its third value matches neither (no_match).
+    const sources = sourcesOf(
+      source('demo-a', 'DEMO_DATA'),
+      source('demo-b', 'DEMO_DATA', { role: 'verification' }),
+      source('demo-o', 'DEMO_DATA', { role: 'verification', officialPublication: true }),
+    );
+    const official = observation('demo-o', THREE);
+    const decision = decideFact(
+      [observation('demo-a', ONE, 'research'), observation('demo-b', TWO), official],
+      [],
+      context('DEMO_DATA', 'demo-a', sources),
+    );
+    expect(decision).toMatchObject({ status: 'unverified', unverifiedReason: 'disputed', candidateValue: null });
+    expect(decision.dispute).toMatchObject({
+      outcome: 'no_match',
+      consultedSourceId: 'demo-o',
+      consultedObservationId: official.observationId,
+      consultedAt: official.retrievedAt,
+      resolvedValue: null,
+    });
+    expect(decision.reason).toContain('demo-o');
+    expect(relations(decision)).toEqual(['disagrees', 'disagrees', 'disagrees']);
+  });
+
+  it('an independent official publication in a tie of two groups per value: no_match', () => {
+    const sources = sourcesOf(
+      source('demo-a', 'DEMO_DATA'),
+      source('demo-b', 'DEMO_DATA'),
+      source('demo-c', 'DEMO_DATA'),
+      source('demo-o', 'DEMO_DATA', { officialPublication: true }),
+    );
+    const decision = decideFact(
+      [observation('demo-a', ONE, 'research'), observation('demo-b', TWO), observation('demo-c', TWO)],
+      [],
+      context('DEMO_DATA', 'demo-a', sources),
+    );
+    // Without the official value the groups already disagree; with it, ONE and TWO have two groups each.
+    const withOfficial = decideFact(
+      [
+        observation('demo-a', ONE, 'research'),
+        observation('demo-b', TWO),
+        observation('demo-c', TWO),
+        observation('demo-o', ONE),
+      ],
+      [],
+      context('DEMO_DATA', 'demo-a', sources),
+    );
+    expect(decision.dispute?.outcome).toBe('unavailable');
+    expect(withOfficial.dispute?.outcome).toBe('no_match');
+  });
+
+  it('an official publication sharing the group of a disagreeing source: same_source, also when consulted', () => {
+    const sources = sourcesOf(
+      source('demo-a', 'DEMO_DATA'),
+      source('demo-b', 'DEMO_DATA', { independenceGroup: 'upstream' }),
+      source('demo-o', 'DEMO_DATA', { independenceGroup: 'upstream', officialPublication: true }),
+    );
+    const observed = decideFact(
+      [observation('demo-a', ONE, 'research'), observation('demo-b', TWO), observation('demo-o', TWO)],
+      [],
+      context('DEMO_DATA', 'demo-a', sources),
+    );
+    expect(observed.unverifiedReason).toBe('disputed');
+    expect(observed.dispute).toMatchObject({ outcome: 'same_source', consultedSourceId: 'demo-o' });
+    expect(observed.reason).toContain('independence group');
+
+    const consulted = decideFact(
+      [observation('demo-a', ONE, 'research'), observation('demo-b', TWO)],
+      [observation('demo-o', THREE, 'consultation')],
+      context('DEMO_DATA', 'demo-a', sources),
+    );
+    expect(consulted.unverifiedReason).toBe('disputed');
+    expect(consulted.dispute).toMatchObject({ outcome: 'same_source', consultedSourceId: 'demo-o' });
+  });
+
+  it('an official publication alone against agreeing groups is a disagreeing party: same_source', () => {
+    const sources = sourcesOf(
+      source('demo-a', 'DEMO_DATA'),
+      source('demo-b', 'DEMO_DATA'),
+      source('demo-o', 'DEMO_DATA', { officialPublication: true }),
+    );
+    const decision = decideFact(
+      [observation('demo-a', ONE, 'research'), observation('demo-b', ONE), observation('demo-o', TWO)],
+      [],
+      context('DEMO_DATA', 'demo-a', sources),
+    );
+    expect(decision).toMatchObject({ status: 'unverified', unverifiedReason: 'disputed', value: null });
+    expect(decision.dispute).toMatchObject({ outcome: 'same_source', consultedSourceId: 'demo-o' });
+  });
+
+  it('a failed official consultation is recorded with its source and attempt time, outcome unavailable', () => {
+    // T41 F-02 (architecture.md 7.3): the dispute record stores the consultation source and time, not only a
+    // retrieval row; the fact stays disputed without a candidate value.
+    const sources = sourcesOf(
+      source('demo-a', 'DEMO_DATA'),
+      source('demo-b', 'DEMO_DATA', { role: 'verification' }),
+      source('demo-o', 'DEMO_DATA', { role: 'verification', officialPublication: true }),
+    );
+    const attemptedAt = '2026-08-17T10:00:00.000Z';
+    const decision = decideFact(
+      [observation('demo-a', ONE, 'research'), observation('demo-b', TWO)],
+      [],
+      context('DEMO_DATA', 'demo-a', sources, {
+        attempts: [
+          { sourceId: 'demo-b', attemptedAt: '2026-08-17T09:00:00.000Z' },
+          { sourceId: 'demo-o', attemptedAt },
+        ],
+      }),
+    );
+    expect(decision).toMatchObject({
+      status: 'unverified',
+      unverifiedReason: 'disputed',
+      value: null,
+      candidateValue: null,
+      manualEligible: false,
+    });
+    expect(decision.dispute).toEqual({
+      sourceValues: [
+        { sourceId: 'demo-a', independenceGroup: 'demo-a', value: ONE },
+        { sourceId: 'demo-b', independenceGroup: 'demo-b', value: TWO },
+      ],
+      consultedSourceId: 'demo-o',
+      consultedObservationId: null,
+      consultedAt: attemptedAt,
+      outcome: 'unavailable',
+      resolvedValue: null,
+    });
+    expect(decision.reason).toContain('official publication (demo-o) unavailable');
+  });
+
+  it('attempts of non-official or non-counted sources are not recorded as the consultation', () => {
+    const sources = sourcesOf(
+      source('demo-a', 'DEMO_DATA'),
+      source('demo-b', 'DEMO_DATA', { role: 'verification' }),
+      source('demo-o', 'DEMO_DATA', { officialPublication: true, accepted: false }),
+    );
+    const decision = decideFact(
+      [observation('demo-a', ONE, 'research'), observation('demo-b', TWO)],
+      [],
+      context('DEMO_DATA', 'demo-a', sources, {
+        attempts: [
+          { sourceId: 'demo-b', attemptedAt: '2026-08-17T09:00:00.000Z' },
+          { sourceId: 'demo-o', attemptedAt: '2026-08-17T10:00:00.000Z' },
+        ],
+      }),
+    );
+    expect(decision.dispute).toMatchObject({ outcome: 'unavailable', consultedSourceId: null, consultedAt: null });
+  });
+
   it('differing values inside one independence group make the fact disputed', () => {
     const sources = sourcesOf(
       source('demo-a', 'DEMO_DATA', { independenceGroup: 'upstream' }),
