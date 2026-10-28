@@ -1,0 +1,95 @@
+TASK: WI-1-T21
+RESULT: PASS
+VALIDATED_HEAD: 03a6a6e2be1bcebfebfc883bf08451c06c1eeb08
+DATE: 2026-10-28T10:30:17Z
+COMMAND: orch gates run --work-item WI-1 --task T21 --set affected
+SUMMARY: 2 PASS / 0 FAIL / 0 NOT RUN; required not passing: none
+--- output ---
+CONFIG: .orchestrate/config.json
+CONFIG_SOURCE: committed@03a6a6e2be1b
+CONFIG_SHA256: bd4be1f1ad74cebf9ac0482ee832513a04f195155ae04fc98f7fbafd3176ec4e
+SET: affected
+
+=== FW-TRACKER (framework, required) PASS exit=0 ms=1877 ===
+COMMAND: builtin:tracker
+REASON: orch tracker check exited 0
+Tracker docs/work-items/WI-1/tasks.md on 03a6a6e2be1bcebfebfc883bf08451c06c1eeb08
+  T00  IMPL   recorded=DONE                                 commits 1176f8c; verified by T02                                                           => DONE
+  T01  IMPL   recorded=DONE                                 commits dd9499e; verified by T02                                                           => DONE
+  T02  VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T02-requirements-check.txt @ c68b058; validated 17f => DONE
+  T03  IMPL   recorded=DONE                                 commits f4ccb0c; verified by T08                                                           => DONE
+  T04  IMPL   recorded=DONE                                 commits 01a71a7; verified by T08                                                           => DONE
+  T05  IMPL   recorded=DONE                                 commits d93cbb1; verified by T07                                                           => DONE
+  T06  IMPL   recorded=DONE                                 commits 32d60da; verified by T07                                                           => DONE
+  T07  VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T07-validate.txt @ f648f85; validated e1459cb72dd59 => DONE
+  T08  VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T08-requirements-check.txt @ 70befa9; validated 5ec => DONE
+  T09  IMPL   recorded=DONE                                 commits f017460,41af5ee; verified by T11                                                   => DONE
+  T10  IMPL   recorded=DONE                                 commits 3ac5b85,c1c0e2c; verified by T11                                                   => DONE
+  T11A IMPL   recorded=DONE                                 commits 266b29d; verified by T11D                                                          => DONE
+  T11B IMPL   recorded=DONE                                 commits 380780f; verified by T11D                                                          => DONE
+  T11C IMPL   recorded=DONE                                 commits 16013be; verified by T11D                                                          => DONE
+  T11D VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T11D-validate.txt @ d98a135; validated 8373bcba3d62 => DONE
+  T11  VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T11-plan-check.txt @ 53e02a7; validated a05778d34c6 => DONE
+  T11E IMPL   recorded=DONE                                 commits 4757d4e,19bfba9; verified by T11I                                                  => DONE
+  T11F IMPL   recorded=DONE                                 commits 1715e21; verified by T11I                                                          => DONE
+  T11G IMPL   recorded=DONE                                 commits bf7dd40,58e906a,b468d07; verified by T11J                                          => DONE
+  T11H IMPL   recorded=DONE                                 commits 89c721d,1f65fda; verified by T11J                                                  => DONE
+  T11I VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T11I-requirements-check.txt @ 3a2f8c9; validated 23 => DONE
+  T11K IMPL   recorded=DONE                                 commits 7bc11e2; verified by T11N                                                          => DONE
+  T11L IMPL   recorded=DONE                                 commits 966a599; verified by T11N                                                          => DONE
+  T11N VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T11N-validate.txt @ 18491cd; validated ce746e477651 => DONE
+  T11J VERIFY recorded=DONE                                 evidence docs/work-items/WI-1/evidence/T11J-plan-check.txt @ 91e93b4; validated 076fd8ef01 => DONE
+  T12  IMPL   recorded=DONE                                 commits 6d8830e; verified by docs/work-items/WI-1/evidence/T12-gates.txt                   => DONE
+  T13  IMPL   recorded=DONE                                 commits 70906b2; verified by docs/work-items/WI-1/evidence/T13-gates.txt                   => DONE
+  T14  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T15  IMPL   recorded=DONE                                 commits 93a4795; verified by docs/work-items/WI-1/evidence/T15-gates.txt                   => DONE
+  T16  IMPL   recorded=DONE                                 commits cf0716e; verified by docs/work-items/WI-1/evidence/T16-gates.txt                   => DONE
+  T17  IMPL   recorded=DONE                                 commits b0b58d2; verified by docs/work-items/WI-1/evidence/T17-gates.txt                   => DONE
+  T18  IMPL   recorded=DONE                                 commits 20d92b2; verified by docs/work-items/WI-1/evidence/T18-gates.txt                   => DONE
+  T19  IMPL   recorded=DONE                                 commits acaa2da; verified by docs/work-items/WI-1/evidence/T19-gates.txt                   => DONE
+  T20  IMPL   recorded=DONE                                 commits 6911bed; verified by docs/work-items/WI-1/evidence/T20-gates.txt                   => DONE
+  T21  IMPL   recorded=IN_PROGRESS                          task branch ahead=0; worktree dirty=0                                                      => PENDING
+  T22  IMPL   recorded=DONE                                 commits 89fa98d; verified by docs/work-items/WI-1/evidence/T22-gates.txt                   => DONE
+  T23  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T24  IMPL   recorded=IN_PROGRESS                          task branch ahead=0; worktree dirty=1                                                      => IN_PROGRESS (interrupted)
+  T25  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T26  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T27  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T28  IMPL   recorded=DONE                                 commits 4cefeba; verified by docs/work-items/WI-1/evidence/T28-gates.txt                   => DONE
+  T29  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T30  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T31  IMPL   recorded=DONE                                 commits 63d83cd; verified by docs/work-items/WI-1/evidence/T31-gates.txt                   => DONE
+  T32  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T33  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T34  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T35  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T36  IMPL   recorded=DONE                                 commits e457fc8; verified by docs/work-items/WI-1/evidence/T36-gates.txt                   => DONE
+  T37  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T38  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T39  IMPL   recorded=IN_PROGRESS                          task branch ahead=0; worktree dirty=17                                                     => IN_PROGRESS (interrupted)
+  T40  IMPL   recorded=DONE                                 commits 9c7f249; verified by docs/work-items/WI-1/evidence/T40-gates.txt                   => DONE
+  T41  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T42  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T43  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T44  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T45  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T46  VERIFY recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T47  VERIFY recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T49  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T50  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T51  IMPL   recorded=IN_PROGRESS                          task branch ahead=0; worktree dirty=0                                                      => PENDING
+  T52  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T53  IMPL   recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+  T48  VERIFY recorded=PENDING                              task branch none; worktree none                                                            => BLOCKED
+STATE: open
+RESULT: PASS (0 violations)
+
+=== FW-CONFIG (framework, required) PASS exit=0 ms=83 ===
+COMMAND: builtin:config
+REASON: orch validate --section config,policy,agents,models exited 0
+SECTION config: PASS
+SECTION policy: PASS
+SECTION agents: PASS
+SECTION models: PASS
+  NOTE 156 file(s) scanned
+RESULT: PASS (0 violation(s), 0 warning(s))
