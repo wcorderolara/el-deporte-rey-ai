@@ -94,7 +94,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T61 | Second capability probe run (FU-3) | IMPL | Orchestrator | T60 | PENDING | 0 | - | - |
 | T62 | Provider research addendum and architecture corrections (FU-3, FU-6, FU-7) | IMPL | architect | T61 | PENDING | 0 | - | - |
 | T63 | Requirements corrections from the provider research (FU-7) | IMPL | product-manager | T14 | IN_PROGRESS | 1 | - | - |
-| T64 | Explicit timeouts for workflow-heavy ingestion tests | IMPL | qa-engineer | T52 | IN_PROGRESS | 1 | - | - |
+| T64 | Explicit timeouts for workflow-heavy ingestion tests | IMPL | qa-engineer | T52 | DONE | 1 | 4bda364 | `docs/work-items/WI-1/evidence/T64-gates.txt` |
 | T65 | Localized import error and fact reason texts | IMPL | frontend-developer | T44 | PENDING | 0 | - | - |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65 | PENDING | 0 | - | - |
 
@@ -1234,6 +1234,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: (OD-62) give every test in these two files that runs the workflow (research to visual QA) an explicit timeout of 60 s, as T42 did with WORKFLOW_TEST_TIMEOUT in `apps/server/test/integration/delivery/support.ts` (import it or define the same constant locally); change no assertion, fixture or scenario; keep the other tests on the default.
 - Acceptance criteria: -
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:integration` -> exit 0
+- Agent result: PASS at bfd113a (npm ci --offline 0; typecheck 0; lint 0; test:integration 0 twice, 511 tests). The four describes of the two files that run the workflow (R-257, R-268, R-290, R-280) get a 60 s `WORKFLOW_TEST_TIMEOUT` as a describe option; other tests stay on the default; no assertion, fixture or scenario changed (`git diff -w`).
+- Orchestrator verification: ownership against the integration tracker, re-run of npm ci --offline, typecheck, lint, test:unit, test:integration in the task worktree (see verification log); main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-3 (constant defined locally to avoid an ingestion-to-delivery dependency; timeout on the describe as T42 did; Prettier reformatting accepted).
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 41901; duration 2 minutes.
+- Integration commit(s): 4bda364 (merge --no-ff of task/WI-1/T64). Affected gates at 4bda364: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-BUILD PASS (evidence/T64-gates.txt, the evidence file of this task).
 
 ### T65: Localized import error and fact reason texts
 - Kind: IMPL
@@ -1702,6 +1708,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T20:49:55Z | T65 | Task added (OD-63); status PENDING | T44 findings F-1, F-2 |
 | 2026-10-28T20:49:55Z | T45 | Depends on extended by T65 (OD-63) | OD-63 |
 | 2026-10-28T20:49:55Z | T48 | Depends on extended by T65 (OD-63) | OD-63 |
+| 2026-10-28T20:51:14Z | T64 | Status DONE | integration commit 4bda364; evidence/T64-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
