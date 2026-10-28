@@ -139,37 +139,51 @@ function stable(value: unknown): unknown {
 
 const STAGES = ['research', 'verification', 'content', 'rendering', 'visual_qa'];
 
+/**
+ * Timeout of a test that takes one or more projects through the whole workflow (research to visual QA, rendering every
+ * slide); under the parallel load of `npm run test:integration` that can take longer than the default 5 seconds
+ * (OD-62). The same value as WORKFLOW_TEST_TIMEOUT of the delivery support, defined here so that the ingestion suites
+ * do not depend on the delivery support (which itself builds on the ingestion support).
+ */
+const WORKFLOW_TEST_TIMEOUT = 60_000;
+
 // ---------------------------------------------------------------------------------------------------------------
 // R-257
 // ---------------------------------------------------------------------------------------------------------------
 
-describe('the default configuration runs on DEMO_DATA without the token (R-257)', () => {
-  it('selects DEMO_DATA, makes no provider request, and gives the same results on repeated runs', async () => {
-    expectNoProviderCredentials();
-    const results: unknown[] = [];
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      const egress = refusingEgress();
-      const t = await start(cleanup, { base: defaultDocument(), egress });
-      expect(t.container.config.providers.sports.sources.filter((source) => source.mode === 'LIVE_DATA')).toEqual([]);
-      expect(buildEgressAllowList(t.container.config).isEmpty).toBe(true);
-      const project = await t.createProject(LIGA_DEMO_MD1);
-      expect(project).toMatchObject({ dataMode: 'DEMO_DATA', demonstration: true });
-      const run = await t.runWorkflow(project.id);
-      expect(run.status, JSON.stringify(run.failure)).toBe('completed');
-      expect(run.stages.map((stage) => [stage.stage, stage.status])).toEqual(STAGES.map((name) => [name, 'completed']));
-      const facts = await t.listFacts(project.id, run.id);
-      expect(facts.dataMode).toBe('DEMO_DATA');
-      expect(facts.facts.length).toBeGreaterThan(0);
-      const catalogue = (await t.get('/catalog/competitions')).json() as Json;
-      results.push({ catalogue: stable(catalogue), facts: stable(facts), stages: stable(run.stages) });
-      expect(egress.requests).toEqual([]);
-      expect(t.egress.requests).toEqual([]);
-      expectNoNetworkViolations();
-    }
-    expect(results[1]).toEqual(results[0]);
-    expectNoProviderCredentials();
-  });
-});
+describe(
+  'the default configuration runs on DEMO_DATA without the token (R-257)',
+  { timeout: WORKFLOW_TEST_TIMEOUT },
+  () => {
+    it('selects DEMO_DATA, makes no provider request, and gives the same results on repeated runs', async () => {
+      expectNoProviderCredentials();
+      const results: unknown[] = [];
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const egress = refusingEgress();
+        const t = await start(cleanup, { base: defaultDocument(), egress });
+        expect(t.container.config.providers.sports.sources.filter((source) => source.mode === 'LIVE_DATA')).toEqual([]);
+        expect(buildEgressAllowList(t.container.config).isEmpty).toBe(true);
+        const project = await t.createProject(LIGA_DEMO_MD1);
+        expect(project).toMatchObject({ dataMode: 'DEMO_DATA', demonstration: true });
+        const run = await t.runWorkflow(project.id);
+        expect(run.status, JSON.stringify(run.failure)).toBe('completed');
+        expect(run.stages.map((stage) => [stage.stage, stage.status])).toEqual(
+          STAGES.map((name) => [name, 'completed']),
+        );
+        const facts = await t.listFacts(project.id, run.id);
+        expect(facts.dataMode).toBe('DEMO_DATA');
+        expect(facts.facts.length).toBeGreaterThan(0);
+        const catalogue = (await t.get('/catalog/competitions')).json() as Json;
+        results.push({ catalogue: stable(catalogue), facts: stable(facts), stages: stable(run.stages) });
+        expect(egress.requests).toEqual([]);
+        expect(t.egress.requests).toEqual([]);
+        expectNoNetworkViolations();
+      }
+      expect(results[1]).toEqual(results[0]);
+      expectNoProviderCredentials();
+    });
+  },
+);
 
 // ---------------------------------------------------------------------------------------------------------------
 // R-266
@@ -331,7 +345,7 @@ function rowCount(t: TestApp, sql: string, runId: string): number {
   return (t.container.db.prepare<{ n: number }>(sql).get([runId]) as { n: number }).n;
 }
 
-describe('downstream stages run unchanged on every mode (R-268)', () => {
+describe('downstream stages run unchanged on every mode (R-268)', { timeout: WORKFLOW_TEST_TIMEOUT }, () => {
   it('verification, content, rendering and visual QA complete on the DEMO, MANUAL and LIVE representations', async () => {
     const egress: ScriptedReplay = scriptedReplay();
     const runs = new Map<string, ModeRun>([

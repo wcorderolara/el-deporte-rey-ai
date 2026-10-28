@@ -52,7 +52,15 @@ afterEach(async () => {
 const STAGES = ['research', 'verification', 'content', 'rendering', 'visual_qa'];
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
-describe('multi-competition demonstration with recorded responses (R-290)', () => {
+/**
+ * Timeout of a test that takes one or more projects through the whole workflow (research to visual QA, rendering every
+ * slide); under the parallel load of `npm run test:integration` that can take longer than the default 5 seconds
+ * (OD-62). The same value as WORKFLOW_TEST_TIMEOUT of the delivery support, defined here so that the ingestion suites
+ * do not depend on the delivery support (which itself builds on the ingestion support).
+ */
+const WORKFLOW_TEST_TIMEOUT = 60_000;
+
+describe('multi-competition demonstration with recorded responses (R-290)', { timeout: WORKFLOW_TEST_TIMEOUT }, () => {
   it('two LIVE_DATA, one MANUAL_DATA and one DEMO_DATA competition go through the same workflow', async () => {
     const egress = scriptedReplay();
     const t = await startLive(cleanup, egress, { base: committedLiveDocument() });
@@ -208,7 +216,7 @@ describe('multi-competition demonstration with recorded responses (R-290)', () =
   });
 });
 
-describe('person data in a recorded provider response (R-280)', () => {
+describe('person data in a recorded provider response (R-280)', { timeout: WORKFLOW_TEST_TIMEOUT }, () => {
   it('is absent from the domain representation, the cache, the stored data, the responses and the logs', async () => {
     const response = recorded('cl-matches-2026-md1.json');
     expect(response.text).toContain(PERSON_MARKER_PREFIX);
