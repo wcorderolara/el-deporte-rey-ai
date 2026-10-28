@@ -88,7 +88,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T55 | Security checks: accepted-advisory option for audit-report | IMPL | qa-engineer | T41 | DONE | 1 | f63dbb2 | `docs/work-items/WI-1/evidence/T55-gates.txt` |
 | T56 | Migration 0002: capitalized_tokens in qa_results | IMPL | backend-developer | T18, T35 | DONE | 1 | ef115d4 | `docs/work-items/WI-1/evidence/T56-gates.txt` |
 | T57 | Counterpart resolution keeps the source failure code | IMPL | backend-developer | T54 | DONE | 1 | b9f9f24 | `docs/work-items/WI-1/evidence/T57-gates.txt` |
-| T58 | Research run invalidates final approvals | IMPL | backend-developer | T37 | IN_PROGRESS | 1 | - | - |
+| T58 | Research run invalidates final approvals | IMPL | backend-developer | T37 | DONE | 1 | 4bdfd2c | `docs/work-items/WI-1/evidence/T58-gates-2.txt` |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58 | PENDING | 0 | - | - |
 
 ## Tasks
@@ -1137,6 +1137,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: (OD-57, T37 risk 1) `architecture.md` section 11.2 states that any regeneration, new draft or research run makes a final approval invalid (stored `final_approvals.invalidated_at`); content (new draft, regeneration), verification (revocation) and review (withdrawal, startup) already invalidate, but starting a research run does not, so a run that fails before the content stage leaves the previous final approval valid. When a workflow run that includes the research stage is created, set `invalidated_at` on every valid final approval of the project's carousels in the same synchronous `BEGIN IMMEDIATE` transaction as the run row (T10-F15; bound parameters of constant SQL, T10-F14); runs without research (if any) leave them unchanged. Tests: a valid final approval becomes invalid as soon as a research run starts, including a run that then fails at research or verification (DEMO_DATA `simulate` failure scenarios); export eligibility follows the stored state; no double invalidation changes an already invalidated time. No contract or data-model change, no new dependency.
 - Acceptance criteria: -
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:integration` -> exit 0
+- Agent result: PASS at aa60d65 (npm ci --offline 0; typecheck 0; lint 0; test:unit 0, 1964 tests; test:integration 0, 455 tests; contract sha256 unchanged). Creating a run that includes research (`full`) invalidates every valid final approval of the project's carousels in the same BEGIN IMMEDIATE transaction as the run and stage rows (constant SQL, bound parameters); a refused or failed start rolls back; `redraft` leaves final approvals unchanged; unit tests (10) and integration tests (3, real server: research failure, verification failure, redraft) with a mutation check (7 tests fail without the call).
+- Orchestrator verification: ownership against the integration tracker, re-run of npm ci --offline, typecheck, lint, test:unit, test:integration in the task worktree (see verification log); main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-7 (only kinds whose stages include research; invalidation after the run rows in the same transaction with the container clock; every carousel of every draft of the project including superseded drafts; one info log line with run ID and count; exported `includesResearch`; verification failure through a test stage override, no DEMO_DATA scenario fails verification; research failure through the `provider-unavailable` scenario after a restart). Notes: the export-level assertion after a research run is left to T42 (export was the stub at BASE); `ProjectRepository.supersedeActiveDraft` supersedes a draft without invalidating its final approval, covered by T38's version-set re-check and noted for T42. Environment incident: a first `npx vitest` before `npm ci --offline` downloaded vitest@5.0.5 into the user npx cache (outside the worktree, failed at startup, not used); reported to the Product Owner.
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 124448; duration 7 minutes.
+- Integration commit(s): 4bdfd2c (merge --no-ff of task/WI-1/T58). Affected gates at 4bdfd2c: first run FAIL (evidence/T58-gates.txt: PRJ-UNIT, intermittent focus-timing failure in apps/web/src/app/App.test.tsx unrelated to this task, 0 of 15 isolated re-runs failed; OD-58); re-run FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-AUDIT PASS (evidence/T58-gates-2.txt).
 
 ### T48: Final gate run
 - Kind: VERIFY
@@ -1552,6 +1558,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T18:20:14Z | T53 | Status DONE | integration commit e6a34fc; evidence/T53-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T18:23:04Z | - | OD-58 recorded (intermittent App shell focus test; fix routed to T44) | T58 gate run |
 | 2026-10-28T18:23:04Z | T44 | Files owned and scope extended by `apps/web/src/app/App.test.tsx` (OD-58) | OD-58 |
+| 2026-10-28T18:23:50Z | T58 | Status DONE | integration commit 4bdfd2c; evidence/T58-gates-2.txt PASS after intermittent PRJ-UNIT failure (OD-58); Orchestrator re-verification |
 
 ## Recovery log
 
