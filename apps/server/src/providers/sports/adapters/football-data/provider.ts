@@ -13,6 +13,10 @@
  * 503, 504 and connection failures `unavailable`, and an exceeded deadline `timeout`: retried up to `maxRetries` with
  * backoff within 30 seconds. Egress refusals (redirect, oversize, foreign origin) `invalid`, never retried.
  *
+ * Probe diagnostics (FU-2; only with an observer attached): the refusal kind of an egress refusal, and for a rejected
+ * response or output its stage (not JSON, allow-list schema, shared domain validation) and the diagnostic path, reduced
+ * to schema field names and numeric indices (`observation.ts`, `diagnosticPath`).
+ *
  * Logging (R-124, R-133): one debug line per request with the path template, the names of the query parameters, the
  * status, the duration, the cache outcome and the remaining budget; never the token, a header value other than the two
  * rate-limit counters (never `X-Authenticated-Client`), a body or a URL with query values.
@@ -88,11 +92,16 @@ import {
   mapStages,
 } from './mapping.js';
 import {
+  type DiagnosticResource,
+  type EgressRefusalKind,
+  type RejectionStage,
   type RequestKind,
   type RequestObservation,
   type RequestObserver,
   apiVersionToken,
+  diagnosticPath,
   droppedKeyPaths,
+  egressRefusalKind,
   fieldPresence,
   totalTableCount,
 } from './observation.js';
@@ -270,10 +279,12 @@ class FootballDataProvider implements FootballDataSource {
       if (skipped > 0) {
         this.#logger.debug({ sourceId: this.#sourceId, resource: 'competitions', skipped }, 'source items left out');
       }
-      const validated = validateCompetitionListing(
-        listing(items, received.retrievedAt, false, false, null),
-        this.#sourceId,
-        this.#logger,
+      const validated = this.#domain('competitions', () =>
+        validateCompetitionListing(
+          listing(items, received.retrievedAt, false, false, null),
+          this.#sourceId,
+          this.#logger,
+        ),
       );
       return {
         value: validated.items,
@@ -298,10 +309,12 @@ class FootballDataProvider implements FootballDataSource {
           'source items left out',
         );
       }
-      const validated = validateSeasonListing(
-        listing(mapped.items, received.retrievedAt, false, false, null),
-        this.#sourceId,
-        this.#logger,
+      const validated = this.#domain('competition', () =>
+        validateSeasonListing(
+          listing(mapped.items, received.retrievedAt, false, false, null),
+          this.#sourceId,
+          this.#logger,
+        ),
       );
       return {
         value: validated.items,
@@ -334,10 +347,12 @@ class FootballDataProvider implements FootballDataSource {
           'source items left out',
         );
       }
-      const validated = validateStageListing(
-        listing(mapped.items, received.retrievedAt, false, false, null),
-        this.#sourceId,
-        this.#logger,
+      const validated = this.#domain('stageDiscovery', () =>
+        validateStageListing(
+          listing(mapped.items, received.retrievedAt, false, false, null),
+          this.#sourceId,
+          this.#logger,
+        ),
       );
       return {
         value: validated.items,
@@ -376,7 +391,9 @@ class FootballDataProvider implements FootballDataSource {
             'source items left out',
           );
         }
-        const snapshot = validateSelectionSnapshot(mapped.snapshot, this.descriptor, this.#logger);
+        const snapshot = this.#domain('selection', () =>
+          validateSelectionSnapshot(mapped.snapshot, this.descriptor, this.#logger),
+        );
         const ttlMs = selectionTtlMs(options.cacheTtlSeconds, snapshot, ref.cur, this.#scheduler.nowMs());
         this.#cache.set(key, snapshot, received.retrievedAt, ttlMs);
         return { value: snapshot, retrievedAt: received.retrievedAt, ttlMs };
@@ -521,7 +538,7 @@ class FootballDataProvider implements FootballDataSource {
             ? sourceErrorFromEgress(error, this.#sourceId)
             : new SourceError('unavailable', 'source request failed', this.#sourceId);
         this.#logRequest(spec, null, sentAt, budget, null, failure.code);
-        this.#observeFailure(spec, failure.code);
+        this.#observeFailure(spec, failure.code, error instanceof EgressError ? egressRefusalKind(error) : null);
         const transient = error instanceof EgressError && (error.kind === 'timeout' || error.kind === 'network');
         if (transient && (await this.#backoff(options, retries, started, signal))) {
           retries += 1;
@@ -643,6 +660,7 @@ class FootballDataProvider implements FootballDataSource {
       raw = JSON.parse(text);
     } catch {
       this.#logger.debug({ sourceId: this.#sourceId, resource: spec.kind }, 'source response is not JSON');
+      this.#observeRejection(spec.kind, 'not_json', null);
       throw new SourceError('invalid', 'source response is not JSON', this.#sourceId);
     }
     const result = parseDomain(schema, raw);
@@ -652,6 +670,7 @@ class FootballDataProvider implements FootballDataSource {
         { sourceId: this.#sourceId, resource: spec.kind, issueCount: result.issues.length, path },
         'source response rejected by the allow-list schema',
       );
+      this.#observeRejection(spec.kind, 'allow_list', path);
       throw new SourceError('invalid', 'source response failed the allow-list schema', this.#sourceId, path);
     }
     if (result.strippedKeys > 0) {
@@ -705,7 +724,29 @@ class FootballDataProvider implements FootballDataSource {
     }
   }
 
-  #observeFailure(spec: RequestSpec, failure: string): void {
+  /**
+   * Runs a shared domain validation; when it rejects the output, the observer learns the stage and the diagnostic path
+   * (field names and indices only) before the error is rethrown unchanged.
+   */
+  #domain<T>(resource: DiagnosticResource, validate: () => T): T {
+    try {
+      return validate();
+    } catch (error) {
+      if (error instanceof SourceError && error.code === 'invalid') {
+        this.#observeRejection(resource, 'domain', error.path);
+      }
+      throw error;
+    }
+  }
+
+  #observeRejection(resource: DiagnosticResource, stage: RejectionStage, path: string | null): void {
+    if (this.#observer === null) {
+      return;
+    }
+    this.#observe({ type: 'rejection', resource, stage, path: diagnosticPath(path) });
+  }
+
+  #observeFailure(spec: RequestSpec, failure: string, refusal: EgressRefusalKind | null): void {
     if (this.#observer === null) {
       return;
     }
@@ -715,6 +756,7 @@ class FootballDataProvider implements FootballDataSource {
       pathTemplate: TEMPLATES.get(spec.kind) ?? '',
       status: null,
       failure,
+      refusal,
       bytes: null,
       requestsAvailable: null,
       counterResetSeconds: null,
@@ -749,6 +791,7 @@ class FootballDataProvider implements FootballDataSource {
       pathTemplate: TEMPLATES.get(spec.kind) ?? '',
       status: response.status,
       failure: null,
+      refusal: null,
       bytes: Buffer.byteLength(response.text, 'utf8'),
       requestsAvailable: counters.requestsAvailable,
       counterResetSeconds: counters.resetSeconds,
@@ -770,7 +813,7 @@ function classOf(purpose: IngestionPurpose): BudgetClass {
  */
 export function isPositiveClient(headers: Headers): boolean {
   const value = headers.get(HEADER_AUTHENTICATED_CLIENT);
-  return value !== null && value.trim() !== '' && value !== ANONYMOUS_CLIENT_MARKER;
+  return value !== null && value.trim() !== '' && value.trim() !== ANONYMOUS_CLIENT_MARKER;
 }
 
 /** Creates the adapter of one configured source. It never throws: problems surface through `validateStartup`. */

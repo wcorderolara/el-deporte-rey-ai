@@ -3,18 +3,28 @@
  * console output and failure paths"; provider-research-plan.md section 7; AD-32; R-259; T11H-F02, T11H-F04).
  * Written by T49, run only by the Orchestrator in T53 under the PD-16 conditions; never part of a gate.
  *
- *   npm run probe:football-data -- --out <findings.md> [--config config/live.config.json]
+ *   npm run probe:football-data -- --out <findings.md> [--config config/live.config.json] [--candidates <codes>]
  *
  * - Reuses FootballDataProvider with its request budget, cache, allow-list schemas and redaction, through the source
  *   registry (shared domain validation). The token is read from the environment only (`FOOTBALL_DATA_API_TOKEN`),
  *   copied into a frozen injected environment, and deleted from `process.env` at once (T19 rules, T11H-F03).
  * - At most 30 requests (a counting transport refuses more), paced by the budget; at most 12 competition details.
+ * - `--candidates <codes>` (FU-2, OD-60): a comma-separated list of 1 to 12 competition codes, each of the configured
+ *   code shape (`COMPETITION_CODE_PATTERN`), deduplicated in order. Details are then requested only for the configured
+ *   reference competitions and the named codes the competition list holds, and coverage is probed for the first 5
+ *   named non-reference competitions that are readable. A named code the list does not hold is reported as not listed
+ *   and costs no request. The request cap and the budget do not change.
  * - Writes a Markdown findings file holding, with retrieval times and resources: the competitions listed and which
  *   the token can read, seasons, matchday and stage filter results, standings and TOTAL tables, stage values and
  *   matchday numbering, field presence (counts) and the names of dropped keys, the rate-limit counters, the largest
  *   response size per resource kind, the 403 evidence as presence booleans, and freshness observations. Anything not
  *   observed is UNVERIFIED. It never holds the token, a header value other than the two counters and the API version,
  *   the `X-Authenticated-Client` value, a raw body or person data.
+ * - Failure diagnostics (FU-2, OD-60; T11H-F02): every `invalid` outcome names what rejected it: the egress refusal
+ *   kind from a closed list (`too_large`, `redirect`, `other`) or the rejecting stage (body not JSON, allow-list schema,
+ *   shared domain validation) with the failing validation path reduced to schema field names and numeric indices
+ *   (any other segment `*`), and the resource kind (closed list). Every non-2xx status and transport failure is also
+ *   counted per resource kind. No value of a body, a header, a URL or the token can reach a diagnostic.
  * - Console output: progress lines with counts and resource kinds only. Every error, rejection, uncaught exception and
  *   unhandled rejection ends in one line `probe failed: <code>; requests: <n>` with a closed code (`config`,
  *   `access_refused`, `not_available`, `rate_limited`, `unavailable`, `timeout`, `invalid`, `internal`), never an
@@ -28,12 +38,20 @@ import { realpathSync } from 'node:fs';
 import { CatalogueConfig, ConfigError, type EnvironmentSource, loadConfig } from '../src/platform/config/index.js';
 import { type EgressClient, EgressError, buildEgressAllowList, createEgressClient } from '../src/platform/net/index.js';
 import {
+  COMPETITION_CODE_PATTERN,
+  DIAGNOSTIC_RESOURCES,
+  type DiagnosticResource,
+  EGRESS_REFUSAL_KINDS,
+  type EgressRefusalKind,
   type FieldPresence,
   PINNED_ORIGIN,
+  REJECTION_STAGES,
+  type RejectionStage,
   type RequestKind,
   type RequestObservation,
   TOKEN_VARIABLE,
   competitionCodeOfRef,
+  diagnosticPath,
   footballDataRegistration,
   parseFootballDataOptions,
 } from '../src/providers/sports/adapters/football-data/index.js';
@@ -57,6 +75,10 @@ export const PROBE_MAX_REQUESTS = 30;
 export const PROBE_MAX_DETAILS = 12;
 /** Candidate leagues probed beside the reference competition. */
 export const PROBE_MAX_CANDIDATES = 5;
+/** Most codes of `--candidates` (after deduplication): one detail request each at most. */
+export const PROBE_MAX_CANDIDATE_CODES = PROBE_MAX_DETAILS;
+/** Longest `--candidates` value accepted (12 codes of at most 16 characters and their commas). */
+const MAX_CANDIDATES_ARGUMENT_LENGTH = PROBE_MAX_CANDIDATE_CODES * 17;
 /** Default configuration of the run. */
 export const PROBE_DEFAULT_CONFIG = 'config/live.config.json';
 
@@ -143,24 +165,50 @@ export function failureLine(code: ProbeFailureCode, state: ProbeState): string {
 interface ProbeArgs {
   readonly out: string;
   readonly config: string;
+  /** Named candidate competition codes (deduplicated, in order), or null when `--candidates` is not given. */
+  readonly candidates: readonly string[] | null;
+}
+
+/**
+ * The codes of `--candidates`: comma-separated, each of the configured competition-code shape, at most
+ * `PROBE_MAX_CANDIDATE_CODES` after deduplication; anything else is a `config` failure (the value is never printed).
+ */
+export function parseCandidateCodes(value: string): string[] {
+  if (value.length === 0 || value.length > MAX_CANDIDATES_ARGUMENT_LENGTH) {
+    throw new ProbeFailure('config');
+  }
+  const codes = value.split(',');
+  if (!codes.every((code) => COMPETITION_CODE_PATTERN.test(code))) {
+    throw new ProbeFailure('config');
+  }
+  const unique = [...new Set(codes)];
+  if (unique.length > PROBE_MAX_CANDIDATE_CODES) {
+    throw new ProbeFailure('config');
+  }
+  return unique;
 }
 
 function parseArgs(argv: readonly string[]): ProbeArgs {
   let out: string | null = null;
   let config = PROBE_DEFAULT_CONFIG;
+  let candidates: string[] | null = null;
   for (let index = 0; index < argv.length; index += 1) {
     const name = argv[index];
     const value = argv[index + 1];
     if (
-      (name === '--out' || name === '--config') &&
+      (name === '--out' || name === '--config' || name === '--candidates') &&
       typeof value === 'string' &&
       value !== '' &&
       !value.startsWith('--')
     ) {
       if (name === '--out') {
         out = value;
-      } else {
+      } else if (name === '--config') {
         config = value;
+      } else if (candidates === null) {
+        candidates = parseCandidateCodes(value);
+      } else {
+        throw new ProbeFailure('config');
       }
       index += 1;
     } else {
@@ -170,7 +218,7 @@ function parseArgs(argv: readonly string[]): ProbeArgs {
   if (out === null) {
     throw new ProbeFailure('config');
   }
-  return { out, config };
+  return { out, config, candidates };
 }
 
 /**
@@ -207,7 +255,72 @@ function countingEgress(inner: EgressClient, state: ProbeState): EgressClient {
 // Findings model
 // ---------------------------------------------------------------------------------------------------------------
 
-type Outcome<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly code: ProbeFailureCode };
+/**
+ * What rejected an `invalid` outcome (FU-2; T11H-F02): closed values and a diagnostic path only (schema field names and
+ * numeric indices, any other segment `*`), never a value.
+ */
+export interface ProbeDiagnostic {
+  readonly resource: DiagnosticResource;
+  readonly stage: 'egress' | RejectionStage;
+  /** The egress refusal kind (stage `egress` only). */
+  readonly refusal: EgressRefusalKind | null;
+  /** The diagnostic path (stages `allow_list` and `domain`), null when none was reported. */
+  readonly path: string | null;
+}
+
+type Outcome<T> =
+  | { readonly ok: true; readonly value: T }
+  | { readonly ok: false; readonly code: ProbeFailureCode; readonly diagnostic: ProbeDiagnostic | null };
+
+const RESOURCES: ReadonlySet<string> = new Set(DIAGNOSTIC_RESOURCES);
+const REFUSALS: ReadonlySet<string> = new Set(EGRESS_REFUSAL_KINDS);
+const STAGES: ReadonlySet<string> = new Set(REJECTION_STAGES);
+
+function closedResource(value: unknown): DiagnosticResource | null {
+  return typeof value === 'string' && RESOURCES.has(value) ? (value as DiagnosticResource) : null;
+}
+
+function closedRefusal(value: unknown): EgressRefusalKind {
+  return typeof value === 'string' && REFUSALS.has(value) ? (value as EgressRefusalKind) : 'other';
+}
+
+function closedStage(value: unknown): RejectionStage | null {
+  return typeof value === 'string' && STAGES.has(value) ? (value as RejectionStage) : null;
+}
+
+/**
+ * The diagnostic text of the findings file (the exact format reviewed by T60):
+ * - `egress refusal <too_large|redirect|other> on <resource>`
+ * - `body not JSON on <resource>`
+ * - `allow-list schema on <resource>, path <diagnostic path|not recorded>`
+ * - `domain validation on <resource>, path <diagnostic path|not recorded>`
+ * - `no diagnostic recorded`
+ * where `<resource>` is one of `DIAGNOSTIC_RESOURCES`. The path is reduced again here (`diagnosticPath` is idempotent).
+ */
+export function diagnosticText(diagnostic: ProbeDiagnostic | null): string {
+  const resource = closedResource(diagnostic?.resource);
+  if (diagnostic === null || resource === null) {
+    return 'no diagnostic recorded';
+  }
+  const path = diagnosticPath(diagnostic.path) ?? 'not recorded';
+  switch (diagnostic.stage) {
+    case 'egress':
+      return `egress refusal ${closedRefusal(diagnostic.refusal)} on ${resource}`;
+    case 'not_json':
+      return `body not JSON on ${resource}`;
+    case 'allow_list':
+      return `allow-list schema on ${resource}, path ${path}`;
+    case 'domain':
+      return `domain validation on ${resource}, path ${path}`;
+    default:
+      return 'no diagnostic recorded';
+  }
+}
+
+/** The failure text of an outcome: the closed code, and for `invalid` its diagnostic. */
+function failedText(outcome: { readonly code: ProbeFailureCode; readonly diagnostic: ProbeDiagnostic | null }): string {
+  return outcome.code === 'invalid' ? `invalid; ${diagnosticText(outcome.diagnostic)}` : outcome.code;
+}
 
 interface CompetitionFinding {
   /** The adapter's opaque reference (never rendered). */
@@ -263,6 +376,12 @@ interface HeaderStats {
 
 class Recorder {
   readonly kinds = new Map<RequestKind, KindStats>();
+  /** Non-2xx statuses and transport failures per resource kind, keyed by their (closed) text. */
+  readonly failures = new Map<string, number>();
+  /** Rejected bodies and outputs, keyed by their diagnostic text. */
+  readonly rejections = new Map<string, number>();
+  /** The diagnostic of the last refusal or rejection; reset before each probed action. */
+  lastDiagnostic: ProbeDiagnostic | null = null;
   readonly headers: HeaderStats = {
     available: [],
     reset: [],
@@ -285,6 +404,18 @@ class Recorder {
   }
 
   observe(observation: RequestObservation): void {
+    if (observation.type === 'rejection') {
+      const resource = closedResource(observation.resource);
+      const stage = closedStage(observation.stage);
+      if (resource === null || stage === null) {
+        return;
+      }
+      const diagnostic: ProbeDiagnostic = { resource, stage, refusal: null, path: diagnosticPath(observation.path) };
+      this.lastDiagnostic = diagnostic;
+      const text = diagnosticText(diagnostic);
+      this.rejections.set(text, (this.rejections.get(text) ?? 0) + 1);
+      return;
+    }
     const stats = this.#kind(observation.kind);
     if (observation.type === 'body') {
       this.#fields(stats, observation.fields);
@@ -296,7 +427,17 @@ class Recorder {
     }
     const status = observation.status === null ? (observation.failure ?? 'failure') : String(observation.status);
     this.headers.statuses.set(status, (this.headers.statuses.get(status) ?? 0) + 1);
+    const resource = closedResource(observation.kind);
+    const refusal =
+      observation.status === null && observation.refusal !== null ? closedRefusal(observation.refusal) : null;
+    if (resource !== null && (observation.status === null || observation.status < 200 || observation.status > 299)) {
+      const text = `${status}${refusal === null ? '' : ` (egress refusal ${refusal})`} on ${resource}`;
+      this.failures.set(text, (this.failures.get(text) ?? 0) + 1);
+    }
     if (observation.status === null) {
+      if (refusal !== null && resource !== null) {
+        this.lastDiagnostic = { resource, stage: 'egress', refusal, path: null };
+      }
       return;
     }
     stats.responses += 1;
@@ -340,11 +481,14 @@ class Recorder {
 // Run
 // ---------------------------------------------------------------------------------------------------------------
 
-async function attempt<T>(action: () => Promise<T>): Promise<Outcome<T>> {
+/** Runs one probed action; an `invalid` failure carries the diagnostic of the refusal or rejection that caused it. */
+async function attempt<T>(recorder: Recorder, action: () => Promise<T>): Promise<Outcome<T>> {
+  recorder.lastDiagnostic = null;
   try {
     return { ok: true, value: await action() };
   } catch (error) {
-    return { ok: false, code: failureCodeOf(error) };
+    const code = failureCodeOf(error);
+    return { ok: false, code, diagnostic: code === 'invalid' ? recorder.lastDiagnostic : null };
   }
 }
 
@@ -373,6 +517,7 @@ function standingsText(snapshot: SelectionSnapshot): string {
 
 interface RunContext {
   readonly source: IngestionSource;
+  readonly recorder: Recorder;
   readonly state: ProbeState;
   readonly clock: Clock;
   readonly stdout: (line: string) => void;
@@ -383,7 +528,7 @@ function remaining(state: ProbeState): number {
 }
 
 async function selectionFinding(run: RunContext, filter: string, ref: SourceRef): Promise<SelectionFinding> {
-  const outcome = await attempt(async () => {
+  const outcome = await attempt(run.recorder, async () => {
     const snapshot = await run.source.fetchSelection(ref, research());
     const fresh = freshness(snapshot, run.clock.now().getTime());
     return {
@@ -429,7 +574,7 @@ async function coverage(
     return result;
   }
   const competitionRef = finding.ref;
-  result.stages = await attempt(async () => {
+  result.stages = await attempt(run.recorder, async () => {
     const listing = await run.source.listStages(competitionRef, season.ref, research());
     return { items: [...listing.items], retrievedAt: listing.retrievedAt, seasonLabel: season.label };
   });
@@ -455,7 +600,7 @@ async function coverage(
   if (whole === undefined && remaining(run.state) >= 2) {
     const previous = seasons.find((item) => item.startYear !== null && item.startYear === (season.startYear ?? 0) - 1);
     if (previous !== undefined) {
-      result.extraStages = await attempt(async () => {
+      result.extraStages = await attempt(run.recorder, async () => {
         const listing = await run.source.listStages(competitionRef, previous.ref, research());
         return { items: [...listing.items], retrievedAt: listing.retrievedAt, seasonLabel: previous.label };
       });
@@ -479,6 +624,10 @@ interface Findings {
   readonly recorder: Recorder;
   readonly state: ProbeState;
   readonly referenceCodes: readonly string[];
+  /** Codes named with `--candidates`, or null. */
+  readonly candidateCodes: readonly string[] | null;
+  /** Named codes the competition list does not hold (no request made for them). */
+  readonly notListed: readonly string[];
 }
 
 /** Runs the probe and returns the exit code; it never throws and prints only counts, kinds and closed codes. */
@@ -525,7 +674,7 @@ export async function runProbe(io: ProbeIo): Promise<number> {
     }
     io.stdout('probe: started');
 
-    const run: RunContext = { source, state, clock, stdout: io.stdout };
+    const run: RunContext = { source, recorder, state, clock, stdout: io.stdout };
     const startedAt = clock.now().toISOString();
     const listing = await source.listCompetitions(research());
     io.stdout(`probe: competitions done; listed: ${String(listing.items.length)}; requests: ${String(state.requests)}`);
@@ -541,6 +690,9 @@ export async function runProbe(io: ProbeIo): Promise<number> {
         detail: null,
       };
     });
+    const named = args.candidates;
+    const byCode = new Map(items.map((item): [string, CompetitionFinding] => [item.code, item]));
+    const notListed = named === null ? [] : named.filter((code) => !byCode.has(code));
     findings = {
       startedAt,
       competitions: { retrievedAt: listing.retrievedAt, items },
@@ -548,14 +700,24 @@ export async function runProbe(io: ProbeIo): Promise<number> {
       recorder,
       state,
       referenceCodes,
+      candidateCodes: named,
+      notListed,
     };
 
-    const candidates = [...items.filter((item) => item.reference), ...items.filter((item) => !item.reference)];
-    for (const item of candidates.slice(0, PROBE_MAX_DETAILS)) {
+    const references = items.filter((item) => item.reference);
+    const others =
+      named === null
+        ? items.filter((item) => !item.reference)
+        : named.flatMap((code) => {
+            const item = byCode.get(code);
+            return item === undefined || item.reference ? [] : [item];
+          });
+    const candidates = [...references, ...others].slice(0, PROBE_MAX_DETAILS);
+    for (const item of candidates) {
       if (remaining(state) < 1) {
         break;
       }
-      item.detail = await attempt(async () => {
+      item.detail = await attempt(recorder, async () => {
         const seasons = await source.listSeasons(item.ref, research());
         return { seasons: [...seasons.items], retrievedAt: seasons.retrievedAt };
       });
@@ -572,7 +734,7 @@ export async function runProbe(io: ProbeIo): Promise<number> {
         .slice(0, PROBE_MAX_CANDIDATES)
         .map((item): [CompetitionFinding, 'candidate'] => [item, 'candidate']),
     ];
-    for (const item of candidates.filter((candidate) => candidate.reference && candidate.detail?.ok !== true)) {
+    for (const item of references.filter((candidate) => candidate.detail?.ok !== true)) {
       targets.unshift([item, 'reference']);
     }
     for (const [item, role] of targets) {
@@ -589,7 +751,7 @@ export async function runProbe(io: ProbeIo): Promise<number> {
     io.stderr(failureLine(code, state));
     if (out !== null && findings !== null) {
       try {
-        write(out, renderFindings(findings, code));
+        write(out, renderFindings(findings, code, code === 'invalid' ? findings.recorder.lastDiagnostic : null));
       } catch {
         // The failure line is already printed; nothing else is reported.
       }
@@ -644,7 +806,7 @@ function renderStages(lines: string[], label: string, stages: CoverageFinding['s
     return;
   }
   if (!stages.ok) {
-    lines.push(`- Stage discovery (${label}): failed (${stages.code})`);
+    lines.push(`- Stage discovery (${label}): failed (${cell(failedText(stages))})`);
     return;
   }
   const value = stages.value;
@@ -671,15 +833,24 @@ function renderStages(lines: string[], label: string, stages: CoverageFinding['s
 }
 
 /** The findings Markdown: derived values only (no token, header values beyond the counters, bodies or persons). */
-export function renderFindings(findings: Findings, failure: ProbeFailureCode | null): string {
+export function renderFindings(
+  findings: Findings,
+  failure: ProbeFailureCode | null,
+  diagnostic: ProbeDiagnostic | null = null,
+): string {
   const { recorder, state } = findings;
   const lines: string[] = [
     '# football-data.org capability findings (probe)',
     '',
     `- Probe run started: ${findings.startedAt} (UTC)`,
-    `- Outcome: ${failure === null ? 'completed' : `failed (${failure})`}`,
+    `- Outcome: ${failure === null ? 'completed' : `failed (${cell(failedText({ code: failure, diagnostic }))})`}`,
     `- Requests sent: ${String(state.requests)} of at most ${String(PROBE_MAX_REQUESTS)}; refused by the request cap: ${String(state.refused)}`,
     `- Configured reference competition codes: ${findings.referenceCodes.map(cell).join(', ') || 'none'}`,
+    `- Named candidate codes (--candidates): ${
+      findings.candidateCodes === null
+        ? 'none (candidates in listing order)'
+        : findings.candidateCodes.map(cell).join(', ') || 'none'
+    }`,
     `- Origin: ${PINNED_ORIGIN} (the only origin contacted)`,
     '- Anything not observed below is UNVERIFIED and not promised (R-259).',
     '',
@@ -692,7 +863,8 @@ export function renderFindings(findings: Findings, failure: ProbeFailureCode | n
   ];
   for (const item of findings.competitions.items) {
     const detail = item.detail;
-    const readable = detail === null ? 'not checked (UNVERIFIED)' : detail.ok ? 'yes' : `no (${detail.code})`;
+    const readable =
+      detail === null ? 'not checked (UNVERIFIED)' : detail.ok ? 'yes' : `no (${cell(failedText(detail))})`;
     const seasons = detail?.ok === true ? String(detail.value.seasons.length) : '-';
     const retrieved = detail?.ok === true ? cell(detail.value.retrievedAt) : '-';
     lines.push(
@@ -701,7 +873,7 @@ export function renderFindings(findings: Findings, failure: ProbeFailureCode | n
   }
 
   lines.push('', '## Coverage per competition', '');
-  if (findings.coverage.length === 0) {
+  if (findings.coverage.length === 0 && findings.notListed.length === 0) {
     lines.push('No competition was probed for coverage (UNVERIFIED).');
   }
   for (const item of findings.coverage) {
@@ -722,7 +894,7 @@ export function renderFindings(findings: Findings, failure: ProbeFailureCode | n
     for (const selection of item.selections) {
       const outcome = selection.outcome;
       if (!outcome.ok) {
-        lines.push(`- Filter ${cell(selection.filter)}: failed (${outcome.code})`);
+        lines.push(`- Filter ${cell(selection.filter)}: failed (${cell(failedText(outcome))})`);
         continue;
       }
       const value = outcome.value;
@@ -735,6 +907,14 @@ export function renderFindings(findings: Findings, failure: ProbeFailureCode | n
       );
     }
     lines.push('');
+  }
+  for (const code of findings.notListed) {
+    lines.push(
+      `### ${cell(code)}, candidate`,
+      '',
+      '- not listed by GET /competitions; no request made (UNVERIFIED)',
+      '',
+    );
   }
 
   lines.push('## Field presence of the mapped fields', '');
@@ -771,11 +951,33 @@ export function renderFindings(findings: Findings, failure: ProbeFailureCode | n
     `- X-RequestsAvailable observed: ${range(headers.available)}`,
     `- X-RequestCounter-Reset observed (seconds): ${range(headers.reset)}`,
     `- Statuses: ${[...headers.statuses].map(([status, count]) => `${status} x${String(count)}`).join(', ') || 'none'}`,
+    `- Failures by resource kind: ${
+      [...recorder.failures]
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([text, count]) => `${cell(text)} x${String(count)}`)
+        .join(', ') || 'none'
+    }`,
     `- 429 responses: ${String(headers.status429)}`,
     '- 403 classification evidence (presence booleans only, never the value):',
     `  - X-Authenticated-Client present on 2xx responses: ${yesNo(headers.clientOn200)}`,
     `  - X-Authenticated-Client present on 403 responses: ${headers.status403 === 0 ? 'no 403 observed (UNVERIFIED)' : yesNo(headers.clientOn403)}`,
     `  - Same value on every response that carried it: ${yesNo(headers.sameAcross)}`,
+    '',
+    '## Rejected responses and outputs',
+    '',
+    'Stage that rejected a received body or the adapter output built from it, with the failing validation path as ' +
+      'schema field names and numeric indices only (any other segment `*`, never a value).',
+    '',
+  );
+  if (recorder.rejections.size === 0) {
+    lines.push('None.');
+  } else {
+    lines.push('| Rejection | Count |', '|---|---|');
+    for (const [text, count] of [...recorder.rejections].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
+      lines.push(`| ${cell(text)} | ${String(count)} |`);
+    }
+  }
+  lines.push(
     '',
     '## Response sizes',
     '',

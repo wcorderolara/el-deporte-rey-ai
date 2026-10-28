@@ -29,10 +29,12 @@ export const HEADER_API_VERSION = 'X-API-Version';
 export const HEADER_AUTHENTICATED_CLIENT = 'X-Authenticated-Client';
 
 /**
- * The provider's anonymous marker value of `X-Authenticated-Client`, if any. UNVERIFIED until the capability probe
- * (T53) observes it: until then any non-empty value counts as positive (T11H-F04).
+ * The provider's anonymous marker value of `X-Authenticated-Client` (FU-5, OD-60; T11H-F04). Source: the provider's
+ * documentation, which describes the header as the detected client or "anonymous" (`provider-research.md` section 2.4
+ * item 8, C8). Not yet observed: every request of the capability probe (T53) was authenticated. A 403 carrying it is
+ * `access_refused`, like a 403 without the header (a stricter classification only).
  */
-export const ANONYMOUS_CLIENT_MARKER: string | null = null;
+export const ANONYMOUS_CLIENT_MARKER = 'anonymous';
 
 /** Longest wait of a discovery request for the budget or a counter reset. */
 export const DISCOVERY_MAX_WAIT_MS = 5_000;

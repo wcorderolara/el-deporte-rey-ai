@@ -73,6 +73,7 @@
             "backoffMs": 1000,
             "maxRateLimitWaitSeconds": 65,
             "maxResponseBytes": 524288,
+            "maxResponseBytesByResource": { "stageDiscovery": 1048576 },
             "researchReservedSlots": 2,
             "maxDiscoveryWaiters": 20,
             "cacheTtlSeconds": {

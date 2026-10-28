@@ -274,8 +274,10 @@ export interface MappedStages {
 /**
  * Matches grouped (in a `Map`) by their stage value and matchday number: stage ID = slug of the value, name = the
  * value as given (R-077), order by earliest kickoff; matchdays = distinct numbers; `wholeStageRef` when the stage has
- * matches without a number; standings `expected` for the stage that contains matchday 1 of the season (the table
- * stage), `unknown` otherwise (refined by T53).
+ * matches without a number; standings `expected` only for the first stage in order that contains matchday 1 (the
+ * table stage), `unknown` for every other stage, including later stages that restart their numbering at 1 (knockout
+ * legs, as in a CL-like season) and stages that continue the season's numbering (as in an EC-like season) (FU-1,
+ * OD-60; `provider-research.md` section 2.4 item 4).
  */
 export function mapStages(response: MatchesResponse, season: SeasonRef): MappedStages {
   const groups = new Map<string, StageGroup>();
@@ -306,6 +308,7 @@ export function mapStages(response: MatchesResponse, season: SeasonRef): MappedS
     (a, b) => a.earliest - b.earliest || (a.value < b.value ? -1 : a.value > b.value ? 1 : 0),
   );
   const ids = new Set<string>();
+  let tableStageFound = false;
   const items = ordered.map((group, index): SourceStage => {
     const order = index + 1;
     let id = slugOf(group.value);
@@ -318,7 +321,8 @@ export function mapStages(response: MatchesResponse, season: SeasonRef): MappedS
     ids.add(id);
     const numbers = [...group.matchdays].sort((a, b) => a - b);
     const total = numbers.length > 0 ? (numbers[numbers.length - 1] ?? null) : null;
-    const expected = group.matchdays.has(1);
+    const expected = !tableStageFound && group.matchdays.has(1);
+    tableStageFound ||= expected;
     const base = { c: season.c, n: season.n, y: season.y, l: season.l, cur: season.cur, st: group.value, sx: expected };
     return {
       id,

@@ -2,8 +2,8 @@
  * The committed LIVE_DATA example `config/live.config.json` (architecture.md section 5.1; contracts/provider-ports.md
  * section 1.4; PD-12, PD-18, AD-38; Q8): it loads with the project's configuration rules, holds DEMO_DATA, MANUAL_DATA
  * and the enabled football-data source with the PD-12 reference competition, keeps `publicationPermission`
- * unconfirmed without a decision, leaves the stage-discovery override unset, and adds only the pinned origin to the
- * egress allow-list. It holds no token.
+ * unconfirmed without a decision, sets the stage-discovery override to 1 MiB within the reviewed 2 MiB bound (FU-4,
+ * OD-60; Q8, T11H-F20), and adds only the pinned origin to the egress allow-list. It holds no token.
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -62,7 +62,7 @@ describe('config/live.config.json', () => {
     });
   });
 
-  it('uses the section 1.4 defaults, the reference competition CL and no stage-discovery override', () => {
+  it('uses the section 1.4 defaults, the reference competition CL and a 1 MiB stage-discovery override', () => {
     const live = liveConfig().providers.sports.sources.find((source) => source.id === 'football-data');
     const parsed = parseFootballDataOptions(live?.options, 'providers.sports.sources[3]');
     expect(parsed.ok).toBe(true);
@@ -76,7 +76,7 @@ describe('config/live.config.json', () => {
       backoffMs: 1000,
       maxRateLimitWaitSeconds: 65,
       maxResponseBytes: 524_288,
-      maxResponseBytesByResource: { stageDiscovery: null },
+      maxResponseBytesByResource: { stageDiscovery: 1_048_576 },
       researchReservedSlots: 2,
       maxDiscoveryWaiters: 20,
       cacheTtlSeconds: {
@@ -89,7 +89,16 @@ describe('config/live.config.json', () => {
         selectionPast: 86_400,
       },
     });
-    expect(Object.hasOwn(live?.options ?? {}, 'maxResponseBytesByResource')).toBe(false);
+    expect(live?.options['maxResponseBytesByResource']).toEqual({ stageDiscovery: 1_048_576 });
+  });
+
+  it('keeps the stage-discovery override within the reviewed 2 MiB bound and above the 512 KiB default (FU-4, Q8)', () => {
+    const live = liveConfig().providers.sports.sources.find((source) => source.id === 'football-data');
+    const parsed = parseFootballDataOptions(live?.options, 'providers.sports.sources[3]');
+    const limit = parsed.ok ? parsed.options.maxResponseBytesByResource.stageDiscovery : null;
+    expect(limit).toBe(1_048_576);
+    expect(limit).toBeLessThanOrEqual(2 * 1024 * 1024);
+    expect(limit).toBeGreaterThan(parsed.ok ? parsed.options.maxResponseBytes : Number.POSITIVE_INFINITY);
   });
 
   it('adds only the pinned origin to the egress allow-list', () => {

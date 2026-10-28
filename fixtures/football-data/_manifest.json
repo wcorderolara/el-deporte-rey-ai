@@ -64,6 +64,34 @@
     {"file":"error-404.json","expect":"not_available","retry":false,"purpose":"404: competition or season not found"},
     {"file":"error-429.json","expect":"rate_limited","retry":"once after the reset wait","retryAfterSeconds":42,"purpose":"429 with X-RequestCounter-Reset 42 and X-RequestsAvailable 0"},
     {"file":"error-500.json","expect":"unavailable","retry":"up to maxRetries","purpose":"500: transient provider failure"},
-    {"file":"error-503.json","expect":"unavailable","retry":"up to maxRetries","purpose":"503: transient provider failure"}
+    {"file":"error-503.json","expect":"unavailable","retry":"up to maxRetries","purpose":"503: transient provider failure"},
+    {
+      "file": "cl-matches-2025-numbered-knockout.json",
+      "expect": "ok",
+      "purpose": "stage discovery, complete past season, CL-like numbering (FU-1): LEAGUE_STAGE matchdays 1 to 8, then PLAYOFFS, LAST_16, QUARTER_FINALS and SEMI_FINALS restarting at matchdays 1 and 2 (legs), FINAL without a number; standings expected for LEAGUE_STAGE only"
+    },
+    {
+      "file": "tc1-matches-2024.json",
+      "expect": "ok",
+      "purpose": "stage discovery of a synthetic tournament TC1 (not listed by competitions.json), EC-like numbering (FU-1): GROUP_STAGE matchdays 1 to 3, then LAST_16 4, QUARTER_FINALS 5, SEMI_FINALS 6 and FINAL 7 continuing the season's numbering; standings expected for GROUP_STAGE only"
+    },
+    {
+      "file": "planted-cl-matches-2026-md1.json",
+      "expect": "ok",
+      "domainPath": "/teams/2/name",
+      "purpose": "planted values (FU-2; T11H-F02, T11H-F04): a provider-valid matchday list (same request as cl-matches-2026-md1.json, never served by default) whose team names break the shared team-name rule (a slash, typographic quotes, a URL carrying the marker token), with an unusual score 917-853 and the marker token in a dropped field; the shared domain validation of the selection rejects it at domainPath; tests add planted header values; no planted value may reach a probe diagnostic"
+    },
+    {
+      "file": "planted-cl-standings-2026-md1.json",
+      "expect": "ok",
+      "domainPath": "/standings/rows/3/played",
+      "purpose": "planted values (FU-2): provider-valid standings (same request as cl-standings-2026-md1.json, never served by default) whose fourth TOTAL row breaks won + drawn + lost = played, with a planted team name and form; the shared domain validation of the selection rejects it at domainPath"
+    },
+    {
+      "file": "planted-tl1-matches-2026-md1.json",
+      "expect": "invalid",
+      "path": "/matches/0/score/fullTime/home",
+      "purpose": "planted values (FU-2): matchday list whose first full-time score is a string carrying a planted score and URL; the allow-list schema rejects it"
+    }
   ]
 }

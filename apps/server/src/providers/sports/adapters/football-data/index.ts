@@ -17,14 +17,28 @@ export { TOKEN_ISSUE, authHeadersFor } from './credentials.js';
 export { attributionRef, competitionCodeOfRef } from './mapping.js';
 export {
   type BodyObservation,
+  DIAGNOSTIC_FIELD_NAMES,
+  DIAGNOSTIC_RESOURCES,
+  type DiagnosticResource,
+  EGRESS_REFUSAL_KINDS,
+  type EgressRefusalKind,
   type FieldPresence,
   MAPPED_FIELDS,
+  REJECTION_STAGES,
+  type RejectionObservation,
+  type RejectionStage,
   type RequestKind,
   type RequestObservation,
   type RequestObserver,
   type ResponseObservation,
+  diagnosticPath,
 } from './observation.js';
-export { type FootballDataOptions, ORIGIN_PROBLEM, parseFootballDataOptions } from './options.js';
+export {
+  COMPETITION_CODE_PATTERN,
+  type FootballDataOptions,
+  ORIGIN_PROBLEM,
+  parseFootballDataOptions,
+} from './options.js';
 export {
   type FootballDataSeams,
   type FootballDataSource,
