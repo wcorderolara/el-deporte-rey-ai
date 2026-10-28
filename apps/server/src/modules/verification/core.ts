@@ -30,6 +30,7 @@ import {
   type CanonicalObservation,
   type Decision,
   type ObservationStage,
+  type RetrievalAttempt,
   type SourceInfo,
   canonicalJson,
   counts,
@@ -71,6 +72,11 @@ export interface VerifyInput {
   /** The project's competition is configured as having no accepted public source (AD-38 item 4). */
   readonly pinned: boolean;
   readonly previousApprovals: readonly PreviousApproval[];
+  /**
+   * Retrieval attempts of the counterpart sources (verification and consultation stages, successful or not), in
+   * order. A disputed fact whose official publication gave no value records the attempt (architecture.md 7.3).
+   */
+  readonly attempts?: readonly RetrievalAttempt[];
 }
 
 /** The subject of a fact (contract `FactSubject`). */
@@ -424,6 +430,7 @@ export function verifyRun(input: VerifyInput): VerifyResult {
       projectSourceId: input.project.sourceId,
       sources: input.sources,
       teamUnmatched: canonical.teams.some((teamId) => identity.unmatched.has(teamId)),
+      attempts: input.attempts ?? [],
     };
     const decision =
       canonical.kind === 'team_official_name'

@@ -11,7 +11,11 @@
  * - All groups agree: verified with the value; the agreeing observations are evidence (`supports`).
  * - Groups disagree: unverified `disputed` (no candidate value); the official publication is consulted. Its value
  *   counts once for its group; the fact is resolved only when at least two independent groups support that value and
- *   no other value has as many; otherwise it stays disputed (`same_source`, `no_match` or `unavailable`).
+ *   no other value has as many. Otherwise it stays disputed: `same_source` when the official publication is not
+ *   independent of the dispute (it shares its independence group with a disagreeing source, or it is itself one of
+ *   the disagreeing parties: without it the other groups would not disagree); `no_match` when an independent official
+ *   publication gives a value matching neither side, or a tie remains; `unavailable` when it gave no value for the
+ *   key (failed or unavailable consultation, or no such value), with the attempted source and time recorded.
  * - A fact that involves an unmatched team is unverified `team_identity_unmatched` (RK-14).
  * - No rule here, and no operation anywhere, sets a fact to verified other than this decision (R-412).
  */
@@ -47,6 +51,13 @@ export interface CanonicalObservation {
   readonly retrievedAt: string;
 }
 
+/** One retrieval attempt of a counterpart source in the run (verification or consultation stage), in order. */
+export interface RetrievalAttempt {
+  readonly sourceId: string;
+  /** Time of the attempt: the retrieval time when it succeeded, the failure time otherwise. */
+  readonly attemptedAt: string;
+}
+
 export interface DecisionContext {
   readonly kind: FactKind;
   readonly projectMode: DataMode;
@@ -54,6 +65,11 @@ export interface DecisionContext {
   readonly sources: ReadonlyMap<string, SourceInfo>;
   /** The fact involves a team without a matched identity. */
   readonly teamUnmatched: boolean;
+  /**
+   * Retrieval attempts of the counterpart sources of the run. For a disputed fact without an official value, the
+   * first attempt of a counted official-publication source is the recorded consultation (architecture.md 7.3).
+   */
+  readonly attempts?: readonly RetrievalAttempt[];
 }
 
 export interface EvidenceLink {
@@ -289,33 +305,41 @@ function disputed(
     independenceGroup: ctx.sources.get(observation.sourceId)?.independenceGroup ?? observation.sourceId,
     value: observation.value,
   }));
-  const isOfficial = (observation: CanonicalObservation): boolean =>
-    ctx.sources.get(observation.sourceId)?.officialPublication === true &&
-    counts(ctx.sources.get(observation.sourceId), ctx.projectMode);
+  const isOfficialSource = (sourceId: string): boolean =>
+    ctx.sources.get(sourceId)?.officialPublication === true && counts(ctx.sources.get(sourceId), ctx.projectMode);
+  const isOfficial = (observation: CanonicalObservation): boolean => isOfficialSource(observation.sourceId);
   const official = counted.find(isOfficial) ?? consultation.find(isOfficial);
   const disputedText = `Disputed: accepted sources disagree (${sourceList(counted)})`;
 
   if (official === undefined) {
+    // The official publication was asked but gave no value for the key (failed, unavailable or no such value): the
+    // consultation is recorded with its source and attempt time; with no attempt at all, none is recorded.
+    const attempt = (ctx.attempts ?? []).find((entry) => isOfficialSource(entry.sourceId));
+    const unavailableText =
+      attempt === undefined
+        ? 'official publication unavailable'
+        : `official publication (${attempt.sourceId}) unavailable`;
     return {
       status: 'unverified',
       unverifiedReason: 'disputed',
       value: null,
       candidateValue: null,
       manualEligible: false,
-      reason: bounded(`${disputedText}; official publication unavailable.`),
+      reason: bounded(`${disputedText}; ${unavailableText}.`),
       evidence: relate(base, ctx, null),
       dispute: {
         sourceValues,
-        consultedSourceId: null,
+        consultedSourceId: attempt?.sourceId ?? null,
         consultedObservationId: null,
-        consultedAt: null,
+        consultedAt: attempt?.attemptedAt ?? null,
         outcome: 'unavailable',
         resolvedValue: null,
       },
     };
   }
 
-  const officialGroup = ctx.sources.get(official.sourceId)?.independenceGroup ?? official.sourceId;
+  const groupOf = (sourceId: string): string => ctx.sources.get(sourceId)?.independenceGroup ?? sourceId;
+  const officialGroup = groupOf(official.sourceId);
   const officialText = canonicalJson(official.value);
   // Supporters of each value: the consistent groups holding it, plus the official group once for its own value.
   const supporters = new Map<string, Set<string>>();
@@ -361,15 +385,37 @@ function disputed(
     };
   }
 
-  const outcome: DisputeOutcome = !fromConsultation && officialSupporters.size < 2 ? 'same_source' : 'no_match';
+  // Independence of the official publication from the dispute (architecture.md 7.3; R-230, R-423). It is the same
+  // source as a disagreeing party when another counted source shares its independence group, or when the dispute
+  // exists only through its own value (the other groups are consistent and agree with one another).
+  const sharesGroup = counted.some(
+    (observation) => observation.sourceId !== official.sourceId && groupOf(observation.sourceId) === officialGroup,
+  );
+  const otherValues = new Set<string>();
+  let otherInconsistent = false;
+  for (const state of groups.values()) {
+    if (state.group === officialGroup) {
+      continue;
+    }
+    if (state.values.size > 1) {
+      otherInconsistent = true;
+    }
+    for (const text of state.values.keys()) {
+      otherValues.add(text);
+    }
+  }
+  const disputedWithoutOfficial = otherInconsistent || otherValues.size > 1;
+  const outcome: DisputeOutcome = sharesGroup || !disputedWithoutOfficial ? 'same_source' : 'no_match';
   const evidence = relate(base, ctx, null);
   if (fromConsultation) {
     evidence.push({ observationId: official.observationId, relation: 'consulted' });
   }
   const outcomeText =
-    outcome === 'same_source'
-      ? `the official publication (${official.sourceId}) is one of the disagreeing sources`
-      : `the official publication (${official.sourceId}) does not settle it`;
+    outcome === 'no_match'
+      ? `the official publication (${official.sourceId}) is independent and does not settle it`
+      : sharesGroup
+        ? `the official publication (${official.sourceId}) shares an independence group with a disagreeing source`
+        : `the official publication (${official.sourceId}) is one of the disagreeing sources`;
   return {
     status: 'unverified',
     unverifiedReason: 'disputed',

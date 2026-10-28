@@ -164,6 +164,43 @@ describe('verification of a run (every fact kind, OD-10)', () => {
     expect(team?.evidence.every((link) => result.facts.length > 0 && link.observationId !== undefined)).toBe(true);
   });
 
+  it('a failed consultation of the official publication is recorded on the dispute (source, attempt time)', () => {
+    const sources = sourcesOf(
+      source('demo-a', 'DEMO_DATA'),
+      source('demo-b', 'DEMO_DATA', { role: 'verification' }),
+      source('demo-o', 'DEMO_DATA', { officialPublication: true }),
+    );
+    const changed = selection();
+    (arrayOf(changed, 'matches')[0] as Json)['score'] = { home: 3, away: 1 };
+    const attemptedAt = '2026-10-20T18:05:00.000Z';
+    const result = verifyRun(
+      input(
+        [
+          ...snapshotObservations('demo-a'),
+          ...snapshotObservations('demo-b', { stage: 'verification', payload: changed }),
+        ],
+        {
+          sources,
+          attempts: [
+            { sourceId: 'demo-b', attemptedAt: '2026-10-20T18:04:00.000Z' },
+            { sourceId: 'demo-o', attemptedAt },
+          ],
+        },
+      ),
+    );
+    const disputed = byKind(result.facts, 'match_score').filter((fact) => fact.dispute !== null);
+    expect(disputed).toHaveLength(1);
+    expect(disputed[0]).toMatchObject({ status: 'unverified', unverifiedReason: 'disputed', candidateValue: null });
+    expect(disputed[0]?.dispute).toMatchObject({
+      outcome: 'unavailable',
+      consultedSourceId: 'demo-o',
+      consultedObservationId: null,
+      consultedAt: attemptedAt,
+    });
+    // Undisputed facts carry no dispute record and are unaffected by the attempts.
+    expect(result.facts.filter((fact) => fact.dispute !== null)).toHaveLength(1);
+  });
+
   it('kickoffs are compared as UTC instants truncated to the minute', () => {
     const shifted = selection();
     (arrayOf(shifted, 'matches')[0] as Json)['kickoff'] = '2026-10-20T12:00:42-06:00';
