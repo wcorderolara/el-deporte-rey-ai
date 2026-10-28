@@ -4,6 +4,10 @@
  * - `start(projectId, kind)` creates a `workflow_runs` row and its `stage_runs` (pending) in one `BEGIN IMMEDIATE`
  *   transaction, after the guards: one active (`pending` or `running`) run per project (`run_in_progress`), and for a
  *   redraft a completed verification to reuse (`no_verified_run`). The guards and the writes are atomic (T10-F15).
+ * - A run whose kind includes the research stage (`full`) invalidates every valid final approval of the project's
+ *   carousels in the same transaction (architecture.md section 11.2; OD-57), so a run that later fails before the
+ *   content stage leaves no stale final approval valid. A `redraft` (no research) leaves them unchanged; its new
+ *   draft invalidates them in the content stage.
  * - The run then executes in the same process, sequentially, with the stages in the fixed order: `full` runs
  *   research, verification, content, rendering, visual QA; `redraft` runs content, rendering, visual QA and records
  *   the run whose facts it reuses (`base_run_id`).
@@ -38,6 +42,11 @@ export const STAGES_BY_KIND: Readonly<Record<RunKind, readonly StageName[]>> = O
   full: STAGE_ORDER,
   redraft: Object.freeze(['content', 'rendering', 'visual_qa'] as const),
 });
+
+/** Whether a run of the kind executes the research stage (and so invalidates final approvals when it starts). */
+export function includesResearch(kind: RunKind): boolean {
+  return STAGES_BY_KIND[kind].includes('research');
+}
 
 /** A stage as registered by a module (`ServerModule.stages`). */
 export type AnyStage = Stage<unknown, unknown>;
@@ -111,6 +120,7 @@ export class WorkflowRunner {
     }
     const { db, config } = this.#container;
     const runId = this.#newId();
+    let invalidated = 0;
     const view = db.transaction(() => {
       options.before?.();
       if (this.#runs.activeRunId(projectId) !== null) {
@@ -132,12 +142,21 @@ export class WorkflowRunner {
         snapshot: buildConfigSnapshot(config, options.parameters ?? NO_RUN_PARAMETERS),
         stages: STAGES_BY_KIND[kind].map((stage) => ({ id: this.#newId(), stage })),
       });
+      if (includesResearch(kind)) {
+        invalidated = this.#runs.invalidateFinalApprovals(projectId, this.#now());
+      }
       const created = this.#runs.view(runId);
       if (created === null) {
         throw new Error('the created run was not found');
       }
       return created;
     });
+    if (invalidated > 0) {
+      this.#container.logger.info(
+        { runId, finalApprovals: invalidated },
+        'final approvals invalidated: a research run started',
+      );
+    }
     this.#launch(runId, projectId, kind);
     return view;
   }

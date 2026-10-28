@@ -96,6 +96,9 @@ const SQL = {
   activeRuns: `SELECT id FROM workflow_runs WHERE status IN ${ACTIVE_STATUSES} ORDER BY id`,
   failRunningStagesOfRun:
     "UPDATE stage_runs SET status = 'failed', failure = ?, finished_at = ? WHERE run_id = ? AND status = 'running'",
+  invalidateProjectFinalApprovals:
+    'UPDATE final_approvals SET invalidated_at = ? WHERE invalidated_at IS NULL AND carousel_id IN (' +
+    'SELECT c.id FROM carousels c JOIN content_drafts d ON d.id = c.draft_id WHERE d.project_id = ?)',
 } as const;
 
 function failureColumn(value: Failure): string {
@@ -155,6 +158,15 @@ export class RunRepository {
       this.#db.prepare(SQL.insertStage).run([stage.id, input.id, stage.stage, index + 1]);
     });
     return next;
+  }
+
+  /**
+   * Invalidates every valid final approval of the project's carousels (architecture.md section 11.2: a research run
+   * makes a final approval invalid; OD-57). An already invalidated final approval keeps its time. Returns the number
+   * of final approvals invalidated. Call inside the transaction that creates the run (T10-F15).
+   */
+  invalidateFinalApprovals(projectId: string, at: string): number {
+    return this.#db.prepare(SQL.invalidateProjectFinalApprovals).run([at, projectId]).changes;
   }
 
   record(runId: string): RunRecord | null {

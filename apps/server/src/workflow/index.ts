@@ -30,6 +30,7 @@ export {
   WorkflowRunner,
   type WorkflowRunnerOptions,
   failInterruptedRuns,
+  includesResearch,
 } from './runner.js';
 export {
   CONFIG_SNAPSHOT_VERSION,
