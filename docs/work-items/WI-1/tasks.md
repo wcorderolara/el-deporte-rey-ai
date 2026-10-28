@@ -95,7 +95,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T62 | Provider research addendum and architecture corrections (FU-3, FU-6, FU-7) | IMPL | architect | T61 | PENDING | 0 | - | - |
 | T63 | Requirements corrections from the provider research (FU-7) | IMPL | product-manager | T14 | IN_PROGRESS | 1 | - | - |
 | T64 | Explicit timeouts for workflow-heavy ingestion tests | IMPL | qa-engineer | T52 | DONE | 1 | 4bda364 | `docs/work-items/WI-1/evidence/T64-gates.txt` |
-| T65 | Localized import error and fact reason texts | IMPL | frontend-developer | T44 | IN_PROGRESS | 1 | - | - |
+| T65 | Localized import error and fact reason texts | IMPL | frontend-developer | T44 | DONE | 1 | 77bf965 | `docs/work-items/WI-1/evidence/T65-gates.txt` |
 | T66 | Localized trace reasons and shared banner cleanup | IMPL | frontend-developer | T65 | PENDING | 0 | - | - |
 | T67 | Load-robust SC-05 linear-time test | IMPL | qa-engineer | T50 | PENDING | 0 | - | - |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65, T66, T67 | PENDING | 0 | - | - |
@@ -1257,6 +1257,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: (OD-63, R-416) F-1: the import error table labels each record by its kind (CSV row number as a row, JSON pointer, form field, or the whole file) instead of "Archivo n" for a CSV row; F-2: the import error detail and the fact reason are rendered from the closed codes the contract provides (`ImportError.problem`, `record`, `field`; fact `status`, `unverifiedReason`, `blockReason`) with Spanish and English texts following the project or UI language, never inventing a value; the server's English `message` or `reason` is shown only where no closed code covers the case; texts render as text only (T10 controls); unit tests for every `problem` value and every reason combination in both languages; update only the text expectations of `e2e/tests/manual-import.spec.ts` if they change. No contract or server change, no new dependency.
 - Acceptance criteria: R-416
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:e2e` -> exit 0 ; `npm run test:a11y` -> exit 0
+- Agent result: PASS at a340734 (npm ci --offline 0; typecheck 0; lint 0; test:unit first run 1 with one load-sensitive failure outside this task (`apps/server/src/modules/imports/timing.test.ts`, SC-05 ratio 32.0 above 24, OD-64), two reruns 0, 2074 tests; test:e2e 0, 13 passed; test:a11y 0, 18 passed). F-1: import error records labelled by kind ("Fila n", whole file, whole document, JSON pointer, form entry) in Spanish and English; F-2: import error detail rendered per closed `problem` code with only the sanitized `field` as parameter (server `message` never shown); fact reason built from `status`, `unverifiedReason` and the dispute outcome, block reasons localized; manually approved texts never say verified (PD-17); server reason shown only for an unverified fact without a reason code, marked `lang="en"`; text-only rendering; `manual-import.spec.ts` text expectations updated.
+- Orchestrator verification: ownership against the integration tracker, re-run of npm ci --offline, typecheck, lint, test:unit, test:integration, test:e2e, test:a11y in the task worktree (port 4345; see verification log); main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-8 (interface language Spanish constant with an optional `language` prop, since the interface has no language switch and the project language governs content; rejection table as a feature component; record kinds from location and record shape; detail per problem code; reason from codes without source names; reason row always shown; `lang` attributes; fixtures in the server's real formats). Escalations ESC-1 (trace page still shows the English server reason) and ESC-2 (unused import-error table in the shared ErrorBanner) routed to T66 (OD-64).
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 176613; duration 13 minutes.
+- Integration commit(s): 77bf965 (merge --no-ff of task/WI-1/T65). Affected gates at 77bf965: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T65-gates.txt, the evidence file of this task).
 
 ### T66: Localized trace reasons and shared banner cleanup
 - Kind: IMPL
@@ -1744,6 +1750,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T21:06:24Z | T45 | Depends on extended by T66 (OD-64) | OD-64 |
 | 2026-10-28T21:06:24Z | T47 | Depends on extended by T67 (OD-64) | OD-64 |
 | 2026-10-28T21:06:24Z | T48 | Depends on extended by T66, T67 (OD-64) | OD-64 |
+| 2026-10-28T21:09:20Z | T65 | Status DONE | integration commit 77bf965; evidence/T65-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
