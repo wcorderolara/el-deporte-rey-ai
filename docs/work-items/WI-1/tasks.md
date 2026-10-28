@@ -71,7 +71,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T37 | Review module: approval state machine, regeneration, final approval | IMPL | backend-developer | T32, T35 | PENDING | 0 | - | - |
 | T38 | Export, history and traceability module | IMPL | backend-developer | T37 | PENDING | 0 | - | - |
 | T39 | Review UI: preview, per-item approval, regeneration, final approval | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
-| T40 | Export, history and traceability UI | IMPL | frontend-developer | T16, T20 | PENDING | 0 | - | - |
+| T40 | Export, history and traceability UI | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
 | T41 | Integration tests: platform, research and verification | IMPL | qa-engineer | T19, T22, T23, T29, T30 | PENDING | 0 | - | - |
 | T42 | Integration tests: content, rendering, visual QA, approval, export, history | IMPL | qa-engineer | T32, T33, T34, T35, T37, T38, T41 | PENDING | 0 | - | - |
 | T43 | Contract conformance tests | IMPL | qa-engineer | T20, T38, T41, T50 | PENDING | 0 | - | - |
@@ -1238,6 +1238,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T04:31:39Z | T39 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T05:32:23Z | - | OD-40 recorded (blockReason in listFacts carried to the T30 brief) | T31 report |
 | 2026-10-28T05:32:26Z | T31 | Status DONE | integration commit 63d83cd; evidence/T31-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T06:38:50Z | T40 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-28T06:38:50Z | - | Environment: host sleep interrupted agents (T31, T36 twice); caffeinate -i started (MED-06), but sleep from lid or system cannot be prevented by the Orchestrator; reported to the PO | pmset log Sleep Service Back to Sleep |
 
 ## Recovery log
 
