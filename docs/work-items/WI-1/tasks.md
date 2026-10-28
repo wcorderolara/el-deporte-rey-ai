@@ -81,7 +81,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T47 | Security delta validation | VERIFY | security-reviewer | T46 | PENDING | 0 | - | - |
 | T49 | FootballDataProvider adapter, request budget, projection cache, live tests and capability probe script | IMPL | backend-developer | T21, T23 | PENDING | 0 | - | - |
 | T50 | Manual data import module and ManualDataProvider | IMPL | backend-developer | T18, T19, T20, T21 | IN_PROGRESS | 1 | - | - |
-| T51 | Manual import UI | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
+| T51 | Manual import UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 70c6f98 | `docs/work-items/WI-1/evidence/T51-gates.txt` |
 | T52 | Integration tests: data modes, catalogue, manual import and credentials | IMPL | qa-engineer | T23, T27, T29, T30, T41, T49, T50 | PENDING | 0 | - | - |
 | T53 | Capability probe run and football-data.org findings | IMPL | Orchestrator | T13, T41, T49 | PENDING | 0 | - | - |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53 | PENDING | 0 | - | - |
@@ -942,6 +942,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: import pages (`architecture.md` section 15.3): upload a JSON or CSV file (read in the browser with `file.arrayBuffer()`, never decoded or altered; at most 524 288 bytes checked before sending; sent through `createImport` as `contentBase64` with the file name normalized to NFC and an optional declared source; T11H-F01, T11H-F20); form entry that builds a `ManualImportDocument` (competition, season, stage, matchday or whole stage, teams, matches with status and score, optional standings rows), with client-side hints while server validation stays authoritative and no person-level field; rejection view listing every error by file or form, record, field and problem (R-274); import history with channel, file name (as text), declared source, time, original hash and a download link to the original using the `download` attribute (T11H-F11), with the note "open originals as text" (Q12, residual R10); versions per selection with the current and earlier versions (R-278); a link to create a project for the imported competition (R-276); accessible names, labels and keyboard use. Component tests with a mocked API client: a rejected import with many errors, an applied import, a reimport creating a new version; a file with a leading BOM and an invalid UTF-8 byte whose `contentBase64` in the captured request decodes to exactly the file's bytes (NV-11); an NFD file name sent as NFC; an oversize file refused before any request.
 - Acceptance criteria: R-274, R-276, R-278
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run build` -> exit 0
+- Agent result: PASS at 2639d2d (npm ci 0; typecheck 0; lint 0; test:unit 0, 880 tests, imports 74; build 0; npm audit --audit-level=high 0, 2 moderate per OD-33).
+- Orchestrator verification: `orch worktree verify-ownership` exit 0 (28 changed, 0 outside); re-run in the task worktree at 2639d2d: npm ci --offline 0, typecheck 0, lint 0, test:unit 0 (50 files, 880 tests), test:integration 0 (5 files, 75 tests), build 0 (Orchestrator build output removed); main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-7 (one selection per form submission; form team keys by the T11H-F09 CSV rule; client checks plus server re-validation; non-conforming file names refused, not rewritten; project link to /projects/new; feature-local useApiResource; routes /imports/:importId and /imports/versions/:versionId). NV-11 tested (exact bytes via arrayBuffer and contentBase64). No new dependency. Note for QA: /imports no longer shows the placeholder text.
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 243756; duration NOT RECORDED (loaded host).
+- Integration commit(s): 70c6f98 (merge --no-ff of task/WI-1/T51). Affected gates at 70c6f98: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T51-gates.txt, the evidence file of this task).
 
 ### T52: Integration tests: data modes, catalogue, manual import and credentials
 - Kind: IMPL
@@ -1287,6 +1293,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T14:25:19Z | - | OD-43 recorded (exclusions stored in config_snapshot parameters; carried to T32) | T27 escalation |
 | 2026-10-28T14:25:59Z | T27 | Status DONE | integration commit 833f585; evidence/T27-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T14:26:24Z | T29 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-28T14:29:08Z | T51 | Status DONE | integration commit 70c6f98; evidence/T51-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
