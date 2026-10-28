@@ -83,7 +83,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T50 | Manual data import module and ManualDataProvider | IMPL | backend-developer | T18, T19, T20, T21 | DONE | 1 | b972c53 | `docs/work-items/WI-1/evidence/T50-gates.txt` |
 | T51 | Manual import UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 70c6f98 | `docs/work-items/WI-1/evidence/T51-gates.txt` |
 | T52 | Integration tests: data modes, catalogue, manual import and credentials | IMPL | qa-engineer | T23, T27, T29, T30, T41, T49, T50 | IN_PROGRESS | 1 | - | - |
-| T53 | Capability probe run and football-data.org findings | IMPL | Orchestrator | T13, T41, T49 | PENDING | 0 | - | - |
+| T53 | Capability probe run and football-data.org findings | IMPL | Orchestrator | T13, T41, T49 | IN_PROGRESS | 1 | - | - |
 | T54 | Verification fixes: dispute outcome rule and unavailable consultation record | IMPL | backend-developer | T30, T41 | IN_PROGRESS | 1 | - | - |
 | T55 | Security checks: accepted-advisory option for audit-report | IMPL | qa-engineer | T41 | IN_PROGRESS | 1 | - | - |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55 | PENDING | 0 | - | - |
@@ -1443,6 +1443,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T16:26:40Z | T34 | Status DONE | integration commit 7e96f23; evidence/T34-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T16:27:01Z | T35 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T16:27:01Z | T52 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-28T16:27:51Z | T53 | Status IN_PROGRESS (attempt 1); Orchestrator working; the probe needs network access to the provider, which the Orchestrator shell does not have; PO asked to run it or to have it recorded as not run | orch next SELECT |
 
 ## Recovery log
 
