@@ -94,7 +94,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T61 | Second capability probe run (FU-3) | IMPL | Orchestrator | T60 | PENDING | 0 | - | - |
 | T62 | Provider research addendum and architecture corrections (FU-3, FU-6, FU-7) | IMPL | architect | T61 | PENDING | 0 | - | - |
 | T63 | Requirements corrections from the provider research (FU-7) | IMPL | product-manager | T14 | PENDING | 0 | - | - |
-| T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63 | PENDING | 0 | - | - |
+| T64 | Explicit timeouts for workflow-heavy ingestion tests | IMPL | qa-engineer | T52 | PENDING | 0 | - | - |
+| T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64 | PENDING | 0 | - | - |
 
 ## Tasks
 
@@ -1206,10 +1207,19 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Acceptance criteria: -
 - Verification: `orch requirements check --work-item 'WI-1' --at .` -> exit 0 ; `orch validate --work-item 'WI-1' --at .` -> exit 0
 
+### T64: Explicit timeouts for workflow-heavy ingestion tests
+- Kind: IMPL
+- Agent: qa-engineer
+- Depends on: T52
+- Files owned: `apps/server/test/integration/ingestion/data-modes.test.ts`, `apps/server/test/integration/ingestion/multi-competition.test.ts`
+- Scope: (OD-62) give every test in these two files that runs the workflow (research to visual QA) an explicit timeout of 60 s, as T42 did with WORKFLOW_TEST_TIMEOUT in `apps/server/test/integration/delivery/support.ts` (import it or define the same constant locally); change no assertion, fixture or scenario; keep the other tests on the default.
+- Acceptance criteria: -
+- Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:integration` -> exit 0
+
 ### T48: Final gate run
 - Kind: VERIFY
 - Agent: qa-engineer
-- Depends on: T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63
+- Depends on: T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64
 - Files owned: `docs/work-items/WI-1/evidence/T48-gates.txt`
 - Scope: run every final gate (project gates of T25 and the four framework-mandatory gates) at a clean, committed integration HEAD in the verify worktree, without `FOOTBALL_DATA_API_TOKEN` in the environment, and report each gate PASS, FAIL or NOT RUN with command, exit code and counts. Last VERIFY task of the work item.
 - Acceptance criteria: -
@@ -1303,6 +1313,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-58 | MEDIUM | Intermittent unit failure at the T58 merge: `apps/web/src/app/App.test.tsx` (App shell R-235) asserts focus on `main` right after the heading appears, while focus moves in an effect after render; under a full gate run it can fail (0 of 15 isolated runs failed). T58's gates are re-run on the same merge and the failed run kept as evidence. Fix routed to T44 (qa-engineer, end-to-end and accessibility journeys), which also owns `apps/web/src/app/App.test.tsx` for this change only: wait for the focus (`waitFor`) without weakening the assertion | re-run only (flake stays); open a new task | low | MED-05; T58 gate run |
 | OD-59 | MEDIUM | U-11 re-check (assigned to T38, which had no network access), done by the Orchestrator on 2026-10-28 from Meta's developer documentation page "Content Publishing" (developers.facebook.com/docs/instagram-platform/content-publishing): "Carousels are limited to 20 images, videos, or a mix of the two", so the `maxSlidesPerCarousel` default and bound of 20 hold; the same page states "JPEG is the only image format supported" for API publishing, which concerns only future automated publication (out of the MVP, which exports for manual publication); PNG acceptance by manual upload in the Instagram app stays UNVERIFIED (the Help Center page did not render without scripts) and is reported to the Product Owner as information; no change to the export format | change the export format to JPEG now (no MVP need; PNG keeps exact text rendering) | low | MED-05; T38 report; U-11 |
 | OD-60 | MEDIUM | Re-plan for the T14 follow-ups under PD-21 to PD-24: T59 (backend-developer) applies FU-1 (standings expectation of knockout stages), FU-2 (probe diagnostics: failing validation path as field names and indices only, egress refusal kind, resource kind of each failure, `--candidates`), FU-4 (`stageDiscovery` 1 MiB in `config/live.config.json`, within the reviewed 2 MiB bound) and FU-5 (anonymous client marker); T60 (security-reviewer) checks that no value can reach the probe findings or console through FU-2 before any live run; T61 (Orchestrator) runs the second probe under PD-24; T62 (architect) writes the addendum to `provider-research.md` from T61, names the CL failing rule and the FU-6 fix with its level (a mapping fix is re-planned; a shared-rule change is escalated), and applies FU-7 to `provider-ports.md` section 1.4 and `architecture-delta.md` section 11.10; T63 (product-manager) applies FU-7 to R-316 and the source notes of R-312 to R-314; FU-8 waits for the PD-18 reply and is outside WI-1 unless it arrives; T45 depends on T59, T62, T63; T48 on T59 to T63 | fold FU-1 to FU-5 into T45; skip the second run | low | MED-05; T14 report; PD-21 to PD-24 |
+| OD-61 | MEDIUM | T43 observations: O-1, a `contentBase64` that breaks its schema is answered 400 IMPORT_REJECTED (`encoding_invalid`, `too_large`) as the createImport description and provider-ports 1.6 specify, not VALIDATION_FAILED; both are declared 400 responses, the specific rule wins and the test asserts it; O-2, the configured LIVE source id `football-data` and name `football-data.org` returned as `sourceId`, `sourceName` and catalogue IDs are configuration data allowed by AD-31, not provider identifiers under R-288, while the provider host, provider codes, numeric IDs and field names stay forbidden; T45 confirms both in the conformance review | O-1 VALIDATION_FAILED (contract description change); O-2 rename the configured source | low | MED-05; T43 report |
+| OD-62 | MEDIUM | Load-sensitive timeouts: `apps/server/test/integration/ingestion/data-modes.test.ts` (R-268 downstream stages) and `multi-competition.test.ts` (T52) run the full workflow under the 5 s default timeout and time out under parallel load (T43 run and Orchestrator verification of T43, load average about 12; both pass alone and on rerun); new task T64 (qa-engineer) gives their workflow-heavy tests an explicit timeout as T42 did (WORKFLOW_TEST_TIMEOUT 60 s) without changing any assertion; T48 depends on T64 | raise the global integration timeout in the Vitest configuration (affects every suite) | low | MED-05; T43 report; T43 verification log |
 
 ## Conflicts
 
@@ -1645,6 +1657,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T20:40:56Z | T63 | Task added (OD-60); status PENDING | T14 follow-ups |
 | 2026-10-28T20:40:56Z | T45 | Depends on extended by T59, T62, T63 (OD-60) | OD-60 |
 | 2026-10-28T20:40:56Z | T48 | Depends on extended by T59 to T63 (OD-60) | OD-60 |
+| 2026-10-28T20:42:44Z | - | OD-61 and OD-62 recorded | T43 report and verification |
+| 2026-10-28T20:42:44Z | T64 | Task added (OD-62); status PENDING | OD-62 |
+| 2026-10-28T20:42:44Z | T48 | Depends on extended by T64 (OD-62) | OD-62 |
 | 2026-10-28T20:31:31Z | T42 | Agent interrupted by the usage limit; resumed in the same worktree (attempt 1 continues) | agent rate-limit notification |
 | 2026-10-28T20:31:31Z | T43 | Agent interrupted by the usage limit; resumed in the same worktree (attempt 1 continues) | agent rate-limit notification |
 | 2026-10-28T20:31:31Z | T44 | Agent interrupted by the usage limit; resumed in the same worktree (attempt 1 continues) | agent rate-limit notification |
