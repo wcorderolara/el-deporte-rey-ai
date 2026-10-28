@@ -90,14 +90,14 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T57 | Counterpart resolution keeps the source failure code | IMPL | backend-developer | T54 | DONE | 1 | b9f9f24 | `docs/work-items/WI-1/evidence/T57-gates.txt` |
 | T58 | Research run invalidates final approvals | IMPL | backend-developer | T37 | DONE | 1 | 4bdfd2c | `docs/work-items/WI-1/evidence/T58-gates-2.txt` |
 | T59 | football-data adapter and probe corrections (FU-1, FU-2, FU-4, FU-5) | IMPL | backend-developer | T14 | DONE | 1 | 7845e6f | `docs/work-items/WI-1/evidence/T59-gates.txt` |
-| T60 | Security check of the probe diagnostics (FU-2) | VERIFY | security-reviewer | T59 | PENDING | 0 | - | - |
+| T60 | Security check of the probe diagnostics (FU-2) | VERIFY | security-reviewer | T59 | IN_PROGRESS | 1 | - | - |
 | T61 | Second capability probe run (FU-3) | IMPL | Orchestrator | T60 | PENDING | 0 | - | - |
 | T62 | Provider research addendum and architecture corrections (FU-3, FU-6, FU-7) | IMPL | architect | T61 | PENDING | 0 | - | - |
 | T63 | Requirements corrections from the provider research (FU-7) | IMPL | product-manager | T14 | DONE | 1 | f6226fe | `docs/work-items/WI-1/evidence/T63-gates.txt` |
 | T64 | Explicit timeouts for workflow-heavy ingestion tests | IMPL | qa-engineer | T52 | DONE | 1 | 4bda364 | `docs/work-items/WI-1/evidence/T64-gates.txt` |
 | T65 | Localized import error and fact reason texts | IMPL | frontend-developer | T44 | DONE | 1 | 77bf965 | `docs/work-items/WI-1/evidence/T65-gates.txt` |
-| T66 | Localized trace reasons and shared banner cleanup | IMPL | frontend-developer | T65 | PENDING | 0 | - | - |
-| T67 | Load-robust SC-05 linear-time test | IMPL | qa-engineer | T50 | PENDING | 0 | - | - |
+| T66 | Localized trace reasons and shared banner cleanup | IMPL | frontend-developer | T65 | IN_PROGRESS | 1 | - | - |
+| T67 | Load-robust SC-05 linear-time test | IMPL | qa-engineer | T50 | IN_PROGRESS | 1 | - | - |
 | T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65, T66, T67 | PENDING | 0 | - | - |
 
 ## Tasks
@@ -1758,6 +1758,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T21:06:24Z | T48 | Depends on extended by T66, T67 (OD-64) | OD-64 |
 | 2026-10-28T21:09:20Z | T65 | Status DONE | integration commit 77bf965; evidence/T65-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T21:11:23Z | T63 | Status DONE | integration commit f6226fe; evidence/T63-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T21:11:33Z | T60 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
+| 2026-10-28T21:11:33Z | T66 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
+| 2026-10-28T21:11:33Z | T67 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 
 ## Recovery log
 
