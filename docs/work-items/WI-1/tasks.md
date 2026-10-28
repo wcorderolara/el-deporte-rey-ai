@@ -89,7 +89,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T56 | Migration 0002: capitalized_tokens in qa_results | IMPL | backend-developer | T18, T35 | DONE | 1 | ef115d4 | `docs/work-items/WI-1/evidence/T56-gates.txt` |
 | T57 | Counterpart resolution keeps the source failure code | IMPL | backend-developer | T54 | DONE | 1 | b9f9f24 | `docs/work-items/WI-1/evidence/T57-gates.txt` |
 | T58 | Research run invalidates final approvals | IMPL | backend-developer | T37 | DONE | 1 | 4bdfd2c | `docs/work-items/WI-1/evidence/T58-gates-2.txt` |
-| T59 | football-data adapter and probe corrections (FU-1, FU-2, FU-4, FU-5) | IMPL | backend-developer | T14 | IN_PROGRESS | 1 | - | - |
+| T59 | football-data adapter and probe corrections (FU-1, FU-2, FU-4, FU-5) | IMPL | backend-developer | T14 | DONE | 1 | 7845e6f | `docs/work-items/WI-1/evidence/T59-gates.txt` |
 | T60 | Security check of the probe diagnostics (FU-2) | VERIFY | security-reviewer | T59 | PENDING | 0 | - | - |
 | T61 | Second capability probe run (FU-3) | IMPL | Orchestrator | T60 | PENDING | 0 | - | - |
 | T62 | Provider research addendum and architecture corrections (FU-3, FU-6, FU-7) | IMPL | architect | T61 | PENDING | 0 | - | - |
@@ -1189,6 +1189,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: (OD-60) `provider-research.md` section 8: FU-1 `mapStages` marks standings `expected` only for the first stage in order that contains matchday 1 and `unknown` for later stages that restart numbering, with recorded-shape tests for a CL-like and an EC-like season; FU-2 probe diagnostics: for an `invalid` outcome record the egress refusal kind from a closed list (`too_large`, `redirect`) or the failing validation path limited to schema field names and numeric indices (any other segment replaced by `*`, never a value; T11H-F02), record the resource kind of each failure in the status counts, and add `--candidates <codes>` so named competitions are probed; FU-4 `config/live.config.json` sets `maxResponseBytesByResource.stageDiscovery` to 1048576 for the football-data source, within the reviewed 2 MiB bound (Q8, T11H-F20), with `live-config.test.ts` updated; FU-5 `ANONYMOUS_CLIENT_MARKER = 'anonymous'` (source: documentation, not yet observed) with a test that a 403 carrying it is `access_refused`. Tests prove that no team name, score, header value, URL or token can appear in a diagnostic (planted values in fixtures). No contract change, no new dependency, no live request.
 - Acceptance criteria: -
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:integration` -> exit 0
+- Agent result: PASS at db29748 (npm ci --offline 0; typecheck 0; lint 0; test:unit 0, 2054 tests; test:integration first run 1 with the two OD-62 load timeouts (load average about 11.6), rerun 0, 511 tests; test:live 0, 1 skipped, no request; test:contract 0, 779 tests; secret-scan PASS; contracts check MATCH). FU-1 `mapStages` standings expectation only for the first stage containing matchday 1 (CL-like and EC-like recorded shapes); FU-2 probe diagnostics in the findings file only (`invalid; egress refusal <too_large|redirect|other> on <resource>`, `body not JSON`, `allow-list schema` or `domain validation on <resource>, path <P>` with P made of declared schema field names, indices or `*`), failures by resource kind, rejected-responses table, `--candidates` (1 to 12 codes, cap 30 unchanged); FU-4 `stageDiscovery` 1048576 in `config/live.config.json`; FU-5 `ANONYMOUS_CLIENT_MARKER = 'anonymous'` (documented, not observed). Planted values (team names with `/` and typographic quotes, scores, token, header values, URLs, oversize body) never reach findings, stdout, stderr, observations or logs.
+- Orchestrator verification: ownership against the integration tracker, re-run of npm ci --offline, typecheck, lint, test:unit, test:integration in the task worktree (see verification log); main working tree unchanged; affected gates on the merged state with T64; 2026-10-28.
+- Decisions: LOW-1 to LOW-7 (closed refusal kinds; closed rejecting stages and resource kinds; path segments from declared schema keys, at most 24 segments and 200 characters, reduced twice; `--candidates` rules; stricter positive-client comparison; planted fixtures as `expect: "ok"` plus `domainPath` and headers planted in tests, because `fixtures/fixtures.test.ts` is not owned; diagnostic on the Outcome line). Notes for T60: a path names the field and index, not the failing rule; the existing "Dropped keys" line prints provider key names matching `SAFE_KEY`; unlisted candidate codes are echoed. No contract change, no new dependency.
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 259146; duration 18 minutes.
+- Integration commit(s): 7845e6f (merge --no-ff of task/WI-1/T59). Affected gates at 7845e6f: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-AUDIT PASS (evidence/T59-gates.txt, the evidence file of this task).
 
 ### T60: Security check of the probe diagnostics (FU-2)
 - Kind: VERIFY
@@ -1710,6 +1716,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T20:49:55Z | T48 | Depends on extended by T65 (OD-63) | OD-63 |
 | 2026-10-28T20:51:14Z | T64 | Status DONE | integration commit 4bda364; evidence/T64-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T20:51:25Z | T65 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
+| 2026-10-28T21:05:55Z | T59 | Status DONE | integration commit 7845e6f; evidence/T59-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
