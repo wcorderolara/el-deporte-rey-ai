@@ -90,7 +90,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T57 | Counterpart resolution keeps the source failure code | IMPL | backend-developer | T54 | DONE | 1 | b9f9f24 | `docs/work-items/WI-1/evidence/T57-gates.txt` |
 | T58 | Research run invalidates final approvals | IMPL | backend-developer | T37 | DONE | 1 | 4bdfd2c | `docs/work-items/WI-1/evidence/T58-gates-2.txt` |
 | T59 | football-data adapter and probe corrections (FU-1, FU-2, FU-4, FU-5) | IMPL | backend-developer | T14 | DONE | 1 | 7845e6f | `docs/work-items/WI-1/evidence/T59-gates.txt` |
-| T60 | Security check of the probe diagnostics (FU-2) | VERIFY | security-reviewer | T59 | DONE | 1 | 8efe25c | `docs/work-items/WI-1/evidence/T60-gates.txt` |
+| T60 | Security check of the probe diagnostics (FU-2) | VERIFY | security-reviewer | T59 | DONE | 1 | 7120696 | `docs/work-items/WI-1/evidence/T60-gates.txt` |
 | T61 | Second capability probe run (FU-3) | IMPL | Orchestrator | T60 | PENDING | 0 | - | - |
 | T62 | Provider research addendum and architecture corrections (FU-3, FU-6, FU-7) | IMPL | architect | T61 | PENDING | 0 | - | - |
 | T63 | Requirements corrections from the provider research (FU-7) | IMPL | product-manager | T14 | DONE | 1 | f6226fe | `docs/work-items/WI-1/evidence/T63-gates.txt` |
@@ -1211,7 +1211,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Decisions: LOW-1 to LOW-3 (delta validation scope; finding IDs; unchanged outputs listed as context). Conditions C1 to C8 bind T61.
 - Human interventions: 0.
 - Agent usage: launches 1; tokens 141264; duration 6 minutes.
-- Integration commit(s): 8efe25c (merge --no-ff of task/WI-1/T60). Affected gates at 8efe25c: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T60-gates.txt, the evidence file of this task).
+- Integration commit(s): 8efe25c (merge --no-ff of task/WI-1/T60); evidence commit 7120696 (VERIFY task: the tracker row names the commit holding the gate evidence). Affected gates at 8efe25c: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T60-gates.txt, the evidence file of this task).
 
 ### T61: Second capability probe run (FU-3)
 - Kind: IMPL
