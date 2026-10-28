@@ -98,7 +98,8 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T65 | Localized import error and fact reason texts | IMPL | frontend-developer | T44 | DONE | 1 | 77bf965 | `docs/work-items/WI-1/evidence/T65-gates.txt` |
 | T66 | Localized trace reasons and shared banner cleanup | IMPL | frontend-developer | T65 | DONE | 1 | 052a1fe | `docs/work-items/WI-1/evidence/T66-gates.txt` |
 | T67 | Load-robust SC-05 linear-time test | IMPL | qa-engineer | T50 | DONE | 1 | 02f4a42 | `docs/work-items/WI-1/evidence/T67-gates.txt` |
-| T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65, T66, T67 | PENDING | 0 | - | - |
+| T68 | Source of truth and architecture records at close | IMPL | architect | T45 | PENDING | 0 | - | - |
+| T48 | Final gate run | VERIFY | qa-engineer | T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65, T66, T67, T68 | PENDING | 0 | - | - |
 
 ## Tasks
 
@@ -989,7 +990,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Orchestrator verification: `orch scan models docs/work-items/WI-1/architecture/conformance-review.md` exit 0; `orch validate --work-item 'WI-1' --at .` exit 0; ownership against the integration tracker; main working tree unchanged; 2026-10-28.
 - Decisions: LOW-1 to LOW-4 (latest full gate run as evidence; reading of "no mode-specific branch"; OD-61 O-2 covering the provider-code slug; local severity scale and IDs). Findings routed by OD-65.
 - Human interventions: 0.
-- Agent usage: launches 1.
+- Agent usage: launches 1; tokens 363955; duration 11 minutes.
 - Integration commit(s): 8d2a62f (merge --no-ff of task/WI-1/T45). Affected gates at 8d2a62f: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T45-gates.txt, the evidence file of this task).
 
 ### T46: Security evidence pack
@@ -1324,10 +1325,19 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Agent usage: launches 1; tokens 78135; duration 18 minutes.
 - Integration commit(s): 02f4a42 (merge --no-ff of task/WI-1/T67). Affected gates at 02f4a42: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-BUILD PASS, PRJ-E2E PASS (evidence/T67-gates.txt, the evidence file of this task).
 
+### T68: Source of truth and architecture records at close
+- Kind: IMPL
+- Agent: architect
+- Depends on: T45
+- Files owned: `.orchestrate/source-of-truth.md`, `docs/work-items/WI-1/architecture/provider-research.md`, `docs/work-items/WI-1/architecture/architecture-delta.md`, `docs/work-items/WI-1/architecture/data-model.md`
+- Scope: (OD-65, T45 CR-06; source-of-truth section 10) record PD-21 to PD-26 in the decision register (section 3) with their sources; update the business rules and security constraints they touch (PD-23 official-publication consultation not automated; PD-26 TeamName rule kept, such selections refused whole and never altered); update section 1 (root `ajv` 8.20.0, OD-39) and section 6 (contract unchanged at 1.0.0); open items (section 9): close or update U-08 (PD-23), U-11 (OD-59: limit 20 confirmed, API publishing JPEG only, manual PNG upload UNVERIFIED), U-18 (PD-21), U-19, U-20, U-22, U-23 (T53, T61, T62), SOT-3 (T43), SOT-5 (record the run parameters in `data-model.md`), and add the deferred items: TeamName widening FU-9 to FU-15 (PD-26, next work item), T60-F01, F03 and F06 probe hardening, FU-8 attribution text after the PD-18 reply, CR-01 to CR-05 (OD-65); reflect PD-26 in `provider-research.md` section 13 and `architecture-delta.md` section 11.14.6 (U-31, U-32 closed by PD-26). Reference, do not restate (section 10).
+- Acceptance criteria: -
+- Verification: `orch scan models .orchestrate/source-of-truth.md` -> exit 0 ; `orch scan models docs/work-items/WI-1/architecture/provider-research.md` -> exit 0 ; `orch validate --work-item 'WI-1' --at .` -> exit 0
+
 ### T48: Final gate run
 - Kind: VERIFY
 - Agent: qa-engineer
-- Depends on: T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65, T66, T67
+- Depends on: T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64, T65, T66, T67, T68
 - Files owned: `docs/work-items/WI-1/evidence/T48-gates.txt`
 - Scope: run every final gate (project gates of T25 and the four framework-mandatory gates) at a clean, committed integration HEAD in the verify worktree, without `FOOTBALL_DATA_API_TOKEN` in the environment, and report each gate PASS, FAIL or NOT RUN with command, exit code and counts. Last VERIFY task of the work item.
 - Acceptance criteria: -
@@ -1427,6 +1437,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | OD-62 | MEDIUM | Load-sensitive timeouts: `apps/server/test/integration/ingestion/data-modes.test.ts` (R-268 downstream stages) and `multi-competition.test.ts` (T52) run the full workflow under the 5 s default timeout and time out under parallel load (T43 run and Orchestrator verification of T43, load average about 12; both pass alone and on rerun); new task T64 (qa-engineer) gives their workflow-heavy tests an explicit timeout as T42 did (WORKFLOW_TEST_TIMEOUT 60 s) without changing any assertion; T48 depends on T64 | raise the global integration timeout in the Vitest configuration (affects every suite) | low | MED-05; T43 report; T43 verification log |
 | OD-63 | MEDIUM | T44 findings: F-1 (the import error table labels a CSV row record as "Archivo n" instead of a row) and F-2 (server English texts shown under the Spanish UI: import error `message` details and fact `reason` texts; R-416 Spanish default) are routed to new task T65 (frontend-developer), which renders localized text from the closed codes the contract already provides (`ImportError.problem` and `record`; fact `status`, `unverifiedReason` and `blockReason`) in Spanish and English, keeping the server text available only where no closed code covers it; no contract or server change; F-3 (the export page lists the caption before the slides, following the API order) needs no change; T45 and T48 depend on T65 | translate on the server (contract change); leave English texts | low | MED-05; T44 report |
 | OD-64 | MEDIUM | T65 follow-ups: ESC-1 (the trace page `apps/web/src/features/history/TracePage.tsx` still shows the English server fact reason, same finding as F-2) and ESC-2 (the unused import-error table of the shared `apps/web/src/ui/ErrorBanner.tsx` still labels records "Archivo n" and renders the server message) go to new task T66 (frontend-developer); the SC-05 linear-time test `apps/server/src/modules/imports/timing.test.ts` (T50, PD-15) failed once under load (ratio 32.0 above the bound 24; passes alone and on rerun) and goes to new task T67 (qa-engineer), which makes the measurement robust to load without raising the bound or weakening the linear-versus-quadratic distinction, the change being re-checked by T47 as a security-control test; T45 depends on T66; T47 and T48 on T67; T48 on T66 | raise the bound (weakens SC-05); leave the flake | low | MED-05; T65 report |
+| OD-65 | MEDIUM | T45 findings: CR-01 and CR-02 (unused copy and CSS after T66), CR-03 (version view duplicated in the export module), CR-04 (brand preview fixed size) and CR-05 (architecture wording on mode-dependent rules) are LOW and deferred to the next work item, listed as open items in the source of truth; CR-06 (PD-21 to PD-26 not yet in the source of truth, `provider-research.md` section 13 and `architecture-delta.md` section 11.14.6) goes to new task T68 (architect, the close-time source-of-truth update the maintenance rule of the source of truth requires), which also records the deferred items (TeamName widening FU-9 to FU-15 under PD-26, T60-F01, F03 and F06 hardening, FU-8 after the PD-18 reply) and closes the open items settled in WI-1; T48 depends on T68 | fix CR-01 to CR-05 in WI-1 | low | MED-05; T45 report |
 
 ## Conflicts
 
@@ -1813,6 +1824,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T22:01:21Z | - | E-16 answered by the Product Owner verbatim: "Keep rule now, widen later"; recorded as PD-26; FU-9 to FU-15 deferred to the next work item | Product Owner 2026-10-28 |
 | 2026-10-28T22:01:31Z | T45 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T22:14:41Z | T45 | Status DONE | integration commit 8d2a62f; evidence/T45-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
+| 2026-10-28T22:15:21Z | - | OD-65 recorded | T45 report |
+| 2026-10-28T22:15:21Z | T68 | Task added (OD-65); status PENDING | T45 CR-06 |
+| 2026-10-28T22:15:21Z | T48 | Depends on extended by T68 (OD-65) | OD-65 |
 
 ## Recovery log
 
