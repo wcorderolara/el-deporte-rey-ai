@@ -1240,7 +1240,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Orchestrator verification: `orch scan models` on `provider-research.md` and `architecture-delta.md` exit 0; `orch validate --work-item 'WI-1' --at .` exit 0; an extra marker-scan of the architecture folder (not a T62 verification line) printed RESULT FAIL with 4 findings, all the documented synthetic marker values in `contracts/provider-ports.md` and `task-plan.md`, identical at the base 180a89a, no real token involved (the folder is outside the marker-scan's intended scope of evidence, research and bundle; T46 step 23 scans those); the Orchestrator first recorded it as PASS in error and corrected it; ownership against the integration tracker; main working tree unchanged; 2026-10-28.
 - Decisions: LOW-1 to LOW-8 (T14 text kept as history with "Update (T62)" blocks; P2 accounting by inference; 537320 bytes attributed to ELC by inference and 1 MiB kept; S-004 leagues ranked equal; local IDs DR-6, FU-9 to FU-15, U-31 to U-33; provider-ports 1.4 confirmations table; struck-through superseded text; no proposed contract file before the decision). Conflict noted: the requirements edge case on special characters (level 5) yields to the `TeamName` contract (level 2) and T10-F06 (level 3): such a name is refused, never altered. DR-6 and U-32 (third run consent) raised as E-16.
 - Human interventions: 0.
-- Agent usage: launches 1.
+- Agent usage: launches 1; tokens 242257; duration 14 minutes.
 - Integration commit(s): c8a8498 (merge --no-ff of task/WI-1/T62). Affected gates at c8a8498: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T62-gates.txt, the evidence file of this task).
 
 ### T63: Requirements corrections from the provider research (FU-7)
@@ -1448,6 +1448,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | E-13 | T11H | HIGH decision: SC-05 isolation of untrusted-input processing for FootballDataProvider responses and for the JSON, CSV and form imports (HIGH-03; reviewer recommends option A for both, with conditions) | 2026-10-27 | 2026-10-27 (PD-15) |
 | E-14 | T11H | HIGH decision: identity-model re-raise for the real credential (T10-F19, Q5): any local process can spend the token request budget through the login-less API (HIGH-03; reviewer recommends option A) | 2026-10-27 | 2026-10-27 (PD-16) |
 | E-15 | T14 | HIGH decisions batched for the Product Owner from `provider-research.md` section 9: DR-1 secondary verification source (R-432), DR-2 costs needing authorization (R-111), DR-4 fallback without an automated official source (U-08), and consent to a second probe run with the free-plan token (FU-3, PD-16) needed to diagnose the CL league-phase refusal; DR-3 (PD-18 permission request) is a Product Owner action | 2026-10-28 | 2026-10-28 (PD-21 to PD-24) |
+| E-16 | T62 | HIGH decisions for the Product Owner from `provider-research.md` section 13: DR-6 (FU-6) the CL league-phase team name fails the shared `TeamName` rule (HIGH-06 overlapping HIGH-03): (a) widen by the closed list `/` and `’` with a contract revision, security review and a third CL-only probe run, (b) keep the rule (CL league phase unusable in LIVE_DATA in WI-1), (c) partial selection; U-32 consent to a third probe run | 2026-10-28 | - |
 
 ## Event log (append-only)
 
@@ -1801,6 +1802,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T21:41:37Z | T62 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
 | 2026-10-28T21:57:37Z | T62 | Status DONE | integration commit c8a8498; evidence/T62-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
 | 2026-10-28T21:57:59Z | T62 | Record corrected: the extra architecture-folder marker-scan was FAIL on pre-existing documented synthetic markers, not PASS | Orchestrator re-check |
+| 2026-10-28T21:58:11Z | - | E-16 raised (DR-6, U-32) | T62 report |
 
 ## Recovery log
 
