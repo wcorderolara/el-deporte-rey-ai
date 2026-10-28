@@ -71,7 +71,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T37 | Review module: approval state machine, regeneration, final approval | IMPL | backend-developer | T32, T35 | PENDING | 0 | - | - |
 | T38 | Export, history and traceability module | IMPL | backend-developer | T37 | PENDING | 0 | - | - |
 | T39 | Review UI: preview, per-item approval, regeneration, final approval | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
-| T40 | Export, history and traceability UI | IMPL | frontend-developer | T16, T20 | IN_PROGRESS | 1 | - | - |
+| T40 | Export, history and traceability UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 9c7f249 | `docs/work-items/WI-1/evidence/T40-gates.txt` |
 | T41 | Integration tests: platform, research and verification | IMPL | qa-engineer | T19, T22, T23, T29, T30 | PENDING | 0 | - | - |
 | T42 | Integration tests: content, rendering, visual QA, approval, export, history | IMPL | qa-engineer | T32, T33, T34, T35, T37, T38, T41 | PENDING | 0 | - | - |
 | T43 | Contract conformance tests | IMPL | qa-engineer | T20, T38, T41, T50 | PENDING | 0 | - | - |
@@ -800,6 +800,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: export action for a final-approved carousel with the resulting file list and folder path; project exports list with export time and the demonstration label (R-269); export detail showing the exact exported slides and caption; per exported slide a trace view (facts, status and reason, evidence with source name, data mode, retrieval time and import version, manual approval, dispute record; R-287). Evidence references are rendered with the shared `SafeReference` component only (plain text, never a link; T10-F16, T11H-F14). Component tests, including hostile reference values rendered with no anchor.
 - Acceptance criteria: R-218, R-220, R-221, R-269, R-287
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run build` -> exit 0
+- Agent result: PASS at edb8292 (npm ci 0; typecheck 0; lint 0; test:unit 0, 812 tests, history 38; build 0; npm audit --audit-level=high 0, 2 moderate per OD-33).
+- Orchestrator verification: `orch worktree verify-ownership` exit 0 (18 changed, 0 outside); re-run in the task worktree at edb8292: npm ci --offline 0, typecheck 0, lint 0, test:unit 0 (42 files, 812 tests), test:integration 0 (5 files, 75 tests), build 0 (Orchestrator build output removed); main working tree unchanged; 2026-10-28.
+- Decisions: LOW-01 to LOW-06 (trace reuses facts and projects components by read-only import; slide image src built from the validated version ID; export of another project not shown; operator-attested label derived in the UI because the contract has no operatorAttested field; export action only for valid final approvals with draft reload on refusal; feature-local useLoad keeps values during reload). No new dependency. Note: cross-feature imports could move to src/ui in a later task that owns it.
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 216300; duration NOT RECORDED (loaded host).
+- Integration commit(s): 9c7f249 (merge --no-ff of task/WI-1/T40). Affected gates at 9c7f249: FW-TRACKER PASS, FW-CONFIG PASS (evidence/T40-gates.txt, the evidence file of this task).
 
 ### T41: Integration tests: platform, research and verification
 - Kind: IMPL
@@ -1250,6 +1256,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T10:28:02Z | - | OD-41 recorded (no-store for brand files and previews, carried to T33 and T34) | T36 report |
 | 2026-10-28T10:28:05Z | T36 | Status DONE | integration commit e457fc8; evidence/T36-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T10:28:21Z | T51 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
+| 2026-10-28T10:28:53Z | T40 | Status DONE | integration commit 9c7f249; evidence/T40-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
