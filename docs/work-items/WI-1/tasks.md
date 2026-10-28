@@ -66,7 +66,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T32 | Content stage: structure, AI drafting, fact placeholders, content checks | IMPL | backend-developer | T22, T27 | DONE | 2 | 9630543 | `docs/work-items/WI-1/evidence/T32-gates.txt` |
 | T33 | Brand asset registry | IMPL | backend-developer | T27 | DONE | 1 | 982c722 | `docs/work-items/WI-1/evidence/T33-gates.txt` |
 | T34 | Rendering stage and carousel templates | IMPL | backend-developer | T27, T33 | DONE | 2 | 7e96f23 | `docs/work-items/WI-1/evidence/T34-gates.txt` |
-| T35 | Visual QA stage | IMPL | backend-developer | T30, T34 | IN_PROGRESS | 1 | - | - |
+| T35 | Visual QA stage | IMPL | backend-developer | T30, T34 | DONE | 1 | f7ae5c3 | `docs/work-items/WI-1/evidence/T35-gates.txt` |
 | T36 | Brand assets and templates UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | e457fc8 | `docs/work-items/WI-1/evidence/T36-gates.txt` |
 | T37 | Review module: approval state machine, regeneration, final approval | IMPL | backend-developer | T32, T35 | PENDING | 0 | - | - |
 | T38 | Export, history and traceability module | IMPL | backend-developer | T37 | PENDING | 0 | - | - |
@@ -817,6 +817,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: `architecture.md` section 10 (revised by T11G): the five checks with severities of OD-09, results per slide version and check, `qa_status`; facts and official names re-read from the database, `data_match` against the display form of the verified value or of the candidate value when unverified, text fit re-measured, PNG size read from the file header; the demonstration band is template text and is excluded from the team-name check. Unit tests: a slide seeded with each defect fails that check by name and a correct slide passes all (R-214); translated or abbreviated team name fails `team_names` (R-237); any size other than the configured one fails `dimensions` (R-238); a carousel without standings slides passes every check (R-285).
 - Acceptance criteria: R-214, R-225, R-237, R-238, R-285
 - Verification: `npm ci` -> exit 0 ; `npm run typecheck` -> exit 0 ; `npm run lint` -> exit 0 ; `npm run test:unit` -> exit 0 ; `npm run test:integration` -> exit 0
+- Agent result: PASS at 4642f44 (npm ci 0; typecheck 0; lint 0; test:unit 0, 1827 tests; test:integration 0, 306 tests; visual-qa 69 tests; npm audit --audit-level=high 0; contracts check MATCH). Checks data_match, team_names, text_fit, style_consistency, dimensions (OD-09 severities) and the capitalized_tokens warning (OD-26, OD-38), results and qa_status in one guarded transaction; qaElementVersion for T37. Escalation E-1: migration 0001 does not accept capitalized_tokens in qa_results.check_name, so the check is computed but not stored until a new migration (routed to T56, OD-56).
+- Orchestrator verification: ownership against the integration tracker, re-run of npm ci --offline, typecheck, lint, test:unit, test:integration in the task worktree (see verification log); main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-11 (style consistency within the same template; caption gets capitalized_tokens only; missing PNG fails dimensions; extended data_match; text_fit failure rules; capitalized_tokens allow-list and word list; detail limits; current configuration for format; unrendered slides stay pending; checks stored only when the constraint accepts them; word-list adjustment for the AD-31 lint rule). No new dependency.
+- Human interventions: 0.
+- Agent usage: launches 1; tokens 326945; duration 20 minutes.
+- Integration commit(s): f7ae5c3 (merge --no-ff of task/WI-1/T35). Affected gates at f7ae5c3: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-AUDIT PASS (evidence/T35-gates.txt, the evidence file of this task).
 
 ### T36: Brand assets and templates UI
 - Kind: IMPL
@@ -1465,6 +1471,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T17:45:17Z | T55 | Status DONE | integration commit f63dbb2; evidence/T55-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T17:46:21Z | T54 | Status DONE | integration commit d002b9d; evidence/T54-gates.txt PASS; Orchestrator re-verification |
 | 2026-10-28T17:47:31Z | T52 | Status DONE | integration commit 4621738; evidence/T52-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T17:48:49Z | T35 | Status DONE | integration commit f7ae5c3; evidence/T35-gates.txt PASS; Orchestrator re-verification |
 
 ## Recovery log
 
