@@ -65,7 +65,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T31 | Facts and verification UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | 63d83cd | `docs/work-items/WI-1/evidence/T31-gates.txt` |
 | T32 | Content stage: structure, AI drafting, fact placeholders, content checks | IMPL | backend-developer | T22, T27 | IN_PROGRESS | 1 | - | - |
 | T33 | Brand asset registry | IMPL | backend-developer | T27 | DONE | 1 | 982c722 | `docs/work-items/WI-1/evidence/T33-gates.txt` |
-| T34 | Rendering stage and carousel templates | IMPL | backend-developer | T27, T33 | PENDING | 0 | - | - |
+| T34 | Rendering stage and carousel templates | IMPL | backend-developer | T27, T33 | IN_PROGRESS | 1 | - | - |
 | T35 | Visual QA stage | IMPL | backend-developer | T30, T34 | PENDING | 0 | - | - |
 | T36 | Brand assets and templates UI | IMPL | frontend-developer | T16, T20 | DONE | 1 | e457fc8 | `docs/work-items/WI-1/evidence/T36-gates.txt` |
 | T37 | Review module: approval state machine, regeneration, final approval | IMPL | backend-developer | T32, T35 | PENDING | 0 | - | - |
@@ -1373,6 +1373,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T15:48:39Z | T41 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 | 2026-10-28T15:52:02Z | - | OD-48 recorded (orphan-file cleanup allowed; decode memory note to T47) | T33 report |
 | 2026-10-28T15:52:33Z | T33 | Status DONE | integration commit 982c722; evidence/T33-gates.txt PASS; Orchestrator re-verification |
+| 2026-10-28T15:52:52Z | T34 | Status IN_PROGRESS (attempt 1); agent launched | orch next SELECT |
 
 ## Recovery log
 
