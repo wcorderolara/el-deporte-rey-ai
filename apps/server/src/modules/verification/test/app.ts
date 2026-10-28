@@ -69,7 +69,8 @@ export function matchday1(document: Json, localKey: string): Json {
   return (stage['matchdays'] as Json)['1'] as Json;
 }
 
-export function testCatalogue(): Json {
+export function testCatalogue(options: SourceOptions = {}): Json {
+  const liveOfficial = options.liveOfficial === true ? [{ sourceId: 'live-o', competitionRef: 'liga-live' }] : [];
   return {
     links: [
       {
@@ -86,6 +87,7 @@ export function testCatalogue(): Json {
         bindings: [
           { sourceId: 'live-a', competitionRef: 'liga-live' },
           { sourceId: 'live-b', competitionRef: 'liga-live' },
+          ...liveOfficial,
         ],
       },
       {
@@ -111,6 +113,11 @@ export function testCatalogue(): Json {
 export interface SourceOptions {
   readonly liveBPermission?: 'unconfirmed' | 'confirmed';
   readonly liveCEnabled?: boolean;
+  /**
+   * Adds `live-o`, an enabled LIVE_DATA official-publication verification source of its own independence group,
+   * bound to `liga-live` after `live-a` and `live-b` (the official consultation of a dispute, OD-56). Off by default.
+   */
+  readonly liveOfficial?: boolean;
 }
 
 export function testSources(options: SourceOptions = {}): Json[] {
@@ -125,6 +132,9 @@ export function testSources(options: SourceOptions = {}): Json[] {
     stubSource('live-b', LIVE_KIND, 'LIVE_DATA', { role: 'verification', ...confirmed }),
     stubSource('live-c', LIVE_KIND, 'LIVE_DATA', { role: 'verification', enabled: options.liveCEnabled ?? false }),
     stubSource('manual-a', MANUAL_KIND, 'MANUAL_DATA'),
+    ...(options.liveOfficial === true
+      ? [stubSource('live-o', LIVE_KIND, 'LIVE_DATA', { role: 'verification', officialPublication: true })]
+      : []),
   ];
 }
 
@@ -195,12 +205,12 @@ export async function verificationTestApp(options: SourceOptions = {}): Promise<
   fixtures.write('default', 'demo-a', fixtureDocument([league('liga-demo', 'Liga Demo')]));
   fixtures.write('default', 'demo-b', fixtureDocument([league('liga-demo', 'Liga Demo')]));
   const live = stubAdapter(LIVE_KIND, 'LIVE_DATA');
-  for (const id of ['live-a', 'live-b', 'live-c']) {
+  for (const id of ['live-a', 'live-b', 'live-c', 'live-o']) {
     live.documents.set(id, liveDocument());
   }
   const manual = stubAdapter(MANUAL_KIND, 'MANUAL_DATA');
   manual.documents.set('manual-a', manualDocument());
-  const config = buildConfig(testSources(options), testCatalogue(), fixtures.rootDir);
+  const config = buildConfig(testSources(options), testCatalogue(options), fixtures.rootDir);
   const { db } = openMigratedDatabase({ location: ':memory:' });
   const container = createContainer({
     config,

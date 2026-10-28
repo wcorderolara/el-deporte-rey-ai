@@ -7,6 +7,7 @@
 import { FactListResponseSchema, FactSchema, ProblemSchema, RunSchema } from '@edr/contracts';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { SOURCE_ERROR_CODES, SourceError } from '../../providers/sports/index.js';
 import { type Json, fixtureDocument, league } from '../../providers/sports/test/synthetic.js';
 
 import {
@@ -452,5 +453,145 @@ describe('facts routes: validation and not found', () => {
       headers: READ_HEADERS,
     });
     expect(noClient.statusCode).toBe(403);
+  });
+});
+
+describe('official consultation failures keep the source failure code (architecture.md 7.3, OD-56)', () => {
+  /** Synthetic secret-looking text of an adapter failure: never stored (T10-F10). */
+  const LEAK = 'Bearer synthetic-token https://live-o.example.test/v1/competitions?key=abc provider body';
+
+  interface RetrievalRow {
+    readonly source_id: string;
+    readonly stage: string;
+    readonly outcome: string;
+    readonly retrieved_at: string;
+    readonly failure: string | null;
+  }
+
+  /** A score dispute between live-a and live-b with live-o, the official publication, failing as `prepare` sets. */
+  async function disputedWithOfficial(prepare: (app: VerificationTestApp) => void) {
+    const app = await start({ liveOfficial: true });
+    setScore(matchday1(app.live.documents.get('live-b') as Json, 'liga-live'), 1, { home: 1, away: 0 });
+    prepare(app);
+    const projectId = await createProject(app, 'liga-live', 'live-a');
+    const runId = await run(app, projectId);
+    const list = await facts(app, projectId, runId);
+    const disputed = list.facts.filter((fact) => fact.unverifiedReason === 'disputed');
+    expect(disputed.map((fact) => fact.kind)).toEqual(['match_score']);
+    const official = app.db
+      .prepare(
+        "SELECT source_id, stage, outcome, retrieved_at, failure FROM retrievals WHERE source_id = 'live-o' ORDER BY rowid",
+      )
+      .all() as unknown as RetrievalRow[];
+    expect(official).toHaveLength(1);
+    const stored = JSON.stringify([
+      app.db.prepare('SELECT * FROM retrievals').all(),
+      app.db.prepare('SELECT * FROM facts').all(),
+      app.db.prepare('SELECT * FROM disputes').all(),
+    ]);
+    for (const fragment of ['Bearer', 'synthetic-token', 'example.test', 'key=abc', 'provider body']) {
+      expect(stored).not.toContain(fragment);
+    }
+    return { fact: disputed[0] as (typeof disputed)[number], retrieval: official[0] as RetrievalRow };
+  }
+
+  /** The dispute names the failed consultation (source, attempt time) and the fact stays disputed and blocked. */
+  function expectDisputedConsultation(
+    fact: Awaited<ReturnType<typeof disputedWithOfficial>>['fact'],
+    retrieval: RetrievalRow,
+    code: string,
+  ): void {
+    expect(fact).toMatchObject({
+      status: 'unverified',
+      unverifiedReason: 'disputed',
+      value: null,
+      candidateValue: null,
+      blockReason: 'not_verified',
+    });
+    expect(fact.dispute).toMatchObject({ outcome: 'unavailable', consultedSourceId: 'live-o', resolvedValue: null });
+    expect(Date.parse(fact.dispute?.consultedAt ?? '')).toBe(Date.parse(retrieval.retrieved_at));
+    expect(fact.reason).toContain(`official publication (live-o) unavailable (code ${code})`);
+    expect(fact.evidence.some((evidence) => evidence.sourceId === 'live-o')).toBe(false);
+  }
+
+  for (const method of ['listCompetitions', 'listSeasons', 'listStages'] as const) {
+    it.each(SOURCE_ERROR_CODES)(`a ${method} SourceError %s reaches the retrieval and the dispute`, async (code) => {
+      const { fact, retrieval } = await disputedWithOfficial((app) => {
+        app.live.overrides.set(`live-o/${method}`, new SourceError(code, LEAK, 'live-o', null, 503, 30));
+      });
+      expect(retrieval.stage).toBe('verification');
+      expect(retrieval.outcome).toBe(code === 'not_available' ? 'not_available' : 'failed');
+      expect(JSON.parse(retrieval.failure ?? 'null')).toEqual({
+        code,
+        sourceId: 'live-o',
+        path: null,
+        httpStatus: 503,
+      });
+      expectDisputedConsultation(fact, retrieval, code);
+    });
+  }
+
+  it.each([
+    ['subscription_restricted', 'not_available', 'not_available'],
+    ['not_found', 'not_available', 'not_available'],
+    ['access_refused', 'access_refused', 'failed'],
+    ['rate_limited', 'rate_limited', 'failed'],
+    ['not_provided', 'no_data', 'failed'],
+    ['source_unavailable', 'unavailable', 'failed'],
+  ] as const)('a listing that answered unavailable (%s) is recorded with code %s', async (reason, code, outcome) => {
+    const { fact, retrieval } = await disputedWithOfficial((app) => {
+      app.live.overrides.set('live-o/listSeasons', {
+        items: [],
+        availability: { available: false, reason },
+        retrievedAt: null,
+        fromCache: false,
+        stale: false,
+        retryAfterSeconds: 60,
+      });
+    });
+    expect(retrieval.outcome).toBe(outcome);
+    expect(JSON.parse(retrieval.failure ?? 'null')).toEqual({ code, sourceId: 'live-o', path: null, httpStatus: null });
+    expectDisputedConsultation(fact, retrieval, code);
+  });
+
+  it('anything else an adapter throws is unavailable, with none of its text', async () => {
+    const { fact, retrieval } = await disputedWithOfficial((app) => {
+      app.live.overrides.set('live-o/listCompetitions', new Error(LEAK));
+    });
+    expect(retrieval.outcome).toBe('failed');
+    expect(JSON.parse(retrieval.failure ?? 'null')).toEqual({
+      code: 'unavailable',
+      sourceId: 'live-o',
+      path: null,
+      httpStatus: null,
+    });
+    expectDisputedConsultation(fact, retrieval, 'unavailable');
+  });
+
+  it('a counterpart the official source does not list stays not_available', async () => {
+    const { fact, retrieval } = await disputedWithOfficial((app) => {
+      app.live.documents.set('live-o', fixtureDocument([league('otra-liga', 'Otra Liga')]));
+    });
+    expect(retrieval.outcome).toBe('not_available');
+    expect(JSON.parse(retrieval.failure ?? 'null')).toEqual({
+      code: 'not_available',
+      sourceId: 'live-o',
+      path: null,
+      httpStatus: null,
+    });
+    expectDisputedConsultation(fact, retrieval, 'not_available');
+  });
+
+  it('an official source that answers resolves the dispute with its value and records no failure', async () => {
+    const app = await start({ liveOfficial: true });
+    setScore(matchday1(app.live.documents.get('live-b') as Json, 'liga-live'), 1, { home: 1, away: 0 });
+    const projectId = await createProject(app, 'liga-live', 'live-a');
+    const runId = await run(app, projectId);
+    const list = await facts(app, projectId, runId);
+    expect(list.facts.filter((fact) => fact.unverifiedReason === 'disputed')).toEqual([]);
+    const official = app.db
+      .prepare("SELECT outcome, failure FROM retrievals WHERE source_id = 'live-o'")
+      .all() as unknown as { outcome: string; failure: string | null }[];
+    expect(official).toEqual([{ outcome: 'ok', failure: null }]);
   });
 });

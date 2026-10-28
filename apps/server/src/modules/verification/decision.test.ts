@@ -316,6 +316,50 @@ describe('decision rule (section 7.3)', () => {
     expect(decision.reason).toContain('official publication (demo-o) unavailable');
   });
 
+  it.each(['unavailable', 'rate_limited', 'timeout', 'access_refused', 'not_available', 'invalid'] as const)(
+    'a consultation failed with %s names that closed code, never another one (OD-56)',
+    (code) => {
+      const sources = sourcesOf(
+        source('demo-a', 'DEMO_DATA'),
+        source('demo-b', 'DEMO_DATA', { role: 'verification' }),
+        source('demo-o', 'DEMO_DATA', { role: 'verification', officialPublication: true }),
+      );
+      const attemptedAt = '2026-08-17T10:00:00.000Z';
+      const decision = decideFact(
+        [observation('demo-a', ONE, 'research'), observation('demo-b', TWO)],
+        [],
+        context('DEMO_DATA', 'demo-a', sources, {
+          attempts: [
+            { sourceId: 'demo-b', attemptedAt: '2026-08-17T09:00:00.000Z', failureCode: null },
+            { sourceId: 'demo-o', attemptedAt, failureCode: code },
+          ],
+        }),
+      );
+      expect(decision).toMatchObject({ status: 'unverified', unverifiedReason: 'disputed', value: null });
+      expect(decision.dispute).toMatchObject({ consultedSourceId: 'demo-o', consultedAt: attemptedAt });
+      expect(decision.dispute?.outcome).toBe('unavailable');
+      expect(decision.reason).toContain(`official publication (demo-o) unavailable (code ${code}).`);
+    },
+  );
+
+  it('a consultation that answered without a value for the key names no failure code', () => {
+    const sources = sourcesOf(
+      source('demo-a', 'DEMO_DATA'),
+      source('demo-b', 'DEMO_DATA', { role: 'verification' }),
+      source('demo-o', 'DEMO_DATA', { role: 'verification', officialPublication: true }),
+    );
+    const decision = decideFact(
+      [observation('demo-a', ONE, 'research'), observation('demo-b', TWO)],
+      [],
+      context('DEMO_DATA', 'demo-a', sources, {
+        attempts: [{ sourceId: 'demo-o', attemptedAt: '2026-08-17T10:00:00.000Z', failureCode: null }],
+      }),
+    );
+    expect(decision.dispute).toMatchObject({ outcome: 'unavailable', consultedSourceId: 'demo-o' });
+    expect(decision.reason).toContain('official publication (demo-o) unavailable.');
+    expect(decision.reason).not.toContain('(code ');
+  });
+
   it('attempts of non-official or non-counted sources are not recorded as the consultation', () => {
     const sources = sourcesOf(
       source('demo-a', 'DEMO_DATA'),

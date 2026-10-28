@@ -32,7 +32,12 @@ import {
 import { z } from 'zod';
 
 import type { AppContainer } from '../../container.js';
-import type { CatalogueService, IngestionContext, SourceRef } from '../../providers/sports/index.js';
+import {
+  type CatalogueService,
+  type IngestionContext,
+  type SourceRef,
+  counterpartFailureCode,
+} from '../../providers/sports/index.js';
 import { StageFailure, failureOf } from '../../workflow/index.js';
 import type { Stage, StageContext } from '../module-kit.js';
 import { ResearchObservationValueSchema, ResearchRepository, researchSnapshot } from '../research/index.js';
@@ -292,11 +297,16 @@ async function retrieveCounterpart(
       ctx,
     );
     if (!counterpart.resolved) {
-      // A counterpart that cannot be resolved because the source failed is a failed attempt with the source failure
-      // code (`source_unavailable` is the catalogue's reason for an `unavailable` source, T21 `availabilityReasonOf`);
-      // a counterpart the source does not list or bind is `not_available`.
+      // A counterpart that cannot be resolved because the source failed keeps the source failure as the catalogue
+      // reports it (architecture.md 7.3, OD-56): the closed SourceError code and HTTP status, or the code of the
+      // listing's availability reason, never another code and never provider text (T10-F10). As for a failed
+      // selection retrieval, `not_available` is a `not_available` attempt and any other code a failed one. A
+      // counterpart the source does not list or bind is `not_available`.
       if (counterpart.reason === 'source_unavailable') {
-        record('failed', { code: 'unavailable', sourceId, path: null, httpStatus: null });
+        const { failure } = counterpart;
+        const code = counterpartFailureCode(failure);
+        const httpStatus = failure.kind === 'source_error' ? failure.httpStatus : null;
+        record(code === 'not_available' ? 'not_available' : 'failed', { code, sourceId, path: null, httpStatus });
       } else {
         record('not_available', { code: 'not_available', sourceId, path: null, httpStatus: null });
       }
@@ -367,6 +377,7 @@ function verify(input: VerificationInput, retrieved: Retrieved): VerifyResult {
     attempts: retrieved.retrievals.map((retrieval) => ({
       sourceId: retrieval.sourceId,
       attemptedAt: retrieval.retrievedAt,
+      failureCode: retrieval.failure?.code ?? null,
     })),
   });
 }
