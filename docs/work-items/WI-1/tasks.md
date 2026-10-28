@@ -92,7 +92,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | T59 | football-data adapter and probe corrections (FU-1, FU-2, FU-4, FU-5) | IMPL | backend-developer | T14 | DONE | 1 | 7845e6f | `docs/work-items/WI-1/evidence/T59-gates.txt` |
 | T60 | Security check of the probe diagnostics (FU-2) | VERIFY | security-reviewer | T59 | DONE | 1 | 7120696 | `docs/work-items/WI-1/evidence/T60-gates.txt` |
 | T61 | Second capability probe run (FU-3) | IMPL | Orchestrator | T60 | DONE | 1 | 406b62f | `docs/work-items/WI-1/evidence/T61-gates.txt` |
-| T62 | Provider research addendum and architecture corrections (FU-3, FU-6, FU-7) | IMPL | architect | T61 | IN_PROGRESS | 1 | - | - |
+| T62 | Provider research addendum and architecture corrections (FU-3, FU-6, FU-7) | IMPL | architect | T61 | DONE | 1 | c8a8498 | `docs/work-items/WI-1/evidence/T62-gates.txt` |
 | T63 | Requirements corrections from the provider research (FU-7) | IMPL | product-manager | T14 | DONE | 1 | f6226fe | `docs/work-items/WI-1/evidence/T63-gates.txt` |
 | T64 | Explicit timeouts for workflow-heavy ingestion tests | IMPL | qa-engineer | T52 | DONE | 1 | 4bda364 | `docs/work-items/WI-1/evidence/T64-gates.txt` |
 | T65 | Localized import error and fact reason texts | IMPL | frontend-developer | T44 | DONE | 1 | 77bf965 | `docs/work-items/WI-1/evidence/T65-gates.txt` |
@@ -1236,6 +1236,12 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 - Scope: (OD-60) from `research/football-data-capabilities-2.md`: addendum to `provider-research.md` sections 2.2, 2.4 and 7 (CL league-phase matchday selection, ELC, PD, BL1, SA, FL1), the failing rule of the CL refusal and the FU-6 fix with its level (an adapter mapping defect: the files and tests of a correction task; a shared domain rule such as the `TeamName` pattern: a security-control and contract change, escalated with its Contract Safety classification), the outcome of PD-21 to PD-24 in section 9; FU-7: record the section 2.4 confirmations in `contracts/provider-ports.md` section 1.4 and U-20, and correct `architecture-delta.md` section 11.10 (terms published on /about, attribution clause 7.1, republishing not stated, PD-18 stands). No legal assessment, no model names.
 - Acceptance criteria: R-281
 - Verification: `orch scan models docs/work-items/WI-1/architecture/provider-research.md` -> exit 0 ; `orch scan models docs/work-items/WI-1/architecture/architecture-delta.md` -> exit 0 ; `orch validate --work-item 'WI-1' --at .` -> exit 0
+- Agent result: PASS (the agent has no shell; the Orchestrator committed the three files on its behalf with the agent's commit message). Addendum to `provider-research.md` (second run P2: ELC, PD, BL1, SA, FL1 confirmed with standings, seven LIVE_DATA competitions confirmed with PL and BSA, PD-14 minimum met; CL league-phase refused by the shared `TeamName` rule at `/teams/29/name`, not a mapping defect; 537320 bytes within the 1 MiB limit, T60-F04 closed; knockout standings `unknown`; section 9 outcomes PD-21 to PD-24); FU-7 applied to `contracts/provider-ports.md` section 1.4 and U-20, U-22, and to `architecture-delta.md` section 11.10 (terms on /about, clause 7.1, republishing not stated, PD-18 stands). FU-6 options for the Product Owner (DR-6, HIGH-06 overlapping HIGH-03): (a) widen `TeamName` by the closed list `/` and `’` with a third run to confirm, (b) keep the rule, (c) partial selection (not recommended); recommendation (a) in WI-1 or (b) now with (a) in the next work item. Proposed follow-ups FU-9 to FU-15.
+- Orchestrator verification: `orch scan models` on `provider-research.md` and `architecture-delta.md` exit 0; `orch validate --work-item 'WI-1' --at .` exit 0; marker-scan of the architecture folder PASS; ownership against the integration tracker; main working tree unchanged; 2026-10-28.
+- Decisions: LOW-1 to LOW-8 (T14 text kept as history with "Update (T62)" blocks; P2 accounting by inference; 537320 bytes attributed to ELC by inference and 1 MiB kept; S-004 leagues ranked equal; local IDs DR-6, FU-9 to FU-15, U-31 to U-33; provider-ports 1.4 confirmations table; struck-through superseded text; no proposed contract file before the decision). Conflict noted: the requirements edge case on special characters (level 5) yields to the `TeamName` contract (level 2) and T10-F06 (level 3): such a name is refused, never altered. DR-6 and U-32 (third run consent) raised as E-16.
+- Human interventions: 0.
+- Agent usage: launches 1.
+- Integration commit(s): c8a8498 (merge --no-ff of task/WI-1/T62). Affected gates at c8a8498: FW-TRACKER PASS, FW-CONFIG PASS, PRJ-INSTALL PASS, PRJ-TYPECHECK PASS, PRJ-LINT PASS, PRJ-UNIT PASS, PRJ-INTEGRATION PASS, PRJ-CONTRACT PASS, PRJ-CONTRACT-ID PASS, PRJ-BUILD PASS, PRJ-E2E PASS, PRJ-A11Y PASS, PRJ-AUDIT PASS (evidence/T62-gates.txt, the evidence file of this task).
 
 ### T63: Requirements corrections from the provider research (FU-7)
 - Kind: IMPL
@@ -1793,6 +1799,7 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T21:36:30Z | T67 | Status DONE | integration commit 02f4a42; evidence/T67-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
 | 2026-10-28T21:41:24Z | T61 | Status DONE | integration commit 406b62f; evidence/T61-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
 | 2026-10-28T21:41:37Z | T62 | Status IN_PROGRESS (attempt 1) | orch next SELECT |
+| 2026-10-28T21:57:37Z | T62 | Status DONE | integration commit c8a8498; evidence/T62-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
 
 ## Recovery log
 
