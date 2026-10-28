@@ -1,4 +1,4 @@
-import type { Fact, SlideTrace } from '@edr/contracts';
+import type { Fact, Language, SlideTrace } from '@edr/contracts';
 import { useId, useMemo } from 'react';
 import { Link, useParams } from 'react-router';
 
@@ -7,6 +7,7 @@ import { blockReasonLabel, factKindLabel, manualCopy, valueCopy } from '../facts
 import { DisputeRecord } from '../facts/DisputeRecord';
 import { EvidenceTable } from '../facts/EvidenceTable';
 import { factValueText, matchLabel, teamNamesFrom, type TeamNames } from '../facts/format';
+import { factReasonText, UI_LANGUAGE } from '../facts/reasonText';
 import { loadSlideTrace, useHistoryApi } from './api';
 import { traceUsesAttestedFacts } from './attested';
 import { AttestedNote } from './AttestedNote';
@@ -169,15 +170,26 @@ function valueLabel(fact: Fact): string {
   }
 }
 
+interface TraceFactProps {
+  fact: Fact;
+  facts: readonly Fact[];
+  teams: TeamNames;
+  /** Language of the reason built from the closed codes; the interface language by default (OD-63, OD-64). */
+  language?: Language;
+}
+
 /**
  * One fact of the exported slide: status (MANUALLY_APPROVED labelled operator-attested, never verified), value,
- * reason, manual approval, publication block reported by the server, evidence per source and dispute record.
+ * reason, manual approval, publication block reported by the server, evidence per source and dispute record. The
+ * reason is built from the fact's closed codes in the interface language, as on the facts page (`factReasonText`,
+ * OD-63, OD-64); the server's English reason appears only where no code covers the case, marked `lang="en"`.
  */
-function TraceFact({ fact, facts, teams }: { fact: Fact; facts: readonly Fact[]; teams: TeamNames }) {
+function TraceFact({ fact, facts, teams, language = UI_LANGUAGE }: TraceFactProps) {
   const titleId = useId();
   const disputeId = useId();
   const title = factTitle(fact, facts, teams);
   const valueText = factValueText(fact, teams);
+  const reason = factReasonText(fact, language);
   return (
     <li className={styles.fact} data-status={fact.status} data-testid="trace-fact" data-fact-key={fact.factKey}>
       <article aria-labelledby={titleId}>
@@ -190,12 +202,12 @@ function TraceFact({ fact, facts, teams }: { fact: Fact; facts: readonly Fact[];
             <dt>{valueText === null ? valueCopy.none : valueLabel(fact)}</dt>
             <dd data-testid="trace-value">{valueText ?? '—'}</dd>
           </div>
-          {fact.reason === null || fact.reason === '' ? null : (
-            <div>
-              <dt>{valueCopy.reason}</dt>
-              <dd>{fact.reason}</dd>
-            </div>
-          )}
+          <div>
+            <dt>{valueCopy.reason}</dt>
+            <dd lang={reason.lang} data-testid="trace-reason" data-origin={reason.origin}>
+              {reason.text}
+            </dd>
+          </div>
           <div>
             <dt>{valueCopy.factKey}</dt>
             <dd>

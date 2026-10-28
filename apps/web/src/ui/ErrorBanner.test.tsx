@@ -50,7 +50,9 @@ describe('ErrorBanner', () => {
     expect(text).toContain('El dato está en disputa entre fuentes.');
   });
 
-  it('lists every import error in a table', () => {
+  it('shows only the rejection message for a rejected import, never a record table or the server message', () => {
+    // The import page lists these errors in its own table from the closed codes (OD-63); no current caller passes a
+    // rejection here, and the banner must not fall back to "Archivo n" labels or the English server text (OD-64).
     render(
       <ErrorBanner
         error={problemError({
@@ -62,20 +64,46 @@ describe('ErrorBanner', () => {
               record: '3',
               field: 'referee',
               problem: 'person_field',
-              message: 'Person field refused',
+              message: 'Person field refused: referee',
             },
-            { location: 'form', record: '/matches/1', field: null, problem: 'required_missing', message: 'Missing' },
+            {
+              location: 'form',
+              record: '/matches/1',
+              field: null,
+              problem: 'required_missing',
+              message: 'Missing required value',
+            },
           ],
         })}
       />,
     );
-    const table = screen.getByRole('table', { name: '2 errores en la importación' });
-    const rows = table.querySelectorAll('tbody tr');
-    expect(rows).toHaveLength(2);
-    expect(rows[0]?.textContent).toContain('Archivo 3');
-    expect(rows[0]?.textContent).toContain('referee');
-    expect(rows[0]?.textContent).toContain('Campo con datos de personas (no permitido)');
-    expect(rows[1]?.textContent).toContain('Formulario /matches/1');
+    const alert = screen.getByRole('alert');
+    const text = alert.textContent ?? '';
+    expect(text).toContain('La importación fue rechazada. No se guardó ningún dato.');
+    expect(screen.queryByRole('table')).toBeNull();
+    expect(text).not.toContain('Archivo');
+    expect(text).not.toContain('Formulario');
+    expect(text).not.toContain('Person field refused');
+    expect(text).not.toContain('Missing required value');
+    expect(text).not.toContain('referee');
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('lists validation issues as text only', () => {
+    render(
+      <ErrorBanner
+        error={problemError({
+          code: 'VALIDATION_FAILED',
+          status: 400,
+          errors: [{ path: 'name', message: '<img src=x onerror=alert(1)>' }],
+        })}
+      />,
+    );
+    const alert = screen.getByRole('alert');
+    expect(alert.textContent).toContain('Campos con errores');
+    expect(alert.querySelector('code')?.textContent).toBe('name');
+    expect(alert.textContent).toContain('<img src=x onerror=alert(1)>');
+    expect(alert.querySelector('img')).toBeNull();
   });
 
   it('explains a local access refusal without suggesting a login', () => {
