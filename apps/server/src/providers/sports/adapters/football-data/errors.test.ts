@@ -19,7 +19,8 @@ import { CatalogueConfig } from '../../../../platform/config/index.js';
 import { CapturingLogger } from '../../test/synthetic.js';
 import { VirtualClock } from '../../support/test/virtual-clock.js';
 
-import { footballDataRegistration } from './provider.js';
+import { ANONYMOUS_CLIENT_MARKER } from './constants.js';
+import { footballDataRegistration, isPositiveClient } from './provider.js';
 import {
   HARNESS_START,
   type Harness,
@@ -85,6 +86,40 @@ describe('authentication failures (R-248)', () => {
     const failure = await failureOf(h.clock.run(h.source.listCompetitions(discoveryCtx())));
     expect(failure.code).toBe('access_refused');
   });
+
+  it('uses the documented anonymous marker "anonymous" (FU-5; documentation, not yet observed)', () => {
+    expect(ANONYMOUS_CLIENT_MARKER).toBe('anonymous');
+    expect(isPositiveClient(new Headers({ 'X-Authenticated-Client': ANONYMOUS_CLIENT_MARKER }))).toBe(false);
+    expect(isPositiveClient(new Headers({ 'X-Authenticated-Client': CLIENT_MARKER }))).toBe(true);
+  });
+
+  it.each([
+    ['a competition list', 'GET /v4/competitions'],
+    ['a selection match list', MD1],
+  ])(
+    'treats a 403 carrying the anonymous marker on %s as access refused, never retried (FU-5, T11H-F04)',
+    async (_label, key) => {
+      const h = harness({ token: TEST_MARKER_TOKEN, observe: true });
+      const reply = replyOf('error-403-authenticated.json', {
+        headers: { 'X-Authenticated-Client': ANONYMOUS_CLIENT_MARKER },
+      });
+      let failure: SourceError;
+      if (key === MD1) {
+        const ref = await md1Ref(h);
+        h.egress.on(MD1, reply);
+        failure = await failureOf(h.clock.run(h.source.fetchSelection(ref, researchCtx())));
+      } else {
+        h.egress.on(key, reply);
+        failure = await failureOf(h.clock.run(h.source.listCompetitions(discoveryCtx())));
+      }
+      expect(failure).toMatchObject({ code: 'access_refused', httpStatus: 403 });
+      expect(availabilityReasonOf(failure)).toBe('access_refused');
+      expect(h.egress.callsTo(key)).toHaveLength(1);
+      const response = h.observations.filter((o) => o.type === 'response').at(-1);
+      expect(response).toMatchObject({ status: 403, classifiedPositive: false, authenticatedClientPresent: true });
+      expect(outputsOf(h, failure)).not.toContain(TEST_MARKER_TOKEN);
+    },
+  );
 });
 
 describe('unavailable competitions and seasons (R-253, R-286)', () => {

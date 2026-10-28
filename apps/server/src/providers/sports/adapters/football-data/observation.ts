@@ -4,10 +4,53 @@
  * the observer never sees a raw body, a header value other than the two counters and the API version, or the
  * `X-Authenticated-Client` value: it receives presence booleans and counts, the names (not values) of dropped keys,
  * response sizes and the parsed counters.
+ *
+ * Failure diagnostics (FU-2, OD-60; T11H-F02): for a refused or rejected response the observer also receives the egress
+ * refusal kind from a closed list, the stage that rejected it from a closed list, and the failing validation path
+ * reduced to schema field names and numeric indices (every other segment replaced by `*`). No value of the body, of a
+ * header or of the request ever reaches a diagnostic.
  */
+import {
+  CompetitionListingSchema,
+  SeasonListingSchema,
+  SelectionSnapshotSchema,
+  StageListingSchema,
+} from '@edr/contracts';
+
+import type { EgressError } from '../../../../platform/net/index.js';
+
+import {
+  CompetitionDetailSchema,
+  CompetitionsResponseSchema,
+  MatchesResponseSchema,
+  StandingsResponseSchema,
+} from './schemas.js';
 
 /** Request kinds, for sizes and observations. */
 export type RequestKind = 'competitions' | 'competition' | 'stageDiscovery' | 'matches' | 'standings';
+
+/** Resource kinds of a diagnostic: the request kinds plus the selection snapshot (closed list). */
+export const DIAGNOSTIC_RESOURCES = [
+  'competitions',
+  'competition',
+  'stageDiscovery',
+  'matches',
+  'standings',
+  'selection',
+] as const;
+export type DiagnosticResource = (typeof DIAGNOSTIC_RESOURCES)[number];
+
+/**
+ * Egress refusal kinds recorded for the probe (closed list): `too_large` (decoded body above its cap), `redirect`
+ * (a redirect response, never followed) and `other` (any other refusal: a foreign origin, or an invalid request such as
+ * the probe's request cap).
+ */
+export const EGRESS_REFUSAL_KINDS = ['too_large', 'redirect', 'other'] as const;
+export type EgressRefusalKind = (typeof EGRESS_REFUSAL_KINDS)[number];
+
+/** Stages that reject a received response (closed list). */
+export const REJECTION_STAGES = ['not_json', 'allow_list', 'domain'] as const;
+export type RejectionStage = (typeof REJECTION_STAGES)[number];
 
 /** One HTTP response (or transport failure) as the observer sees it. */
 export interface ResponseObservation {
@@ -18,6 +61,8 @@ export interface ResponseObservation {
   readonly status: number | null;
   /** Closed failure code of the attempt (`timeout`, `unavailable`, `invalid`, ...), null on a received response. */
   readonly failure: string | null;
+  /** The egress refusal kind when the egress client refused the request or its response, else null. */
+  readonly refusal: EgressRefusalKind | null;
   /** Decoded bytes of the body. */
   readonly bytes: number | null;
   readonly requestsAvailable: number | null;
@@ -51,7 +96,19 @@ export interface BodyObservation {
   readonly totalTables: number | null;
 }
 
-export type RequestObservation = ResponseObservation | BodyObservation;
+/**
+ * A received response (or the adapter output built from it) that was rejected: by `JSON.parse`, by the allow-list
+ * schema of the resource, or by the shared domain validation. `path` is a diagnostic path (`diagnosticPath`): schema
+ * field names and numeric indices only, never a value; null when the stage reports none.
+ */
+export interface RejectionObservation {
+  readonly type: 'rejection';
+  readonly resource: DiagnosticResource;
+  readonly stage: RejectionStage;
+  readonly path: string | null;
+}
+
+export type RequestObservation = ResponseObservation | BodyObservation | RejectionObservation;
 export type RequestObserver = (observation: RequestObservation) => void;
 
 /** Mapped field paths per kind (`[]` iterates an array). */
@@ -210,4 +267,112 @@ export function apiVersionToken(value: string | null): string | null {
     return null;
   }
   return /^v[0-9]{1,3}$/.test(value) ? value : 'other';
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Failure diagnostics (FU-2; T11H-F02)
+// ---------------------------------------------------------------------------------------------------------------
+
+/** The refusal kind of an egress failure, or null when it is not a refusal (timeout, network, cancellation). */
+export function egressRefusalKind(error: EgressError): EgressRefusalKind | null {
+  switch (error.kind) {
+    case 'too_large':
+    case 'redirect':
+      return error.kind;
+    case 'denied':
+    case 'invalid_request':
+      return 'other';
+    case 'timeout':
+    case 'network':
+    case 'aborted':
+      return null;
+  }
+}
+
+/** A schema field name usable as a diagnostic segment. */
+const FIELD_NAME = /^[A-Za-z_][A-Za-z0-9_]{0,63}$/;
+/** A numeric array index (the largest array cap is below 100,000). */
+const INDEX = /^(0|[1-9][0-9]{0,4})$/;
+const MAX_DIAGNOSTIC_SEGMENTS = 24;
+const MAX_DIAGNOSTIC_PATH_LENGTH = 200;
+
+function isRecordLike(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+/**
+ * The object keys declared by `schemas` (walked through every nested schema: objects, arrays, unions, optionals,
+ * nullables, pipes, refinements). Only declared keys are collected, never literal or enum values.
+ */
+export function declaredFieldNames(schemas: readonly unknown[]): ReadonlySet<string> {
+  const names = new Set<string>();
+  const seen = new Set<unknown>();
+  const visit = (schema: unknown, depth: number): void => {
+    if (!isRecordLike(schema) || seen.has(schema) || depth > 64) {
+      return;
+    }
+    seen.add(schema);
+    const internals = schema['_zod'];
+    const def = isRecordLike(internals) ? internals['def'] : undefined;
+    if (!isRecordLike(def)) {
+      return;
+    }
+    if (def['type'] === 'object' && isRecordLike(def['shape'])) {
+      for (const [key, value] of Object.entries(def['shape'])) {
+        if (FIELD_NAME.test(key)) {
+          names.add(key);
+        }
+        visit(value, depth + 1);
+      }
+    }
+    for (const [key, value] of Object.entries(def)) {
+      if (key === 'shape') {
+        continue;
+      }
+      if (Array.isArray(value)) {
+        for (const item of value as unknown[]) {
+          visit(item, depth + 1);
+        }
+      } else {
+        visit(value, depth + 1);
+      }
+    }
+  };
+  for (const schema of schemas) {
+    visit(schema, 0);
+  }
+  return names;
+}
+
+/**
+ * The closed list of segment names a diagnostic path may hold: the field names declared by the adapter's allow-list
+ * schemas and by the shared domain schemas its output passes (listings and the selection snapshot).
+ */
+export const DIAGNOSTIC_FIELD_NAMES: ReadonlySet<string> = declaredFieldNames([
+  CompetitionsResponseSchema,
+  CompetitionDetailSchema,
+  MatchesResponseSchema,
+  StandingsResponseSchema,
+  CompetitionListingSchema,
+  SeasonListingSchema,
+  StageListingSchema,
+  SelectionSnapshotSchema,
+]);
+
+/**
+ * A validation path (`/teams/12/name`) reduced to a diagnostic path: each segment is kept only when it is a numeric
+ * index or a declared schema field name (`DIAGNOSTIC_FIELD_NAMES`); any other segment becomes `*`. Null for anything
+ * that is not a path. The result can never hold a value of the validated input (T11H-F02).
+ */
+export function diagnosticPath(path: unknown): string | null {
+  if (typeof path !== 'string' || path.length > MAX_DIAGNOSTIC_PATH_LENGTH || !path.startsWith('/')) {
+    return null;
+  }
+  if (path === '/') {
+    return '/';
+  }
+  const segments = path.slice(1).split('/').slice(0, MAX_DIAGNOSTIC_SEGMENTS);
+  return segments
+    .map((segment) => (INDEX.test(segment) || DIAGNOSTIC_FIELD_NAMES.has(segment) ? `/${segment}` : '/*'))
+    .join('');
 }
