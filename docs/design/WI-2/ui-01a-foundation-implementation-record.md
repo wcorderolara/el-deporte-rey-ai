@@ -4,6 +4,9 @@ Status: Accepted by Product Owner after personal review of the local gallery
 Date: 2026-10-29
 Branch: `work/WI-2.1-ui-01a`
 Starting commit: `2270ebe`
+Accepted implementation checkpoint commit: `a9f3923` (`feat(web): establish accepted UI-01A Tailwind v4 design system foundation`).
+
+This hash identifies the accepted implementation and its preparation documents. The subsequent documentation commit records this hash without changing application code.
 
 Acceptance checkpoint: the Product Owner approved the visual result and accepted UI-01A in the current conversation. Committing this increment on its current feature branch is authorized. UI-01B is prepared for review only; implementation requires a separate approval.
 
