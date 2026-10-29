@@ -1,6 +1,6 @@
 # WI-2.1 — Product Owner Decision Register
 
-Status: Confirmed product and frontend direction; implementation not authorized
+Status: Confirmed product and frontend direction; UI-01A accepted by Product Owner
 Date: 2026-10-29
 Source: Product Owner design-refinement brief for WI-2.1
 
@@ -110,4 +110,4 @@ No conflict was found with the product scope, data/verification model, approval 
 
 ## 7. Decision status
 
-PD-UI-01 through PD-UI-20 are confirmed for design refinement. They authorize documentation and future planning only. Implementation still requires explicit Product Owner approval of the applicable UI phase.
+PD-UI-01 through PD-UI-20 remain confirmed. The Product Owner personally reviewed the local gallery, approved the visual result, accepted UI-01A, and authorized its commit on the current feature branch. UI-01B is prepared as a documentation scope only. UI-01B and every later UI phase still require explicit Product Owner approval for implementation.

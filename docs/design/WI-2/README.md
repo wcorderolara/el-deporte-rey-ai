@@ -7,6 +7,8 @@
 - [Static content format roadmap](static-content-format-roadmap.md)
 - [Incremental UX/UI implementation plan](incremental-ux-ui-implementation-plan.md)
 - [Tailwind CSS v4 migration strategy](tailwind-v4-migration-strategy.md)
+- [UI-01A foundation implementation record](ui-01a-foundation-implementation-record.md)
+- [UI-01B shell and navigation scope](ui-01b-shell-and-navigation-scope.md)
 - [Future SaaS readiness and migration considerations](future-saas-readiness-considerations.md)
 - [Open design dependencies and questions](open-design-dependencies.md)
 

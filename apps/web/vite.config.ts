@@ -14,6 +14,7 @@
  */
 import { fileURLToPath } from 'node:url';
 
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath, type ProxyOptions } from 'vite';
 
@@ -71,7 +72,7 @@ export default defineConfig({
   envDir: WEB_DIR,
   envPrefix: 'VITE_',
   clearScreen: false,
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: [
       {

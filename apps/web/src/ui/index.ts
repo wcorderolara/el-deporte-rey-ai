@@ -11,4 +11,5 @@ export { ListingProvenance, type ListingProvenanceProps } from './ListingProvena
 export { ProvenanceLabel, type ProvenanceLabelProps } from './ProvenanceLabel';
 export { SafeReference, type SafeReferenceProps } from './SafeReference';
 export { StatusBadge, type BadgeTone, type StatusBadgeProps } from './StatusBadge';
+export * from './primitives';
 export * from './copy';

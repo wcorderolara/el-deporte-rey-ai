@@ -1,9 +1,9 @@
 # WI-2.1 — Product and UX/UI Redesign Proposal
 
-Status: Refined by confirmed Product Owner decisions; implementation approval pending
+Status: Refined by confirmed Product Owner decisions; UI-01A accepted by Product Owner
 Date: 2026-10-29
 Audience: Product Owner, design, frontend, QA
-Implementation constraint: analysis only; no application code or API contract changes
+Implementation constraint: UI-01A foundation only; no application-shell, workflow, backend, or API contract changes
 
 ## 1. Product vision and executive assessment
 

@@ -67,7 +67,7 @@ These do not block the current-contract review workspace (UI-04A):
 - New provider/input/shared-host/credential conditions still trigger the existing security-review requirements.
 - Additive contract work for formats must follow PD-11 and the contract-change process.
 - The team-name widening and other carried WI-1 open items remain outside this design refinement unless separately authorized.
-- Tailwind CSS v4 installation/configuration waits for explicit UI-01 approval; exact packages and versions must satisfy the repository dependency policy.
+- Tailwind CSS v4 installation/configuration was approved, implemented, and accepted in UI-01A with `tailwindcss` and `@tailwindcss/vite` pinned to 4.3.3. Explicit implementation approval is still required for UI-01B or feature migration.
 - Next.js is not an open WI-2.1 implementation choice. It is a future architecture candidate requiring a separate decision record.
 - The future SaaS business model, identity/tenant model, isolation requirements, cloud persistence, operations, and migration funding are intentionally undecided and do not block WI-2.
 

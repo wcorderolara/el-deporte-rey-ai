@@ -1,0 +1,192 @@
+/*
+ * El Deporte Rey AI design tokens.
+ *
+ * Tailwind theme variables are the source of truth for new primitives. The legacy aliases in global.css point to
+ * the compatibility tokens below so untouched CSS Modules keep their current light appearance until migration.
+ */
+
+@font-face {
+  font-family: 'Inter';
+  src: url('../../../../assets/fonts/Inter-Regular.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('../../../../assets/fonts/Inter-Bold.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  src: url('../../../../assets/fonts/Montserrat-ExtraBold.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 800;
+}
+
+@theme static {
+  /* Approved provisional brand palette. */
+  --color-brand-purple: #5b2a86;
+  --color-brand-purple-deep: #2e1145;
+  --color-brand-gold: #d4af37;
+  --color-brand-blue: #1f4fb8;
+  --color-brand-white: #ffffff;
+
+  /* Premium dark studio surfaces informed by the selected hybrid Stitch reference. */
+  --color-surface-canvas: #0d0b16;
+  --color-surface-subtle: #14121d;
+  --color-surface-raised: #1c1a26;
+  --color-surface-card: #201e2a;
+  --color-surface-overlay: #2a2246;
+  --color-surface-inverse: #f7f4fb;
+  --color-surface-scrim: rgb(7 5 13 / 72%);
+
+  --color-text-primary: #f7f4fb;
+  --color-text-secondary: #c2c6d7;
+  --color-text-subtle: #9296a8;
+  --color-text-inverse: #18131f;
+  --color-text-link: #b0c6ff;
+
+  --color-border-subtle: #312852;
+  --color-border-default: #424655;
+  --color-border-strong: #6e7284;
+
+  /* Semantic meanings remain independent from brand colors. */
+  --color-success: #78dc9a;
+  --color-success-surface: #112a1c;
+  --color-warning: #f5c451;
+  --color-warning-surface: #30250c;
+  --color-danger: #ffb4ab;
+  --color-danger-surface: #3b1418;
+  --color-info: #b0c6ff;
+  --color-info-surface: #152442;
+  --color-focus: #b0c6ff;
+  --color-verified: #78dc9a;
+  --color-unverified: #f5c451;
+  --color-attested: #d3bbff;
+  --color-attested-surface: #281942;
+  --color-demo: #ffb77c;
+  --color-demo-surface: #352014;
+
+  /* Legacy compatibility palette: do not use for new primitives. */
+  --color-legacy-text: #1a1a1a;
+  --color-legacy-text-muted: #4a4a4a;
+  --color-legacy-canvas: #ffffff;
+  --color-legacy-surface: #f5f5f5;
+  --color-legacy-border: #767676;
+  --color-legacy-accent: #0b4f8a;
+  --color-legacy-focus: #0b4f8a;
+  --color-legacy-error-text: #8a1111;
+  --color-legacy-error-surface: #fdecec;
+  --color-legacy-warning-text: #6b3d00;
+  --color-legacy-warning-surface: #fff4e0;
+
+  /* Typography. */
+  --font-display: 'Montserrat', 'Arial Black', sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-legacy: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.375rem;
+  --text-body-md: 1rem;
+  --text-body-md--line-height: 1.625rem;
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.75rem;
+  --text-heading-sm: 1.25rem;
+  --text-heading-sm--line-height: 1.625rem;
+  --text-heading-md: 1.75rem;
+  --text-heading-md--line-height: 2.125rem;
+  --text-heading-lg: 2.5rem;
+  --text-heading-lg--line-height: 2.75rem;
+  --text-display: 4rem;
+  --text-display--line-height: 4.25rem;
+
+  --tracking-display: -0.035em;
+  --tracking-heading: -0.02em;
+  --tracking-label: 0.08em;
+
+  /* 4px-derived spacing plus named layout dimensions. */
+  --spacing: 0.25rem;
+  --spacing-press: 1px;
+  --spacing-touch: 2.75rem;
+  --spacing-gutter-mobile: 1rem;
+  --spacing-gutter-tablet: 1.5rem;
+  --spacing-gutter-desktop: 2rem;
+  --spacing-content: 80rem;
+  --spacing-reading: 46rem;
+  --spacing-sidebar: 20rem;
+  --spacing-inspector: 22.5rem;
+
+  /* Shape and border widths. */
+  --radius-control: 0.375rem;
+  --radius-card: 0.625rem;
+  --radius-panel: 1rem;
+  --radius-pill: 9999px;
+  --border-width-hairline: 1px;
+  --border-width-strong: 2px;
+  --border-width-spinner: 2px;
+  --border-width-alert: 4px;
+
+  /* Elevation and focus. */
+  --shadow-control: 0 1px 0 rgb(255 255 255 / 4%);
+  --shadow-card: 0 12px 32px rgb(4 2 10 / 28%);
+  --shadow-overlay: 0 24px 64px rgb(4 2 10 / 48%);
+  --shadow-focus: 0 0 0 3px rgb(176 198 255 / 38%);
+  --shadow-gold-glow: 0 0 16px rgb(212 175 55 / 28%);
+
+  /* Responsive layout. */
+  --breakpoint-sm: 37.5rem;
+  --breakpoint-md: 56.25rem;
+  --breakpoint-lg: 75rem;
+  --breakpoint-xl: 90rem;
+
+  /* Motion. */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1.2);
+  --duration-fast: 120ms;
+  --duration-standard: 200ms;
+  --duration-slow: 320ms;
+  --default-transition-duration: var(--duration-standard);
+  --default-transition-timing-function: var(--ease-standard);
+}
+
+:root {
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: var(--color-legacy-focus);
+  --control-border-width: var(--border-width-hairline);
+  --control-disabled-opacity: 0.52;
+}
+
+@utility border-hairline {
+  border-style: solid;
+  border-width: var(--border-width-hairline);
+}
+
+@utility border-strong {
+  border-style: solid;
+  border-width: var(--border-width-strong);
+}
+
+@utility border-spinner {
+  border-style: solid;
+  border-width: var(--border-width-spinner);
+}
+
+@utility border-alert {
+  border-style: solid;
+  border-width: var(--border-width-hairline);
+  border-left-width: var(--border-width-alert);
+}
+
+@utility focus-studio {
+  --focus-ring-color: var(--color-focus);
+}

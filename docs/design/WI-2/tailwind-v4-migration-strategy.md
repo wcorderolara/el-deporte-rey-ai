@@ -1,8 +1,10 @@
 # WI-2.1 — Tailwind CSS v4 Migration Strategy
 
-Status: Approved technical direction; implementation not authorized
+Status: UI-01A foundation accepted by Product Owner; feature and shell migration not authorized
 Date: 2026-10-29
 Applies to: UI-01 through UI-06 on the existing React/Vite frontend
+
+Implementation checkpoint (UI-01A): M0 and the token/global portion of M1 are complete; the initial primitive subset of M2 is complete. Preflight remains intentionally disabled during coexistence. M3 application shell and all M4 feature slices have not started.
 
 ## 1. Decision and objective
 
