@@ -1,10 +1,10 @@
 # WI-2.1 — Tailwind CSS v4 Migration Strategy
 
-Status: UI-01A foundation accepted by Product Owner; feature and shell migration not authorized
+Status: UI-01A foundation and UI-01B shell accepted; UI-02 feature slice prepared
 Date: 2026-10-29
 Applies to: UI-01 through UI-06 on the existing React/Vite frontend
 
-Implementation checkpoint (UI-01A): M0 and the token/global portion of M1 are complete; the initial primitive subset of M2 is complete. Preflight remains intentionally disabled during coexistence. M3 application shell and all M4 feature slices have not started.
+Implementation checkpoint: M0 and the token/global portion of M1 are complete; the initial primitive subset of M2 is complete. M3 application shell is implemented and accepted under UI-01B. Preflight remains disabled. All M4 feature slices remain unstarted at this checkpoint. The two obsolete shell/layout CSS Modules were removed after their replacement passed component, functional E2E, accessibility, and responsive checks; feature CSS Modules are unchanged.
 
 ## 1. Decision and objective
 

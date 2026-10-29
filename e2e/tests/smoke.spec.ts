@@ -19,12 +19,11 @@ test.describe('Application shell (R-235)', () => {
 
     const navigation = page.getByRole('navigation', { name: 'Navegación principal' });
     await expect(navigation).toBeVisible();
-    await expect(navigation.getByRole('link')).toHaveText([
-      'Proyectos',
-      'Importaciones manuales',
-      'Marca y plantillas',
-    ]);
-    await expect(navigation.getByRole('link', { name: 'Proyectos' })).toHaveAttribute('aria-current', 'page');
+    await expect(navigation.getByRole('link')).toHaveCount(6);
+    for (const name of ['Inicio', 'Crear contenido', 'Mis proyectos', 'Plantillas', 'Mi marca', 'Datos']) {
+      await expect(navigation.getByRole('link', { name, exact: true })).toBeVisible();
+    }
+    await expect(navigation.getByRole('link', { name: 'Inicio', exact: true })).toHaveAttribute('aria-current', 'page');
     await expect(page.getByRole('main')).toBeVisible();
   });
 

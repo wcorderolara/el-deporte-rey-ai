@@ -1,6 +1,6 @@
 # WI-2.1 — Incremental UX/UI Implementation Plan
 
-Status: UI-01A accepted by Product Owner; UI-01B and later phases not authorized for implementation
+Status: UI-01A and UI-01B accepted; UI-02 scope prepared
 Date: 2026-10-29
 
 ## 1. Delivery principles
@@ -36,9 +36,9 @@ Outcome: a reusable premium sports-studio foundation without changing workflows.
 Increment split:
 
 - **UI-01A — foundation (accepted by Product Owner):** Tailwind CSS v4/Vite integration, centralized tokens, controlled legacy aliases, preflight decision, Button, IconButton, Card, Badge, Input, Select, Textarea, Alert, EmptyState, LoadingState, tests, and an isolated review gallery.
-- **UI-01B — shell (not started or authorized):** application shell, primary navigation, project context, and any remaining shell-specific primitives. UI-01A deliberately makes no shell or feature-screen changes.
+- **UI-01B — shell (implemented, verified, and accepted):** application shell, primary navigation, route-derived project context, responsive disclosure, and breadcrumbs. Feature screens remain unchanged.
 
-The prepared UI-01B scope, acceptance criteria, risks, and dependencies are in `ui-01b-shell-and-navigation-scope.md`. This checkpoint authorizes documentation preparation only.
+The UI-01B scope is in `ui-01b-shell-and-navigation-scope.md`; results and acceptance are in `ui-01b-shell-implementation-report.md`. The next increment is prepared in `ui-02-dashboard-and-creation-entry-scope.md`; UI-02 application code has not started at the UI-01B checkpoint.
 
 Scope:
 

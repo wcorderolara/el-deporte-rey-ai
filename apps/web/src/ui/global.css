@@ -2,6 +2,7 @@
  * Tailwind v4 foundation. Preflight is intentionally not imported during the incremental migration: its margin,
  * padding and border resets would change legacy CSS Module screens before their owning feature is migrated.
  */
+@layer theme, base, components, utilities;
 @import 'tailwindcss/theme.css' layer(theme);
 @import './tokens.css';
 @import 'tailwindcss/utilities.css' layer(utilities);
@@ -38,8 +39,10 @@ body {
   margin: 0;
 }
 
-a {
-  color: var(--edr-color-accent);
+@layer base {
+  a {
+    color: var(--edr-color-accent);
+  }
 }
 
 :focus-visible {

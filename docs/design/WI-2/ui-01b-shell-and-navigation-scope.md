@@ -1,6 +1,6 @@
 # UI-01B — Application Shell and Navigation Scope
 
-Status: Prepared for Product Owner approval; implementation not started
+Status: Implemented, verified, and accepted by Product Owner
 
 ## Objective
 
@@ -36,4 +36,6 @@ Feature-screen redesign, new formats, workflow changes, approval changes, backen
 - Project context must tolerate absent or failed project data and must not disrupt existing route focus behavior.
 - Official logo and KETSI assets remain pending; use the approved neutral placeholders and provisional brand tokens.
 - Stitch contains unsupported features and external assets; adapt its visual hierarchy through existing React components and local tokens.
-- UI-01A acceptance is complete. UI-01B implementation still requires explicit Product Owner approval.
+- UI-01A and UI-01B are accepted. The Product Owner requested closure and progression to the next increment; its scope is prepared separately for UI-02.
+
+Implementation results and final route mappings are recorded in `ui-01b-shell-implementation-report.md`.
