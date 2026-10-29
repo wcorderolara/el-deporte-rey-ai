@@ -10,7 +10,7 @@
 | Authorization | Product Owner request of 2026-10-27 via orchestrate analyze: requirements analysis only, no implementation. No merge, push or deploy is authorized. |
 | Config sha256 | `6614e48a55c0252c3962656d71eeec2dd29d537309bb39828a6df78b01824354` |
 | Last gate run | final (regression on `main` plus the configuration update), T70 `evidence/T70-gates.txt` at 7ef3db7: 15 PASS, 0 FAIL, 0 NOT RUN (2026-10-28) |
-| Work-item status | PO_ACCEPTANCE |
+| Work-item status | CLOSED |
 
 Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orchestrate/workflows/task-tracking.md. Only the Orchestrator edits this file.
 
@@ -1901,6 +1901,9 @@ Rules: /Users/waltercordero/Documents/Training/vetclaims-ai-agents/plugins/orche
 | 2026-10-28T23:16:44Z | T69 | Status DONE | integration commit 7569d12; evidence/T69-gates.txt PASS; Orchestrator acceptance (ownership, merged-state gates; PD-25) |
 | 2026-10-28T23:16:59Z | T70 | Status IN_PROGRESS (attempt 1); regression on main content plus the configuration update, run by the Orchestrator per closing.md section 3 item 4 | orch next SELECT |
 | 2026-10-28T23:18:49Z | T70 | Status DONE | evidence/T70-gates.txt PASS at 7ef3db7 (commit e72ee4c) |
+| 2026-10-29T14:15:59Z | - | Metrics recorded (orch metrics) | close |
+| 2026-10-29T14:15:59Z | - | Worktree cleanup: 23 clean, merged worktrees removed; the Product Owner confirmed that the ignored files (installed packages, build output, caches including the Playwright browser download of WI-1-T24; no token file, no application data) may be deleted ("Yes, remove all"), so the finished task and demo worktrees holding them were removed with --include-ignored; the integration, verify and T69 worktrees stay until the closure (closing.md section 6) | Product Owner 2026-10-29 |
+| 2026-10-29T14:16:13Z | - | Work-item status CLOSED (last tracker change; the closure registry decides closure) | T69, T70 DONE; regression evidence/T70-gates.txt PASS; metrics recorded; cleanup applied |
 
 ## Recovery log
 
