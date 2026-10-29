@@ -1,0 +1,12 @@
+{
+  "schema": "orchestrate/closures@1",
+  "closures": [
+    {
+      "workItem": "WI-1",
+      "closingCommit": "b3a50d25daab90ef7850718865b2f4db5b4e8598",
+      "recordedAt": "2026-10-29T15:43Z",
+      "recordedBy": "wcorderolara",
+      "basis": "Merge 1 cefc4eb (work item WI-1) and merge 2 2e6f423 (close records) by the Product Owner on main; regression task T70 final gates PASS 15 of 15 (evidence/T70-gates.txt at 7ef3db7); merged tip b3a50d25daab90ef7850718865b2f4db5b4e8598"
+    }
+  ]
+}
