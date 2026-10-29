@@ -15,7 +15,7 @@ test.describe('Application shell (R-235)', () => {
     await expect(page).toHaveURL(/\/$/);
     await expect(page).toHaveTitle('El Deporte Rey GT');
 
-    await expect(page.getByRole('heading', { level: 1, name: 'Proyectos' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Tu próximo contenido empieza aquí' })).toBeVisible();
 
     const navigation = page.getByRole('navigation', { name: 'Navegación principal' });
     await expect(navigation).toBeVisible();
@@ -29,7 +29,7 @@ test.describe('Application shell (R-235)', () => {
 
   test('shows no login, account or sign-in element', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1, name: 'Proyectos' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Tu próximo contenido empieza aquí' })).toBeVisible();
 
     await expect(page.locator('input[type="password"]')).toHaveCount(0);
     await expect(page.locator('input[autocomplete~="username"], input[type="email"]')).toHaveCount(0);

@@ -24,13 +24,13 @@ describe('App shell (R-235)', () => {
   it('opens directly on the project list', async () => {
     const router = renderAt('/');
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Proyectos' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Tu próximo contenido empieza aquí' })).toBeTruthy();
     expect(router.state.location.pathname).toBe('/');
   });
 
   it('has no login, account or sign-in element', async () => {
     renderAt('/');
-    await screen.findByRole('heading', { level: 1, name: 'Proyectos' });
+    await screen.findByRole('heading', { level: 1, name: 'Tu próximo contenido empieza aquí' });
 
     expect(document.body.textContent).not.toMatch(LOGIN_WORDING);
     expect(document.querySelector('input[type="password"]')).toBeNull();
@@ -44,7 +44,7 @@ describe('App shell (R-235)', () => {
 
   it('provides landmarks, a skip link and a labelled main navigation', async () => {
     renderAt('/');
-    await screen.findByRole('heading', { level: 1, name: 'Proyectos' });
+    await screen.findByRole('heading', { level: 1, name: 'Tu próximo contenido empieza aquí' });
 
     expect(screen.getByRole('banner')).toBeTruthy();
     expect(screen.getByRole('main').id).toBe('main-content');
@@ -70,7 +70,7 @@ describe('App shell (R-235)', () => {
   it('navigates with the main navigation, marks the current page and moves focus to the main content', async () => {
     const user = userEvent.setup();
     renderAt('/');
-    await screen.findByRole('heading', { level: 1, name: 'Proyectos' });
+    await screen.findByRole('heading', { level: 1, name: 'Tu próximo contenido empieza aquí' });
 
     await user.click(screen.getByRole('link', { name: 'Datos' }));
 
@@ -86,7 +86,7 @@ describe('App shell (R-235)', () => {
   it('opens the existing creation route through the primary action', async () => {
     const user = userEvent.setup();
     const router = renderAt('/');
-    await screen.findByRole('heading', { name: 'Proyectos' });
+    await screen.findByRole('heading', { name: 'Tu próximo contenido empieza aquí' });
     await user.click(screen.getAllByRole('link', { name: 'Crear contenido' })[0]!);
     expect(await screen.findByRole('heading', { name: 'Nuevo proyecto' })).toBeTruthy();
     expect(router.state.location.pathname).toBe('/projects/new');
@@ -105,7 +105,7 @@ describe('App shell (R-235)', () => {
   it('closes disclosure with Escape and restores focus to its trigger', async () => {
     const user = userEvent.setup();
     renderAt('/');
-    await screen.findByRole('heading', { name: 'Proyectos' });
+    await screen.findByRole('heading', { name: 'Tu próximo contenido empieza aquí' });
     const menu = screen.getByRole('button', { name: 'Menú' });
     await user.click(menu);
     expect(menu.getAttribute('aria-expanded')).toBe('true');
@@ -120,8 +120,8 @@ describe('App shell (R-235)', () => {
 
 describe('Route table: lazy feature stubs', () => {
   it.each([
-    [featurePaths.projectList, 'Proyectos'],
-    [featurePaths.projects, 'Proyectos'],
+    [featurePaths.projectList, 'Tu próximo contenido empieza aquí'],
+    [featurePaths.projects, 'Tu próximo contenido empieza aquí'],
     [`${featurePaths.projects}/00000000-0000-4000-8000-000000000001`, 'Proyectos'],
     [
       featurePaths.facts('00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000002'),

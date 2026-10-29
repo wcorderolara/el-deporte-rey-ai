@@ -1,15 +1,6 @@
 /* Projects feature. Colours come from the global palette (text contrast of at least 4.5:1); every status also has a
    text label and a symbol, never colour alone. */
 
-.pageHeader {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 1rem;
-}
-
-.primaryLink,
 .primaryButton,
 .secondaryButton {
   display: inline-block;
@@ -21,7 +12,6 @@
   cursor: pointer;
 }
 
-.primaryLink,
 .primaryButton {
   color: #ffffff;
   background: var(--edr-color-accent);
@@ -74,13 +64,6 @@
 td > .secondary {
   display: block;
   margin-left: 0;
-}
-
-.sourceCell {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.25rem;
 }
 
 .panel {

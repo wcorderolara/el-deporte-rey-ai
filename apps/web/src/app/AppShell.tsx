@@ -114,6 +114,7 @@ export function AppShell() {
       navigation={<MainNavigation pathname={location.pathname} hash={location.hash} />}
       title={context.title}
       navigationKey={`${location.pathname}${location.hash}`}
+      contentVariant={['/', '/projects', '/projects/'].includes(location.pathname) ? 'studio' : 'legacy'}
       primaryAction={
         <Link
           to="/projects/new"
@@ -170,7 +171,14 @@ export function AppShell() {
       }
       projectContext={context.projectPath ? `Proyecto actual · ${context.projectSection}` : undefined}
     >
-      <p className="m-0 mb-2 min-h-6 text-[var(--edr-color-muted)]" role="status">
+      <p
+        className={
+          ['/', '/projects', '/projects/'].includes(location.pathname)
+            ? 'm-0 mb-2 min-h-6 text-text-secondary'
+            : 'm-0 mb-2 min-h-6 text-legacy-text-muted'
+        }
+        role="status"
+      >
         {navigation.state === 'loading' ? appCopy.loading : ''}
       </p>
       <Outlet />

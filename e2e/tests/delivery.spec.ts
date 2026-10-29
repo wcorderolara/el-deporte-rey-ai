@@ -171,12 +171,12 @@ test.describe('Delivery journey (DEMO_DATA league matchday)', () => {
     // The project list shows the approval state and the export time; reopening shows the same content (R-220).
     await page.goto('/');
     const listRow = page
-      .getByRole('table', { name: 'Proyectos e historial' })
-      .getByRole('row')
+      .getByRole('list', { name: 'Proyectos e historial' })
+      .getByRole('article')
       .filter({ has: page.locator(`a[href="/projects/${projectId}"]`) });
-    await expect(listRow.getByRole('cell').nth(5)).toHaveText('Exportado');
-    await expect(listRow.getByRole('cell').nth(6)).toHaveText(exportedAt);
-    await listRow.getByRole('link', { name: title }).click();
+    await expect(listRow.getByText('Exportado', { exact: true }).first()).toBeVisible();
+    await expect(listRow.locator('time').first()).toHaveText(exportedAt);
+    await listRow.getByRole('link', { name: title, exact: true }).click();
     await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
     await page.getByRole('link', { name: 'Revisión y aprobación' }).click();
     await expect(page.getByRole('heading', { level: 3, name: 'Vista previa en orden de publicación' })).toBeVisible();

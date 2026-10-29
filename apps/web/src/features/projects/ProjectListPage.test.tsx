@@ -1,108 +1,108 @@
-/**
- * Project list as the home page (R-200, R-235, R-269): history columns, demonstration label, data mode, loading,
- * empty and error states.
- */
+import type { ApprovalState } from '@edr/contracts';
 import { cleanup, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
-
-import { fakeServer, json, MANUAL_PROJECT_ID, PROJECT_ID, renderApp, summaries } from './test/support';
+import { fakeServer, json, PROJECT_ID, renderApp, summaries } from './test/support';
 
 afterEach(cleanup);
 
-describe('Project list (home page)', () => {
-  it('lists every project with the history columns, newest first', async () => {
+describe('Creator dashboard', () => {
+  it('preserves ordered project metadata and demonstration warnings in accessible cards', async () => {
     const server = fakeServer({ 'GET /api/v1/projects': () => json({ projects: summaries }) });
     renderApp('/', server);
+    const library = await screen.findByRole('list', { name: 'Proyectos e historial' });
+    const cards = within(library).getAllByRole('article');
+    expect(cards).toHaveLength(2);
+    const demo = within(cards[0]!);
+    expect(demo.getByRole('heading', { level: 3 }).textContent).toBe(summaries[0]!.title);
+    expect(demo.getByText('Fase de liga · Jornada 3')).toBeTruthy();
+    expect(demo.getByText('Demostración').parentElement?.textContent).toContain('⚠');
+    expect(demo.getByText(/No son datos reales/)).toBeTruthy();
+    expect(demo.getByText('Español')).toBeTruthy();
+    expect(demo.getByText('Para continuar')).toBeTruthy();
+    await userEvent.click(demo.getByText('Detalles del proyecto'));
+    expect(demo.getByText('Fixtures de copa')).toBeTruthy();
+    expect(demo.getByText('Datos de demostración')).toBeTruthy();
+    expect(demo.getByText('En revisión')).toBeTruthy();
+    expect(demo.getByText('Sin exportaciones')).toBeTruthy();
+    expect(within(cards[1]!).getByText('Apertura · Fase completa')).toBeTruthy();
+    expect(within(cards[1]!).getByText('Inglés')).toBeTruthy();
+    expect(within(cards[1]!).queryByText('Demostración')).toBeNull();
+    expect(cards[1]!.querySelector('time')?.dateTime).toBe('2026-10-26T18:30:00Z');
+    expect(server.unexpected).toEqual([]);
+    expect(server.callsTo('GET', '/api/v1/projects')).toHaveLength(1);
+  });
 
-    const table = await screen.findByRole('table', { name: 'Proyectos e historial' });
-    const headers = within(table)
-      .getAllByRole('columnheader')
-      .map((header) => header.textContent);
-    expect(headers).toEqual([
-      'Título',
-      'Competición y temporada',
-      'Fase y jornada',
-      'Fuente de datos',
-      'Demostración',
-      'Idioma',
-      'Estado de aprobación',
-      'Última exportación',
-    ]);
-    const rows = within(table).getAllByRole('row').slice(1);
-    expect(rows).toHaveLength(2);
-
-    const demo = rows[0];
-    const manual = rows[1];
-    if (demo === undefined || manual === undefined) {
-      throw new Error('missing rows');
-    }
-    expect(within(demo).getByRole('link').getAttribute('href')).toBe(`/projects/${PROJECT_ID}`);
-    expect(demo.textContent).toContain('Copa Continental Demo');
-    expect(demo.textContent).toContain('2025-26');
-    expect(demo.textContent).toContain('Fase de liga · Jornada 3');
-    expect(demo.textContent).toContain('Fixtures de copa');
-    expect(demo.textContent).toContain('Datos de demostración');
-    expect(within(demo).getByText('Demostración')).toBeTruthy();
-    expect(demo.textContent).toContain('Español');
-    expect(demo.textContent).toContain('En revisión');
-    expect(demo.textContent).toContain('Sin exportaciones');
-
-    expect(within(manual).getByRole('link').getAttribute('href')).toBe(`/projects/${MANUAL_PROJECT_ID}`);
-    expect(manual.textContent).toContain('Apertura · Fase completa');
-    expect(manual.textContent).toContain('Datos manuales');
-    expect(manual.textContent).not.toContain('Demostración');
-    expect(manual.textContent).toContain('Inglés');
-    expect(manual.textContent).toContain('Exportado');
+  it.each<[ApprovalState, string, string, string]>([
+    ['no_draft', 'En preparación', 'Continuar', ''],
+    ['in_review', 'Pendiente de revisión', 'Revisar contenido', '/review'],
+    ['final_approved', 'Listo para descargar', 'Descargar contenido', '/exports'],
+    ['exported', 'Exportado', 'Ver contenido', '/exports'],
+  ])('maps %s to a supported action without new requests', async (approvalState, label, action, suffix) => {
+    const server = fakeServer({
+      'GET /api/v1/projects': () => json({ projects: [{ ...summaries[0], approvalState }] }),
+    });
+    renderApp('/projects', server);
+    const card = await screen.findByRole('article');
+    expect(within(card).getAllByText(label).length).toBeGreaterThan(0);
     expect(
-      within(manual)
-        .getByText((_, element) => element?.tagName === 'TIME')
-        .getAttribute('datetime'),
-    ).toBe('2026-10-26T18:30:00Z');
+      within(card)
+        .getByRole('link', { name: `${action}: ${summaries[0]!.title}` })
+        .getAttribute('href'),
+    ).toBe(`/projects/${PROJECT_ID}${suffix}`);
+    expect(card.textContent).not.toMatch(/Generando contenido|Necesita atención|Reintentar/);
     expect(server.unexpected).toEqual([]);
   });
 
-  it('labels a demonstration project with text and a symbol, not colour alone (R-269)', async () => {
-    const server = fakeServer({ 'GET /api/v1/projects': () => json({ projects: summaries }) });
-    renderApp('/projects', server);
-
-    const table = await screen.findByRole('table');
-    const label = within(table).getByText('Demostración', { selector: 'span' });
-    expect(label.parentElement?.textContent).toContain('⚠');
+  it('never promotes an old export timestamp to current approval readiness', async () => {
+    const server = fakeServer({
+      'GET /api/v1/projects': () => json({ projects: [{ ...summaries[1], approvalState: 'no_draft' }] }),
+    });
+    renderApp('/', server);
+    const card = await screen.findByRole('article');
+    expect(within(card).getByText('En preparación')).toBeTruthy();
+    expect(within(card).queryByText('Listo para descargar')).toBeNull();
+    expect(
+      within(card)
+        .getByRole('link', { name: /^Continuar:/ })
+        .getAttribute('href'),
+    ).toBe(`/projects/${summaries[1]!.id}`);
   });
 
-  it('offers the create page and has no form on the home page', async () => {
+  it('provides honest empty state and links to the existing creation flow', async () => {
     const server = fakeServer({ 'GET /api/v1/projects': () => json({ projects: [] }) });
     renderApp('/', server);
-
-    expect(await screen.findByText('Todavía no hay proyectos.', { exact: false })).toBeTruthy();
-    expect(screen.getByRole('heading', { level: 1, name: 'Proyectos' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Nuevo proyecto/ }).getAttribute('href')).toBe('/projects/new');
-    expect(screen.getByRole('link', { name: 'Crear el primer proyecto' }).getAttribute('href')).toBe('/projects/new');
+    expect(await screen.findByRole('heading', { name: 'Todavía no has creado contenido' })).toBeTruthy();
+    const main = within(screen.getByRole('main'));
+    expect(main.getByRole('heading', { level: 1 }).textContent).toBe('Tu próximo contenido empieza aquí');
+    for (const link of main.getAllByRole('link', { name: 'Crear contenido' }))
+      expect(link.getAttribute('href')).toBe('/projects/new');
+    expect(screen.queryByRole('article')).toBeNull();
     expect(document.querySelector('form')).toBeNull();
   });
 
-  it('shows a loading status, then an error with a retry that reloads the list', async () => {
+  it('keeps loading visible without fake cards or readiness', async () => {
+    const server = fakeServer({ 'GET /api/v1/projects': () => new Promise<Response>(() => {}) });
+    renderApp('/', server);
+    expect(await screen.findByText('Cargando proyectos…')).toBeTruthy();
+    expect(screen.queryByRole('article')).toBeNull();
+    expect(screen.queryByText('Listo para descargar')).toBeNull();
+  });
+
+  it('shows a safe Spanish connection error and retries the existing request', async () => {
     let attempts = 0;
     const server = fakeServer({
       'GET /api/v1/projects': () => {
-        attempts += 1;
-        if (attempts === 1) {
-          throw new TypeError('connection refused');
-        }
+        if (++attempts === 1) throw new TypeError('private diagnostic must not leak');
         return json({ projects: summaries });
       },
     });
     renderApp('/', server);
-
-    expect(await screen.findByRole('status')).toBeTruthy();
     const alert = await screen.findByRole('alert');
-    expect(alert.textContent).toContain('No se pudo cargar la lista de proyectos');
     expect(alert.textContent).toContain('No se pudo conectar con el servidor local');
-
+    expect(alert.textContent).not.toContain('private diagnostic');
     await userEvent.click(within(alert).getByRole('button', { name: 'Reintentar' }));
-
-    expect(await screen.findByRole('table')).toBeTruthy();
+    expect(await screen.findByRole('list', { name: 'Proyectos e historial' })).toBeTruthy();
     expect(screen.queryByRole('alert')).toBeNull();
     expect(server.callsTo('GET', '/api/v1/projects')).toHaveLength(2);
   });

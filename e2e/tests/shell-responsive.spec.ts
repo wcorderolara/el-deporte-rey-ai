@@ -4,7 +4,7 @@ for (const width of [1440, 768, 390]) {
   test(`shell navigation at ${width}px @a11y`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'Proyectos', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tu próximo contenido empieza aquí', exact: true })).toBeVisible();
     const nav = page.getByRole('navigation', { name: 'Navegación principal' });
     const menu = page.getByRole('button', { name: 'Menú' });
     if (width < 1200) {

@@ -140,8 +140,8 @@ test.describe('Accessibility @a11y', () => {
 
   test('project list page has no serious or critical axe violation', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1, name: 'Proyectos' })).toBeVisible();
-    await expect(page.getByRole('table', { name: 'Proyectos e historial' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Tu próximo contenido empieza aquí' })).toBeVisible();
+    await expect(page.getByRole('list', { name: 'Proyectos e historial' })).toBeVisible();
     await expectAccessible(page);
   });
 

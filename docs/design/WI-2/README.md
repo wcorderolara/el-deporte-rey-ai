@@ -11,10 +11,11 @@
 - [UI-01B shell and navigation scope](ui-01b-shell-and-navigation-scope.md)
 - [UI-01B implementation report](ui-01b-shell-implementation-report.md)
 - [UI-02 dashboard and creation entry scope](ui-02-dashboard-and-creation-entry-scope.md)
+- [UI-02 implementation and visual evidence](ui-02-creator-dashboard-implementation-report.md)
 - [Future SaaS readiness and migration considerations](future-saas-readiness-considerations.md)
 - [Open design dependencies and questions](open-design-dependencies.md)
 
-These documents preserve the design decisions and increment reports. UI-01A and UI-01B are accepted. UI-02 is prepared as the next increment. Merge, push, or deployment requires the applicable Product Owner authorization.
+These documents preserve the design decisions and increment reports. UI-01A and UI-01B are accepted. UI-02 is implemented and verified, pending Product Owner visual acceptance; its changes remain uncommitted. UI-03 has not started. Merge, push, or deployment requires the applicable Product Owner authorization.
 
 The approved product direction is a local, AI-assisted **static sports content creation studio**. It creates, customizes, reviews, approves, and downloads creative assets; it does not publish, schedule, manage social accounts, or create/edit video.
 

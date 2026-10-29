@@ -1,6 +1,6 @@
 # WI-2.1 — Incremental UX/UI Implementation Plan
 
-Status: UI-01A and UI-01B accepted; UI-02 scope prepared
+Status: UI-01A and UI-01B accepted; UI-02 implemented and verified pending visual acceptance
 Date: 2026-10-29
 
 ## 1. Delivery principles
@@ -38,7 +38,7 @@ Increment split:
 - **UI-01A — foundation (accepted by Product Owner):** Tailwind CSS v4/Vite integration, centralized tokens, controlled legacy aliases, preflight decision, Button, IconButton, Card, Badge, Input, Select, Textarea, Alert, EmptyState, LoadingState, tests, and an isolated review gallery.
 - **UI-01B — shell (implemented, verified, and accepted):** application shell, primary navigation, route-derived project context, responsive disclosure, and breadcrumbs. Feature screens remain unchanged.
 
-The UI-01B scope is in `ui-01b-shell-and-navigation-scope.md`; results and acceptance are in `ui-01b-shell-implementation-report.md`. The next increment is prepared in `ui-02-dashboard-and-creation-entry-scope.md`; UI-02 application code has not started at the UI-01B checkpoint.
+The UI-01B scope is in `ui-01b-shell-and-navigation-scope.md`; results and acceptance are in `ui-01b-shell-implementation-report.md`. UI-02 was subsequently authorized from checkpoint `6aff775` and is implemented and verified; see `ui-02-creator-dashboard-implementation-report.md`. UI-03 remains unstarted and requires its own approval.
 
 Scope:
 
@@ -75,6 +75,8 @@ Review evidence:
 - Token use and migration boundaries conform to `tailwind-v4-migration-strategy.md`.
 
 ### UI-02 — Dashboard and content creation entry point
+
+Delivery status: implemented and verified, pending Product Owner visual acceptance. No implementation commit is created until that acceptance. Approval summary data supports four conservative states; run progress/failure remains in project details. Only the existing carousel flow is enabled.
 
 Outcome: the creator can begin and resume work without interpreting an operational table.
 

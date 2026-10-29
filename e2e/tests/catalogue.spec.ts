@@ -17,8 +17,8 @@ import { expect, test } from '../support/test.js';
 /** Row of the project list whose title links to the project. */
 function projectRow(page: Page, projectId: string) {
   return page
-    .getByRole('table', { name: 'Proyectos e historial' })
-    .getByRole('row')
+    .getByRole('list', { name: 'Proyectos e historial' })
+    .getByRole('article')
     .filter({ has: page.locator(`a[href="/projects/${projectId}"]`) });
 }
 
@@ -98,21 +98,22 @@ test.describe('Catalogue and project creation', () => {
     }
 
     await page.getByRole('link', { name: 'Volver a la lista de proyectos' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Proyectos' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Tu próximo contenido empieza aquí' })).toBeVisible();
     const row = projectRow(page, projectId);
-    await expect(row.getByRole('rowheader')).toHaveText(title);
-    await expect(row.getByRole('cell')).toHaveText([
-      /^Liga Demo\s*2026\/27$/,
-      'Temporada Regular · Jornada 1',
-      /Synthetic source A\s*Datos de demostración/,
-      /^\W*Demostración$/,
-      'Español',
-      'Sin borrador',
-      'Sin exportaciones',
-    ]);
+    await expect(row.getByRole('heading', { level: 3 })).toHaveText(title);
+    await expect(row).toContainText('Liga Demo · 2026/27');
+    await expect(row).toContainText('Temporada Regular · Jornada 1');
+    await expect(row).toContainText('Demostración');
+    await expect(row).toContainText('Español');
+    await expect(row).toContainText('En preparación');
+    await row.getByText('Detalles del proyecto').click();
+    await expect(row).toContainText('Synthetic source A');
+    await expect(row).toContainText('Datos de demostración');
+    await expect(row).toContainText('Sin borrador');
+    await expect(row).toContainText('Sin exportaciones');
 
     // Opening the project from the list shows its competition, season and matchday (R-200).
-    await row.getByRole('link', { name: title }).click();
+    await row.getByRole('link', { name: title, exact: true }).click();
     await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Ejecución' }).getByRole('status').first()).toHaveText(
       'El proyecto todavía no tiene ejecuciones.',
@@ -190,8 +191,10 @@ test.describe('Catalogue and project creation', () => {
     // The list keeps each project's own language (R-236).
     await page.goto('/');
     const row = projectRow(page, projectId);
-    await expect(row.getByRole('rowheader')).toHaveText('Copa Demo 2025/26 · Octavos de Final · Matchday 1');
-    await expect(row.getByRole('cell').nth(4)).toHaveText('Inglés');
-    await expect(row.getByRole('cell').nth(3)).toHaveText(/^\W*Demostración$/);
+    await expect(row.getByRole('heading', { level: 3 })).toHaveText(
+      'Copa Demo 2025/26 · Octavos de Final · Matchday 1',
+    );
+    await expect(row.getByText('Inglés', { exact: true })).toBeVisible();
+    await expect(row.getByText('Demostración', { exact: true })).toBeVisible();
   });
 });

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 
 import { appCopy } from './copy';
+import { classNames } from './format';
 import { Button } from './primitives';
 
 export const MAIN_CONTENT_ID = 'main-content';
@@ -16,6 +17,7 @@ export interface LayoutProps {
   primaryAction?: ReactNode;
   projectContext?: string;
   navigationKey?: string;
+  contentVariant?: 'legacy' | 'studio';
 }
 
 /**
@@ -31,6 +33,7 @@ export function Layout({
   primaryAction,
   projectContext,
   navigationKey,
+  contentVariant = 'legacy',
 }: LayoutProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLButtonElement>(null);
@@ -107,7 +110,12 @@ export function Layout({
         <div className="min-w-0 flex-1 p-gutter-mobile sm:p-gutter-tablet lg:p-gutter-desktop">
           <main
             id={MAIN_CONTENT_ID}
-            className="mx-auto w-full min-w-0 max-w-content overflow-x-auto rounded-panel bg-legacy-canvas p-4 font-legacy text-legacy-text shadow-card outline-none sm:p-6"
+            className={classNames(
+              'mx-auto w-full min-w-0 max-w-content outline-none',
+              contentVariant === 'studio'
+                ? 'font-sans text-text-primary'
+                : 'overflow-x-auto rounded-panel bg-legacy-canvas p-4 font-legacy text-legacy-text shadow-card sm:p-6',
+            )}
             ref={mainRef}
             tabIndex={-1}
           >

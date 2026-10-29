@@ -259,10 +259,12 @@ test.describe('Manual import journey (MANUAL_DATA)', () => {
     // The project list shows the manual source and mode, without the demonstration label (R-269).
     await page.goto('/');
     const row = page
-      .getByRole('table', { name: 'Proyectos e historial' })
-      .getByRole('row')
+      .getByRole('list', { name: 'Proyectos e historial' })
+      .getByRole('article')
       .filter({ has: page.locator(`a[href="/projects/${projectId}"]`) });
-    await expect(row.getByRole('cell').nth(2)).toHaveText(/Operator import\s*Datos manuales/);
-    await expect(row.getByRole('cell').nth(3)).not.toContainText('Demostración');
+    await expect(row.getByText('Datos manuales', { exact: true }).first()).toBeVisible();
+    await expect(row.getByText('Demostración', { exact: true })).toHaveCount(0);
+    await row.getByText('Detalles del proyecto').click();
+    await expect(row.getByText('Operator import', { exact: true })).toBeVisible();
   });
 });

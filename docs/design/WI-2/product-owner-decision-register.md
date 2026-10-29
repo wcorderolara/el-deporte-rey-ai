@@ -1,6 +1,6 @@
 # WI-2.1 — Product Owner Decision Register
 
-Status: UI-01A and UI-01B accepted by Product Owner
+Status: UI-01A and UI-01B accepted; UI-02 authorized, implemented, and verified pending visual acceptance
 Date: 2026-10-29
 Source: Product Owner design-refinement brief for WI-2.1
 
@@ -110,4 +110,4 @@ No conflict was found with the product scope, data/verification model, approval 
 
 ## 7. Decision status
 
-PD-UI-01 through PD-UI-20 remain confirmed. The Product Owner personally reviewed the local gallery, approved the visual result, accepted UI-01A, and authorized its commit on the current feature branch. The subsequent UI-01B directive authorized shell/navigation implementation from checkpoint `4c78b36`. The Product Owner then confirmed the shell looks good without problems and requested closure and progression to the next increment. UI-01B is accepted. UI-02 scope is prepared separately; later increments remain subject to their scoped approval and review.
+PD-UI-01 through PD-UI-20 remain confirmed. The Product Owner personally reviewed the local gallery, approved the visual result, accepted UI-01A, and authorized its commit on the current feature branch. The subsequent UI-01B directive authorized shell/navigation implementation from checkpoint `4c78b36`. The Product Owner then confirmed the shell looks good without problems and requested closure and progression to the next increment. UI-01B is accepted at `6aff775`. The subsequent UI-02 brief authorized the creator dashboard only, retaining all contracts and current carousel creation. UI-02 is implemented and verified, pending visual acceptance, with no UI-02 commit yet. UI-03 and later increments remain subject to their scoped approval and review.

@@ -35,6 +35,11 @@ const sizes: Record<ButtonSize, string> = {
   lg: 'px-5 py-3 text-body-lg',
 };
 
+/** Shared styling for router-composed links without coupling primitives to a router. */
+export function buttonClassName(variant: ButtonVariant = 'primary', size: ButtonSize = 'md', className?: string) {
+  return classNames(base, variants[variant], sizes[size], 'no-underline', className);
+}
+
 /** Token-backed action button. Loading is announced and prevents duplicate activation. */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   {
@@ -57,7 +62,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       {...props}
       ref={ref}
       type={type}
-      className={classNames(base, variants[variant], sizes[size], className)}
+      className={buttonClassName(variant, size, className)}
       disabled={disabled || isLoading}
       aria-busy={isLoading || undefined}
     >
