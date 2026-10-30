@@ -8,6 +8,16 @@ All schema work is additive and shipped as new numbered migrations. Never edit a
 
 `0003_competitions.sql` creates an independent local `competitions` table with UUID identity, validated name, timestamps and a recency index. It does not add a FK or reinterpret existing `competition_id` values. Startup migration is transactional and existing tables/data are untouched.
 
+## PD-ARCH-01B migration
+
+`0004_seasons_and_participants.sql` is additive and references only the managed `competitions` root:
+
+- `competition_seasons` stores season labels plus an internal normalized identity key and enforces `UNIQUE(competition_id, normalized_label)`.
+- `managed_teams` is a global local catalogue. Its exact normalized name+region pair is unique; the optional region allows same-named clubs in distinct locations. No fuzzy matching or provider ID is used.
+- `season_participants` has a composite `(season_id, team_id)` primary key and FKs to both parent tables. Deleting a membership does not delete a team. No season/team deletion operation is introduced in this slice.
+
+The pre-existing WI-1 `teams` and `team_aliases` tables are not renamed, repurposed or copied: they represent per-run verification identities. Import slug tables also remain separate. No project, import, approval or export row is changed.
+
 ## Later project relationship
 
 When competition-based content creation is ready, add a nullable FK column or an explicit association for newly linked workflows. Keep it null for legacy projects. If historical mapping is offered, map only when both the catalogue/source identity and selection snapshot establish an unambiguous managed competition; otherwise leave unlinked and preserve all original snapshots. Any mapping should be dry-run/reportable and reversible before applying.
@@ -25,4 +35,4 @@ Manual import IDs are not automatically mapped to managed competition UUIDs. Exi
 | Existing content behavior changes unexpectedly | Preserve Project APIs and runner until a separately scoped integration slice. |
 | Persistent DB upgrade fails partway | Existing migration runner wraps each migration and migration history atomically; verify FK and integrity in targeted tests. |
 
-There is no incompatible dependency detected for 01A. The only rollout consideration is that the API and UI must be deployed from a build containing migration 0003, which applies non-destructively at server startup.
+There is no incompatible dependency detected for 01A or 01B. The API and UI must be deployed from a build containing migrations 0003 and 0004; both apply non-destructively at server startup.

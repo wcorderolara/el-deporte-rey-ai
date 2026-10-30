@@ -14,6 +14,19 @@ import {
   ManagedCompetitionListResponseSchema,
   ManagedCompetitionParamsSchema,
   ManagedCompetitionSchema,
+  ManagedSeasonCreateSchema,
+  ManagedSeasonListResponseSchema,
+  ManagedSeasonParamsSchema,
+  ManagedSeasonSchema,
+  ManagedTeamCreateSchema,
+  ManagedTeamListResponseSchema,
+  ManagedTeamParamsSchema,
+  ManagedTeamSchema,
+  SeasonParticipantCreateSchema,
+  SeasonParticipantListResponseSchema,
+  SeasonParticipantParamsSchema,
+  SeasonParticipantsParamsSchema,
+  SeasonParticipantSchema,
 } from './competitions.js';
 import { ExportDetailSchema, ExportSchema, SlideTraceSchema } from './exports.js';
 import { FactSchema, LeftOutMatchSchema, StandingsAvailabilitySchema } from './facts.js';
@@ -291,6 +304,50 @@ export const operations = {
     body: null,
     success: json(200, ProjectSchema),
     problemStatuses: READ_BY_ID,
+  },
+  listManagedSeasons: {
+    operationId: 'listManagedSeasons', method: 'get', path: '/competitions/{competitionId}/seasons', tag: 'competitions',
+    params: z.strictObject({ competitionId: ManagedSeasonParamsSchema.shape.competitionId }), query: null, clientHeader: false,
+    body: null, success: json(200, ManagedSeasonListResponseSchema), problemStatuses: READ_BY_ID,
+  },
+  createManagedSeason: {
+    operationId: 'createManagedSeason', method: 'post', path: '/competitions/{competitionId}/seasons', tag: 'competitions',
+    params: z.strictObject({ competitionId: ManagedSeasonParamsSchema.shape.competitionId }), query: null, clientHeader: true,
+    body: jsonBody(ManagedSeasonCreateSchema), success: json(201, ManagedSeasonSchema), problemStatuses: WRITE_BODY,
+  },
+  getManagedSeason: {
+    operationId: 'getManagedSeason', method: 'get', path: '/competitions/{competitionId}/seasons/{seasonId}', tag: 'competitions',
+    params: ManagedSeasonParamsSchema, query: null, clientHeader: false, body: null,
+    success: json(200, ManagedSeasonSchema), problemStatuses: READ_BY_ID,
+  },
+  listManagedTeams: {
+    operationId: 'listManagedTeams', method: 'get', path: '/teams', tag: 'teams', params: null, query: null,
+    clientHeader: false, body: null, success: json(200, ManagedTeamListResponseSchema), problemStatuses: READ,
+  },
+  createManagedTeam: {
+    operationId: 'createManagedTeam', method: 'post', path: '/teams', tag: 'teams', params: null, query: null,
+    clientHeader: true, body: jsonBody(ManagedTeamCreateSchema), success: json(201, ManagedTeamSchema), problemStatuses: WRITE_BODY,
+  },
+  getManagedTeam: {
+    operationId: 'getManagedTeam', method: 'get', path: '/teams/{teamId}', tag: 'teams',
+    params: ManagedTeamParamsSchema, query: null, clientHeader: false, body: null,
+    success: json(200, ManagedTeamSchema), problemStatuses: READ_BY_ID,
+  },
+  listSeasonParticipants: {
+    operationId: 'listSeasonParticipants', method: 'get', path: '/competitions/{competitionId}/seasons/{seasonId}/participants',
+    tag: 'competitions', params: SeasonParticipantsParamsSchema, query: null, clientHeader: false, body: null,
+    success: json(200, SeasonParticipantListResponseSchema), problemStatuses: READ_BY_ID,
+  },
+  addSeasonParticipant: {
+    operationId: 'addSeasonParticipant', method: 'post', path: '/competitions/{competitionId}/seasons/{seasonId}/participants',
+    tag: 'competitions', params: SeasonParticipantsParamsSchema, query: null, clientHeader: true,
+    body: jsonBody(SeasonParticipantCreateSchema), success: json(201, SeasonParticipantSchema), problemStatuses: WRITE_BODY,
+  },
+  removeSeasonParticipant: {
+    operationId: 'removeSeasonParticipant', method: 'delete',
+    path: '/competitions/{competitionId}/seasons/{seasonId}/participants/{teamId}', tag: 'competitions',
+    params: SeasonParticipantParamsSchema, query: null, clientHeader: true, body: null,
+    success: { status: 204, mediaTypes: [], schema: null }, problemStatuses: [400, 403, 404, 415, 421],
   },
   updateProject: {
     operationId: 'updateProject',

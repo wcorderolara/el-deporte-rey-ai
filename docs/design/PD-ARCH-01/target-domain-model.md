@@ -7,9 +7,9 @@
 | Concept | Responsibility and relationship |
 | --- | --- |
 | `Competition` | Stable local identity, name, sport and optional region/organizer metadata; owns seasons and source bindings. PD-ARCH-01A currently stores only UUID, name and timestamps. |
-| `Season` | A competition's season label, dates and local status. Unique within its competition. |
-| `Team` | Reusable local club identity, independent of provider identifiers. |
-| `CompetitionParticipant` | Membership of a team in a season/competition, including local display override and participation metadata. |
+| `Season` | A competition's operator-provided label, such as `2026/27` or `2027`. A normalized label is unique within the competition; historical seasons are retained. PD-ARCH-01B stores UUID, competition FK, label and creation time. |
+| `Team` | Reusable local club identity, independent of provider identifiers. PD-ARCH-01B stores name, optional region and timestamps in a global local catalogue. Exact normalized name+region duplicates are refused; similar names stay distinct. |
+| `CompetitionParticipant` | Membership of a team in a season. PD-ARCH-01B uses the `(season_id, team_id)` composite primary key and a join timestamp; unlinking removes membership only and retains the team. |
 | `CompetitionStage` | A stage under a season with a type and order: league, group, knockout, or special/custom. A season may have none, one, or many. |
 | `Matchday` / `Round` | Optional round grouping within a stage; not every format has numbered matchdays. Use an explicit stable key and display order, not a required integer assumption. |
 | `Match` | Scheduled event in a stage and optional round, with local participant references, kickoff/status and source-neutral identity. Rescheduled events retain identity/history. |
@@ -51,3 +51,5 @@ This is a logical model, not a requirement to make every box a table. For exampl
 Keep `Project` and its run/draft/carousel/approval/export chain as the historical workflow aggregate. In a later additive integration, add a nullable FK from new project workflows to the managed `Competition` (or introduce a content-item relation if multiple workflows per content item are required). Existing rows remain unlinked unless an operator-reviewed mapping proves identity. Preserve `competition_id`, `competition_name`, source/mode and selection snapshots for historical reproduction.
 
 PD-ARCH-01A does not add a project FK because the existing create-project flow still selects provider catalogues and the new competition has no season/context data yet.
+
+PD-ARCH-01B adds `competition_seasons`, `managed_teams` and `season_participants`; the existing WI-1 `teams` table remains a run/verification identity map with separate semantics and is not reused or migrated.

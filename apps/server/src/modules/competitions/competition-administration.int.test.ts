@@ -1,0 +1,191 @@
+import {
+  ManagedSeasonListResponseSchema,
+  ManagedSeasonSchema,
+  ManagedTeamListResponseSchema,
+  ManagedTeamSchema,
+  ProblemSchema,
+  SeasonParticipantListResponseSchema,
+  SeasonParticipantSchema,
+} from '@edr/contracts';
+import { afterEach, describe, expect, it } from 'vitest';
+import { READ_HEADERS, WRITE_HEADERS, projectsTestApp, type ProjectsTestApp } from '../projects/test/support.js';
+
+let h: ProjectsTestApp | undefined;
+afterEach(async () => {
+  await h?.close();
+  h = undefined;
+});
+
+async function createCompetition(name: string) {
+  const response = await h!.inject({
+    method: 'POST',
+    url: '/api/v1/competitions',
+    headers: WRITE_HEADERS,
+    payload: { name },
+  });
+  expect(response.statusCode).toBe(201);
+  return response.json() as { id: string; name: string };
+}
+
+async function createSeason(competitionId: string, label: string) {
+  return h!.inject({
+    method: 'POST',
+    url: `/api/v1/competitions/${competitionId}/seasons`,
+    headers: WRITE_HEADERS,
+    payload: { label },
+  });
+}
+
+async function createTeam(name: string, region: string | null = null) {
+  return h!.inject({ method: 'POST', url: '/api/v1/teams', headers: WRITE_HEADERS, payload: { name, region } });
+}
+
+describe('competition seasons, local teams and participants', () => {
+  it('keeps multiple season labels, rejects normalized duplicates only within their competition, and retrieves seasons', async () => {
+    h = await projectsTestApp({ includeCompetitions: true });
+    const competition = await createCompetition('Liga Local');
+    const otherCompetition = await createCompetition('Copa Local');
+
+    const first = ManagedSeasonSchema.parse((await createSeason(competition.id, '2026/27')).json());
+    const second = ManagedSeasonSchema.parse((await createSeason(competition.id, '2027')).json());
+    expect(first.label).toBe('2026/27');
+    expect(second.label).toBe('2027');
+    const duplicate = await createSeason(competition.id, ' 2026/27 ');
+    expect(duplicate.statusCode).toBe(409);
+    expect(ProblemSchema.parse(duplicate.json()).code).toBe('DUPLICATE_SEASON');
+    const blank = await createSeason(competition.id, '   ');
+    expect(blank.statusCode).toBe(400);
+    expect(ProblemSchema.parse(blank.json()).code).toBe('VALIDATION_FAILED');
+
+    const sameLabelElsewhere = ManagedSeasonSchema.parse((await createSeason(otherCompetition.id, '2026/27')).json());
+    expect(sameLabelElsewhere.competitionId).toBe(otherCompetition.id);
+    const list = ManagedSeasonListResponseSchema.parse(
+      (
+        await h.inject({
+          method: 'GET',
+          url: `/api/v1/competitions/${competition.id}/seasons`,
+          headers: READ_HEADERS,
+        })
+      ).json(),
+    );
+    expect(list.seasons.map((season) => season.label).sort()).toEqual(['2026/27', '2027']);
+    expect(
+      ManagedSeasonSchema.parse(
+        (
+          await h.inject({
+            method: 'GET',
+            url: `/api/v1/competitions/${competition.id}/seasons/${first.id}`,
+            headers: READ_HEADERS,
+          })
+        ).json(),
+      ),
+    ).toEqual(first);
+    expect(h.db.prepare<{ count: number }>('SELECT COUNT(*) AS count FROM competition_seasons').get()?.count).toBe(3);
+    expect(h.stub.count('demo-a', 'listCompetitions')).toBe(0);
+    expect(h.stub.targetedCalls()).toBe(0);
+  });
+
+  it('stores reusable local teams, blocks exact normalized duplicates, and leaves similar identities distinct', async () => {
+    h = await projectsTestApp({ includeCompetitions: true });
+    const first = ManagedTeamSchema.parse((await createTeam('Club Local', 'Zona Centro')).json());
+    const duplicate = await createTeam(' club   local ', ' zona centro ');
+    expect(duplicate.statusCode).toBe(409);
+    expect(ProblemSchema.parse(duplicate.json()).code).toBe('DUPLICATE_TEAM');
+    const blankName = await createTeam('   ');
+    expect(blankName.statusCode).toBe(400);
+    expect(ProblemSchema.parse(blankName.json()).code).toBe('VALIDATION_FAILED');
+
+    const similar = ManagedTeamSchema.parse((await createTeam('Club Local FC', 'Zona Centro')).json());
+    const sameNameDifferentRegion = ManagedTeamSchema.parse((await createTeam('Club Local', 'Zona Sur')).json());
+    expect(similar.id).not.toBe(first.id);
+    expect(sameNameDifferentRegion.id).not.toBe(first.id);
+    expect(
+      ManagedTeamSchema.parse(
+        (
+          await h.inject({
+            method: 'GET',
+            url: `/api/v1/teams/${first.id}`,
+            headers: READ_HEADERS,
+          })
+        ).json(),
+      ),
+    ).toEqual(first);
+    expect(
+      ManagedTeamListResponseSchema.parse(
+        (await h.inject({ method: 'GET', url: '/api/v1/teams', headers: READ_HEADERS })).json(),
+      ).teams,
+    ).toHaveLength(3);
+    expect(h.db.prepare<{ count: number }>('SELECT COUNT(*) AS count FROM teams').get()?.count).toBe(0);
+  });
+
+  it('prevents duplicate membership, reuses teams across seasons and removes only the association', async () => {
+    h = await projectsTestApp({ includeCompetitions: true });
+    const competition = await createCompetition('Liga de prueba');
+    const anotherCompetition = await createCompetition('Copa de prueba');
+    const season = ManagedSeasonSchema.parse((await createSeason(competition.id, '2026/27')).json());
+    const anotherSeason = ManagedSeasonSchema.parse((await createSeason(anotherCompetition.id, '2027')).json());
+    const team = ManagedTeamSchema.parse((await createTeam('Equipo Reutilizable', 'Ciudad')).json());
+    const membershipPath = `/api/v1/competitions/${competition.id}/seasons/${season.id}/participants`;
+
+    const joined = await h.inject({
+      method: 'POST',
+      url: membershipPath,
+      headers: WRITE_HEADERS,
+      payload: { teamId: team.id },
+    });
+    expect(joined.statusCode).toBe(201);
+    expect(SeasonParticipantSchema.parse(joined.json()).team.id).toBe(team.id);
+    const repeated = await h.inject({
+      method: 'POST',
+      url: membershipPath,
+      headers: WRITE_HEADERS,
+      payload: { teamId: team.id },
+    });
+    expect(repeated.statusCode).toBe(409);
+    expect(ProblemSchema.parse(repeated.json()).code).toBe('DUPLICATE_PARTICIPANT');
+
+    const reused = await h.inject({
+      method: 'POST',
+      url: `/api/v1/competitions/${anotherCompetition.id}/seasons/${anotherSeason.id}/participants`,
+      headers: WRITE_HEADERS,
+      payload: { teamId: team.id },
+    });
+    expect(reused.statusCode).toBe(201);
+    const participants = SeasonParticipantListResponseSchema.parse(
+      (await h.inject({ method: 'GET', url: membershipPath, headers: READ_HEADERS })).json(),
+    );
+    expect(participants.participants.map((item) => item.team.id)).toEqual([team.id]);
+
+    const removed = await h.inject({
+      method: 'DELETE',
+      url: `${membershipPath}/${team.id}`,
+      headers: { host: '127.0.0.1:4300', origin: 'http://127.0.0.1:4300', 'x-edr-client': 'web' },
+    });
+    expect(removed.statusCode).toBe(204);
+    expect(
+      SeasonParticipantListResponseSchema.parse(
+        (await h.inject({ method: 'GET', url: membershipPath, headers: READ_HEADERS })).json(),
+      ).participants,
+    ).toEqual([]);
+    expect(
+      ManagedTeamSchema.parse(
+        (await h.inject({ method: 'GET', url: `/api/v1/teams/${team.id}`, headers: READ_HEADERS })).json(),
+      ).id,
+    ).toBe(team.id);
+    expect(h.db.prepare<{ count: number }>('SELECT COUNT(*) AS count FROM season_participants').get()?.count).toBe(1);
+    expect(h.db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
+  });
+
+  it('returns not found for missing parents and teams rather than creating dangling links', async () => {
+    h = await projectsTestApp({ includeCompetitions: true });
+    const response = await h.inject({
+      method: 'POST',
+      url: '/api/v1/competitions/11111111-1111-4111-8111-111111111111/seasons/22222222-2222-4222-8222-222222222222/participants',
+      headers: WRITE_HEADERS,
+      payload: { teamId: '33333333-3333-4333-8333-333333333333' },
+    });
+    expect(response.statusCode).toBe(404);
+    expect(ProblemSchema.parse(response.json()).code).toBe('NOT_FOUND');
+    expect(h.db.prepare<{ count: number }>('SELECT COUNT(*) AS count FROM season_participants').get()?.count).toBe(0);
+  });
+});

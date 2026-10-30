@@ -85,6 +85,7 @@ const COMMITTED = [
   { version: 1, name: 'initial' },
   { version: 2, name: 'qa_capitalized_tokens' },
   { version: 3, name: 'competitions' },
+  { version: 4, name: 'seasons_and_participants' },
 ];
 
 describe('committed migrations', () => {
@@ -97,6 +98,7 @@ describe('committed migrations', () => {
       { version: 1, name: 'initial', fileName: '0001_initial.sql' },
       { version: 2, name: 'qa_capitalized_tokens', fileName: '0002_qa_capitalized_tokens.sql' },
       { version: 3, name: 'competitions', fileName: '0003_competitions.sql' },
+      { version: 4, name: 'seasons_and_participants', fileName: '0004_seasons_and_participants.sql' },
     ]);
   });
 
@@ -104,22 +106,25 @@ describe('committed migrations', () => {
     const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
     const first = openMigratedDatabase({ location, now: () => FIXED_NOW });
     try {
-      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 3 });
+      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 4 });
       expect(first.db.prepare('PRAGMA journal_mode').get()).toEqual({ journal_mode: 'wal' });
       expect(first.db.prepare('PRAGMA foreign_keys').get()).toEqual({ foreign_keys: 1 });
       expect(appliedMigrations(first.db)).toEqual(
         COMMITTED.map((record) => ({ ...record, appliedAt: '2026-10-27T16:32:21.123Z' })),
       );
-      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 3 });
+      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 4 });
     } finally {
       first.db.close();
     }
 
     const second = openMigratedDatabase({ location });
     try {
-      expect(second.report).toEqual({ applied: [], currentVersion: 3 });
+      expect(second.report).toEqual({ applied: [], currentVersion: 4 });
       expect(tableExists(second.db, 'facts')).toBe(true);
       expect(tableExists(second.db, 'competitions')).toBe(true);
+      expect(tableExists(second.db, 'competition_seasons')).toBe(true);
+      expect(tableExists(second.db, 'managed_teams')).toBe(true);
+      expect(tableExists(second.db, 'season_participants')).toBe(true);
     } finally {
       second.db.close();
     }
@@ -446,8 +451,9 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
         applied: [
           { version: 2, name: 'qa_capitalized_tokens' },
           { version: 3, name: 'competitions' },
+          { version: 4, name: 'seasons_and_participants' },
         ],
-        currentVersion: 3,
+        currentVersion: 4,
       });
 
       expect(db.prepare(QA_RESULT_BYTES).all()).toEqual(bytesBefore);
@@ -482,7 +488,7 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
     // Reopening applies nothing more.
     const reopened = openMigratedDatabase({ location });
     try {
-      expect(reopened.report).toEqual({ applied: [], currentVersion: 3 });
+      expect(reopened.report).toEqual({ applied: [], currentVersion: 4 });
     } finally {
       reopened.db.close();
     }

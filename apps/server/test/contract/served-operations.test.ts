@@ -145,6 +145,28 @@ beforeAll(async () => {
   const createdCompetition = await d.call('createCompetition', { json: { name: 'Competición de prueba' } });
   const managedCompetitionId = String((createdCompetition.body as { id: string }).id);
   await d.call('getCompetition', { params: { competitionId: managedCompetitionId } });
+  await d.call('listManagedSeasons', { params: { competitionId: managedCompetitionId } });
+  const createdSeason = await d.call('createManagedSeason', {
+    params: { competitionId: managedCompetitionId },
+    json: { label: 'Temporada contractual' },
+  });
+  const managedSeasonId = String((createdSeason.body as { id: string }).id);
+  await d.call('getManagedSeason', {
+    params: { competitionId: managedCompetitionId, seasonId: managedSeasonId },
+  });
+  const createdTeam = await d.call('createManagedTeam', {
+    json: { name: 'Equipo contractual', region: 'Región de prueba' },
+  });
+  const managedTeamId = String((createdTeam.body as { id: string }).id);
+  await d.call('listManagedTeams');
+  await d.call('getManagedTeam', { params: { teamId: managedTeamId } });
+  const participantParams = { competitionId: managedCompetitionId, seasonId: managedSeasonId };
+  await d.call('listSeasonParticipants', { params: participantParams });
+  await d.call('addSeasonParticipant', { params: participantParams, json: { teamId: managedTeamId } });
+  await d.call('listSeasonParticipants', { params: participantParams });
+  await d.call('removeSeasonParticipant', {
+    params: { ...participantParams, teamId: managedTeamId },
+  });
 }, RUN_TIMEOUT);
 
 afterAll(async () => {

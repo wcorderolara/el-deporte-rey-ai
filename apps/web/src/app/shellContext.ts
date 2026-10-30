@@ -43,6 +43,10 @@ export function shellContext(pathname: string): ShellContext {
   if (pathname === '/competitions' || pathname === '/competitions/') {
     return { title: 'Competiciones', parent: { label: 'Inicio', to: '/' } };
   }
+  const season = /^\/competitions\/([^/]+)\/seasons\/[^/]+/.exec(pathname);
+  if (season) {
+    return { title: 'Temporada', parent: { label: 'Competición', to: `/competitions/${season[1]}` } };
+  }
   if (pathname.startsWith('/competitions/')) {
     return { title: 'Competición', parent: { label: 'Competiciones', to: '/competitions' } };
   }

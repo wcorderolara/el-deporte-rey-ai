@@ -64,16 +64,16 @@ describe('contract document', () => {
     );
   });
 
-  it('has 40 operations on 33 paths, 15 of them mutating, with unique operation IDs', () => {
-    expect(Object.keys(child(document, 'paths'))).toHaveLength(33);
-    expect(operations).toHaveLength(40);
-    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(15);
+  it('has 52 operations on 41 paths, 20 of them mutating, with unique operation IDs', () => {
+    expect(Object.keys(child(document, 'paths'))).toHaveLength(41);
+    expect(operations).toHaveLength(52);
+    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(20);
     const ids = operations.map((operation) => operation.operation.operationId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('has 85 component schemas', () => {
-    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(85);
+  it('has 89 component schemas', () => {
+    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(89);
   });
 });
 
@@ -239,7 +239,7 @@ function differences(left: JsonValue | undefined, right: JsonValue | undefined, 
 }
 
 describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () => {
-  it('differs from the accepted proposal only in info.version, descriptions and the OD-26 warning check', async () => {
+  it('contains the recorded WI-2 deltas and local competition administration additions', async () => {
     const proposal = await loadDocument(PROPOSAL_PATH);
     expect(child(proposal, 'info').version).toBe('1.0.0-proposed.2');
     const promoted = structuredClone(document);
@@ -248,7 +248,27 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
     delete child(accepted, 'info').version;
     const ack = '/paths/~1carousels~1{carouselId}~1elements~1{elementId}~1qa-acknowledgements/post';
     expect(differences(normative(accepted), normative(promoted))).toEqual([
+      '/tags/1/name: changed',
+      '/tags/2/name: changed',
+      '/tags/3/name: changed',
+      '/tags/4/name: changed',
+      '/tags/5/name: changed',
+      '/tags/6/name: changed',
+      '/tags/7/name: changed',
+      '/tags/8/name: changed',
+      '/tags/9/name: changed',
+      '/tags/10/name: changed',
+      '/tags/11: added',
+      '/tags/12: added',
       `${ack}/requestBody/content/application~1json/schema/properties/checks/items/enum/1: added`,
+      '/paths/~1competitions: added',
+      '/paths/~1competitions~1{competitionId}: added',
+      '/paths/~1competitions~1{competitionId}~1seasons: added',
+      '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}: added',
+      '/paths/~1teams: added',
+      '/paths/~1teams~1{teamId}: added',
+      '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1participants: added',
+      '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1participants~1{teamId}: added',
       '/paths/~1exports~1{exportId}~1download: added',
       '/components/schemas/Problem/properties/code/enum/15: changed',
       '/components/schemas/Problem/properties/code/enum/16: changed',
@@ -259,7 +279,14 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/Problem/properties/code/enum/21: changed',
       '/components/schemas/Problem/properties/code/enum/22: added',
       '/components/schemas/Problem/properties/code/enum/23: added',
+      '/components/schemas/Problem/properties/code/enum/24: added',
+      '/components/schemas/Problem/properties/code/enum/25: added',
+      '/components/schemas/Problem/properties/code/enum/26: added',
       '/components/schemas/QaResult/oneOf/5: added',
+      '/components/schemas/Competition: added',
+      '/components/schemas/ManagedSeason: added',
+      '/components/schemas/ManagedTeam: added',
+      '/components/schemas/SeasonParticipant: added',
     ]);
   });
 

@@ -364,6 +364,12 @@ export const componentSamples: Record<ComponentName, unknown> = {
   CompetitionSource: competitionSource,
   CatalogueCompetition: catalogueCompetition,
   Competition: { id: uuid(80), name: 'Liga de prueba', createdAt: T1, updatedAt: T1 },
+  ManagedSeason: { id: uuid(81), competitionId: uuid(80), label: '2026/27', createdAt: T1 },
+  ManagedTeam: { id: uuid(82), name: 'Club Local', region: 'Ciudad Ficticia', createdAt: T1, updatedAt: T1 },
+  SeasonParticipant: {
+    team: { id: uuid(82), name: 'Club Local', region: 'Ciudad Ficticia', createdAt: T1, updatedAt: T1 },
+    joinedAt: T1,
+  },
   Catalogue: { competitions: [catalogueCompetition], sources: [sourceListing] },
   Season: season,
   SeasonList: {
@@ -491,6 +497,9 @@ export const componentSamples: Record<ComponentName, unknown> = {
 /** Samples of the JSON request bodies (inline or by reference) of the operations that have one. */
 export const requestSamples: Partial<Record<OperationId, unknown>> = {
   createCompetition: { name: 'Liga de prueba' },
+  createManagedSeason: { label: '2026/27' },
+  createManagedTeam: { name: 'Club Local', region: 'Ciudad Ficticia' },
+  addSeasonParticipant: { teamId: uuid(82) },
   createProject: componentSamples.ProjectCreate,
   updateProject: componentSamples.ProjectUpdate,
   startRun: componentSamples.RunStart,
@@ -509,6 +518,14 @@ export const responseSamples: Partial<Record<OperationId, unknown>> = {
   listManagedCompetitions: { competitions: [componentSamples.Competition] },
   createCompetition: componentSamples.Competition,
   getCompetition: componentSamples.Competition,
+  listManagedSeasons: { seasons: [componentSamples.ManagedSeason] },
+  createManagedSeason: componentSamples.ManagedSeason,
+  getManagedSeason: componentSamples.ManagedSeason,
+  listManagedTeams: { teams: [componentSamples.ManagedTeam] },
+  createManagedTeam: componentSamples.ManagedTeam,
+  getManagedTeam: componentSamples.ManagedTeam,
+  listSeasonParticipants: { participants: [componentSamples.SeasonParticipant] },
+  addSeasonParticipant: componentSamples.SeasonParticipant,
   listSeasons: componentSamples.SeasonList,
   listStages: componentSamples.StageList,
   listProjects: { projects: [projectSummary] },

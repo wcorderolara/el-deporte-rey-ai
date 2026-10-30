@@ -42,6 +42,7 @@ servers:
 tags:
   - name: catalog
   - name: competitions
+  - name: teams
   - name: projects
   - name: runs
   - name: facts
@@ -218,6 +219,239 @@ paths:
         '400': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/seasons:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    get:
+      tags: [competitions]
+      operationId: listManagedSeasons
+      description: List locally managed seasons of a competition, newest first. No provider request is made.
+      responses:
+        '200':
+          description: Competition seasons.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [seasons]
+                additionalProperties: false
+                properties:
+                  seasons:
+                    type: array
+                    items: { $ref: '#/components/schemas/ManagedSeason' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [competitions]
+      operationId: createManagedSeason
+      description: Add a historical/current season label without replacing another season of the competition.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [label]
+              additionalProperties: false
+              properties:
+                label: { $ref: '#/components/schemas/DisplayName' }
+      responses:
+        '201':
+          description: Season created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ManagedSeason' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/seasons/{seasonId}:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: seasonId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    get:
+      tags: [competitions]
+      operationId: getManagedSeason
+      responses:
+        '200':
+          description: Competition season.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ManagedSeason' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /teams:
+    get:
+      tags: [teams]
+      operationId: listManagedTeams
+      description: List the local reusable team catalogue, alphabetically. No provider request is made.
+      responses:
+        '200':
+          description: Local teams.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [teams]
+                additionalProperties: false
+                properties:
+                  teams:
+                    type: array
+                    items: { $ref: '#/components/schemas/ManagedTeam' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [teams]
+      operationId: createManagedTeam
+      description: Create a reusable local team identity. An exact normalized name-and-region match is rejected; similar names remain distinct.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              additionalProperties: false
+              properties:
+                name: { $ref: '#/components/schemas/TeamName' }
+                region: { anyOf: [{ $ref: '#/components/schemas/DisplayName' }, { type: 'null' }] }
+      responses:
+        '201':
+          description: Local team created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ManagedTeam' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /teams/{teamId}:
+    parameters:
+      - name: teamId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    get:
+      tags: [teams]
+      operationId: getManagedTeam
+      responses:
+        '200':
+          description: Local team.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ManagedTeam' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/seasons/{seasonId}/participants:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: seasonId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    get:
+      tags: [competitions]
+      operationId: listSeasonParticipants
+      responses:
+        '200':
+          description: Season participants.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [participants]
+                additionalProperties: false
+                properties:
+                  participants:
+                    type: array
+                    items: { $ref: '#/components/schemas/SeasonParticipant' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [competitions]
+      operationId: addSeasonParticipant
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [teamId]
+              additionalProperties: false
+              properties:
+                teamId: { $ref: '#/components/schemas/Uuid' }
+      responses:
+        '201':
+          description: Team linked to this season.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SeasonParticipant' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/seasons/{seasonId}/participants/{teamId}:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: seasonId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: teamId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    delete:
+      tags: [competitions]
+      operationId: removeSeasonParticipant
+      description: Remove the season association only; the local team remains in the catalogue.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '204': { description: Season association removed. }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
   /projects:
     get:
@@ -1190,6 +1424,32 @@ components:
         name: { $ref: '#/components/schemas/DisplayName' }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
+    ManagedSeason:
+      type: object
+      required: [id, competitionId, label, createdAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        competitionId: { $ref: '#/components/schemas/Uuid' }
+        label: { $ref: '#/components/schemas/DisplayName' }
+        createdAt: { type: string, format: date-time }
+    ManagedTeam:
+      type: object
+      required: [id, name, region, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        name: { $ref: '#/components/schemas/TeamName' }
+        region: { anyOf: [{ $ref: '#/components/schemas/DisplayName' }, { type: 'null' }] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    SeasonParticipant:
+      type: object
+      required: [team, joinedAt]
+      additionalProperties: false
+      properties:
+        team: { $ref: '#/components/schemas/ManagedTeam' }
+        joinedAt: { type: string, format: date-time }
     StageName:
       description: Stage name as the source gives it; letters, marks, digits, spaces and . ' & ( ) / _ - only.
       type: string
@@ -1245,6 +1505,9 @@ components:
             - EXPORT_FILES_MISSING
             - EXPORT_FILES_CORRUPT
             - DUPLICATE_ASSET
+            - DUPLICATE_SEASON
+            - DUPLICATE_TEAM
+            - DUPLICATE_PARTICIPANT
             - PROVIDER_FAILED
             - PROVIDER_RATE_LIMITED
             - SELECTION_UNAVAILABLE
