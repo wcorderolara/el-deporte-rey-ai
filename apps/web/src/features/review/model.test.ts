@@ -5,6 +5,7 @@ import type { Problem } from '../../api/types';
 import {
   approvalObstacles,
   blockReasonText,
+  bulkApprovalSummary,
   finalApprovalObstacles,
   finalApprovalReasons,
   orderedElements,
@@ -88,6 +89,28 @@ describe('approvalObstacles', () => {
         : result,
     );
     expect(approvalObstacles(version(1, { qa }))).toEqual([]);
+  });
+});
+
+describe('bulkApprovalSummary', () => {
+  it('separates eligible current slides, approvals, warning acknowledgements, and blockers', () => {
+    const warningQa = PASSING_QA.map((result) =>
+      result.check === 'capitalized_tokens' ? { ...result, outcome: 'fail' as const } : result,
+    );
+    const approvedSlide = slide(1, 1, 'cover', { state: 'approved' });
+    const readySlide = slide(2, 2, 'match_result');
+    const warningSlide = slide(3, 3, 'match_result', { qa: warningQa });
+    const blockedSlide = slide(4, 4, 'closing', { blocked: true });
+    const summary = bulkApprovalSummary([approvedSlide, readySlide, warningSlide, blockedSlide]);
+    expect(summary).toMatchObject({
+      approved: 1,
+      eligible: [readySlide],
+      warning: [warningSlide],
+      blocked: [blockedSlide],
+      pending: [],
+      pendingCount: 3,
+      total: 4,
+    });
   });
 });
 

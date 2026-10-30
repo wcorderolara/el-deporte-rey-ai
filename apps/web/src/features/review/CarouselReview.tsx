@@ -1,13 +1,29 @@
 import type { Carousel, Element, FinalApproval } from '@edr/contracts';
-import { useId, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { Link } from 'react-router';
 
 import { ApiError } from '../../api/client';
 import { featurePaths } from '../../app/routes';
 import { Button, ErrorBanner, formatDateTime, StatusBadge } from '../../ui';
-import { carouselCopy, elementCopy, finalCopy, finalRefusalLabel, slideTypeLabel, versionStateLabel } from './copy';
+import {
+  approvalObstacleLabel,
+  carouselCopy,
+  elementCopy,
+  finalCopy,
+  finalRefusalLabel,
+  slideTypeLabel,
+  versionStateLabel,
+} from './copy';
 import { ElementReview } from './ElementReview';
-import { elementName, finalApprovalObstacles, hasValidFinalApproval, orderedElements, problemItems } from './model';
+import {
+  approvalObstacles,
+  bulkApprovalSummary,
+  elementName,
+  finalApprovalObstacles,
+  hasValidFinalApproval,
+  orderedElements,
+  problemItems,
+} from './model';
 import styles from './Review.module.css';
 import { useReviewDependencies } from './ReviewContext';
 
@@ -161,7 +177,222 @@ export interface CarouselReviewProps {
   carousel: Carousel;
   onElementChanged: (element: Element) => void;
   onFinalApproved: (approval: FinalApproval) => void;
-  onRefresh: () => void;
+  onRefresh: () => Promise<boolean>;
+}
+
+interface BulkFailure {
+  element: Element;
+  error: unknown;
+}
+interface BulkResult {
+  approved: number;
+  failures: BulkFailure[];
+  refreshed: boolean;
+}
+
+function BulkApprovalDialog({
+  slides,
+  running,
+  result,
+  onCancel,
+  onConfirm,
+  onRetry,
+}: {
+  slides: Element[];
+  running: boolean;
+  result: BulkResult | null;
+  onCancel: () => void;
+  onConfirm: (eligible: Element[]) => void;
+  onRetry: () => void;
+}) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const previousFocus = useRef<HTMLElement | null>(null);
+  const summary = bulkApprovalSummary(slides);
+
+  useEffect(() => {
+    previousFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    cancelRef.current?.focus();
+    return () => previousFocus.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (running) dialogRef.current?.focus();
+    else if (result !== null) cancelRef.current?.focus();
+  }, [result, running]);
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === 'Escape' && !running) {
+      event.preventDefault();
+      onCancel();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const controls = [...(dialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled)') ?? [])];
+    const first = controls[0];
+    const last = controls.at(-1);
+    if (first === undefined || last === undefined) {
+      event.preventDefault();
+      dialogRef.current?.focus();
+      return;
+    }
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
+  }
+
+  return (
+    <div className={styles.dialogBackdrop}>
+      <div
+        ref={dialogRef}
+        className={styles.bulkDialog}
+        role="dialog"
+        aria-modal="true"
+        aria-label={carouselCopy.bulkDialogLabel}
+        aria-describedby="bulk-approval-summary"
+        onKeyDown={handleKeyDown}
+        tabIndex={-1}
+      >
+        <h3 id="bulk-approval-title">
+          {result
+            ? carouselCopy.bulkResult(result.approved, result.failures.length, result.refreshed)
+            : carouselCopy.approveAllTitle}
+        </h3>
+        {result === null ? (
+          <>
+            <ul id="bulk-approval-summary" className={styles.bulkCounts}>
+              <li>{summary.total} diapositivas</li>
+              <li>
+                {summary.eligible.length} {carouselCopy.eligible}
+              </li>
+              <li>
+                {summary.approved} {carouselCopy.alreadyApproved}
+              </li>
+              <li>{summary.warning.length} con advertencias sin confirmar</li>
+              <li>{summary.blocked.length} bloqueadas</li>
+              <li>{summary.pending.length} pendientes de control visual</li>
+            </ul>
+            {summary.warning.length > 0 ? (
+              <section className={styles.bulkAttention}>
+                <h4>{carouselCopy.warningSlides}</h4>
+                <ul>
+                  {summary.warning.map((item) => (
+                    <li key={item.id}>{elementName(item)}</li>
+                  ))}
+                </ul>
+                <p>Confirme cada advertencia desde los detalles de la diapositiva. No se confirmará automáticamente.</p>
+              </section>
+            ) : null}
+            {summary.blocked.length > 0 ? (
+              <section className={styles.bulkAttention}>
+                <h4>{carouselCopy.blockedSlides}</h4>
+                <ul>
+                  {summary.blocked.map((item) => (
+                    <li key={item.id}>
+                      {elementName(item)}:{' '}
+                      {approvalObstacles(item.currentVersion)
+                        .map((obstacle) => approvalObstacleLabel[obstacle])
+                        .join(', ')}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+            {summary.pending.length > 0 ? (
+              <section className={styles.bulkAttention}>
+                <h4>Pendientes del control visual</h4>
+                <ul>
+                  {summary.pending.map((item) => (
+                    <li key={item.id}>{elementName(item)}</li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+            {summary.eligible.length === 0 ? (
+              <p>
+                {summary.total > 0 && summary.approved === summary.total
+                  ? carouselCopy.allSlidesApproved
+                  : carouselCopy.noEligible}
+              </p>
+            ) : null}
+          </>
+        ) : (
+          <div id="bulk-approval-summary" aria-live="polite">
+            {result.failures.length === 0 && result.refreshed ? (
+              <p>{carouselCopy.allSlidesApproved}</p>
+            ) : (
+              <>
+                <p>
+                  Las aprobaciones completadas se conservaron.{' '}
+                  {result.refreshed
+                    ? 'Actualizamos el estado del carrusel.'
+                    : 'No se pudo actualizar el borrador; actualice la vista antes de continuar.'}
+                </p>
+                <ul className={styles.bulkFailures}>
+                  {result.failures.map(({ element, error }) => (
+                    <li key={element.id}>
+                      {carouselCopy.bulkFailure(element.position)}
+                      <details>
+                        <summary>Ver detalle</summary>
+                        <ErrorBanner title={elementName(element)} error={error} />
+                      </details>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        )}
+        <div className={styles.dialogActions}>
+          {result === null ? (
+            <>
+              <button
+                ref={cancelRef}
+                className={styles.dialogSecondary}
+                type="button"
+                onClick={onCancel}
+                disabled={running}
+              >
+                {carouselCopy.cancel}
+              </button>
+              <button
+                className={styles.dialogPrimary}
+                type="button"
+                onClick={() => onConfirm(summary.eligible)}
+                disabled={running || summary.eligible.length === 0}
+              >
+                {running ? carouselCopy.bulkRunning : carouselCopy.confirmBulk(summary.eligible.length)}
+              </button>
+            </>
+          ) : (
+            <>
+              {result.failures.length > 0 || !result.refreshed ? (
+                <button className={styles.dialogSecondary} type="button" onClick={onRetry} disabled={running}>
+                  {result.failures.length > 0 ? carouselCopy.retryRemaining : carouselCopy.refreshState}
+                </button>
+              ) : null}
+              <button
+                ref={cancelRef}
+                className={styles.dialogPrimary}
+                type="button"
+                onClick={onCancel}
+                disabled={running}
+              >
+                {carouselCopy.dismiss}
+              </button>
+            </>
+          )}
+        </div>
+        <span className={styles.visuallyHidden} role="status" aria-live="polite">
+          {running ? carouselCopy.bulkRunning : ''}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -181,21 +412,78 @@ export function CarouselReview({
   const slides = elements.filter((element) => element.kind === 'slide');
   const caption = elements.find((element) => element.kind === 'caption');
   const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
+  const selectedSlideIdRef = useRef<string | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkRunning, setBulkRunning] = useState(false);
+  const bulkRunningRef = useRef(false);
+  const [bulkResult, setBulkResult] = useState<BulkResult | null>(null);
+  const [workflowMessage, setWorkflowMessage] = useState('');
   const slideButtons = useRef<Array<HTMLButtonElement | null>>([]);
   const selectedIndex = Math.max(
     0,
     slides.findIndex((element) => element.id === selectedSlideId),
   );
   const selectedSlide = slides[selectedIndex];
+  const approvalSummary = bulkApprovalSummary(slides);
+  const firstSlideId = slides[0]?.id;
+
+  useEffect(() => {
+    if (selectedSlideId === null && firstSlideId !== undefined) {
+      selectedSlideIdRef.current = firstSlideId;
+      setSelectedSlideId(firstSlideId);
+    }
+  }, [carousel.id, firstSlideId, selectedSlideId]);
+
+  function selectSlide(id: string | null) {
+    selectedSlideIdRef.current = id;
+    setSelectedSlideId(id);
+  }
 
   const handleChanged = (element: Element) => {
     onElementChanged(element);
-    onRefresh();
+    void onRefresh();
   };
   const handleApproved = (approval: FinalApproval) => {
     onFinalApproved(approval);
-    onRefresh();
+    void onRefresh();
   };
+  async function approveEligible(eligible: Element[]) {
+    if (bulkRunningRef.current || eligible.length === 0) return;
+    bulkRunningRef.current = true;
+    setBulkRunning(true);
+    setBulkResult(null);
+    setWorkflowMessage('');
+    let approved = 0;
+    const failures: BulkFailure[] = [];
+    try {
+      for (const slide of eligible) {
+        try {
+          const result = await api.approveElement(carousel.id, slide.id, slide.currentVersion.id);
+          onElementChanged(result);
+          approved += 1;
+        } catch (error) {
+          failures.push({ element: slide, error });
+        }
+      }
+      const refreshed = await onRefresh();
+      setBulkResult({ approved, failures, refreshed });
+    } finally {
+      bulkRunningRef.current = false;
+      setBulkRunning(false);
+    }
+  }
+  async function retryRemaining() {
+    if (bulkRunningRef.current) return;
+    bulkRunningRef.current = true;
+    setBulkRunning(true);
+    try {
+      const refreshed = await onRefresh();
+      if (refreshed) setBulkResult(null);
+    } finally {
+      bulkRunningRef.current = false;
+      setBulkRunning(false);
+    }
+  }
   function navigateByKeyboard(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const next =
       event.key === 'ArrowDown' || event.key === 'ArrowRight'
@@ -205,7 +493,7 @@ export function CarouselReview({
           : -1;
     if (next >= 0 && next < slides.length) {
       event.preventDefault();
-      setSelectedSlideId(slides[next]?.id ?? null);
+      selectSlide(slides[next]?.id ?? null);
       slideButtons.current[next]?.focus();
     }
   }
@@ -229,7 +517,7 @@ export function CarouselReview({
                 aria-label={carouselCopy.slideButton(element.position, element.slideType, version.state)}
                 className={styles.thumbnailButton}
                 data-selected={selected}
-                onClick={() => setSelectedSlideId(element.id)}
+                onClick={() => selectSlide(element.id)}
                 onKeyDown={(event) => navigateByKeyboard(event, index)}
               >
                 {version.imageUrl === null ? (
@@ -263,7 +551,7 @@ export function CarouselReview({
           variant="quiet"
           size="sm"
           disabled={selectedIndex === 0}
-          onClick={() => setSelectedSlideId(slides[selectedIndex - 1]?.id ?? null)}
+          onClick={() => selectSlide(slides[selectedIndex - 1]?.id ?? null)}
         >
           {carouselCopy.previous}
         </Button>
@@ -272,7 +560,7 @@ export function CarouselReview({
           variant="quiet"
           size="sm"
           disabled={selectedIndex >= slides.length - 1}
-          onClick={() => setSelectedSlideId(slides[selectedIndex + 1]?.id ?? null)}
+          onClick={() => selectSlide(slides[selectedIndex + 1]?.id ?? null)}
         >
           {carouselCopy.next}
         </Button>
@@ -284,6 +572,31 @@ export function CarouselReview({
       <h2 id={titleId} className={styles.visuallyHidden}>
         {carouselCopy.title(carousel.sequence, carousel.total)}
       </h2>
+      <div className={styles.approvalToolbar}>
+        <p className={styles.approvalSummary}>
+          {carouselCopy.approvalSummary(
+            approvalSummary.approved,
+            approvalSummary.total,
+            approvalSummary.pendingCount,
+            approvalSummary.warning.length + approvalSummary.blocked.length + approvalSummary.pending.length,
+          )}{' '}
+          {caption?.currentVersion.state === 'approved' ? finalCopy.captionApproved : finalCopy.captionPending}
+        </p>
+        <Button
+          variant="primary"
+          size="lg"
+          disabled={bulkRunning}
+          onClick={() => {
+            setBulkResult(null);
+            setBulkOpen(true);
+          }}
+        >
+          {carouselCopy.approveAll}
+        </Button>
+      </div>
+      <p role="status" aria-live="polite" className={styles.workflowStatus}>
+        {workflowMessage}
+      </p>
       <div className={styles.workspace}>
         {selectedSlide === undefined ? (
           <div className={styles.emptyWorkspace}>{carouselCopy.noSlides}</div>
@@ -294,12 +607,18 @@ export function CarouselReview({
             onRefused={onRefresh}
             workspaceNavigation={navigation}
             workspaceControls={selectedControls}
-            onApproved={
-              selectedIndex < slides.length - 1
-                ? () => setSelectedSlideId(slides[selectedIndex + 1]?.id ?? null)
-                : undefined
-            }
-            approveAndNext={selectedIndex < slides.length - 1}
+            onApproved={(approvedElement) => {
+              if (selectedSlideIdRef.current !== approvedElement.id) return;
+              const currentSlides = slides.map((slide) => (slide.id === approvedElement.id ? approvedElement : slide));
+              const currentIndex = currentSlides.findIndex((slide) => slide.id === approvedElement.id);
+              const nextPending = [
+                ...currentSlides.slice(currentIndex + 1),
+                ...currentSlides.slice(0, currentIndex),
+              ].find((slide) => slide.currentVersion.state !== 'approved');
+              if (nextPending) selectSlide(nextPending.id);
+              else setWorkflowMessage(carouselCopy.noNextPending);
+            }}
+            approveAndNext
           />
         )}
       </div>
@@ -325,6 +644,18 @@ export function CarouselReview({
         onApproved={handleApproved}
         onRefused={onRefresh}
       />
+      {bulkOpen ? (
+        <BulkApprovalDialog
+          slides={slides}
+          running={bulkRunning}
+          result={bulkResult}
+          onCancel={() => {
+            if (!bulkRunning) setBulkOpen(false);
+          }}
+          onConfirm={(eligible) => void approveEligible(eligible)}
+          onRetry={() => void retryRemaining()}
+        />
+      ) : null}
     </section>
   );
 }

@@ -1,6 +1,6 @@
 # WI-2.1 — Product and UX/UI Redesign Proposal
 
-Status: UI-01A, UI-01B, UI-02, UI-03, and UI-04A accepted; UI-04B not started
+Status: UI-01A, UI-01B, UI-02, UI-03, UI-04A, and UI-04B accepted
 Date: 2026-10-29
 Audience: Product Owner, design, frontend, QA
 Implementation constraint: UI-03 and UI-04A preserve backend and API contracts. Detailed delivery evidence is recorded in the increment reports.

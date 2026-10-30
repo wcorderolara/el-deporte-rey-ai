@@ -132,7 +132,7 @@ Review and verification:
 
 ### UI-04 — Visual content editor
 
-Delivery status: UI-04A is accepted on `work/WI-2.1-ui-04`; UI-04B is prepared and not started. Automated E2E and browser accessibility suites for UI-04A were not run under PD-UI-21; targeted component tests and technical checks are listed in the implementation report.
+Delivery status: UI-04A is accepted on `work/WI-2.1-ui-04`; UI-04B bulk approval is accepted on `work/WI-2.1-ui-04b`. UI-05 has not started. Automated E2E and browser accessibility suites are not run under PD-UI-21; targeted component tests and technical checks are recorded in each increment report.
 
 Outcome: a creator can preview, customize, review, and approve the existing carousel efficiently.
 
@@ -144,12 +144,11 @@ Scope:
 - Existing text fields presented as editable only where a supporting save contract/behavior exists; otherwise use clear review/regenerate controls. Do not create a deceptive editable control.
 - Template and authorized brand presentation using current capabilities.
 - Provenance, blocking facts, QA, warnings, and technical versions through progressive disclosure.
-- **Aprobar y siguiente**, individual approval/withdrawal, regeneration, caption approval, and explicit final approval.
+- **Aprobar y siguiente**, individual approval/withdrawal, regeneration, caption approval, explicit final approval, and confirmed bulk approval of eligible slides.
 - Completion gate with **Descargar contenido** as the next action.
 
 Out of scope:
 
-- Bulk approval.
 - Direct manipulation or freeform graphic editing without supporting behavior.
 - New static formats.
 - Video controls.
@@ -165,7 +164,8 @@ Review evidence:
 Capability split:
 
 - **UI-04A, current-contract review workspace:** deliver the three-panel experience with preview, issues, regeneration, approval, withdrawal, and final approval.
-- **UI-04B, editing capability (prepared, not started):** add direct headline/supporting-text changes, per-asset template selection, and brand-style choices only after an additive API/data proposal defines immutable new versions, validation, provenance/fact preservation, re-rendering, QA, optimistic concurrency, and approval invalidation. The Product Owner must authorize implementation after reviewing that proposal.
+- **UI-04B, bulk approval:** let creators approve all currently eligible slide versions after an accessible confirmation summary. Reuse the existing per-version approval operation sequentially, preserve each server guard, report partial failures, and keep caption and final approval independent. No new API contract is planned unless code inspection shows the existing operation cannot support safe partial results.
+- Direct editing, per-asset template selection, and brand-style choices remain future capabilities requiring a separate additive API/data proposal for immutable versions, validation, provenance/fact preservation, rendering, QA, concurrency, and approval invalidation.
 
 ### UI-05 — Download, history, and manual-data management UX
 

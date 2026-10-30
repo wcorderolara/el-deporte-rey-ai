@@ -85,6 +85,49 @@ export function approvalObstacles(version: ElementVersion): ApprovalObstacle[] {
   return obstacles;
 }
 
+export interface BulkApprovalSummary {
+  approved: number;
+  eligible: Element[];
+  warning: Element[];
+  blocked: Element[];
+  pending: Element[];
+  pendingCount: number;
+  total: number;
+}
+
+/** Classifies only current slide versions; the server remains authoritative for every approval. */
+export function bulkApprovalSummary(slides: readonly Element[]): BulkApprovalSummary {
+  const summary: BulkApprovalSummary = {
+    approved: 0,
+    eligible: [],
+    warning: [],
+    blocked: [],
+    pending: [],
+    pendingCount: 0,
+    total: slides.length,
+  };
+  for (const slide of slides) {
+    if (slide.currentVersion.state === 'approved') {
+      summary.approved += 1;
+      continue;
+    }
+    const obstacles = approvalObstacles(slide.currentVersion);
+    if (obstacles.length === 0) {
+      summary.eligible.push(slide);
+      continue;
+    }
+    if (obstacles.length === 1 && obstacles[0] === 'qa_ack_required') {
+      summary.warning.push(slide);
+    } else if (obstacles.length === 1 && obstacles[0] === 'pending_qa') {
+      summary.pending.push(slide);
+    } else {
+      summary.blocked.push(slide);
+    }
+  }
+  summary.pendingCount = summary.total - summary.approved;
+  return summary;
+}
+
 /** Reasons why an element prevents the final approval, as in Problem.items of FINAL_APPROVAL_REFUSED (R-240). */
 export function finalApprovalReasons(element: Element): FinalApprovalRefusalReason[] {
   const version = element.currentVersion;

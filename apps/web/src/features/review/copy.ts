@@ -121,6 +121,34 @@ export const carouselCopy = {
   previous: 'Anterior',
   next: 'Siguiente',
   noSlides: 'Este carrusel todavía no tiene diapositivas para revisar.',
+  approvalSummary: (approved: number, total: number, pending: number, blocked: number) =>
+    `${approved} de ${total} diapositivas aprobadas; ${pending} pendientes${blocked > 0 ? `, ${blocked} requieren atención` : ''}.`,
+  approveAll: 'Aprobar todas',
+  approveAllTitle: '¿Aprobar todas las diapositivas?',
+  bulkCount: (count: number, label: string) => `${count} ${label}`,
+  eligible: 'listas para aprobar',
+  alreadyApproved: 'ya aprobadas',
+  warningSlides: 'Advertencias sin confirmar',
+  blockedSlides: 'Diapositivas bloqueadas o pendientes',
+  confirmBulk: (count: number) => `Aprobar ${count} ${count === 1 ? 'diapositiva' : 'diapositivas'}`,
+  cancel: 'Cancelar',
+  noEligible: 'No hay diapositivas listas para aprobar. Revise las advertencias y los elementos pendientes.',
+  bulkRunning: 'Aprobando diapositivas…',
+  bulkResult: (approved: number, failed: number, refreshed: boolean) =>
+    failed === 0 && refreshed
+      ? `${approved} ${approved === 1 ? 'diapositiva aprobada' : 'diapositivas aprobadas'}.`
+      : failed === 0
+        ? `${approved} aprobaciones aplicadas; falta confirmar el estado actualizado.`
+        : `${approved} ${approved === 1 ? 'aprobada' : 'aprobadas'}; ${failed} ${failed === 1 ? 'requiere' : 'requieren'} atención. No se completó toda la aprobación.`,
+  bulkFailure: (position: number) =>
+    `No se pudo aprobar la diapositiva ${position}. Actualice el estado antes de volver a intentarlo.`,
+  retryRemaining: 'Revisar e intentar de nuevo las pendientes',
+  refreshState: 'Actualizar el estado',
+  dismiss: 'Listo',
+  allSlidesApproved: 'Todas las diapositivas están aprobadas. Revise el copy o continúe con la aprobación final.',
+  noNextPending: 'No quedan diapositivas pendientes. Revise el copy o continúe con la aprobación final.',
+  bulkDialogLabel: 'Confirmar aprobación de diapositivas',
+  finalAction: 'Aprobar carrusel completo',
   captionEyebrow: 'TEXTO DE PUBLICACIÓN',
 } as const;
 
@@ -291,7 +319,7 @@ export const finalCopy = {
   captionApproved: 'Copy aprobado',
   captionPending: 'Copy pendiente de aprobación',
   pendingDetails: 'Ver elementos pendientes y motivos',
-  approve: 'Dar la aprobación final',
+  approve: carouselCopy.finalAction,
   approving: 'Registrando la aprobación final…',
   approvedAt: 'Aprobación final registrada',
   valid: 'La aprobación final es válida. El carrusel se puede exportar.',

@@ -54,7 +54,7 @@ async function finalPanel(): Promise<HTMLElement> {
 }
 
 function finalButton(panel: HTMLElement): HTMLButtonElement {
-  return within(panel).getByRole('button', { name: /aprobación final/ }) as HTMLButtonElement;
+  return within(panel).getByRole('button', { name: 'Aprobar carrusel completo' }) as HTMLButtonElement;
 }
 
 describe('Final approval control (R-240)', () => {

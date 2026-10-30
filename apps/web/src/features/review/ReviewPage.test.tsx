@@ -143,23 +143,143 @@ describe('Review workspace navigation and hierarchy', () => {
 
   it('approves the current slide and moves to the next slide using the existing version approval API', async () => {
     const first = slide(1, 1, 'cover');
-    const elements = [first, slide(2, 2, 'match_result'), caption(3, 3)];
+    const alreadyApproved = slide(2, 2, 'match_result', { state: 'approved' });
+    const nextPending = slide(3, 3, 'closing');
+    const elements = [first, alreadyApproved, nextPending, caption(4, 4)];
     const approvedFirst = checkedElement({
       ...first,
       currentVersion: { ...first.currentVersion, state: 'approved' },
     });
     const server = fakeServer({
-      [DRAFT_PATH]: [
-        draftResponse(draft({ carousels: [carousel(elements)] })),
-        draftResponse(draft({ carousels: [carousel([approvedFirst, ...elements.slice(1)])] })),
-      ],
+      [DRAFT_PATH]: [draftResponse(draft({ carousels: [carousel(elements)] }))],
       [`PUT ${elementPath(CAROUSEL_ID, elementId(1), 'approval')}`]: () => json(approvedFirst),
     });
     renderApp(REVIEW, server);
     const slideCard = await screen.findByRole('article', { name: 'Diapositiva 1: Portada' });
     await userEvent.click(within(slideCard).getByRole('button', { name: 'Aprobar y siguiente' }));
-    expect(await screen.findByRole('heading', { level: 3, name: 'Diapositiva 2: Resultado' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { level: 3, name: 'Diapositiva 3: Cierre' })).toBeTruthy();
     expect(server.callsTo('PUT', elementPath(CAROUSEL_ID, elementId(1), 'approval'))).toHaveLength(1);
+  });
+
+  it('does not move selection when the selected slide changes during approval', async () => {
+    const first = slide(1, 1, 'cover');
+    const second = slide(2, 2, 'match_result');
+    const approvedFirst = checkedElement({ ...first, currentVersion: { ...first.currentVersion, state: 'approved' } });
+    let resolveApproval: ((response: Response) => void) | undefined;
+    const pendingApproval = new Promise<Response>((resolve) => {
+      resolveApproval = resolve;
+    });
+    const server = fakeServer({
+      [DRAFT_PATH]: draftResponse(draft({ carousels: [carousel([first, second, caption(3, 3)])] })),
+      [`PUT ${elementPath(CAROUSEL_ID, first.id, 'approval')}`]: () => pendingApproval,
+    });
+    renderApp(REVIEW, server);
+    const slideCard = await screen.findByRole('article', { name: 'Diapositiva 1: Portada' });
+    await userEvent.click(within(slideCard).getByRole('button', { name: 'Aprobar y siguiente' }));
+    await userEvent.click(screen.getByRole('button', { name: /Diapositiva 2: Resultado/ }));
+    resolveApproval?.(json(approvedFirst));
+    expect(await screen.findByRole('heading', { level: 3, name: 'Diapositiva 2: Resultado' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Diapositiva 2: Resultado/ }).getAttribute('aria-current')).toBe('true');
+    expect(server.callsTo('PUT', elementPath(CAROUSEL_ID, first.id, 'approval'))).toHaveLength(1);
+  });
+
+  it('confirms and approves only eligible slides in sequence, without approving the caption', async () => {
+    const base = standardCarousel();
+    const slides = base.elements.filter((item) => item.kind === 'slide');
+    const updatedSlides = slides.map((item) =>
+      checkedElement({
+        ...item,
+        currentVersion: { ...item.currentVersion, state: 'approved' },
+      }),
+    );
+    const server = fakeServer({
+      [DRAFT_PATH]: [
+        draftResponse(draft({ carousels: [base] })),
+        draftResponse(
+          draft({ carousels: [carousel([...updatedSlides, base.elements.find((item) => item.kind === 'caption')!])] }),
+        ),
+      ],
+      ...Object.fromEntries(
+        slides.map((item) => [
+          `PUT ${elementPath(CAROUSEL_ID, item.id, 'approval')}`,
+          () => json(updatedSlides.find((updated) => updated.id === item.id)),
+        ]),
+      ),
+    });
+    renderApp(REVIEW, server);
+    await screen.findByRole('heading', { level: 3, name: 'Diapositiva 1: Portada' });
+    await userEvent.click(screen.getByRole('button', { name: 'Aprobar todas' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Confirmar aprobación de diapositivas' });
+    expect(dialog.textContent).toContain('3 listas para aprobar');
+    expect(dialog.textContent).toContain('0 ya aprobadas');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Aprobar 3 diapositivas' }));
+    expect(await within(dialog).findByText('3 diapositivas aprobadas.')).toBeTruthy();
+    expect(
+      slides.every((item) => server.callsTo('PUT', elementPath(CAROUSEL_ID, item.id, 'approval')).length === 1),
+    ).toBe(true);
+    expect(server.callsTo('PUT', elementPath(CAROUSEL_ID, elementId(4), 'approval'))).toHaveLength(0);
+    expect(server.unexpected).toEqual([]);
+  });
+
+  it('does not bulk-approve slides with unacknowledged warnings or blockers', async () => {
+    const warningQa = slide(1, 1, 'cover').currentVersion.qa.map((item) =>
+      item.check === 'capitalized_tokens' ? { ...item, outcome: 'fail' as const } : item,
+    );
+    const items = [
+      slide(1, 1, 'cover', { qa: warningQa }),
+      slide(2, 2, 'match_result', { blocked: true }),
+      caption(3, 3),
+    ];
+    const server = fakeServer({ [DRAFT_PATH]: draftResponse(draft({ carousels: [carousel(items)] })) });
+    renderApp(REVIEW, server);
+    await screen.findByRole('heading', { level: 3, name: 'Diapositiva 1: Portada' });
+    await userEvent.click(screen.getByRole('button', { name: 'Aprobar todas' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Confirmar aprobación de diapositivas' });
+    expect(dialog.textContent).toContain('Advertencias sin confirmar');
+    expect(dialog.textContent).toContain('Diapositiva 1: Portada');
+    expect(dialog.textContent).toContain('Diapositivas bloqueadas o pendientes');
+    expect(within(dialog).getByRole('button', { name: 'Aprobar 0 diapositivas' }).hasAttribute('disabled')).toBe(true);
+    expect(server.calls.filter((call) => call.method === 'PUT' && call.path.endsWith('/approval'))).toHaveLength(0);
+  });
+
+  it('reports partial success and refreshes eligibility before offering a safe retry', async () => {
+    const first = slide(1, 1, 'cover');
+    const second = slide(2, 2, 'match_result');
+    const copy = caption(3, 3);
+    const firstApproved = checkedElement({ ...first, currentVersion: { ...first.currentVersion, state: 'approved' } });
+    const secondApproved = checkedElement({
+      ...second,
+      currentVersion: { ...second.currentVersion, state: 'approved' },
+    });
+    const currentDraft = (approvedSecond: boolean) =>
+      draftResponse(draft({ carousels: [carousel([firstApproved, approvedSecond ? secondApproved : second, copy])] }));
+    let secondAttempt = 0;
+    const server = fakeServer({
+      [DRAFT_PATH]: [
+        draftResponse(draft({ carousels: [carousel([first, second, copy])] })),
+        currentDraft(false),
+        currentDraft(false),
+        currentDraft(true),
+      ],
+      [`PUT ${elementPath(CAROUSEL_ID, first.id, 'approval')}`]: () => json(firstApproved),
+      [`PUT ${elementPath(CAROUSEL_ID, second.id, 'approval')}`]: () => {
+        secondAttempt += 1;
+        return secondAttempt === 1 ? Promise.reject(new TypeError('network unavailable')) : json(secondApproved);
+      },
+    });
+    renderApp(REVIEW, server);
+    await screen.findByRole('heading', { level: 3, name: 'Diapositiva 1: Portada' });
+    await userEvent.click(screen.getByRole('button', { name: 'Aprobar todas' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Confirmar aprobación de diapositivas' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Aprobar 2 diapositivas' }));
+    expect(await within(dialog).findByText(/1 aprobada; 1 requiere atención/)).toBeTruthy();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Revisar e intentar de nuevo las pendientes' }));
+    expect(await within(dialog).findByText('1 listas para aprobar')).toBeTruthy();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Aprobar 1 diapositiva' }));
+    expect(await within(dialog).findByText('1 diapositiva aprobada.')).toBeTruthy();
+    expect(server.callsTo('PUT', elementPath(CAROUSEL_ID, first.id, 'approval'))).toHaveLength(1);
+    expect(server.callsTo('PUT', elementPath(CAROUSEL_ID, second.id, 'approval'))).toHaveLength(2);
+    expect(server.callsTo('PUT', elementPath(CAROUSEL_ID, elementId(3), 'approval'))).toHaveLength(0);
   });
 });
 

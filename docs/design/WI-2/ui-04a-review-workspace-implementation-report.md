@@ -66,4 +66,4 @@ From the repository root, run `npm run dev`. Open `http://127.0.0.1:5173/project
 9. Confirm the final summary counts approved slides accurately, shows copy status and pending reasons, and keeps final approval disabled until the server reports readiness. Confirm only a valid final approval exposes the existing export route.
 10. Expand `Datos y trazabilidad del borrador` and confirm draft metadata, left-out matches, and the exclusions editor remain usable.
 
-UI-04A was accepted on 2026-10-29 and closed on its dedicated branch. UI-04B has not started. Its design requires a separate additive API/data proposal covering immutable edited versions, validation, provenance and fact preservation, rerendering, QA, concurrency, and approval invalidation before implementation. Do not merge, push, or deploy without separate authorization.
+UI-04A was accepted on 2026-10-29 and closed on its dedicated branch. UI-04B bulk approval is a separate follow-on increment. Do not merge, push, or deploy without separate authorization.

@@ -493,6 +493,124 @@
   min-width: 0;
 }
 
+.approvalToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-raised);
+}
+
+.approvalSummary,
+.workflowStatus {
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.workflowStatus:empty {
+  display: none;
+}
+
+.dialogBackdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  overflow-y: auto;
+  place-items: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--color-surface-canvas) 78%, transparent);
+}
+
+.bulkDialog {
+  display: grid;
+  width: min(100%, 38rem);
+  max-height: min(90dvh, 52rem);
+  gap: 1rem;
+  overflow: auto;
+  padding: 1.5rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-overlay);
+  color: var(--color-text-primary);
+}
+
+.bulkDialog:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.bulkDialog h3,
+.bulkDialog h4,
+.bulkDialog p,
+.bulkDialog ul {
+  margin: 0;
+}
+
+.bulkCounts,
+.bulkAttention,
+.bulkFailures {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.bulkAttention {
+  padding: 0.75rem;
+  border-left: 0.25rem solid var(--color-warning);
+  background: var(--color-warning-surface);
+  color: var(--color-text-primary);
+}
+
+.bulkFailures {
+  padding-left: 1.25rem;
+  color: var(--color-danger);
+}
+
+.dialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.dialogPrimary,
+.dialogSecondary {
+  min-height: 44px;
+  padding: 0.625rem 1rem;
+  border: 2px solid var(--color-brand-gold);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.dialogPrimary {
+  background: var(--color-brand-gold);
+  color: var(--color-text-inverse);
+}
+
+.dialogSecondary {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-card);
+  color: var(--color-text-primary);
+}
+
+.dialogPrimary:focus-visible,
+.dialogSecondary:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.dialogPrimary:disabled,
+.dialogSecondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
 .element {
   display: grid;
   min-width: 0;
@@ -857,6 +975,28 @@
 }
 
 @media (max-width: 44rem) {
+  .approvalToolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dialogBackdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .bulkDialog {
+    width: 100%;
+    max-height: 90dvh;
+    box-sizing: border-box;
+    border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+    padding: 1rem;
+  }
+
+  .dialogActions > button {
+    flex: 1 1 auto;
+  }
+
   .reviewHeader {
     flex-direction: column;
     gap: 0.75rem;

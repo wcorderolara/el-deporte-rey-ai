@@ -1,6 +1,6 @@
 # WI-2.1 — Tailwind CSS v4 Migration Strategy
 
-Status: UI-01A, UI-01B, UI-02, UI-03, and UI-04A accepted; UI-04B not started
+Status: UI-01A, UI-01B, UI-02, UI-03, UI-04A, and UI-04B accepted
 Date: 2026-10-29
 Applies to: UI-01 through UI-06 on the existing React/Vite frontend
 

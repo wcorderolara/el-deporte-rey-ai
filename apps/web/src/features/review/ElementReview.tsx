@@ -11,7 +11,10 @@ import styles from './Review.module.css';
 import { useReviewDependencies } from './ReviewContext';
 import { TextFields } from './TextFields';
 
-type Action = { kind: 'approve' | 'withdraw' | 'regenerate' } | { kind: 'acknowledge'; check: QaWarningCheck };
+type Action =
+  | { kind: 'approve'; advance: boolean }
+  | { kind: 'withdraw' | 'regenerate' }
+  | { kind: 'acknowledge'; check: QaWarningCheck };
 
 const errorTitle: Record<Action['kind'], string> = {
   approve: elementCopy.approveError,
@@ -28,7 +31,7 @@ export interface ElementReviewProps {
   onRefused: () => void;
   workspaceNavigation?: ReactNode;
   workspaceControls?: ReactNode;
-  onApproved?: () => void;
+  onApproved?: (element: Element) => void;
   approveAndNext?: boolean;
 }
 
@@ -115,7 +118,7 @@ export function ElementReview({
           break;
       }
       onChanged(result);
-      if (approved) onApproved?.();
+      if (approved && next.kind === 'approve' && next.advance) onApproved?.(result);
     } catch (error) {
       setFailure({ action: next, error });
       if (error instanceof ApiError && error.kind === 'problem') {
@@ -131,12 +134,7 @@ export function ElementReview({
       ? problemFacts(failure.error.problem)
       : [];
 
-  const approvalLabel =
-    element.kind === 'caption'
-      ? elementCopy.approveCaption
-      : approveAndNext
-        ? elementCopy.approveAndNext
-        : elementCopy.approveSlide;
+  const approvalLabel = element.kind === 'caption' ? elementCopy.approveCaption : elementCopy.approveSlide;
 
   return (
     <article
@@ -243,17 +241,31 @@ export function ElementReview({
               {elementCopy.withdraw}
             </Button>
           ) : (
-            <Button
-              variant="primary"
-              size="lg"
-              isLoading={action?.kind === 'approve'}
-              loadingLabel={elementCopy.approving}
-              disabled={busy || obstacles.length > 0}
-              aria-describedby={obstacles.length > 0 ? obstaclesId : undefined}
-              onClick={() => void run({ kind: 'approve' })}
-            >
-              {approvalLabel}
-            </Button>
+            <>
+              <Button
+                variant="secondary"
+                isLoading={action?.kind === 'approve' && !action.advance}
+                loadingLabel={elementCopy.approving}
+                disabled={busy || obstacles.length > 0}
+                aria-describedby={obstacles.length > 0 ? obstaclesId : undefined}
+                onClick={() => void run({ kind: 'approve', advance: false })}
+              >
+                {approvalLabel}
+              </Button>
+              {element.kind === 'slide' && approveAndNext ? (
+                <Button
+                  variant="primary"
+                  size="lg"
+                  isLoading={action?.kind === 'approve' && action.advance}
+                  loadingLabel={elementCopy.approving}
+                  disabled={busy || obstacles.length > 0}
+                  aria-describedby={obstacles.length > 0 ? obstaclesId : undefined}
+                  onClick={() => void run({ kind: 'approve', advance: true })}
+                >
+                  {elementCopy.approveAndNext}
+                </Button>
+              ) : null}
+            </>
           )}
           <Button
             variant="secondary"

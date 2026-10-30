@@ -12,7 +12,7 @@ export interface DraftRequest {
   /** Loads the draft again, showing the loading state (after a failed first load). */
   reload: () => void;
   /** Loads the draft again in the background, keeping the shown draft until the answer arrives. */
-  refresh: () => void;
+  refresh: () => Promise<boolean>;
   refreshing: boolean;
   refreshError: unknown;
   /** Shows the element returned by an element operation until the next refresh. */
@@ -60,27 +60,26 @@ export function useDraft(api: ReviewApi, projectId: string): DraftRequest {
     setAttempt((value) => value + 1);
   }, []);
 
-  const refresh = useCallback(() => {
+  const refresh = useCallback(async () => {
     const current = new AbortController();
     controller.current?.abort();
     controller.current = current;
     const id = ++sequence.current;
     setRefreshing(true);
     setRefreshError(null);
-    api.getActiveDraft(projectId, current.signal).then(
-      (draft) => {
-        if (id === sequence.current) {
-          setState({ status: 'success', draft });
-          setRefreshing(false);
-        }
-      },
-      (error: unknown) => {
-        if (id === sequence.current) {
-          setRefreshError(error);
-          setRefreshing(false);
-        }
-      },
-    );
+    let refreshed = false;
+    try {
+      const draft = await api.getActiveDraft(projectId, current.signal);
+      if (id === sequence.current) {
+        setState({ status: 'success', draft });
+        refreshed = true;
+      }
+    } catch (error) {
+      if (id === sequence.current) setRefreshError(error);
+    } finally {
+      if (id === sequence.current) setRefreshing(false);
+    }
+    return refreshed;
   }, [api, projectId]);
 
   useEffect(() => () => controller.current?.abort(), []);

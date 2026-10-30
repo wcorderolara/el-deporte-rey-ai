@@ -50,7 +50,9 @@ async function card(name = SLIDE): Promise<HTMLElement> {
 }
 
 function button(container: HTMLElement, name: string | RegExp): HTMLButtonElement {
-  if (name === 'Aprobar esta versión') name = /^Aprobar (diapositiva|copy|y siguiente)$/;
+  if (name === 'Aprobar esta versión') {
+    name = container.textContent?.includes('Texto de publicación y hashtags') ? 'Aprobar copy' : 'Aprobar diapositiva';
+  }
   if (name === 'Regenerar este elemento') name = /^Regenerar (diapositiva|copy)$/;
   return within(container).getByRole('button', { name }) as HTMLButtonElement;
 }
