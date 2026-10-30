@@ -9,7 +9,9 @@ export interface ShellContext {
 export function shellContext(pathname: string): ShellContext {
   if (pathname === '/') return { title: 'Inicio' };
   if (pathname === '/projects' || pathname === '/projects/') return { title: 'Mis proyectos' };
-  if (pathname === '/projects/new') return { title: 'Crear contenido' };
+  if (pathname === '/projects/new' || pathname === '/projects/new/') {
+    return { title: 'Crear contenido', parent: { label: 'Mis proyectos', to: '/projects' } };
+  }
   const project = /^\/projects\/([^/]+)(\/.*)?$/.exec(pathname);
   if (project) {
     const suffix = project[2] ?? '';

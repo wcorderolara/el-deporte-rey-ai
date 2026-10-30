@@ -18,6 +18,7 @@ import {
   project,
   PROJECT_ID,
   renderApp,
+  run,
   STALE_LISTING,
   type Handler,
 } from './test/support';
@@ -39,7 +40,11 @@ function cupServer(extra: Record<string, Handler> = {}) {
 }
 
 function submitButton(): HTMLButtonElement {
-  return screen.getByRole('button', { name: /Crear proyecto/ });
+  return screen.getByRole('button', { name: /Continuar/ });
+}
+
+function createButton(): HTMLButtonElement {
+  return screen.getByRole('button', { name: /Crear carrusel/ });
 }
 
 async function chooseCupSeason(user: ReturnType<typeof userEvent.setup>) {
@@ -118,42 +123,41 @@ describe('Create form: catalogue (R-243, R-282, R-286, R-291)', () => {
 });
 
 describe('Create form: source, season and stage (OD-16, R-283, R-284)', () => {
-  it('offers only selectable sources and preselects the first available one', async () => {
+  it('preselects the first available source without exposing provider implementation details', async () => {
     const user = userEvent.setup();
     const server = fakeServer({
       [CATALOGUE]: () => json(catalogue),
       'GET /api/v1/catalog/competitions/manual-liga-nacional/sources/manual/seasons': () =>
         json({ ...cupSeasons, competitionId: 'manual-liga-nacional', sourceId: 'manual' }),
+      'GET /api/v1/catalog/competitions/manual-liga-nacional/sources/manual/seasons/2025-26/stages': () =>
+        json({ ...cupStages, competitionId: 'manual-liga-nacional', sourceId: 'manual' }),
     });
     renderApp('/projects/new', server);
 
     await user.click(await screen.findByRole('radio', { name: /Liga Nacional Manual/ }));
 
-    const sources = screen.getByRole('group', { name: 'Fuente de datos' });
-    const radios = within(sources).getAllByRole('radio') as HTMLInputElement[];
-    expect(radios.map((radio) => radio.value)).toEqual(['live-api', 'manual']);
-    expect(radios[0]?.disabled).toBe(true);
-    expect(radios[0]?.closest('li')?.textContent).toContain('La fuente no lo encuentra.');
-    expect(radios[1]?.checked).toBe(true);
-    expect(radios[1]?.closest('li')?.textContent).toContain('Datos manuales');
-
     expect(await screen.findByRole('combobox', { name: 'Temporada' })).toBeTruthy();
+    expect(
+      server.callsTo('GET', '/api/v1/catalog/competitions/manual-liga-nacional/sources/manual/seasons'),
+    ).toHaveLength(1);
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Temporada' }), '2025-26');
+    const manualStages = await screen.findByRole('group', { name: 'Fase' });
+    await user.click(within(manualStages).getByRole('radio', { name: 'Eliminatoria de playoff' }));
+    await user.click(submitButton());
+    const manualMode = await screen.findByRole('radio', { name: /Cargar resultados manualmente/ });
+    expect((manualMode as HTMLInputElement).checked).toBe(true);
+    expect(screen.getByRole('link', { name: 'Abrir importaciones manuales' })).toBeTruthy();
     expect(server.unexpected).toEqual([]);
   });
 
-  it('does not offer a non-selectable verification source', async () => {
+  it('only offers data modes supported by available selectable sources', async () => {
     const user = userEvent.setup();
     renderApp('/projects/new', cupServer());
-
-    await user.click(await screen.findByRole('radio', { name: /Copa Continental Demo/ }));
-
-    const sources = screen.getByRole('group', { name: 'Fuente de datos' });
-    expect(
-      within(sources)
-        .getAllByRole('radio')
-        .map((radio) => radio.getAttribute('value')),
-    ).toEqual(['demo-cup']);
-    expect((within(sources).getByRole('radio') as HTMLInputElement).checked).toBe(true);
+    const stages = await chooseCupSeason(user);
+    await user.click(within(stages).getByRole('radio', { name: 'Eliminatoria de playoff' }));
+    await user.click(submitButton());
+    expect(await screen.findByRole('radio', { name: /Probar con datos de demostración/ })).toBeTruthy();
+    expect(screen.queryByRole('radio', { name: /Obtener resultados automáticamente/ })).toBeNull();
   });
 
   it('loads seasons only on source choice and stages only on season choice', async () => {
@@ -291,6 +295,7 @@ describe('Create form: submit (R-243, R-236)', () => {
     const user = userEvent.setup();
     const server = cupServer({
       'POST /api/v1/projects': () => json(project(), 201),
+      [`POST /api/v1/projects/${PROJECT_ID}/runs`]: () => json(run(['running']), 202),
       [`GET /api/v1/projects/${PROJECT_ID}`]: () => json(project()),
     });
     renderApp('/projects/new', server);
@@ -317,6 +322,9 @@ describe('Create form: submit (R-243, R-236)', () => {
     expect(language.value).toBe('es');
 
     await user.click(submitButton());
+    expect(await screen.findByRole('heading', { name: '¿Cómo quieres preparar los datos?' })).toBeTruthy();
+    expect(screen.getByText(/todavía no se han consultado/)).toBeTruthy();
+    await user.click(createButton());
 
     expect(await screen.findByRole('heading', { level: 1, name: project().title })).toBeTruthy();
     const [post] = server.callsTo('POST', '/api/v1/projects');
@@ -329,6 +337,7 @@ describe('Create form: submit (R-243, R-236)', () => {
       language: 'es',
     });
     expect(post?.headers['X-EDR-Client']).toBe('web');
+    expect(server.callsTo('POST', `/api/v1/projects/${PROJECT_ID}/runs`)[0]?.body).toEqual({ kind: 'full' });
     expect(server.unexpected).toEqual([]);
   });
 
@@ -336,6 +345,7 @@ describe('Create form: submit (R-243, R-236)', () => {
     const user = userEvent.setup();
     const server = cupServer({
       'POST /api/v1/projects': () => json(project({ stageId: 'playoff', matchday: null, language: 'en' }), 201),
+      [`POST /api/v1/projects/${PROJECT_ID}/runs`]: () => json(run(['running']), 202),
       [`GET /api/v1/projects/${PROJECT_ID}`]: () => json(project({ stageId: 'playoff', matchday: null })),
     });
     renderApp('/projects/new', server);
@@ -353,6 +363,7 @@ describe('Create form: submit (R-243, R-236)', () => {
     expect(submitButton().disabled).toBe(false);
 
     await user.click(submitButton());
+    await user.click(createButton());
 
     await screen.findByRole('heading', { level: 1, name: project().title });
     expect(server.callsTo('POST', '/api/v1/projects')[0]?.body).toEqual({
@@ -408,19 +419,21 @@ describe('Create form: submit (R-243, R-236)', () => {
     const stages = await chooseCupSeason(user);
     await user.click(within(stages).getByRole('radio', { name: 'Octavos de final' }));
     await user.click(submitButton());
+    await user.click(createButton());
 
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('No se pudo crear el proyecto');
     expect(alert.textContent).toContain('La selección no está disponible en la fuente elegida.');
     expect(alert.textContent).toContain('La fase no está disponible.');
-    expect(screen.getByRole('heading', { level: 1, name: 'Nuevo proyecto' })).toBeTruthy();
-    expect(submitButton().disabled).toBe(false);
+    expect(screen.getByRole('heading', { level: 1, name: 'Crear contenido' })).toBeTruthy();
+    expect(createButton().disabled).toBe(false);
   });
 
   it('can be completed with the keyboard only', async () => {
     const user = userEvent.setup();
     const server = cupServer({
       'POST /api/v1/projects': () => json(project(), 201),
+      [`POST /api/v1/projects/${PROJECT_ID}/runs`]: () => json(run(['running']), 202),
       [`GET /api/v1/projects/${PROJECT_ID}`]: () => json(project()),
     });
     renderApp('/projects/new', server);
@@ -439,7 +452,32 @@ describe('Create form: submit (R-243, R-236)', () => {
     await user.keyboard(' ');
     submitButton().focus();
     await user.keyboard('{Enter}');
+    createButton().focus();
+    await user.keyboard('{Enter}');
 
     expect(await screen.findByRole('heading', { level: 1, name: project().title })).toBeTruthy();
+  });
+
+  it('preserves selections when navigating back and recovers a saved project if generation cannot start', async () => {
+    const user = userEvent.setup();
+    const server = cupServer({
+      'POST /api/v1/projects': () => json(project(), 201),
+      [`POST /api/v1/projects/${PROJECT_ID}/runs`]: () => problem({ status: 503, code: 'INTERNAL_ERROR' }),
+      [`GET /api/v1/projects/${PROJECT_ID}`]: () => json(project()),
+    });
+    renderApp('/projects/new', server);
+    const stages = await chooseCupSeason(user);
+    await user.click(within(stages).getByRole('radio', { name: 'Eliminatoria de playoff' }));
+    await user.click(submitButton());
+    await user.click(screen.getByRole('button', { name: 'Volver a definir' }));
+    expect((screen.getByRole('radio', { name: 'Eliminatoria de playoff' }) as HTMLInputElement).checked).toBe(true);
+    await user.click(submitButton());
+    await user.click(createButton());
+    expect((await screen.findByRole('alert')).textContent).toContain(
+      'El proyecto quedó guardado, pero no se pudo iniciar la generación.',
+    );
+    expect(screen.getByRole('button', { name: 'Iniciar ejecución completa' })).toBeTruthy();
+    expect(server.callsTo('POST', '/api/v1/projects')).toHaveLength(1);
+    expect(server.callsTo('POST', `/api/v1/projects/${PROJECT_ID}/runs`)).toHaveLength(1);
   });
 });

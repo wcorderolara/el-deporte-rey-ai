@@ -1,6 +1,6 @@
 import type { Language, Project, RunKind } from '@edr/contracts';
 import { useCallback, useState, type FormEvent } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useLocation, useParams } from 'react-router';
 
 import { featurePaths } from '../../app/routes';
 import { DataModeBadge, DemoBanner, ErrorBanner, featureCopy, formatDateTime } from '../../ui';
@@ -109,7 +109,15 @@ function LanguageSection({ project, onUpdated }: { project: Project; onUpdated: 
   );
 }
 
-function RunSection({ project, onRunFinished }: { project: Project; onRunFinished: () => void }) {
+function RunSection({
+  project,
+  onRunFinished,
+  creationGenerationFailed,
+}: {
+  project: Project;
+  onRunFinished: () => void;
+  creationGenerationFailed: boolean;
+}) {
   const { api, runPollIntervalMs } = useProjectsDependencies();
   const polling = useRunPolling(api, project.id, project.latestRun, runPollIntervalMs, onRunFinished);
   const [starting, setStarting] = useState<RunKind | null>(null);
@@ -136,6 +144,11 @@ function RunSection({ project, onRunFinished }: { project: Project; onRunFinishe
   return (
     <section aria-labelledby="project-run-title">
       <h2 id="project-run-title">{runCopy.title}</h2>
+      {creationGenerationFailed ? (
+        <p role="alert" className={styles.note}>
+          El proyecto quedó guardado, pero no se pudo iniciar la generación. Puedes volver a intentarlo aquí.
+        </p>
+      ) : null}
       <p role="status" className={styles.runSummary}>
         {run === null ? runCopy.none : runSummary(run)}
         {starting === null ? '' : ` ${runCopy.starting}`}
@@ -211,6 +224,12 @@ function ProjectSections({ project }: { project: Project }) {
 
 function ProjectDetail({ projectId }: { projectId: string }) {
   const { api } = useProjectsDependencies();
+  const location = useLocation();
+  const creationGenerationFailed =
+    typeof location.state === 'object' &&
+    location.state !== null &&
+    'creationGenerationFailed' in location.state &&
+    location.state.creationGenerationFailed === true;
   const request = useApiRequest(
     projectId,
     useCallback((signal: AbortSignal) => api.getProject(projectId, signal), [api, projectId]),
@@ -253,7 +272,7 @@ function ProjectDetail({ projectId }: { projectId: string }) {
       <SelectionSummary project={project} />
       <ProjectSections project={project} />
       <LanguageSection project={project} onUpdated={replace} />
-      <RunSection project={project} onRunFinished={refresh} />
+      <RunSection project={project} onRunFinished={refresh} creationGenerationFailed={creationGenerationFailed} />
     </article>
   );
 }

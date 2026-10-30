@@ -113,6 +113,7 @@ test.describe('Accessibility @a11y', () => {
         competition: /^Liga Manual Sintética/,
         stage: 'Torneo Apertura',
         matchday: 'Jornada 1',
+        mode: 'manual',
       });
       await runToEnd(page, 1);
       const manualFactsHref = await page
@@ -151,7 +152,7 @@ test.describe('Accessibility @a11y', () => {
     await page.getByRole('combobox', { name: 'Temporada' }).selectOption({ index: 1 });
     await page.getByRole('radio', { name: 'Octavos de Final', exact: true }).check();
     await page.getByRole('combobox', { name: 'Jornada' }).selectOption({ label: 'Jornada 1' });
-    await expect(page.getByRole('button', { name: 'Crear proyecto' })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'Continuar' })).toBeEnabled();
     await expectAccessible(page);
   });
 

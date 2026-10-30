@@ -114,7 +114,11 @@ export function AppShell() {
       navigation={<MainNavigation pathname={location.pathname} hash={location.hash} />}
       title={context.title}
       navigationKey={`${location.pathname}${location.hash}`}
-      contentVariant={['/', '/projects', '/projects/'].includes(location.pathname) ? 'studio' : 'legacy'}
+      contentVariant={
+        ['/', '/projects', '/projects/', '/projects/new', '/projects/new/'].includes(location.pathname)
+          ? 'studio'
+          : 'legacy'
+      }
       primaryAction={
         <Link
           to="/projects/new"

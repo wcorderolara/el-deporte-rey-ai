@@ -94,9 +94,9 @@ export function Layout({
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="border-b border-border-subtle bg-surface-raised px-gutter-mobile py-5 sm:px-gutter-tablet lg:px-gutter-desktop">
+        <header className="border-b border-border-subtle bg-surface-raised px-gutter-mobile py-4 sm:px-gutter-tablet lg:px-gutter-desktop">
           {breadcrumbs}
-          <p className="m-0 mt-3 font-display text-heading-sm font-extrabold tracking-heading sm:text-heading-md">
+          <p className="m-0 mt-2 font-display text-heading-sm font-extrabold tracking-heading sm:text-heading-md">
             {title}
           </p>
           {projectContext ? (

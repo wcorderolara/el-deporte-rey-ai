@@ -50,5 +50,5 @@ test('dashboard primary creation action opens the existing form', async ({ page 
   await page.goto('/');
   await page.getByRole('main').getByRole('link', { name: 'Crear contenido', exact: true }).first().click();
   await expect(page).toHaveURL(/\/projects\/new$/);
-  await expect(page.getByRole('heading', { name: 'Nuevo proyecto' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Crear contenido' })).toBeVisible();
 });

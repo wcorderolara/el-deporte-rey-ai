@@ -88,7 +88,7 @@ describe('App shell (R-235)', () => {
     const router = renderAt('/');
     await screen.findByRole('heading', { name: 'Tu próximo contenido empieza aquí' });
     await user.click(screen.getAllByRole('link', { name: 'Crear contenido' })[0]!);
-    expect(await screen.findByRole('heading', { name: 'Nuevo proyecto' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Crear contenido' })).toBeTruthy();
     expect(router.state.location.pathname).toBe('/projects/new');
   });
 

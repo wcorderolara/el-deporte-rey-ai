@@ -25,6 +25,8 @@ export interface ProjectSelection {
   readonly matchday?: string;
   /** Content language option; the default (Español) when omitted. */
   readonly language?: 'Español' | 'Inglés';
+  /** Data mode of the selected competition/source. */
+  readonly mode?: 'automatic' | 'manual' | 'demo';
 }
 
 /** The project ID of the current project address. */
@@ -36,38 +38,49 @@ export function projectIdOf(page: Page): string {
   return match[1];
 }
 
-/** Fills the creation form, checking that "Crear proyecto" stays disabled until the selection is complete. */
-export async function fillProjectForm(page: Page, selection: ProjectSelection): Promise<void> {
+/** Fills the content definition and confirms the selected data mode. */
+export async function fillProjectForm(page: Page, selection: ProjectSelection, confirm = true): Promise<void> {
   await page.goto('/projects/new');
-  await expect(page.getByRole('heading', { level: 1, name: 'Nuevo proyecto' })).toBeVisible();
-  const create = page.getByRole('button', { name: 'Crear proyecto' });
-  await expect(create).toBeDisabled();
+  await expect(page.getByRole('heading', { level: 1, name: 'Crear contenido' })).toBeVisible();
+  const continueButton = page.getByRole('button', { name: 'Continuar' });
+  await expect(continueButton).toBeDisabled();
   await page.getByRole('radio', { name: selection.competition }).check();
-  await expect(create).toBeDisabled();
+  await expect(continueButton).toBeDisabled();
   const season = page.getByRole('combobox', { name: 'Temporada' });
-  await expect(season.locator('option')).not.toHaveCount(1);
+  await expect(season.locator('option').nth(1)).toBeAttached();
   if (selection.season === undefined) {
     await season.selectOption({ index: 1 });
   } else {
     await season.selectOption({ label: selection.season });
   }
-  await expect(create).toBeDisabled();
+  await expect(continueButton).toBeDisabled();
   await page.getByRole('radio', { name: selection.stage, exact: true }).check();
   if (selection.matchday !== undefined) {
-    await expect(create).toBeDisabled();
+    await expect(continueButton).toBeDisabled();
     await page.getByRole('combobox', { name: 'Jornada' }).selectOption({ label: selection.matchday });
   }
   if (selection.language !== undefined) {
     await page.getByRole('combobox', { name: 'Idioma del contenido' }).selectOption({ label: selection.language });
   }
   await expect(page.getByText('La selección está completa.')).toBeVisible();
-  await expect(create).toBeEnabled();
+  await expect(continueButton).toBeEnabled();
+  if (!confirm) return;
+  await continueButton.click();
+  await expect(page.getByRole('heading', { name: '¿Cómo quieres preparar los datos?' })).toBeVisible();
+  const modeName =
+    selection.mode === 'manual'
+      ? /Cargar resultados manualmente/
+      : selection.mode === 'automatic'
+        ? /Obtener resultados automáticamente/
+        : /Probar con datos de demostración/;
+  await expect(page.getByRole('radio', { name: modeName })).toBeChecked();
+  await expect(page.getByRole('button', { name: 'Crear carrusel' })).toBeEnabled();
 }
 
 /** Creates a project through the form and returns its ID (the browser is on the project page). */
 export async function createProject(page: Page, selection: ProjectSelection): Promise<string> {
   await fillProjectForm(page, selection);
-  await page.getByRole('button', { name: 'Crear proyecto' }).click();
+  await page.getByRole('button', { name: 'Crear carrusel' }).click();
   await page.waitForURL(new RegExp(`/projects/${UUID.source}$`));
   await expect(page.getByRole('region', { name: 'Selección' })).toBeVisible();
   return projectIdOf(page);
@@ -102,10 +115,13 @@ export async function runToEnd(
   outcome: 'completada' | 'fallida' = 'completada',
 ): Promise<void> {
   const region = runRegion(page);
-  await region.getByRole('button', { name: /^(Iniciar|Reiniciar) ejecución completa$/ }).click();
-  await expect(
-    region.getByRole('heading', { level: 3, name: `Ejecución ${String(runNumber)} (completa)` }),
-  ).toBeVisible();
+  const runHeading = region.getByRole('heading', { level: 3, name: `Ejecución ${String(runNumber)} (completa)` });
+  const anyRunHeading = region.getByRole('heading', { level: 3, name: /^Ejecución \d+ \(completa\)$/ });
+  await expect(anyRunHeading.or(region.getByText('El proyecto todavía no tiene ejecuciones.'))).toBeVisible();
+  if ((await runHeading.count()) === 0) {
+    await region.getByRole('button', { name: /^(Iniciar|Reiniciar) ejecución completa$/ }).click();
+  }
+  await expect(runHeading).toBeVisible();
   await expect(region.getByRole('status').first()).toHaveText(`Ejecución ${String(runNumber)}: ${outcome}.`, {
     timeout: RUN_TIMEOUT_MS,
   });

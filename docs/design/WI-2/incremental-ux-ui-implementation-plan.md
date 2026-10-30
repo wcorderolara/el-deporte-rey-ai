@@ -1,6 +1,6 @@
 # WI-2.1 — Incremental UX/UI Implementation Plan
 
-Status: UI-01A and UI-01B accepted; UI-02 implemented and verified pending visual acceptance
+Status: UI-01A, UI-01B, UI-02, and UI-03 accepted; UI-04A is next and not started
 Date: 2026-10-29
 
 ## 1. Delivery principles
@@ -15,6 +15,8 @@ Date: 2026-10-29
 - Preserve future SaaS portability through clear boundaries, without adding SaaS features or speculative infrastructure during WI-2.
 - Keep safety-critical statuses and approval gates visible even when technical detail is collapsed.
 - End every creator journey at **Descargar contenido**, never at publishing or scheduling.
+- Follow PD-UI-21 for verification and acceptance on UI-03 and later tasks: Codex runs typecheck, affected-code ESLint, relevant unit/component tests, build when appropriate, and `git diff --check`; Product Owner owns functional E2E and visual acceptance.
+- Prefer targeted checks and reuse valid results. Do not automatically run Playwright E2E, browser accessibility, visual regression, or repeated multi-viewport screenshot suites. For critical behavior, contracts, authentication, security-sensitive work, or shared infrastructure, explain the need and exact commands and request authorization before expensive browser/E2E checks. Keep existing E2E infrastructure intact.
 
 ## 2. Pre-implementation design gate
 
@@ -38,7 +40,7 @@ Increment split:
 - **UI-01A — foundation (accepted by Product Owner):** Tailwind CSS v4/Vite integration, centralized tokens, controlled legacy aliases, preflight decision, Button, IconButton, Card, Badge, Input, Select, Textarea, Alert, EmptyState, LoadingState, tests, and an isolated review gallery.
 - **UI-01B — shell (implemented, verified, and accepted):** application shell, primary navigation, route-derived project context, responsive disclosure, and breadcrumbs. Feature screens remain unchanged.
 
-The UI-01B scope is in `ui-01b-shell-and-navigation-scope.md`; results and acceptance are in `ui-01b-shell-implementation-report.md`. UI-02 was subsequently authorized from checkpoint `6aff775` and is implemented and verified; see `ui-02-creator-dashboard-implementation-report.md`. UI-03 remains unstarted and requires its own approval.
+The UI-01B scope is in `ui-01b-shell-and-navigation-scope.md`; results and acceptance are in `ui-01b-shell-implementation-report.md`. UI-02 was subsequently authorized from checkpoint `6aff775`, accepted by the Product Owner, and checkpointed at `41ea6f70aba4a58df1d5604f1956b4e660dbbf4a`; see `ui-02-creator-dashboard-implementation-report.md`. UI-03 was visually accepted on 2026-10-29 on its dedicated branch; see `ui-03-guided-content-creation-implementation-report.md`. UI-04A is the next implementation scope; this preparation does not begin its implementation.
 
 Scope:
 
@@ -76,7 +78,7 @@ Review evidence:
 
 ### UI-02 — Dashboard and content creation entry point
 
-Delivery status: implemented and verified, pending Product Owner visual acceptance. No implementation commit is created until that acceptance. Approval summary data supports four conservative states; run progress/failure remains in project details. Only the existing carousel flow is enabled.
+Delivery status: implemented, verified, and accepted by the Product Owner on 2026-10-29. Approval summary data supports four conservative states; run progress/failure remains in project details. Only the existing carousel flow is enabled.
 
 Outcome: the creator can begin and resume work without interpreting an operational table.
 
@@ -102,6 +104,8 @@ Review evidence:
 
 ### UI-03 — Competition selection and data confirmation
 
+Delivery status: implemented, verified, and visually accepted by the Product Owner on 2026-10-29. The guided definition and data-confirmation flow is limited to the supported Instagram carousel. Match results are not available from the pre-generation catalogue APIs, so the interface states that they will be consulted when generation starts instead of fabricating a preview.
+
 Outcome: the creator defines a carousel and confirms trustworthy data in a guided path.
 
 Scope:
@@ -120,14 +124,15 @@ Out of scope:
 - New input formats or data providers.
 - Contract changes.
 
-Review evidence:
+Review and verification:
 
-- Complete LIVE_DATA, MANUAL_DATA, and DEMO_DATA state matrices.
-- Unavailable automatic data has a practical manual fallback.
-- Unverified and attested data are never presented as verified.
-- Existing import caps, whole-document rejection, originals, and versioning remain.
+- UI-03 visual acceptance is complete. Functional E2E ownership follows PD-UI-21.
+- Technical verification for subsequent UI tasks follows the targeted checks in Delivery principles. Additional expensive browser/E2E verification for critical or shared behavior requires presenting exact commands and receiving authorization first.
+- Existing E2E infrastructure and test cases remain available for manual execution.
 
 ### UI-04 — Visual content editor
+
+Delivery status: not started. UI-04A is the next implementation scope and requires its own implementation authorization.
 
 Outcome: a creator can preview, customize, review, and approve the existing carousel efficiently.
 

@@ -25,6 +25,7 @@ function projectRow(page: Page, projectId: string) {
 test.describe('Catalogue and project creation', () => {
   test('the catalogue shows both fixture competitions, their sources and the manual source', async ({ page }) => {
     await page.goto('/projects/new');
+    await page.getByText('Ver disponibilidad y fuentes').click();
     const sources = page.getByRole('region', { name: 'Fuentes de datos del catálogo' });
     await expect(sources.getByRole('listitem').filter({ hasText: 'Synthetic source A' })).toContainText(
       'Datos de demostración',
@@ -38,6 +39,7 @@ test.describe('Catalogue and project creation', () => {
     await expect(competitions.getByRole('radio', { name: /^Copa Demo \(Continente Sintético\)/ })).toBeVisible();
     await expect(competitions.getByRole('radio', { name: /^Liga Demo \(País Sintético\)/ })).toBeVisible();
     const copa = competitions.getByRole('listitem').filter({ has: page.getByRole('radio', { name: /^Copa Demo/ }) });
+    await copa.getByText('Ver disponibilidad de esta competición').click();
     await expect(copa.getByRole('listitem')).toHaveText([
       /Synthetic source A\s*Datos de demostración/,
       /Synthetic source B\s*Datos de demostración/,
@@ -48,12 +50,16 @@ test.describe('Catalogue and project creation', () => {
     page,
   }) => {
     test.setTimeout(90_000);
-    await fillProjectForm(page, {
-      competition: /^Liga Demo/,
-      season: '2026/27 (actual)',
-      stage: 'Temporada Regular',
-      matchday: 'Jornada 1',
-    });
+    await fillProjectForm(
+      page,
+      {
+        competition: /^Liga Demo/,
+        season: '2026/27 (actual)',
+        stage: 'Temporada Regular',
+        matchday: 'Jornada 1',
+      },
+      false,
+    );
     // Seasons and matchdays offered are only those the source has (R-243, R-283).
     await expect(page.getByRole('combobox', { name: 'Temporada' }).locator('option')).toHaveText([
       'Elija una temporada',
@@ -70,10 +76,9 @@ test.describe('Catalogue and project creation', () => {
     await expect(page.getByRole('combobox', { name: 'Idioma del contenido' }).locator('option:checked')).toHaveText(
       'Español',
     );
-    const sourceGroup = page.getByRole('group', { name: 'Fuente de datos' });
-    await expect(sourceGroup.getByRole('radio', { name: 'Synthetic source A Datos de demostración' })).toBeChecked();
-
-    await page.getByRole('button', { name: 'Crear proyecto' }).click();
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    await expect(page.getByRole('radio', { name: /Probar con datos de demostración/ })).toBeChecked();
+    await page.getByRole('button', { name: 'Crear carrusel' }).click();
     await page.waitForURL(/\/projects\/[0-9a-f-]{36}$/);
     const projectId = new URL(page.url()).pathname.split('/')[2] ?? '';
 
@@ -105,18 +110,19 @@ test.describe('Catalogue and project creation', () => {
     await expect(row).toContainText('Temporada Regular · Jornada 1');
     await expect(row).toContainText('Demostración');
     await expect(row).toContainText('Español');
-    await expect(row).toContainText('En preparación');
+    await expect(row).toContainText('Pendiente de revisión');
     await row.getByText('Detalles del proyecto').click();
     await expect(row).toContainText('Synthetic source A');
     await expect(row).toContainText('Datos de demostración');
-    await expect(row).toContainText('Sin borrador');
+    await expect(row).toContainText('En revisión');
     await expect(row).toContainText('Sin exportaciones');
 
     // Opening the project from the list shows its competition, season and matchday (R-200).
     await row.getByRole('link', { name: title, exact: true }).click();
     await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
+    await runToEnd(page, 1);
     await expect(page.getByRole('region', { name: 'Ejecución' }).getByRole('status').first()).toHaveText(
-      'El proyecto todavía no tiene ejecuciones.',
+      'Ejecución 1: completada.',
     );
   });
 

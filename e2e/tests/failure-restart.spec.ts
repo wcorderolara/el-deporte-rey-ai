@@ -38,12 +38,13 @@ test.describe('Research failure and restart (journey-owned server)', () => {
       stage: 'Temporada Regular',
       matchday: 'Jornada 1',
     });
+    await runToEnd(page, 1);
 
-    // The primary source becomes unavailable: the run fails at research with its reason (R-203).
+    // The project was saved while its source was available. A later retry encounters a source outage.
     await page.goto('about:blank');
     await scenarioServer.restart(PRIMARY_UNAVAILABLE);
     await page.goto(`/projects/${projectId}`);
-    await runToEnd(page, 1, 'fallida');
+    await runToEnd(page, 2, 'fallida');
     const research = stageStatus(page, 'Obtención de datos');
     await expect(research.getByRole('cell').first()).toHaveText(/Fallida/);
     await expect(research.getByRole('cell').last()).toContainText('La fuente de datos no está disponible.');
@@ -58,13 +59,13 @@ test.describe('Research failure and restart (journey-owned server)', () => {
     await page.goto('about:blank');
     await scenarioServer.restart(SINGLE_SOURCE);
     await page.goto(`/projects/${projectId}`);
-    await runToEnd(page, 2);
+    await runToEnd(page, 3);
     for (const stage of STAGES) {
       await expect(stageStatus(page, stage).getByRole('cell').first()).toHaveText(/Completada/);
     }
 
     // The facts of the match missing from demo-b are unverified, awaiting independent verification.
-    await page.getByRole('link', { name: 'Datos y verificación (ejecución 2)' }).click();
+    await page.getByRole('link', { name: 'Datos y verificación (ejecución 3)' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Datos y verificación' })).toBeVisible();
     await expect(
       page.getByText(/^\d+ datos: \d+ verificados, [1-9]\d* sin verificar, 0 aprobados manualmente/),

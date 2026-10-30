@@ -59,7 +59,7 @@ test.describe('Delivery journey (DEMO_DATA league matchday)', () => {
     });
     const title = 'Liga Demo 2026/27 · Temporada Regular · Jornada 2';
     const run = runRegion(page);
-    await run.getByRole('button', { name: 'Iniciar ejecución completa' }).click();
+    // Creation already started the existing full run.
     await expect(run.getByRole('heading', { level: 3, name: 'Ejecución 1 (completa)' })).toBeVisible();
     await expect(stageTable(page).getByRole('rowheader')).toHaveText([...STAGES]);
     await expect(run.getByRole('status').first()).toHaveText('Ejecución 1: completada.', { timeout: 60_000 });

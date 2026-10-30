@@ -26,12 +26,23 @@
   font-size: 0.875rem;
 }
 
+.provenanceStudio {
+  margin: 0.25rem 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
 .provenance p {
   margin: 0;
 }
 
 .stale {
   color: var(--edr-color-warning-text);
+  font-weight: 600;
+}
+
+.staleStudio {
+  color: var(--color-warning);
   font-weight: 600;
 }
 

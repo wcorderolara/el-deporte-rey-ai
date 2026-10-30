@@ -51,7 +51,7 @@ export function CatalogueSources({ sources }: { sources: readonly SourceListing[
               {source.sourceName} <DataModeBadge mode={source.mode} />
             </p>
             <AvailabilityNote availability={source.availability} />
-            <ListingProvenance listing={source.listing} />
+            <ListingProvenance listing={source.listing} surface="studio" />
           </li>
         ))}
       </ul>
@@ -127,8 +127,11 @@ export function CompetitionField({ catalogue, value, onChange }: CompetitionFiel
                 )}
               </label>
               <div id={descriptionId} className={styles.choiceDescription}>
-                <CompetitionSources competition={competition} />
-                {noSelectableSource ? <p className={styles.secondary}>{createCopy.competitionNoSource}</p> : null}
+                <details>
+                  <summary>{createCopy.competitionAvailabilityDetails}</summary>
+                  <CompetitionSources competition={competition} />
+                  {noSelectableSource ? <p className={styles.secondary}>{createCopy.competitionNoSource}</p> : null}
+                </details>
               </div>
             </li>
           );
@@ -210,7 +213,7 @@ export function SeasonField({ seasonList, value, onChange }: SeasonFieldProps) {
       <div className={styles.field}>
         <p className={styles.fieldTitle}>{createCopy.seasonsUnavailable}</p>
         <AvailabilityNote availability={seasonList.availability} />
-        <ListingProvenance listing={seasonList.listing} />
+        <ListingProvenance listing={seasonList.listing} surface="studio" />
       </div>
     );
   }
@@ -237,7 +240,7 @@ export function SeasonField({ seasonList, value, onChange }: SeasonFieldProps) {
         </select>
       )}
       <div id={provenanceId}>
-        <ListingProvenance listing={seasonList.listing} />
+        <ListingProvenance listing={seasonList.listing} surface="studio" />
       </div>
     </div>
   );
@@ -283,7 +286,7 @@ export function StageField({ stageList, value, onChange }: StageFieldProps) {
       <div className={styles.field}>
         <p className={styles.fieldTitle}>{createCopy.seasonUnavailable}</p>
         <AvailabilityNote availability={stageList.availability} />
-        <ListingProvenance listing={stageList.listing} />
+        <ListingProvenance listing={stageList.listing} surface="studio" />
       </div>
     );
   }
@@ -325,7 +328,7 @@ export function StageField({ stageList, value, onChange }: StageFieldProps) {
           );
         })}
       </ul>
-      <ListingProvenance listing={stageList.listing} />
+      <ListingProvenance listing={stageList.listing} surface="studio" />
     </fieldset>
   );
 }

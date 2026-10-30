@@ -1,6 +1,6 @@
 # UI-02 — Creator Dashboard and Content Creation Entry
 
-Status: Implemented and verified; awaiting Product Owner visual acceptance
+Status: Accepted by Product Owner; implementation checkpoint closed
 Branch: `work/WI-2.1-ui-02`
 Accepted UI-01B checkpoint: `6aff775887e93d427f228f81a92d336d8173dc1b`
 
@@ -112,4 +112,4 @@ From the repository root run `npm run dev`, then open `http://127.0.0.1:5173/` (
 
 Running only `npm run dev:web` shows the shell but requires the existing local API at port 4300 for project data. With no backend, HTTP 502 is a development proxy failure and is displayed honestly with the safe error/retry state. No mock data is substituted into the application.
 
-UI-03 has not started. No UI-02 commit, merge, push, or deployment is authorized before visual acceptance.
+The Product Owner confirmed visual acceptance on 2026-10-29. The implementation is committed at `41ea6f70aba4a58df1d5604f1956b4e660dbbf4a`. UI-03 proceeds from this accepted checkpoint on `work/WI-2.1-ui-03`. No merge, push, or deployment is authorized by that acceptance.

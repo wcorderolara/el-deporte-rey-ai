@@ -174,11 +174,13 @@ test.describe('Manual import journey (MANUAL_DATA)', () => {
       .getByRole('group', { name: 'Competición' })
       .getByRole('listitem')
       .filter({ has: page.getByRole('radio', { name: /^Liga Manual Sintética/ }) });
+    await manualCompetition.getByText('Ver disponibilidad de esta competición').click();
     await expect(manualCompetition.getByRole('listitem')).toHaveText([/Operator import\s*Datos manuales/]);
     const projectId = await createProject(page, {
       competition: /^Liga Manual Sintética/,
       stage: 'Torneo Apertura',
       matchday: 'Jornada 1',
+      mode: 'manual',
     });
     const selection = page.getByRole('region', { name: 'Selección' });
     await expect(selection).toContainText('Operator import');
