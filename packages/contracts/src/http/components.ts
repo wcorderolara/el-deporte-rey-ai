@@ -18,6 +18,7 @@ import {
   StageSchema,
 } from './catalog.js';
 import { BrandAssetKindSchema, BrandAssetSchema, TemplateSchema } from './brand.js';
+import { ManagedCompetitionSchema } from './competitions.js';
 import { ExportDetailSchema, ExportFieldsSchema, ExportSchema, SlideTraceSchema } from './exports.js';
 import {
   BlockReasonSchema,
@@ -119,6 +120,7 @@ export const componentSchemas = {
   CompetitionSource: CompetitionSourceSchema,
   CatalogueCompetition: CatalogueCompetitionSchema,
   Catalogue: CatalogueSchema,
+  Competition: ManagedCompetitionSchema,
   Season: SeasonSchema,
   SeasonList: SeasonListSchema,
   Stage: StageSchema,

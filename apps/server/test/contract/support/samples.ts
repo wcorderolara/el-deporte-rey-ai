@@ -363,6 +363,7 @@ export const componentSamples: Record<ComponentName, unknown> = {
   SourceListing: sourceListing,
   CompetitionSource: competitionSource,
   CatalogueCompetition: catalogueCompetition,
+  Competition: { id: uuid(80), name: 'Liga de prueba', createdAt: T1, updatedAt: T1 },
   Catalogue: { competitions: [catalogueCompetition], sources: [sourceListing] },
   Season: season,
   SeasonList: {
@@ -489,6 +490,7 @@ export const componentSamples: Record<ComponentName, unknown> = {
 
 /** Samples of the JSON request bodies (inline or by reference) of the operations that have one. */
 export const requestSamples: Partial<Record<OperationId, unknown>> = {
+  createCompetition: { name: 'Liga de prueba' },
   createProject: componentSamples.ProjectCreate,
   updateProject: componentSamples.ProjectUpdate,
   startRun: componentSamples.RunStart,
@@ -504,6 +506,9 @@ export const responseSamples: Partial<Record<OperationId, unknown>> = {
   getHealth: { status: 'ok' },
   getSettings: componentSamples.Settings,
   listCompetitions: componentSamples.Catalogue,
+  listManagedCompetitions: { competitions: [componentSamples.Competition] },
+  createCompetition: componentSamples.Competition,
+  getCompetition: componentSamples.Competition,
   listSeasons: componentSamples.SeasonList,
   listStages: componentSamples.StageList,
   listProjects: { projects: [projectSummary] },

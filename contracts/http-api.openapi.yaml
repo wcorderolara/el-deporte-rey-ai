@@ -41,6 +41,7 @@ servers:
   - url: http://127.0.0.1:4300/api/v1
 tags:
   - name: catalog
+  - name: competitions
   - name: projects
   - name: runs
   - name: facts
@@ -150,6 +151,74 @@ paths:
         '421': { $ref: '#/components/responses/Problem' }
         '502': { $ref: '#/components/responses/Problem' }
         '503': { $ref: '#/components/responses/Problem' }
+  /competitions:
+    get:
+      tags: [competitions]
+      operationId: listManagedCompetitions
+      description: List locally managed competitions, newest first. This is distinct from the provider catalogue.
+      responses:
+        '200':
+          description: Locally managed competitions.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [competitions]
+                additionalProperties: false
+                properties:
+                  competitions:
+                    type: array
+                    items: { $ref: '#/components/schemas/Competition' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [competitions]
+      operationId: createCompetition
+      description: Create a locally managed competition. This does not create a project or query a sports provider.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              additionalProperties: false
+              properties:
+                name: { $ref: '#/components/schemas/DisplayName' }
+      responses:
+        '201':
+          description: Competition created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Competition' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    get:
+      tags: [competitions]
+      operationId: getCompetition
+      responses:
+        '200':
+          description: Locally managed competition.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Competition' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /projects:
     get:
       tags: [projects]
@@ -1112,6 +1181,15 @@ components:
       minLength: 1
       maxLength: 80
       pattern: '^[\p{L}\p{M}\p{N} .''&()/-]{1,80}$'
+    Competition:
+      type: object
+      required: [id, name, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        name: { $ref: '#/components/schemas/DisplayName' }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     StageName:
       description: Stage name as the source gives it; letters, marks, digits, spaces and . ' & ( ) / _ - only.
       type: string

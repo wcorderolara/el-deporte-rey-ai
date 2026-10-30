@@ -40,6 +40,12 @@ export function shellContext(pathname: string): ShellContext {
   }
   if (pathname === '/brand' || pathname === '/brand/') return { title: 'Marca y plantillas' };
   if (pathname === '/imports' || pathname === '/imports/') return { title: 'Datos' };
+  if (pathname === '/competitions' || pathname === '/competitions/') {
+    return { title: 'Competiciones', parent: { label: 'Inicio', to: '/' } };
+  }
+  if (pathname.startsWith('/competitions/')) {
+    return { title: 'Competición', parent: { label: 'Competiciones', to: '/competitions' } };
+  }
   if (pathname.startsWith('/imports/'))
     return { title: 'Detalle de datos', parent: { label: 'Datos', to: '/imports' } };
   return { title: 'Página no encontrada' };

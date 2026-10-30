@@ -31,6 +31,12 @@ const NAV_ITEMS: readonly NavItem[] = [
     isCurrent: (pathname) => pathname.startsWith('/projects') && pathname !== '/projects/new',
   },
   {
+    to: '/competitions',
+    label: 'Competiciones',
+    symbol: '◉',
+    isCurrent: (pathname) => pathname.startsWith('/competitions'),
+  },
+  {
     to: '/exports',
     label: 'Exportaciones',
     symbol: '⇩',
@@ -127,6 +133,7 @@ export function AppShell() {
           location.pathname,
         ) ||
         /^\/projects\/[^/]+\/review(?:\/.*)?$/.test(location.pathname) ||
+        /^\/competitions(?:\/.*)?$/.test(location.pathname) ||
         /^\/projects\/[^/]+(?:\/exports(?:\/.*)?)?\/?$/.test(location.pathname)
           ? 'studio'
           : 'legacy'

@@ -32,6 +32,7 @@ import {
 } from '../../../providers/sports/test/synthetic.js';
 import type { StageProvider } from '../../../workflow/index.js';
 import { type ProjectsModule, createProjectsModule } from '../index.js';
+import { createCompetitionModule } from '../../competitions/index.js';
 
 export const HOST = '127.0.0.1:4300';
 export const ORIGIN = 'http://127.0.0.1:4300';
@@ -133,6 +134,7 @@ export interface ProjectsTestOptions {
   readonly stub?: StubAdapter;
   /** Run the module's startup hook (default true). */
   readonly startup?: boolean;
+  readonly includeCompetitions?: boolean;
 }
 
 /** Builds the app with the projects module over a fresh in-memory database. */
@@ -165,7 +167,10 @@ export async function projectsTestApp(options: ProjectsTestOptions = {}): Promis
   if (options.startup !== false) {
     await module.onStartup?.(container);
   }
-  const app = await buildApp(container, { webRoot: null, modules: [module] });
+  const app = await buildApp(container, {
+    webRoot: null,
+    modules: options.includeCompetitions ? [createCompetitionModule(), module] : [module],
+  });
   await app.ready();
   return {
     app,

@@ -84,6 +84,7 @@ const FIXED_NOW = new Date('2026-10-27T16:32:21.123Z');
 const COMMITTED = [
   { version: 1, name: 'initial' },
   { version: 2, name: 'qa_capitalized_tokens' },
+  { version: 3, name: 'competitions' },
 ];
 
 describe('committed migrations', () => {
@@ -95,6 +96,7 @@ describe('committed migrations', () => {
     expect(files.map(({ version, name, fileName }) => ({ version, name, fileName }))).toEqual([
       { version: 1, name: 'initial', fileName: '0001_initial.sql' },
       { version: 2, name: 'qa_capitalized_tokens', fileName: '0002_qa_capitalized_tokens.sql' },
+      { version: 3, name: 'competitions', fileName: '0003_competitions.sql' },
     ]);
   });
 
@@ -102,21 +104,22 @@ describe('committed migrations', () => {
     const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
     const first = openMigratedDatabase({ location, now: () => FIXED_NOW });
     try {
-      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 2 });
+      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 3 });
       expect(first.db.prepare('PRAGMA journal_mode').get()).toEqual({ journal_mode: 'wal' });
       expect(first.db.prepare('PRAGMA foreign_keys').get()).toEqual({ foreign_keys: 1 });
       expect(appliedMigrations(first.db)).toEqual(
         COMMITTED.map((record) => ({ ...record, appliedAt: '2026-10-27T16:32:21.123Z' })),
       );
-      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 2 });
+      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 3 });
     } finally {
       first.db.close();
     }
 
     const second = openMigratedDatabase({ location });
     try {
-      expect(second.report).toEqual({ applied: [], currentVersion: 2 });
+      expect(second.report).toEqual({ applied: [], currentVersion: 3 });
       expect(tableExists(second.db, 'facts')).toBe(true);
+      expect(tableExists(second.db, 'competitions')).toBe(true);
     } finally {
       second.db.close();
     }
@@ -440,8 +443,11 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
       expect(bytesBefore).toHaveLength(5);
 
       expect(runMigrations(db, { now: () => FIXED_NOW })).toEqual({
-        applied: [{ version: 2, name: 'qa_capitalized_tokens' }],
-        currentVersion: 2,
+        applied: [
+          { version: 2, name: 'qa_capitalized_tokens' },
+          { version: 3, name: 'competitions' },
+        ],
+        currentVersion: 3,
       });
 
       expect(db.prepare(QA_RESULT_BYTES).all()).toEqual(bytesBefore);
@@ -476,7 +482,7 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
     // Reopening applies nothing more.
     const reopened = openMigratedDatabase({ location });
     try {
-      expect(reopened.report).toEqual({ applied: [], currentVersion: 2 });
+      expect(reopened.report).toEqual({ applied: [], currentVersion: 3 });
     } finally {
       reopened.db.close();
     }

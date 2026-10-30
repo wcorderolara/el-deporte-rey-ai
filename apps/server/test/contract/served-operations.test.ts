@@ -141,6 +141,10 @@ beforeAll(async () => {
   l = new ContractClient(live, spec);
   r = new ContractClient(limited, spec);
   w = new ContractClient(warned, spec);
+  await d.call('listManagedCompetitions');
+  const createdCompetition = await d.call('createCompetition', { json: { name: 'Competición de prueba' } });
+  const managedCompetitionId = String((createdCompetition.body as { id: string }).id);
+  await d.call('getCompetition', { params: { competitionId: managedCompetitionId } });
 }, RUN_TIMEOUT);
 
 afterAll(async () => {

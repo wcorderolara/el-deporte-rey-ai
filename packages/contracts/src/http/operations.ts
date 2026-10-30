@@ -9,6 +9,12 @@ import { z } from 'zod';
 
 import { BrandAssetKindSchema, BrandAssetSchema, TemplateSchema } from './brand.js';
 import { CatalogueSchema, SeasonListSchema, StageListSchema } from './catalog.js';
+import {
+  ManagedCompetitionCreateSchema,
+  ManagedCompetitionListResponseSchema,
+  ManagedCompetitionParamsSchema,
+  ManagedCompetitionSchema,
+} from './competitions.js';
 import { ExportDetailSchema, ExportSchema, SlideTraceSchema } from './exports.js';
 import { FactSchema, LeftOutMatchSchema, StandingsAvailabilitySchema } from './facts.js';
 import { ImportCreateSchema, ImportSummarySchema, ManualSelectionHistorySchema, ManualVersionSchema } from './imports.js';
@@ -43,7 +49,6 @@ export const JSON_MEDIA_TYPE = 'application/json';
 
 /** Response of listProjects: project list and history, newest first. */
 export const ProjectListResponseSchema = z.strictObject({ projects: z.array(ProjectSummarySchema) });
-
 /** Response of listRuns: runs of the project, newest first. */
 export const RunListResponseSchema = z.strictObject({ runs: z.array(RunSchema) });
 
@@ -247,6 +252,21 @@ export const operations = {
     body: null,
     success: json(200, ProjectListResponseSchema),
     problemStatuses: READ,
+  },
+  listManagedCompetitions: {
+    operationId: 'listManagedCompetitions', method: 'get', path: '/competitions', tag: 'competitions',
+    params: null, query: null, clientHeader: false, body: null,
+    success: json(200, ManagedCompetitionListResponseSchema), problemStatuses: READ,
+  },
+  createCompetition: {
+    operationId: 'createCompetition', method: 'post', path: '/competitions', tag: 'competitions',
+    params: null, query: null, clientHeader: true, body: jsonBody(ManagedCompetitionCreateSchema),
+    success: json(201, ManagedCompetitionSchema), problemStatuses: WRITE_BODY,
+  },
+  getCompetition: {
+    operationId: 'getCompetition', method: 'get', path: '/competitions/{competitionId}', tag: 'competitions',
+    params: ManagedCompetitionParamsSchema, query: null, clientHeader: false, body: null,
+    success: json(200, ManagedCompetitionSchema), problemStatuses: READ_BY_ID,
   },
   createProject: {
     operationId: 'createProject',

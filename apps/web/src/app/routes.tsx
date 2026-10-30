@@ -26,6 +26,7 @@ const review = lazyFeature(() => import('../features/review'));
 const history = lazyFeature(() => import('../features/history'));
 const brand = lazyFeature(() => import('../features/brand'));
 const imports = lazyFeature(() => import('../features/imports'));
+const competitions = lazyFeature(() => import('../features/competitions'));
 
 /** Paths of the feature mount points (without the splat). */
 export const featurePaths = {
@@ -38,6 +39,7 @@ export const featurePaths = {
   exportHistory: '/exports',
   brand: '/brand',
   imports: '/imports',
+  competitions: '/competitions',
 } as const;
 
 export const appRoutes: RouteObject[] = [
@@ -58,6 +60,7 @@ export const appRoutes: RouteObject[] = [
           { path: 'exports/*', lazy: history },
           { path: 'brand/*', lazy: brand },
           { path: 'imports/*', lazy: imports },
+          { path: 'competitions/*', lazy: competitions },
           { path: '*', Component: NotFoundPage },
         ],
       },
