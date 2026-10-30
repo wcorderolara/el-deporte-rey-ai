@@ -22,7 +22,7 @@
  * every fact an exported slide version references, with its status and reason, evidence (source, mode, reference,
  * retrieval time, import version), manual approval and dispute, from the verification module's facts view.
  */
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 import type { ElementVersion, Export, ExportDetail, FactStatus, SlideTrace, TextField } from '@edr/contracts';
 
@@ -35,8 +35,9 @@ import { pngSize, readSlideImage, slideImageUrl } from '../rendering/index.js';
 import { ReviewRepository, VersionSetSchema, sameVersionSet, versionSetOf, versionState } from '../review/index.js';
 import { VerificationService } from '../verification/index.js';
 
-import { ExportFileStore } from './files.js';
+import { ExportFileStore, exportRelativeDirectory } from './files.js';
 import { type ExportPlan, type ManifestFact, type ManifestSource, type PlannedSlide, exportFiles } from './manifest.js';
+import { createZip } from './zip.js';
 import {
   type ExportProject,
   ExportRepository,
@@ -138,6 +139,24 @@ export class ExportService {
     const plan = await this.#withImages(planned);
     const files = exportFiles(plan);
     const directory = await this.#write(plan, files);
+    const persisted = await this.#files.readFiles(
+      plan.project.id,
+      exportId,
+      files.map((file) => file.fileName),
+    );
+    if (
+      persisted.length !== files.length ||
+      persisted.some((file, index) => {
+        const expected = files[index];
+        return (
+          expected === undefined ||
+          file.name !== expected.fileName ||
+          createHash('sha256').update(file.bytes).digest('hex') !== expected.sha256
+        );
+      })
+    ) {
+      throw new Error('persisted export artifacts failed integrity verification');
+    }
 
     let record: StoredExport;
     try {
@@ -398,6 +417,56 @@ export class ExportService {
         version: this.#versionView(stored.projectId, version),
       }));
     return { ...this.#exportView(stored, files), elements };
+  }
+
+  /** Creates a ZIP from the exact persisted files of an export, without re-rendering or adding history. */
+  async downloadExport(exportId: string): Promise<Buffer> {
+    const stored = this.#repository.export(exportId);
+    if (stored === null) throw PROBLEMS.exportNotFound();
+    if (stored.directory !== exportRelativeDirectory(stored.projectId, stored.id)) {
+      throw new HttpProblem(409, 'EXPORT_FILES_CORRUPT', 'Los archivos registrados no coinciden con esta exportación.');
+    }
+    const records = this.#repository.exportFiles(exportId);
+    const slides = records.filter((file) => file.kind === 'slide_image');
+    const caption = records.filter((file) => file.kind === 'caption_text');
+    const manifest = records.filter((file) => file.kind === 'manifest');
+    if (
+      slides.length === 0 ||
+      caption.length !== 1 ||
+      manifest.length !== 1 ||
+      slides.some((f, i) => f.position !== i + 1 || f.fileName !== `${String(i + 1).padStart(2, '0')}.png`)
+    ) {
+      throw new HttpProblem(
+        409,
+        'EXPORT_FILES_CORRUPT',
+        'El registro de archivos de esta exportación está incompleto.',
+      );
+    }
+    let files: readonly { name: string; bytes: Buffer }[];
+    try {
+      files = await this.#files.readFiles(
+        stored.projectId,
+        stored.id,
+        [...slides, ...caption, ...manifest].map((f) => f.fileName),
+      );
+    } catch {
+      throw new HttpProblem(404, 'EXPORT_FILES_MISSING', 'Los archivos de esta exportación ya no están disponibles.');
+    }
+    for (const [index, file] of files.entries()) {
+      const expected = [...slides, ...caption, ...manifest][index];
+      if (
+        expected === undefined ||
+        createHash('sha256').update(file.bytes).digest('hex') !== expected.sha256 ||
+        (expected.kind === 'manifest' && expected.sha256 !== stored.manifestSha256)
+      ) {
+        throw new HttpProblem(
+          409,
+          'EXPORT_FILES_CORRUPT',
+          'Un archivo de esta exportación no coincide con su registro.',
+        );
+      }
+    }
+    return createZip(files);
   }
 
   /**

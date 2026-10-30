@@ -8,6 +8,7 @@ import { appCopy, DemoBanner, ErrorBanner, formatDateTime } from '../../ui';
 import { exportCarousel, loadActiveDraft, useHistoryApi } from './api';
 import { exportActionCopy, historyCopy } from './copy';
 import { ExportFiles } from './ExportFiles';
+import { DownloadExportButton } from './DownloadExportButton';
 import styles from './History.module.css';
 import { exportPath } from './paths';
 import { useLoad } from './useLoad';
@@ -53,7 +54,7 @@ export function ExportAction({ projectId, onExported }: ExportActionProps) {
     try {
       const written = await exportCarousel(client, carousel.id);
       setResult(written);
-      setAnnouncement(exportActionCopy.exported(written.directory));
+      setAnnouncement(exportActionCopy.resultTitle);
       onExported(written);
     } catch (error) {
       setFailure(error);
@@ -116,7 +117,15 @@ export function ExportAction({ projectId, onExported }: ExportActionProps) {
             {exportActionCopy.resultTitle}
           </h3>
           {result.demonstration ? <DemoBanner /> : null}
-          <ExportFiles directory={result.directory} files={result.files} />
+          <p>
+            {result.files.filter((file) => file.kind === 'slide_image').length} imágenes · Carrusel de Instagram ·{' '}
+            {formatDateTime(result.exportedAt)}
+          </p>
+          <DownloadExportButton exportId={result.id} className={styles.button} />
+          <details>
+            <summary>Detalles técnicos</summary>
+            <ExportFiles directory={result.directory} files={result.files} />
+          </details>
           <p>
             <Link to={exportPath(projectId, result.id)}>{exportActionCopy.openExport}</Link>
           </p>

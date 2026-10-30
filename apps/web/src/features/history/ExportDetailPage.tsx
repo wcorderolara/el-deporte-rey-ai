@@ -8,6 +8,7 @@ import { exportUsesAttestedFacts } from './attested';
 import { AttestedNote } from './AttestedNote';
 import { detailCopy, historyCopy, textFieldLabel } from './copy';
 import { ExportFiles } from './ExportFiles';
+import { DownloadExportButton } from './DownloadExportButton';
 import styles from './History.module.css';
 import { exportsPath, isUuid, projectPath, tracePath } from './paths';
 import { useLoad } from './useLoad';
@@ -112,6 +113,9 @@ function ExportContent({ projectId, detail }: { projectId: string; detail: Expor
       {detail.demonstration || detail.dataMode === 'DEMO_DATA' ? <DemoBanner /> : null}
       {exportUsesAttestedFacts(detail) ? <AttestedNote /> : null}
       <p className={styles.note}>{historyCopy.noPublication}</p>
+      <p>
+        <DownloadExportButton exportId={detail.id} className={styles.button} />
+      </p>
       <section className={styles.section} aria-labelledby={contentTitleId}>
         <h2 id={contentTitleId}>{detailCopy.contentTitle}</h2>
         <p className={styles.muted}>{detailCopy.contentIntro}</p>
@@ -130,10 +134,10 @@ function ExportContent({ projectId, detail }: { projectId: string; detail: Expor
           </ol>
         )}
       </section>
-      <section className={styles.section} aria-labelledby={filesTitleId}>
-        <h2 id={filesTitleId}>{detailCopy.filesTitle}</h2>
+      <details className={styles.section}>
+        <summary id={filesTitleId}>{detailCopy.filesTitle}</summary>
         <ExportFiles directory={detail.directory} files={detail.files} />
-      </section>
+      </details>
     </>
   );
 }

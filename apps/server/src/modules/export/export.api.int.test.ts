@@ -12,7 +12,7 @@
  *   `operatorAttested: true`, every used fact listed as `manually_approved`, never as verified, and traced to the
  *   import version.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
@@ -124,6 +124,18 @@ describe('DEMO_DATA export, history and trace (R-218 to R-221, R-269, R-287)', (
     const egressBefore = t.egress.requests.length;
     const aiBefore = t.aiRequests.length;
     const written = await exportOf(t, carousel.id);
+    const beforeRepeatDownload = (await t.get(`/projects/${project.id}/exports`)).json() as { exports: unknown[] };
+    const download = await t.get(`/exports/${written.id}/download`);
+    expect(download.statusCode, download.body).toBe(200);
+    expect(download.headers['content-type']).toContain('application/zip');
+    expect(download.headers['content-disposition']).toBe(
+      `attachment; filename="carrusel-${written.id.slice(0, 8)}.zip"`,
+    );
+    expect(download.rawPayload.readUInt32LE(0)).toBe(0x04034b50);
+    const archiveNames = download.rawPayload.toString('latin1');
+    for (const file of written.files) expect(archiveNames).toContain(file.fileName);
+    expect((await t.get(`/projects/${project.id}/exports`)).json()).toEqual(beforeRepeatDownload);
+    expect((await t.get('/exports/not-a-uuid/download')).statusCode).toBe(400);
     expect(t.egress.requests.length).toBe(egressBefore);
     expect(t.aiRequests.length).toBe(aiBefore);
     expectNoNetworkViolations();
@@ -162,6 +174,10 @@ describe('DEMO_DATA export, history and trace (R-218 to R-221, R-269, R-287)', (
       });
       expect(trace.facts.map((fact) => fact.factId).sort()).toEqual(referencedFacts(t, file.elementVersionId ?? ''));
     }
+    rmSync(join(t.container.paths.dataDir, written.directory, 'caption.txt'));
+    const missingFile = await t.get(`/exports/${written.id}/download`);
+    expect(missingFile.statusCode).toBe(404);
+    expect((missingFile.json() as { code: string }).code).toBe('EXPORT_FILES_MISSING');
     const matchSlide = carousel.elements.find((element) => element.slideType === 'match_result');
     const matchFile = slides.find((file) => file.elementVersionId === matchSlide?.currentVersion.id);
     const trace = await traceOf(t, written.id, matchFile?.position ?? 0);

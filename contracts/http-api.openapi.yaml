@@ -664,6 +664,24 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
+  /exports/{exportId}/download:
+    parameters:
+      - $ref: '#/components/parameters/ExportId'
+    get:
+      tags: [exports]
+      operationId: downloadExport
+      description: Download the exact persisted artifacts of an export as a ZIP. This does not regenerate content or create another export record.
+      responses:
+        '200':
+          description: Existing export artifacts in publication order.
+          content:
+            application/zip:
+              schema: { type: string, format: binary }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /exports/{exportId}/slides/{position}/trace:
     parameters:
       - $ref: '#/components/parameters/ExportId'
@@ -1146,6 +1164,8 @@ components:
             - QA_ACK_REQUIRED
             - FINAL_APPROVAL_REFUSED
             - FINAL_APPROVAL_REQUIRED
+            - EXPORT_FILES_MISSING
+            - EXPORT_FILES_CORRUPT
             - DUPLICATE_ASSET
             - PROVIDER_FAILED
             - PROVIDER_RATE_LIMITED

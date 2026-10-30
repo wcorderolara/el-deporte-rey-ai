@@ -94,6 +94,23 @@ export function loadExport(client: ApiClient, exportId: string, signal?: AbortSi
   });
 }
 
+/** Download original persisted export artifacts as a ZIP. */
+export function downloadExport(client: ApiClient, exportId: string): Promise<Blob> {
+  return client.getBlob(operationPath('downloadExport', { exportId }));
+}
+
+export function saveExportZip(blob: Blob, exportId: string): void {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `carrusel-${exportId.slice(0, 8)}.zip`;
+  anchor.style.display = 'none';
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 /** traceExportedSlide: facts of the exported slide with statuses, evidence and disputes (R-221, R-287). */
 export function loadSlideTrace(
   client: ApiClient,

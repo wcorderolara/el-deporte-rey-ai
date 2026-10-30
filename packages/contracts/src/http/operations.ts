@@ -159,6 +159,7 @@ const JSON_ONLY = [JSON_MEDIA_TYPE] as const;
 const PNG = ['image/png'] as const;
 const IMAGES = ['image/png', 'image/jpeg'] as const;
 const OCTET_STREAM = ['application/octet-stream'] as const;
+const ZIP = ['application/zip'] as const;
 
 const READ = [403, 421] as const;
 const READ_BY_ID = [400, 403, 404, 421] as const;
@@ -486,6 +487,18 @@ export const operations = {
     body: null,
     success: json(200, ExportDetailSchema),
     problemStatuses: READ_BY_ID,
+  },
+  downloadExport: {
+    operationId: 'downloadExport',
+    method: 'get',
+    path: '/exports/{exportId}/download',
+    tag: 'exports',
+    params: ExportParamsSchema,
+    query: null,
+    clientHeader: false,
+    body: null,
+    success: { status: 200, mediaTypes: ZIP, schema: null },
+    problemStatuses: [400, 403, 404, 409, 421],
   },
   traceExportedSlide: {
     operationId: 'traceExportedSlide',

@@ -84,6 +84,18 @@ describe('ExportFileStore', () => {
     expect([...readFileSync(join(directory, '01.png'))]).toEqual([1, 2, 3]);
   });
 
+  it('reads only allowlisted files from the UUID-derived export directory and rejects links', async () => {
+    const store = new ExportFileStore(dataDir);
+    const folder = await store.createFolder(PROJECT, EXPORT);
+    await folder.writeFile('01.png', Buffer.from([4, 5, 6]));
+    expect(await store.readFiles(PROJECT, EXPORT, ['01.png'])).toEqual([
+      { name: '01.png', bytes: Buffer.from([4, 5, 6]) },
+    ]);
+    await refusal(store.readFiles(PROJECT, EXPORT, ['../outside']));
+    symlinkSync(join(outside, 'absent'), join(dataDir, 'exports', PROJECT, EXPORT, 'caption.txt'));
+    await refusal(store.readFiles(PROJECT, EXPORT, ['caption.txt']));
+  });
+
   it('refuses to reuse an existing export directory (every export is a fresh folder)', async () => {
     const store = new ExportFileStore(dataDir);
     await store.createFolder(PROJECT, EXPORT);

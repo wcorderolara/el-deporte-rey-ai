@@ -94,7 +94,8 @@
 }
 
 .button {
-  padding: 0.25rem 0.75rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.875rem;
   border: 1px solid var(--edr-color-accent);
   border-radius: 0.25rem;
   color: var(--edr-color-background);
@@ -105,6 +106,13 @@
 .button:disabled {
   cursor: not-allowed;
   opacity: 0.7;
+}
+
+.button:focus-visible,
+.section a:focus-visible,
+.result a:focus-visible {
+  outline: 3px solid var(--edr-color-focus, var(--edr-color-accent));
+  outline-offset: 3px;
 }
 
 .result {

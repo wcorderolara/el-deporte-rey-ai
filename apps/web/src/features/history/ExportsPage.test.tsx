@@ -208,6 +208,10 @@ describe('export action', () => {
     expect(post?.headers['X-EDR-Client']).toBe('web');
     expect(post?.body).toBeUndefined();
 
+    expect(within(result).getByRole('button', { name: 'Descargar carrusel' })).toBeTruthy();
+    expect(within(result).getByText('Detalles técnicos')).toBeTruthy();
+    expect(document.activeElement).toBe(within(result).getByRole('heading', { name: 'Tu carrusel está listo' }));
+    await user.click(within(result).getByText('Detalles técnicos'));
     expect(within(result).getByTestId('export-directory').textContent).toBe(written.directory);
     expect(
       within(result)
@@ -219,10 +223,7 @@ describe('export action', () => {
       `${EXPORTS_PATH}/${NEW_EXPORT_ID}`,
     );
     expect(within(result).getByTestId('demo-banner')).toBeTruthy();
-    expect(screen.getByTestId('export-status').textContent).toBe(
-      `Carrusel exportado en la carpeta ${written.directory}.`,
-    );
-    expect(document.activeElement).toBe(within(result).getByRole('heading', { name: 'Resultado de la exportación' }));
+    expect(screen.getByTestId('export-status').textContent).toBe('Tu carrusel está listo');
 
     await waitFor(() => expect(screen.getAllByTestId('export-row')).toHaveLength(3));
     expect(calls.filter((call) => call.url === urls.exports)).toHaveLength(2);

@@ -6,7 +6,7 @@ import { featurePaths } from '../../app/routes';
 import { appCopy, DataModeBadge, DemoBanner, ErrorBanner, featureCopy, formatDateTime, pageCopy } from '../../ui';
 import { approvalStateLabel } from '../projects/copy';
 import { loadExportsPage, useHistoryApi } from './api';
-import { historyCopy, listCopy } from './copy';
+import { exportActionCopy, historyCopy, listCopy } from './copy';
 import { ExportAction } from './ExportAction';
 import styles from './History.module.css';
 import { exportPath, isUuid, projectPath } from './paths';
@@ -58,6 +58,9 @@ function ExportsView({ projectId }: { projectId: string }) {
       {data.project.demonstration || data.project.dataMode === 'DEMO_DATA' ? <DemoBanner /> : null}
       <p className={styles.note}>{historyCopy.noPublication}</p>
       <ExportAction projectId={projectId} onExported={page.reload} />
+      <p>
+        <a href="#export-history">{exportActionCopy.historyLink}</a>
+      </p>
       {page.state.status === 'error' ? (
         <ErrorBanner error={page.state.error} title={historyCopy.loadErrorTitle} onRetry={page.reload} />
       ) : null}
@@ -115,7 +118,7 @@ function ProjectSummary({ project }: { project: Project }) {
 function ExportList({ projectId, exports }: { projectId: string; exports: readonly Export[] }) {
   const titleId = useId();
   return (
-    <section className={styles.section} aria-labelledby={titleId}>
+    <section id="export-history" className={styles.section} aria-labelledby={titleId}>
       <h2 id={titleId}>{listCopy.title}</h2>
       <p className={styles.muted}>{listCopy.kept}</p>
       {exports.length === 0 ? (

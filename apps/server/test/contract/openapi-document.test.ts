@@ -64,9 +64,9 @@ describe('contract document', () => {
     );
   });
 
-  it('has 39 operations on 32 paths, 15 of them mutating, with unique operation IDs', () => {
-    expect(Object.keys(child(document, 'paths'))).toHaveLength(32);
-    expect(operations).toHaveLength(39);
+  it('has 40 operations on 33 paths, 15 of them mutating, with unique operation IDs', () => {
+    expect(Object.keys(child(document, 'paths'))).toHaveLength(33);
+    expect(operations).toHaveLength(40);
     expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(15);
     const ids = operations.map((operation) => operation.operation.operationId);
     expect(new Set(ids).size).toBe(ids.length);
@@ -249,6 +249,16 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
     const ack = '/paths/~1carousels~1{carouselId}~1elements~1{elementId}~1qa-acknowledgements/post';
     expect(differences(normative(accepted), normative(promoted))).toEqual([
       `${ack}/requestBody/content/application~1json/schema/properties/checks/items/enum/1: added`,
+      '/paths/~1exports~1{exportId}~1download: added',
+      '/components/schemas/Problem/properties/code/enum/15: changed',
+      '/components/schemas/Problem/properties/code/enum/16: changed',
+      '/components/schemas/Problem/properties/code/enum/17: changed',
+      '/components/schemas/Problem/properties/code/enum/18: changed',
+      '/components/schemas/Problem/properties/code/enum/19: changed',
+      '/components/schemas/Problem/properties/code/enum/20: changed',
+      '/components/schemas/Problem/properties/code/enum/21: changed',
+      '/components/schemas/Problem/properties/code/enum/22: added',
+      '/components/schemas/Problem/properties/code/enum/23: added',
       '/components/schemas/QaResult/oneOf/5: added',
     ]);
   });

@@ -131,7 +131,7 @@ describe('export detail', () => {
 
     expect(screen.getByTestId('demo-banner')).toBeTruthy();
     expect(screen.queryByTestId('attested-note')).toBeNull();
-    expect(screen.queryAllByRole('button')).toHaveLength(0);
+    expect(screen.getByRole('button', { name: 'Descargar carrusel' })).toBeTruthy();
   });
 
   it('labels content using a manually approved fact as operator-attested, never as verified', async () => {

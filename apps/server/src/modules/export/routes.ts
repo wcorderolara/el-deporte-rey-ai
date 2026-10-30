@@ -54,6 +54,17 @@ export function registerExportRoutes(app: FastifyInstance, service: ExportServic
     return contractResponse(ExportDetailSchema, service.getExport(exportId));
   });
 
+  app.get('/exports/:exportId/download', async (request, reply) => {
+    const { exportId } = ExportParamsSchema.parse(request.params);
+    const zip = await service.downloadExport(exportId);
+    return reply
+      .header('Content-Type', 'application/zip')
+      .header('Content-Disposition', `attachment; filename="carrusel-${exportId.slice(0, 8)}.zip"`)
+      .header('X-Content-Type-Options', 'nosniff')
+      .header('Cache-Control', 'no-store')
+      .send(zip);
+  });
+
   app.get('/exports/:exportId/slides/:position/trace', async (request) => {
     const { exportId, position } = SlideTraceParamsSchema.parse(request.params);
     return contractResponse(SlideTraceSchema, service.traceSlide(exportId, position));

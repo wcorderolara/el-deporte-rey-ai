@@ -207,6 +207,7 @@ export interface ApiClientOptions {
 export interface ApiClient {
   request<T = unknown>(method: HttpMethod, path: string, options?: RequestOptions<T>): Promise<T>;
   get<T = unknown>(path: string, options?: Omit<RequestOptions<T>, 'body'>): Promise<T>;
+  getBlob(path: string, options?: { signal?: AbortSignal }): Promise<Blob>;
   post<T = unknown>(path: string, body?: unknown, options?: Omit<RequestOptions<T>, 'body'>): Promise<T>;
   put<T = unknown>(path: string, body?: unknown, options?: Omit<RequestOptions<T>, 'body'>): Promise<T>;
   patch<T = unknown>(path: string, body?: unknown, options?: Omit<RequestOptions<T>, 'body'>): Promise<T>;
@@ -308,9 +309,34 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
     return parsed.data;
   }
 
+  async function getBlob(path: string, init: { signal?: AbortSignal } = {}): Promise<Blob> {
+    assertRelativePath(path);
+    let response: Response;
+    try {
+      response = await fetchFunction(`${basePath}${path}`, {
+        method: 'GET',
+        headers: { Accept: 'application/zip, application/problem+json' },
+        credentials: 'same-origin',
+        redirect: 'error',
+        cache: 'no-store',
+        ...(init.signal ? { signal: init.signal } : {}),
+      });
+    } catch (cause) {
+      throw new ApiError(isAbortError(cause) || init.signal?.aborted === true ? 'aborted' : 'network', { cause });
+    }
+    if (!response.ok) throw await toError(response);
+    if (mediaType(response) !== 'application/zip') throw new ApiError('invalid_response', { status: response.status });
+    try {
+      return await response.blob();
+    } catch (cause) {
+      throw new ApiError(isAbortError(cause) ? 'aborted' : 'invalid_response', { status: response.status, cause });
+    }
+  }
+
   return {
     request,
     get: (path, options) => request('GET', path, options),
+    getBlob,
     post: (path, body, options) => request('POST', path, { ...options, body }),
     put: (path, body, options) => request('PUT', path, { ...options, body }),
     patch: (path, body, options) => request('PATCH', path, { ...options, body }),

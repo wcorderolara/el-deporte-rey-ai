@@ -155,6 +155,8 @@ export const problemCodeMessage: Record<ProblemCode, string> = {
   QA_ACK_REQUIRED: 'Antes de aprobar, confirme las advertencias del control visual.',
   FINAL_APPROVAL_REFUSED: 'No se puede dar la aprobación final: hay elementos pendientes.',
   FINAL_APPROVAL_REQUIRED: 'Se necesita la aprobación final antes de exportar.',
+  EXPORT_FILES_MISSING: 'Los archivos de esta exportación ya no están disponibles.',
+  EXPORT_FILES_CORRUPT: 'No se pudo verificar los archivos de esta exportación.',
   DUPLICATE_ASSET: 'Este archivo ya está registrado.',
   PROVIDER_FAILED: 'La fuente de datos no respondió correctamente.',
   PROVIDER_RATE_LIMITED: 'Se alcanzó el límite de solicitudes de la fuente de datos.',

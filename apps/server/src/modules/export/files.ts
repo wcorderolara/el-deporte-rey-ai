@@ -13,6 +13,7 @@
  *
  * Errors are `ExportFileError` with fixed messages that never contain a path (T10-F10).
  */
+import { constants } from 'node:fs';
 import { lstat, mkdir, open, realpath } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
 
@@ -146,5 +147,42 @@ export class ExportFileStore {
         }
       },
     };
+  }
+
+  /** Reads only named artifacts from a validated export folder; paths from records are never trusted. */
+  async readFiles(
+    projectId: string,
+    exportId: string,
+    names: readonly string[],
+  ): Promise<readonly { name: string; bytes: Buffer }[]> {
+    exportRelativeDirectory(projectId, exportId);
+    const realDataDir = await this.#realDataDir();
+    const root = await plainDirectory(join(realDataDir, EXPORTS_DIRECTORY), false);
+    const project = await plainDirectory(join(root, projectId), false);
+    const directory = await plainDirectory(join(project, exportId), false);
+    if (relative(realDataDir, directory) !== [EXPORTS_DIRECTORY, projectId, exportId].join(sep)) {
+      throw new ExportFileError('an export directory is outside the data directory');
+    }
+    const files: { name: string; bytes: Buffer }[] = [];
+    let total = 0;
+    for (const name of names) {
+      checkFileName(name);
+      try {
+        const handle = await open(join(directory, name), constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+        try {
+          const stat = await handle.stat();
+          if (!stat.isFile()) throw new ExportFileError('an export artifact is not a regular file');
+          total += stat.size;
+          if (total > 256 * 1024 * 1024) throw new ExportFileError('export artifacts exceed the download limit');
+          files.push({ name, bytes: await handle.readFile() });
+        } finally {
+          await handle.close();
+        }
+      } catch (error) {
+        if (error instanceof ExportFileError) throw error;
+        throw new ExportFileError('an export artifact is missing or unreadable');
+      }
+    }
+    return files;
   }
 }

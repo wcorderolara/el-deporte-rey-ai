@@ -87,6 +87,7 @@ export const OPERATION_IDS = [
   'exportCarousel',
   'listProjectExports',
   'getExport',
+  'downloadExport',
   'traceExportedSlide',
   'listImports',
   'createImport',

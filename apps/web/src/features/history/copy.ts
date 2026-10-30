@@ -44,8 +44,9 @@ export const exportActionCopy = {
   exporting: 'Exportando…',
   exportErrorTitle: 'No se pudo exportar el carrusel',
   exported: (directory: string): string => `Carrusel exportado en la carpeta ${directory}.`,
-  resultTitle: 'Resultado de la exportación',
+  resultTitle: 'Tu carrusel está listo',
   openExport: 'Abrir esta exportación',
+  historyLink: 'Ver historial',
 } as const;
 
 export const listCopy = {

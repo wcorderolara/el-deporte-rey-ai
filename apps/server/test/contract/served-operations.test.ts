@@ -382,6 +382,7 @@ describe('DEMO_DATA and MANUAL_DATA operations on the running app', { timeout: R
     expect(demo.aiRequests.length).toBe(ai);
     expectNoNetworkViolations();
     state.exported = exported;
+    await ok<undefined>(d, 'downloadExport', { params: { exportId: exported.id } });
 
     const project = required(state.project, 'project');
     const history = await ok<{ exports: Export[] }>(d, 'listProjectExports', { params: { projectId: project.id } });
