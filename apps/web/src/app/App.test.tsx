@@ -95,11 +95,11 @@ describe('App shell (R-235)', () => {
   it('shows project breadcrumbs without exposing internal IDs as labels', async () => {
     const id = '00000000-0000-4000-8000-000000000001';
     renderAt(`/projects/${id}/review`);
-    await screen.findByRole('heading', { name: 'Revisión y aprobación' });
+    await screen.findByRole('heading', { name: 'Revisión del contenido' });
     const crumbs = screen.getByRole('navigation', { name: 'Ruta de navegación' });
     expect(within(crumbs).getByRole('link', { name: 'Proyecto' }).getAttribute('href')).toBe(`/projects/${id}`);
     expect(crumbs.textContent).not.toContain(id);
-    expect(within(screen.getByRole('banner')).getByText('Proyecto actual · Revisión del contenido')).toBeTruthy();
+    expect(within(screen.getByRole('banner')).queryByText('Proyecto actual · Revisión del contenido')).toBeNull();
   });
 
   it('closes disclosure with Escape and restores focus to its trigger', async () => {
@@ -127,7 +127,7 @@ describe('Route table: lazy feature stubs', () => {
       featurePaths.facts('00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000002'),
       'Datos y verificación',
     ],
-    [featurePaths.review('00000000-0000-4000-8000-000000000001'), 'Revisión y aprobación'],
+    [featurePaths.review('00000000-0000-4000-8000-000000000001'), 'Revisión del contenido'],
     [featurePaths.history('00000000-0000-4000-8000-000000000001'), 'Exportaciones e historial'],
     [featurePaths.brand, 'Marca y plantillas'],
     [`${featurePaths.imports}/00000000-0000-4000-8000-000000000003`, 'Importaciones manuales'],

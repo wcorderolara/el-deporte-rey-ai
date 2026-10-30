@@ -1,6 +1,6 @@
 # WI-2.1 — Incremental UX/UI Implementation Plan
 
-Status: UI-01A, UI-01B, UI-02, and UI-03 accepted; UI-04A is next and not started
+Status: UI-01A, UI-01B, UI-02, UI-03, and UI-04A accepted; UI-04B prepared and not started
 Date: 2026-10-29
 
 ## 1. Delivery principles
@@ -40,7 +40,7 @@ Increment split:
 - **UI-01A — foundation (accepted by Product Owner):** Tailwind CSS v4/Vite integration, centralized tokens, controlled legacy aliases, preflight decision, Button, IconButton, Card, Badge, Input, Select, Textarea, Alert, EmptyState, LoadingState, tests, and an isolated review gallery.
 - **UI-01B — shell (implemented, verified, and accepted):** application shell, primary navigation, route-derived project context, responsive disclosure, and breadcrumbs. Feature screens remain unchanged.
 
-The UI-01B scope is in `ui-01b-shell-and-navigation-scope.md`; results and acceptance are in `ui-01b-shell-implementation-report.md`. UI-02 was subsequently authorized from checkpoint `6aff775`, accepted by the Product Owner, and checkpointed at `41ea6f70aba4a58df1d5604f1956b4e660dbbf4a`; see `ui-02-creator-dashboard-implementation-report.md`. UI-03 was visually accepted on 2026-10-29 on its dedicated branch; see `ui-03-guided-content-creation-implementation-report.md`. UI-04A is the next implementation scope; this preparation does not begin its implementation.
+The UI-01B scope is in `ui-01b-shell-and-navigation-scope.md`; results and acceptance are in `ui-01b-shell-implementation-report.md`. UI-02 was subsequently authorized from checkpoint `6aff775`, accepted by the Product Owner, and checkpointed at `41ea6f70aba4a58df1d5604f1956b4e660dbbf4a`; see `ui-02-creator-dashboard-implementation-report.md`. UI-03 was visually accepted on 2026-10-29 on its dedicated branch; see `ui-03-guided-content-creation-implementation-report.md`. UI-04A was authorized from UI-03 checkpoint `7b1daf1` on `work/WI-2.1-ui-04` and accepted by the Product Owner on 2026-10-29. See `ui-04a-review-workspace-implementation-report.md`. UI-04B is prepared as the next increment; it must begin from the accepted UI-04A checkpoint after its separately required API/data semantics are defined.
 
 Scope:
 
@@ -132,7 +132,7 @@ Review and verification:
 
 ### UI-04 — Visual content editor
 
-Delivery status: not started. UI-04A is the next implementation scope and requires its own implementation authorization.
+Delivery status: UI-04A is accepted on `work/WI-2.1-ui-04`; UI-04B is prepared and not started. Automated E2E and browser accessibility suites for UI-04A were not run under PD-UI-21; targeted component tests and technical checks are listed in the implementation report.
 
 Outcome: a creator can preview, customize, review, and approve the existing carousel efficiently.
 
@@ -165,7 +165,7 @@ Review evidence:
 Capability split:
 
 - **UI-04A, current-contract review workspace:** deliver the three-panel experience with preview, issues, regeneration, approval, withdrawal, and final approval.
-- **UI-04B, separately approved editing capability:** add direct headline/supporting-text changes, per-asset template selection, and brand-style choices only after an additive API/data proposal defines immutable new versions, validation, provenance/fact preservation, re-rendering, QA, optimistic concurrency, and approval invalidation. UI-04B is not authorized by this design-refinement phase.
+- **UI-04B, editing capability (prepared, not started):** add direct headline/supporting-text changes, per-asset template selection, and brand-style choices only after an additive API/data proposal defines immutable new versions, validation, provenance/fact preservation, re-rendering, QA, optimistic concurrency, and approval invalidation. The Product Owner must authorize implementation after reviewing that proposal.
 
 ### UI-05 — Download, history, and manual-data management UX
 

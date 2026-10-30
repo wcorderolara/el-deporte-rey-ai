@@ -1,10 +1,10 @@
 # WI-2.1 — Tailwind CSS v4 Migration Strategy
 
-Status: UI-01A, UI-01B, and UI-02 accepted; UI-03 creation slice implemented pending visual acceptance
+Status: UI-01A, UI-01B, UI-02, UI-03, and UI-04A accepted; UI-04B not started
 Date: 2026-10-29
 Applies to: UI-01 through UI-06 on the existing React/Vite frontend
 
-Implementation checkpoint: M0 and the token/global portion of M1 are complete; the initial primitive subset of M2 is complete. M3 application shell is accepted under UI-01B. The dashboard slice is accepted under UI-02. UI-03 now applies token-backed scoped styling to the guided creation flow; preflight remains disabled. Other feature slices remain unstarted.
+Implementation checkpoint: M0 and the token/global portion of M1 are complete; the initial primitive subset of M2 is complete. M3 application shell is accepted under UI-01B. The dashboard slice is accepted under UI-02. UI-03 applies token-backed styling to guided creation and is accepted. UI-04A now uses the token-backed review workspace and retains scoped CSS Modules for detailed domain components; preflight remains disabled. Later feature slices remain unstarted.
 
 ## 1. Decision and objective
 

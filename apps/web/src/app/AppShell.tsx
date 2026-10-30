@@ -113,9 +113,12 @@ export function AppShell() {
       mainRef={mainRef}
       navigation={<MainNavigation pathname={location.pathname} hash={location.hash} />}
       title={context.title}
+      hideHeaderTitle={context.hideHeaderTitle}
+      hideHeaderDescription={context.hideHeaderTitle}
       navigationKey={`${location.pathname}${location.hash}`}
       contentVariant={
-        ['/', '/projects', '/projects/', '/projects/new', '/projects/new/'].includes(location.pathname)
+        ['/', '/projects', '/projects/', '/projects/new', '/projects/new/'].includes(location.pathname) ||
+        /^\/projects\/[^/]+\/review(?:\/.*)?$/.test(location.pathname)
           ? 'studio'
           : 'legacy'
       }
@@ -173,7 +176,9 @@ export function AppShell() {
           </ol>
         </nav>
       }
-      projectContext={context.projectPath ? `Proyecto actual · ${context.projectSection}` : undefined}
+      projectContext={
+        context.projectPath && context.projectSection ? `Proyecto actual · ${context.projectSection}` : undefined
+      }
     >
       <p
         className={

@@ -50,7 +50,7 @@ function allApproved() {
 }
 
 async function finalPanel(): Promise<HTMLElement> {
-  return screen.findByRole('region', { name: 'Aprobación final del carrusel' });
+  return screen.findByRole('region', { name: 'Aprobación final' });
 }
 
 function finalButton(panel: HTMLElement): HTMLButtonElement {
@@ -77,6 +77,7 @@ describe('Final approval control (R-240)', () => {
     const control = finalButton(panel);
     expect(control.disabled).toBe(true);
     const reasons = document.getElementById(control.getAttribute('aria-describedby') ?? '');
+    await userEvent.click(within(reasons as HTMLElement).getByText('Ver elementos pendientes y motivos'));
     const items = within(reasons as HTMLElement)
       .getAllByRole('listitem')
       .map((item) => item.textContent);
@@ -99,6 +100,8 @@ describe('Final approval control (R-240)', () => {
     });
     renderApp(REVIEW, server);
     const panel = await finalPanel();
+    expect(panel.textContent).toContain('2 de 2 diapositivas aprobadas');
+    expect(panel.textContent).toContain('Copy aprobado');
     expect(panel.textContent).toContain('Todos los elementos están aprobados y ninguno está bloqueado.');
     const control = finalButton(panel);
     expect(control.disabled).toBe(false);

@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   API,
+  CAROUSEL_ID,
   CAROUSEL_2_ID,
   caption,
   carousel,
@@ -16,6 +17,8 @@ import {
   draft,
   DRAFT_PATH,
   draftResponse,
+  elementId,
+  elementPath,
   factId,
   factSegment,
   fakeServer,
@@ -29,6 +32,7 @@ import {
   renderApp,
   slide,
   standardCarousel,
+  checkedElement,
   template,
   versionId,
 } from './test/support';
@@ -38,6 +42,9 @@ afterEach(cleanup);
 const REVIEW = `/projects/${PROJECT_ID}/review`;
 
 async function waitForDraft() {
+  await screen.findByRole('heading', { level: 1, name: 'Revisión del contenido' });
+  const details = await screen.findByText('Datos y trazabilidad del borrador');
+  if (details.closest('details')?.open !== true) await userEvent.click(details);
   return screen.findByRole('heading', { level: 2, name: 'Borrador' });
 }
 
@@ -47,7 +54,7 @@ describe('Review page: loading and errors', () => {
     renderApp(REVIEW, server);
     expect(await screen.findByText('Cargando el borrador…')).toBeTruthy();
     await waitForDraft();
-    expect(screen.getByRole('heading', { level: 1, name: 'Revisión y aprobación' })).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: 'Revisión del contenido' })).toBeTruthy();
     expect(server.unexpected).toEqual([]);
   });
 
@@ -114,34 +121,76 @@ describe('Review page: demonstration label and data mode (R-269, OD-21)', () => 
   });
 });
 
+describe('Review workspace navigation and hierarchy', () => {
+  it('keeps one primary title, functional breadcrumbs, and technical details collapsed by default', async () => {
+    const server = fakeServer({ [DRAFT_PATH]: draftResponse() });
+    renderApp(REVIEW, server);
+    await screen.findByRole('heading', { level: 1, name: 'Revisión del contenido' });
+    await screen.findByRole('navigation', { name: 'Diapositivas del carrusel' });
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toBeTruthy();
+    const slideCard = screen.getByRole('article', { name: 'Diapositiva 1: Portada' });
+    expect(within(slideCard).getByText('Detalles y verificaciones').closest('details')?.open).toBe(false);
+  });
+
+  it('shows a useful empty state when the draft has no carousels', async () => {
+    const server = fakeServer({ [DRAFT_PATH]: draftResponse(draft({ carousels: [] })) });
+    renderApp(REVIEW, server);
+    await screen.findByRole('heading', { level: 1, name: 'Revisión del contenido' });
+    expect(await screen.findByText('El borrador no tiene carruseles.')).toBeTruthy();
+    expect(screen.queryByRole('navigation', { name: 'Diapositivas del carrusel' })).toBeNull();
+  });
+
+  it('approves the current slide and moves to the next slide using the existing version approval API', async () => {
+    const first = slide(1, 1, 'cover');
+    const elements = [first, slide(2, 2, 'match_result'), caption(3, 3)];
+    const approvedFirst = checkedElement({
+      ...first,
+      currentVersion: { ...first.currentVersion, state: 'approved' },
+    });
+    const server = fakeServer({
+      [DRAFT_PATH]: [
+        draftResponse(draft({ carousels: [carousel(elements)] })),
+        draftResponse(draft({ carousels: [carousel([approvedFirst, ...elements.slice(1)])] })),
+      ],
+      [`PUT ${elementPath(CAROUSEL_ID, elementId(1), 'approval')}`]: () => json(approvedFirst),
+    });
+    renderApp(REVIEW, server);
+    const slideCard = await screen.findByRole('article', { name: 'Diapositiva 1: Portada' });
+    await userEvent.click(within(slideCard).getByRole('button', { name: 'Aprobar y siguiente' }));
+    expect(await screen.findByRole('heading', { level: 3, name: 'Diapositiva 2: Resultado' })).toBeTruthy();
+    expect(server.callsTo('PUT', elementPath(CAROUSEL_ID, elementId(1), 'approval'))).toHaveLength(1);
+  });
+});
+
 describe('Review page: preview in carousel order (R-215)', () => {
-  it('lists every slide by position, then the caption with its hashtags, with the slide images', async () => {
+  it('shows one selected slide, navigable thumbnails, and the publication copy separately', async () => {
     const server = fakeServer({ [DRAFT_PATH]: draftResponse() });
     renderApp(REVIEW, server);
     await waitForDraft();
 
     const carouselRegion = screen.getByRole('region', { name: 'Carrusel' });
-    const headings = within(carouselRegion)
-      .getAllByRole('heading', { level: 4 })
-      .map((heading) => heading.textContent);
-    expect(headings).toEqual([
-      'Diapositiva 1: Portada',
-      'Diapositiva 2: Resultado',
-      'Diapositiva 3: Cierre',
-      'Texto de publicación y hashtags',
-    ]);
-
-    const images = within(carouselRegion).getAllByRole('img');
-    expect(images.map((image) => [image.getAttribute('alt'), image.getAttribute('src')])).toEqual([
-      ['Imagen de Diapositiva 1: Portada, versión 1', `${API}/element-versions/${versionId(1)}/image`],
-      ['Imagen de Diapositiva 2: Resultado, versión 1', `${API}/element-versions/${versionId(2)}/image`],
-      ['Imagen de Diapositiva 3: Cierre, versión 1', `${API}/element-versions/${versionId(3)}/image`],
-    ]);
+    const thumbnails = within(carouselRegion).getAllByRole('button', { name: /^Diapositiva/ });
+    expect(thumbnails).toHaveLength(3);
+    expect(thumbnails[0]?.getAttribute('aria-current')).toBe('true');
+    const selectedSlide = screen.getByRole('article', { name: 'Diapositiva 1: Portada' });
+    const image = within(selectedSlide).getByRole('img', { name: 'Imagen de Diapositiva 1: Portada, versión 1' });
+    expect(image.getAttribute('src')).toBe(`${API}/element-versions/${versionId(1)}/image`);
+    await userEvent.click(within(selectedSlide).getByText('Detalles y verificaciones'));
+    expect(within(selectedSlide).getByText('Detalles y verificaciones').closest('details')?.open).toBe(true);
 
     const captionCard = screen.getByRole('article', { name: 'Texto de publicación y hashtags' });
     expect(captionCard.textContent).toContain('Texto de publicación de prueba con');
     expect(captionCard.textContent).toContain('#JornadaDemo #FutbolDemo');
     expect(within(captionCard).queryByRole('img')).toBeNull();
+    const secondSlide = within(carouselRegion).getByRole('button', { name: /Diapositiva 2:/ });
+    await userEvent.click(within(carouselRegion).getByRole('button', { name: /Diapositiva 1:/ }));
+    await userEvent.keyboard('{ArrowRight}');
+    expect(screen.getByRole('heading', { level: 3, name: 'Diapositiva 2: Resultado' })).toBeTruthy();
+    expect(secondSlide.getAttribute('aria-current')).toBe('true');
+    expect(document.activeElement).toBe(secondSlide);
+    const nextSlide = screen.getByRole('article', { name: 'Diapositiva 2: Resultado' });
+    expect(within(nextSlide).getByText('Detalles y verificaciones').closest('details')?.open).toBe(false);
   });
 
   it('shows numbered carousels in sequence order (OD-03)', async () => {
@@ -155,8 +204,10 @@ describe('Review page: preview in carousel order (R-215)', () => {
     });
     renderApp(REVIEW, server);
     await waitForDraft();
-    const titles = screen.getAllByRole('heading', { level: 2, name: /^Carrusel/ }).map((h) => h.textContent);
-    expect(titles).toEqual(['Carrusel 1 de 2', 'Carrusel 2 de 2']);
+    const picker = screen.getByRole('navigation', { name: 'Elegir carrusel para revisar' });
+    expect(within(picker).getAllByRole('button')).toHaveLength(2);
+    await userEvent.click(within(picker).getByRole('button', { name: /Carrusel 2 de 2/ }));
+    expect(screen.getByRole('heading', { level: 2, name: 'Carrusel 2 de 2' })).toBeTruthy();
     expect(screen.getByRole('region', { name: 'Borrador' }).textContent).toContain('2 carruseles');
   });
 
@@ -206,6 +257,8 @@ describe('Review page: provenance of every text segment (R-208, OD-01, R-071, OD
     renderApp(REVIEW, server);
     await waitForDraft();
 
+    const slideCard = screen.getByRole('article', { name: 'Diapositiva 1: Resultado' });
+    await userEvent.click(within(slideCard).getByText('Detalles y verificaciones'));
     const text = screen.getByRole('region', { name: 'Texto: Diapositiva 1: Resultado' });
     const items = within(text).getAllByRole('listitem');
     const labelOf = (fragment: string): string => {
@@ -290,7 +343,7 @@ describe('Review page: left-out matches and standings (R-255, R-285)', () => {
     expect(summary.textContent).toContain('no se calcula a partir de los resultados');
     expect(screen.queryByRole('article', { name: /Clasificación/ })).toBeNull();
     const carouselRegion = screen.getByRole('region', { name: 'Carrusel' });
-    expect(within(carouselRegion).getAllByRole('article')).toHaveLength(4);
+    expect(within(carouselRegion).getAllByRole('article')).toHaveLength(2);
   });
 });
 

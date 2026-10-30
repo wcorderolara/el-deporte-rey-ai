@@ -1,5 +1,6 @@
 export interface ShellContext {
   title: string;
+  hideHeaderTitle?: boolean;
   projectPath?: string;
   projectSection?: string;
   parent?: { label: string; to: string };
@@ -15,6 +16,7 @@ export function shellContext(pathname: string): ShellContext {
   const project = /^\/projects\/([^/]+)(\/.*)?$/.exec(pathname);
   if (project) {
     const suffix = project[2] ?? '';
+    const isReview = /^\/review(?:\/|$)/.test(suffix);
     const title = suffix.includes('/facts')
       ? 'Datos y verificación'
       : suffix.includes('/review')
@@ -26,7 +28,12 @@ export function shellContext(pathname: string): ShellContext {
             : suffix === '/exports'
               ? 'Descargas e historial'
               : 'Proyecto';
-    return { title, projectPath: `/projects/${project[1]}`, projectSection: title };
+    return {
+      title,
+      projectPath: `/projects/${project[1]}`,
+      projectSection: isReview ? undefined : title,
+      hideHeaderTitle: isReview,
+    };
   }
   if (pathname === '/brand' || pathname === '/brand/') return { title: 'Marca y plantillas' };
   if (pathname === '/imports' || pathname === '/imports/') return { title: 'Datos' };

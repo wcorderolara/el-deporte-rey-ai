@@ -43,10 +43,15 @@ const DRAFT_GET = `${API}/projects/${PROJECT_ID}/draft`;
 const SLIDE = 'Diapositiva 1: Resultado';
 
 async function card(name = SLIDE): Promise<HTMLElement> {
-  return screen.findByRole('article', { name });
+  const element = await screen.findByRole('article', { name });
+  const details = within(element).queryByText('Detalles y verificaciones');
+  if (details !== null && details.closest('details')?.open !== true) await userEvent.click(details);
+  return element;
 }
 
 function button(container: HTMLElement, name: string | RegExp): HTMLButtonElement {
+  if (name === 'Aprobar esta versión') name = /^Aprobar (diapositiva|copy|y siguiente)$/;
+  if (name === 'Regenerar este elemento') name = /^Regenerar (diapositiva|copy)$/;
   return within(container).getByRole('button', { name }) as HTMLButtonElement;
 }
 
@@ -81,7 +86,7 @@ describe('Element approval binds to the exact version (R-406)', () => {
     const [call] = server.callsTo('PUT', elementPath(CAROUSEL_ID, elementId(1), 'approval'));
     expect(call?.body).toEqual({ versionId: versionId(1) });
     expect(call?.headers['X-EDR-Client']).toBe('web');
-    expect(within(slideCard).getByText('Aprobada')).toBeTruthy();
+    expect(within(slideCard).getAllByText('Aprobada').length).toBeGreaterThan(0);
     expect(button(slideCard, 'Retirar la aprobación')).toBeTruthy();
     expect(server.callsTo('GET', DRAFT_GET).length).toBeGreaterThanOrEqual(2);
   });
@@ -343,7 +348,7 @@ describe('Content flags and blocking QA failures (R-207, OD-09)', () => {
     expect(qaRegion.textContent).toContain('esperado «2-1», obtenido «2-7»');
     expect(qaRegion.textContent).toContain('Un fallo bloqueante solo se resuelve regenerando el elemento.');
     expect(within(qaRegion).queryByRole('button')).toBeNull();
-    expect(within(slideCard).getByText('Control visual fallido')).toBeTruthy();
+    expect(within(slideCard).getAllByText('Control visual fallido').length).toBeGreaterThan(0);
     expect(button(slideCard, 'Aprobar esta versión').disabled).toBe(true);
   });
 });
@@ -389,6 +394,7 @@ describe('QA warnings (OD-09, OD-26, OD-38): acknowledged one check per request'
     expect(qaRegion.textContent).toContain('Colores fuera de la paleta: #ff00ff');
     expect(button(slideCard, 'Aprobar esta versión').disabled).toBe(true);
     expect(slideCard.textContent).toContain('hay advertencias del control visual sin confirmar');
+    expect(slideCard.textContent).toContain('Hay 2 advertencias del control visual.');
 
     await userEvent.click(button(qaRegion, 'Confirmar la advertencia: Palabras con mayúscula no reconocidas'));
     expect(await within(slideCard).findByText('Advertencia confirmada.')).toBeTruthy();
@@ -446,14 +452,16 @@ describe('Regeneration of one element (R-217, R-040)', () => {
     expect(await within(slideCard).findByText(/Se creó la versión 2/)).toBeTruthy();
     expect(slideCard.textContent).toContain('necesita una aprobación nueva');
     expect(slideCard.textContent).toContain('Titular regenerado');
-    expect(within(slideCard).getByText('Pendiente del control visual')).toBeTruthy();
+    expect(within(slideCard).getAllByText('Pendiente del control visual').length).toBeGreaterThan(0);
     expect(button(slideCard, 'Aprobar esta versión').disabled).toBe(true);
+    expect(document.activeElement).toBe(within(slideCard).getByRole('heading', { name: SLIDE }));
     const [call] = server.callsTo('POST', elementPath(CAROUSEL_ID, elementId(1), 'regenerate'));
     expect(call?.body).toBeUndefined();
     expect(call?.headers['X-EDR-Client']).toBe('web');
 
+    await userEvent.click(screen.getByRole('button', { name: /Diapositiva 2: Cierre/ }));
     const otherCard = await card('Diapositiva 2: Cierre');
-    expect(within(otherCard).getByText('Aprobada')).toBeTruthy();
+    expect(within(otherCard).getAllByText('Aprobada').length).toBeGreaterThan(0);
     expect(server.callsTo('POST', elementPath(CAROUSEL_ID, elementId(2), 'regenerate'))).toHaveLength(0);
   });
 

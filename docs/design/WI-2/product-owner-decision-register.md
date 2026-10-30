@@ -1,6 +1,6 @@
 # WI-2.1 — Product Owner Decision Register
 
-Status: UI-01A, UI-01B, UI-02, and UI-03 accepted
+Status: UI-01A, UI-01B, UI-02, UI-03, and UI-04A accepted; UI-04B prepared and not started
 Date: 2026-10-29
 Source: Product Owner design-refinement brief for WI-2.1
 
@@ -111,4 +111,4 @@ No conflict was found with the product scope, data/verification model, approval 
 
 ## 7. Decision status
 
-PD-UI-01 through PD-UI-21 remain confirmed. The Product Owner personally reviewed the local gallery, approved the visual result, accepted UI-01A, and authorized its commit on the current feature branch. The subsequent UI-01B directive authorized shell/navigation implementation from checkpoint `4c78b36`. The Product Owner then confirmed the shell looks good without problems and requested closure and progression to the next increment. UI-01B is accepted at `6aff775`. UI-02 retained all contracts and current carousel creation; the Product Owner confirmed visual acceptance on 2026-10-29. Its committed checkpoint is `41ea6f70aba4a58df1d5604f1956b4e660dbbf4a` on `work/WI-2.1-ui-02`. UI-03 was visually accepted by the Product Owner on 2026-10-29 on `work/WI-2.1-ui-03`; its implementation is closed at the accepted checkpoint recorded in Git. The Product Owner owns functional E2E testing and visual acceptance under PD-UI-21. UI-04A is the next implementation scope and awaits its own authorization.
+PD-UI-01 through PD-UI-21 remain confirmed. The Product Owner personally reviewed the local gallery, approved the visual result, accepted UI-01A, and authorized its commit on the current feature branch. The subsequent UI-01B directive authorized shell/navigation implementation from checkpoint `4c78b36`. The Product Owner then confirmed the shell looks good without problems and requested closure and progression to the next increment. UI-01B is accepted at `6aff775`. UI-02 retained all contracts and current carousel creation; the Product Owner confirmed visual acceptance on 2026-10-29. Its committed checkpoint is `41ea6f70aba4a58df1d5604f1956b4e660dbbf4a` on `work/WI-2.1-ui-02`. UI-03 was visually accepted by the Product Owner on 2026-10-29 on `work/WI-2.1-ui-03`; its implementation is closed at the accepted checkpoint recorded in Git. UI-04A was accepted by the Product Owner on 2026-10-29 and closed at the accepted checkpoint on `work/WI-2.1-ui-04`. UI-04B is prepared but not started; its editing capability requires a separately reviewed additive API/data proposal and explicit implementation authorization. The Product Owner owns functional E2E testing and visual acceptance under PD-UI-21.

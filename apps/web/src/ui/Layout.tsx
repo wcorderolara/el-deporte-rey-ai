@@ -13,6 +13,8 @@ export interface LayoutProps {
   mainRef?: Ref<HTMLElement>;
   children: ReactNode;
   title?: string;
+  hideHeaderTitle?: boolean;
+  hideHeaderDescription?: boolean;
   breadcrumbs?: ReactNode;
   primaryAction?: ReactNode;
   projectContext?: string;
@@ -29,6 +31,8 @@ export function Layout({
   mainRef,
   children,
   title = appCopy.name,
+  hideHeaderTitle = false,
+  hideHeaderDescription = false,
   breadcrumbs,
   primaryAction,
   projectContext,
@@ -96,10 +100,12 @@ export function Layout({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="border-b border-border-subtle bg-surface-raised px-gutter-mobile py-4 sm:px-gutter-tablet lg:px-gutter-desktop">
           {breadcrumbs}
-          <p className="m-0 mt-2 font-display text-heading-sm font-extrabold tracking-heading sm:text-heading-md">
-            {title}
-          </p>
-          {projectContext ? (
+          {hideHeaderTitle ? null : (
+            <p className="m-0 mt-2 font-display text-heading-sm font-extrabold tracking-heading sm:text-heading-md">
+              {title}
+            </p>
+          )}
+          {hideHeaderDescription ? null : projectContext ? (
             <p className="m-0 mt-2 text-body-sm text-info">{projectContext}</p>
           ) : (
             <p className="m-0 mt-2 text-body-sm text-text-secondary">

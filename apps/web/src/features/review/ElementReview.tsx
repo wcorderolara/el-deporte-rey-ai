@@ -1,10 +1,10 @@
 import type { Element, QaWarningCheck } from '@edr/contracts';
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
 import { ApiError } from '../../api/client';
-import { ErrorBanner, formatDateTime, StatusBadge } from '../../ui';
+import { Button, ErrorBanner, formatDateTime, StatusBadge } from '../../ui';
 import { BlockingFacts } from './BlockingFacts';
-import { approvalObstacleLabel, contentFlagLabel, elementCopy, versionStateLabel } from './copy';
+import { approvalObstacleLabel, contentFlagLabel, elementCopy, textFieldLabel, versionStateLabel } from './copy';
 import { approvalObstacles, elementName, problemFacts } from './model';
 import { QaResults } from './QaResults';
 import styles from './Review.module.css';
@@ -26,6 +26,10 @@ export interface ElementReviewProps {
   onChanged: (element: Element) => void;
   /** Called after a refused operation, so the view shows the server's current state. */
   onRefused: () => void;
+  workspaceNavigation?: ReactNode;
+  workspaceControls?: ReactNode;
+  onApproved?: () => void;
+  approveAndNext?: boolean;
 }
 
 /**
@@ -34,7 +38,15 @@ export interface ElementReviewProps {
  * acknowledgement of warnings, and the approve, withdraw and regenerate actions. Approval sends the exact version
  * shown (R-406). The server's answer is always shown; a refusal is announced with the facts it names.
  */
-export function ElementReview({ element, onChanged, onRefused }: ElementReviewProps) {
+export function ElementReview({
+  element,
+  onChanged,
+  onRefused,
+  workspaceNavigation,
+  workspaceControls,
+  onApproved,
+  approveAndNext = false,
+}: ElementReviewProps) {
   const { api } = useReviewDependencies();
   const [action, setAction] = useState<Action | null>(null);
   const [failure, setFailure] = useState<{ action: Action; error: unknown } | null>(null);
@@ -42,12 +54,35 @@ export function ElementReview({ element, onChanged, onRefused }: ElementReviewPr
   const baseId = useId();
   const titleId = `${baseId}-title`;
   const obstaclesId = `${baseId}-obstacles`;
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const technicalDetailsRef = useRef<HTMLDetailsElement>(null);
+  const focusAfterRegeneration = useRef(false);
+  const previousVersionId = useRef(element.currentVersion.id);
 
   const version = element.currentVersion;
   const name = elementName(element);
   const obstacles = approvalObstacles(version);
+  const warningCount = version.qa.filter((result) => result.severity === 'warning' && result.outcome === 'fail').length;
   const approved = version.state === 'approved';
   const busy = action !== null;
+
+  useEffect(() => {
+    if (previousVersionId.current !== version.id) {
+      previousVersionId.current = version.id;
+      if (focusAfterRegeneration.current) {
+        focusAfterRegeneration.current = false;
+        headingRef.current?.focus();
+      }
+    }
+  }, [version.id]);
+
+  useEffect(() => {
+    focusAfterRegeneration.current = false;
+    if (technicalDetailsRef.current !== null) technicalDetailsRef.current.open = false;
+    setAction(null);
+    setFailure(null);
+    setMessage('');
+  }, [element.id]);
 
   async function run(next: Action) {
     if (busy) {
@@ -56,18 +91,21 @@ export function ElementReview({ element, onChanged, onRefused }: ElementReviewPr
     setAction(next);
     setFailure(null);
     setMessage('');
+    let approved = false;
     try {
       let result: Element;
       switch (next.kind) {
         case 'approve':
           result = await api.approveElement(element.carouselId, element.id, version.id);
           setMessage(elementCopy.approved(result.currentVersion.versionNumber));
+          approved = true;
           break;
         case 'withdraw':
           result = await api.withdrawElementApproval(element.carouselId, element.id);
           setMessage(elementCopy.withdrawn);
           break;
         case 'regenerate':
+          focusAfterRegeneration.current = true;
           result = await api.regenerateElement(element.carouselId, element.id);
           setMessage(elementCopy.regenerated(result.currentVersion.versionNumber));
           break;
@@ -77,6 +115,7 @@ export function ElementReview({ element, onChanged, onRefused }: ElementReviewPr
           break;
       }
       onChanged(result);
+      if (approved) onApproved?.();
     } catch (error) {
       setFailure({ action: next, error });
       if (error instanceof ApiError && error.kind === 'problem') {
@@ -92,152 +131,198 @@ export function ElementReview({ element, onChanged, onRefused }: ElementReviewPr
       ? problemFacts(failure.error.problem)
       : [];
 
+  const approvalLabel =
+    element.kind === 'caption'
+      ? elementCopy.approveCaption
+      : approveAndNext
+        ? elementCopy.approveAndNext
+        : elementCopy.approveSlide;
+
   return (
     <article
       aria-labelledby={titleId}
-      className={styles.element}
+      className={`${styles.element} ${element.kind === 'caption' ? styles.captionElement : ''}`}
       data-blocked={version.blocked ? 'true' : 'false'}
       data-state={version.state}
     >
-      <header className={styles.elementHeader}>
-        <h4 id={titleId}>{name}</h4>
-        <p className={styles.elementMeta}>
-          {elementCopy.version(version.versionNumber)}, {elementCopy.createdAt}{' '}
-          <time dateTime={version.createdAt}>{formatDateTime(version.createdAt)}</time>
-        </p>
-        <p className={styles.badges}>
+      {workspaceNavigation ? <div className={styles.slideRail}>{workspaceNavigation}</div> : null}
+      <section className={styles.elementPreview} aria-label={name}>
+        <header className={styles.elementHeader}>
+          <div>
+            <p className={styles.elementEyebrow}>
+              {element.kind === 'slide' ? elementCopy.slideEyebrow : elementCopy.captionEyebrow}
+            </p>
+            <h3 id={titleId} ref={headingRef} tabIndex={-1}>
+              {name}
+            </h3>
+          </div>
+        </header>
+
+        {element.kind === 'slide' ? (
+          version.imageUrl === null ? (
+            <div className={styles.imageUnavailable} role="status">
+              {elementCopy.noImage}
+            </div>
+          ) : (
+            <figure className={styles.figure}>
+              <img
+                className={styles.slideImage}
+                src={api.slideImageUrl(version.id)}
+                alt={elementCopy.imageAlt(name, version.versionNumber)}
+                width={version.width ?? undefined}
+                height={version.height ?? undefined}
+                loading="eager"
+              />
+              {version.width === null || version.height === null ? null : (
+                <figcaption className={styles.hint}>{elementCopy.dimensions(version.width, version.height)}</figcaption>
+              )}
+            </figure>
+          )
+        ) : (
+          <div className={styles.captionCopy} aria-label={elementCopy.captionReadable}>
+            {version.fields.length === 0 ? (
+              <p>{elementCopy.noText}</p>
+            ) : (
+              <dl>
+                {version.fields.map((field, index) => (
+                  <div key={`${field.field}-${index}`}>
+                    <dt>{textFieldLabel[field.field]}</dt>
+                    <dd>{field.segments.map((segment) => segment.text).join('')}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+          </div>
+        )}
+        {workspaceControls ? <div className={styles.workspaceControls}>{workspaceControls}</div> : null}
+      </section>
+
+      <section className={styles.reviewPanel} aria-label={`${elementCopy.reviewPanel}: ${name}`}>
+        <div className={styles.reviewStatus}>
           <StatusBadge
             label={versionStateLabel[version.state]}
             tone={approved ? 'positive' : version.state === 'qa_failed' ? 'caution' : 'neutral'}
             symbol={approved ? '✓' : version.state === 'qa_failed' ? '!' : '•'}
           />
           {version.blocked ? <StatusBadge label={elementCopy.blocked} tone="caution" symbol="⛔" /> : null}
-        </p>
-      </header>
-
-      {element.kind === 'slide' ? (
-        version.imageUrl === null ? (
-          <p className={styles.hint}>{elementCopy.noImage}</p>
-        ) : (
-          <figure className={styles.figure}>
-            <img
-              className={styles.slideImage}
-              src={api.slideImageUrl(version.id)}
-              alt={elementCopy.imageAlt(name, version.versionNumber)}
-              width={version.width ?? undefined}
-              height={version.height ?? undefined}
-              loading="lazy"
-            />
-            {version.width === null || version.height === null ? null : (
-              <figcaption className={styles.hint}>{elementCopy.dimensions(version.width, version.height)}</figcaption>
-            )}
-          </figure>
-        )
-      ) : null}
-
-      <section aria-label={`${elementCopy.textTitle}: ${name}`}>
-        <TextFields version={version} />
-      </section>
-
-      {version.blockingFacts.length === 0 ? null : (
-        <section className={styles.blockedPanel} aria-label={`${elementCopy.blockedTitle}: ${name}`}>
-          <p className={styles.panelTitle}>
-            <span aria-hidden="true">⛔ </span>
-            {elementCopy.blockedTitle}
-          </p>
-          <p>{elementCopy.blockedIntro}</p>
-          <BlockingFacts facts={version.blockingFacts} label={elementCopy.blockedTitle} />
-        </section>
-      )}
-
-      {version.contentFlags.length === 0 ? null : (
-        <section className={styles.flagPanel} aria-label={`${elementCopy.flagsTitle}: ${name}`}>
-          <p className={styles.panelTitle}>
-            <span aria-hidden="true">! </span>
-            {elementCopy.flagsTitle}
-          </p>
-          <ul className={styles.detailList}>
-            {version.contentFlags.map((flag, index) => (
-              <li key={`${flag.code}-${index}`}>
-                <strong>{contentFlagLabel[flag.code]}</strong>. {elementCopy.flagField}: {flag.field}.{' '}
-                {elementCopy.flagExcerpt}: «{flag.excerpt}»
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {element.kind === 'slide' || version.qa.length > 0 ? (
-        <section aria-label={`${elementCopy.qaTitle}: ${name}`}>
-          <p className={styles.panelTitle}>{elementCopy.qaTitle}</p>
-          <QaResults
-            results={version.qa}
-            onAcknowledge={busy ? null : (check) => void run({ kind: 'acknowledge', check })}
-            acknowledging={action?.kind === 'acknowledge' ? action.check : null}
-          />
-        </section>
-      ) : null}
-
-      <div className={styles.actions} role="group" aria-label={`${elementCopy.actionsTitle}: ${name}`}>
-        {approved ? (
-          <button
-            type="button"
-            className={styles.secondaryButton}
-            disabled={busy}
-            onClick={() => void run({ kind: 'withdraw' })}
-          >
-            {action?.kind === 'withdraw' ? elementCopy.withdrawing : elementCopy.withdraw}
-          </button>
-        ) : (
-          <button
-            type="button"
-            className={styles.primaryButton}
-            disabled={busy || obstacles.length > 0}
-            aria-describedby={obstacles.length > 0 ? obstaclesId : undefined}
-            onClick={() => void run({ kind: 'approve' })}
-          >
-            {action?.kind === 'approve' ? elementCopy.approving : elementCopy.approve}
-          </button>
+        </div>
+        <div className={obstacles.length > 0 ? styles.obstacles : styles.readiness} aria-live="polite">
+          <strong>
+            {approved
+              ? elementCopy.approvedStatus
+              : obstacles.length > 0
+                ? elementCopy.needsAttention
+                : elementCopy.noIssues}
+          </strong>
+          {obstacles.length > 0 ? (
+            <ul className={styles.detailList} id={obstaclesId}>
+              {obstacles.map((obstacle) => (
+                <li key={obstacle}>{approvalObstacleLabel[obstacle]}</li>
+              ))}
+            </ul>
+          ) : null}
+          {warningCount > 0 ? (
+            <p className={styles.warningSummary}>{elementCopy.warningSummary(warningCount)}</p>
+          ) : null}
+        </div>
+        {version.blockingFacts.length === 0 ? null : (
+          <div className={styles.blockedPanel}>
+            <p className={styles.panelTitle}>{elementCopy.blockedTitle}</p>
+            <p>{elementCopy.blockedIntro}</p>
+          </div>
         )}
-        <button
-          type="button"
-          className={styles.secondaryButton}
-          disabled={busy || version.state === 'superseded'}
-          onClick={() => void run({ kind: 'regenerate' })}
-        >
-          {elementCopy.regenerate}
-        </button>
-      </div>
-      {obstacles.length === 0 ? null : (
-        <div id={obstaclesId} className={styles.obstacles}>
-          <p>{elementCopy.cannotApprove}</p>
-          <ul className={styles.detailList}>
-            {obstacles.map((obstacle) => (
-              <li key={obstacle}>{approvalObstacleLabel[obstacle]}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <p className={styles.hint}>{elementCopy.regenerateHint}</p>
-
-      <p role="status" aria-live="polite" className={styles.status}>
-        {action?.kind === 'regenerate' ? elementCopy.regenerating : message}
-      </p>
-      {failure === null ? null : (
-        <div>
-          <ErrorBanner
-            title={`${errorTitle[failure.action.kind]}: ${name}`}
-            error={failure.error}
-            onRetry={() => void run(failure.action)}
-          />
-          {refusedFacts.length === 0 ? null : (
-            <div className={styles.blockedPanel}>
-              <p>{elementCopy.refusedFacts}</p>
-              <BlockingFacts facts={refusedFacts} label={elementCopy.refusedFacts} />
-            </div>
+        <div className={styles.actions} role="group" aria-label={`${elementCopy.actionsTitle}: ${name}`}>
+          {approved ? (
+            <Button
+              variant="secondary"
+              isLoading={action?.kind === 'withdraw'}
+              loadingLabel={elementCopy.withdrawing}
+              disabled={busy}
+              onClick={() => void run({ kind: 'withdraw' })}
+            >
+              {elementCopy.withdraw}
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              size="lg"
+              isLoading={action?.kind === 'approve'}
+              loadingLabel={elementCopy.approving}
+              disabled={busy || obstacles.length > 0}
+              aria-describedby={obstacles.length > 0 ? obstaclesId : undefined}
+              onClick={() => void run({ kind: 'approve' })}
+            >
+              {approvalLabel}
+            </Button>
           )}
+          <Button
+            variant="secondary"
+            isLoading={action?.kind === 'regenerate'}
+            loadingLabel={elementCopy.regenerating}
+            disabled={busy || version.state === 'superseded'}
+            onClick={() => void run({ kind: 'regenerate' })}
+          >
+            {elementCopy.regenerateLabel(element.kind)}
+          </Button>
         </div>
-      )}
+        {failure === null ? null : (
+          <div>
+            <ErrorBanner
+              title={`${errorTitle[failure.action.kind]}: ${name}`}
+              error={failure.error}
+              onRetry={() => void run(failure.action)}
+            />
+            {refusedFacts.length === 0 ? null : (
+              <div className={styles.blockedPanel}>
+                <p>{elementCopy.refusedFacts}</p>
+                <BlockingFacts facts={refusedFacts} label={elementCopy.refusedFacts} />
+              </div>
+            )}
+          </div>
+        )}
+        <p role="status" aria-live="polite" className={styles.status}>
+          {action?.kind === 'regenerate' ? elementCopy.regenerating : message}
+        </p>
+        <details ref={technicalDetailsRef} className={styles.technicalDetails}>
+          <summary>{elementCopy.technicalDetails}</summary>
+          <p className={styles.elementMeta}>
+            {elementCopy.version(version.versionNumber)}, {elementCopy.createdAt}{' '}
+            <time dateTime={version.createdAt}>{formatDateTime(version.createdAt)}</time>
+          </p>
+          <section className={styles.technicalFields} aria-label={`${elementCopy.textTitle}: ${name}`}>
+            <TextFields version={version} />
+          </section>
+          {version.blockingFacts.length === 0 ? null : (
+            <section aria-label={`${elementCopy.blockedTitle}: ${name}`}>
+              <BlockingFacts facts={version.blockingFacts} label={elementCopy.blockedTitle} />
+            </section>
+          )}
+          {version.contentFlags.length === 0 ? null : (
+            <section className={styles.flagPanel} aria-label={`${elementCopy.flagsTitle}: ${name}`}>
+              <p className={styles.panelTitle}>{elementCopy.flagsTitle}</p>
+              <ul className={styles.detailList}>
+                {version.contentFlags.map((flag, index) => (
+                  <li key={`${flag.code}-${index}`}>
+                    <strong>{contentFlagLabel[flag.code]}</strong>. {elementCopy.flagField}: {flag.field}.{' '}
+                    {elementCopy.flagExcerpt}: «{flag.excerpt}»
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          {element.kind === 'slide' || version.qa.length > 0 ? (
+            <section aria-label={`${elementCopy.qaTitle}: ${name}`}>
+              <p className={styles.panelTitle}>{elementCopy.qaTitle}</p>
+              <QaResults
+                results={version.qa}
+                onAcknowledge={busy ? null : (check) => void run({ kind: 'acknowledge', check })}
+                acknowledging={action?.kind === 'acknowledge' ? action.check : null}
+              />
+            </section>
+          ) : null}
+          <p className={styles.hint}>{elementCopy.regenerateHint}</p>
+        </details>
+      </section>
     </article>
   );
 }

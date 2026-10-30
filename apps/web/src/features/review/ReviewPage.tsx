@@ -1,5 +1,6 @@
 import { contractRegExp, type Draft } from '@edr/contracts';
 import { Link, useParams } from 'react-router';
+import { useState } from 'react';
 
 import { ApiError } from '../../api/client';
 import { featurePaths } from '../../app/routes';
@@ -93,11 +94,12 @@ function LeftOutMatches({ draft }: { draft: Draft }) {
 function ProjectReview({ projectId }: { projectId: string }) {
   const { api } = useReviewDependencies();
   const request = useDraft(api, projectId);
+  const [selectedCarouselId, setSelectedCarouselId] = useState<string | null>(null);
   const state = request.state;
 
   if (state.status !== 'success') {
     return (
-      <section aria-labelledby="review-title">
+      <section aria-labelledby="review-title" className={styles.page}>
         <h1 id="review-title">{reviewCopy.title}</h1>
         {state.status === 'loading' ? (
           <p role="status">{reviewCopy.loading}</p>
@@ -114,12 +116,29 @@ function ProjectReview({ projectId }: { projectId: string }) {
   }
 
   const draft = state.draft;
+  const carousels = [...draft.carousels].sort((a, b) => a.sequence - b.sequence);
+  const carousel = carousels.find((item) => item.id === selectedCarouselId) ?? carousels[0];
+  const slides = carousel?.elements.filter((element) => element.kind === 'slide') ?? [];
+  const approvedSlides = slides.filter((element) => element.currentVersion.state === 'approved').length;
+  const caption = carousel?.elements.find((element) => element.kind === 'caption');
   return (
     <article aria-labelledby="review-title" className={styles.page}>
-      <p>
-        <Link to={projectPath(projectId)}>{reviewCopy.backToProject}</Link>
-      </p>
-      <h1 id="review-title">{reviewCopy.title}</h1>
+      <header className={styles.reviewHeader}>
+        <div>
+          <p className={styles.eyebrow}>{reviewCopy.eyebrow}</p>
+          <h1 id="review-title">{reviewCopy.title}</h1>
+          <p className={styles.reviewIntro}>{reviewCopy.intro}</p>
+        </div>
+        {carousel ? (
+          <div className={styles.progressCard} role="group" aria-label={reviewCopy.progressLabel}>
+            <span>{reviewCopy.carouselPosition(carousel.sequence, carousel.total)}</span>
+            <strong>{reviewCopy.slideProgress(approvedSlides, slides.length)}</strong>
+            <span>
+              {caption?.currentVersion.state === 'approved' ? reviewCopy.captionApproved : reviewCopy.captionPending}
+            </span>
+          </div>
+        ) : null}
+      </header>
       {draft.demonstration || draft.dataMode === 'DEMO_DATA' ? <DemoBanner /> : null}
       <div className={styles.toolbar}>
         <button
@@ -137,11 +156,31 @@ function ProjectReview({ projectId }: { projectId: string }) {
       {request.refreshError === null ? null : (
         <ErrorBanner title={reviewCopy.refreshError} error={request.refreshError} onRetry={request.refresh} />
       )}
-      <DraftSummary draft={draft} />
-      {draft.carousels.length === 0 ? <p>{reviewCopy.noCarousels}</p> : null}
-      {[...draft.carousels]
-        .sort((a, b) => a.sequence - b.sequence)
-        .map((carousel) => (
+      {carousel === undefined ? (
+        <p className={styles.emptyState}>{reviewCopy.noCarousels}</p>
+      ) : (
+        <>
+          {carousels.length > 1 ? (
+            <nav className={styles.carouselPicker} aria-label={reviewCopy.carouselPicker}>
+              {carousels.map((item) => {
+                const itemSlides = item.elements.filter((element) => element.kind === 'slide');
+                const count = itemSlides.filter((element) => element.currentVersion.state === 'approved').length;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    aria-current={item.id === carousel.id ? 'true' : undefined}
+                    aria-pressed={item.id === carousel.id}
+                    className={styles.carouselChoice}
+                    onClick={() => setSelectedCarouselId(item.id)}
+                  >
+                    {reviewCopy.carouselPosition(item.sequence, item.total)}
+                    <span>{reviewCopy.slideProgress(count, itemSlides.length)}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          ) : null}
           <CarouselReview
             key={carousel.id}
             projectId={projectId}
@@ -150,9 +189,14 @@ function ProjectReview({ projectId }: { projectId: string }) {
             onFinalApproved={request.showFinalApproval}
             onRefresh={request.refresh}
           />
-        ))}
-      <LeftOutMatches draft={draft} />
-      <ExclusionsEditor key={draft.id} projectId={projectId} draft={draft} />
+        </>
+      )}
+      <details className={styles.draftDetails}>
+        <summary>{reviewCopy.draftDetails}</summary>
+        <DraftSummary draft={draft} />
+        <LeftOutMatches draft={draft} />
+        <ExclusionsEditor key={draft.id} projectId={projectId} draft={draft} />
+      </details>
     </article>
   );
 }
@@ -160,7 +204,7 @@ function ProjectReview({ projectId }: { projectId: string }) {
 /** Shown for a review address whose project identifier is not a server identifier. */
 export function ReviewNotFound() {
   return (
-    <section aria-labelledby="review-title">
+    <section aria-labelledby="review-title" className={styles.page}>
       <h1 id="review-title">{reviewCopy.title}</h1>
       <p>{reviewCopy.notFound}</p>
       <p>
@@ -171,6 +215,7 @@ export function ReviewNotFound() {
 }
 
 /**
+ * Focused review of one selected carousel, with the full draft and exclusions retained in a details section.
  * Review of the active draft of a project (R-206, R-208, R-215, R-217, R-240, R-269, R-271, R-272): demonstration
  * banner, data mode, numbered carousels with the preview of every slide, caption and hashtags in order, per-element
  * provenance, state, blocked facts, flags, QA, acknowledgement, approval, withdrawal and regeneration, the final

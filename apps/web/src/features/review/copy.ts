@@ -22,7 +22,16 @@ import type {
 } from '@edr/contracts';
 
 export const reviewCopy = {
-  title: 'Revisión y aprobación',
+  title: 'Revisión del contenido',
+  eyebrow: 'REVISA Y APRUEBA',
+  intro: 'Revisa las diapositivas, confirma el texto y aprueba el carrusel para preparar la descarga.',
+  progressLabel: 'Progreso del carrusel seleccionado',
+  carouselPosition: (sequence: number, total: number): string => `Carrusel ${sequence} de ${total}`,
+  slideProgress: (approved: number, total: number): string => `${approved} de ${total} diapositivas aprobadas`,
+  captionApproved: 'Copy aprobado',
+  captionPending: 'Copy pendiente de aprobación',
+  carouselPicker: 'Elegir carrusel para revisar',
+  draftDetails: 'Datos y trazabilidad del borrador',
   loading: 'Cargando el borrador…',
   loadError: 'No se pudo cargar el borrador',
   notFound: 'La dirección no corresponde a ningún proyecto.',
@@ -104,9 +113,15 @@ export const exclusionsCopy = {
 
 export const carouselCopy = {
   title: (sequence: number, total: number): string => (total > 1 ? `Carrusel ${sequence} de ${total}` : 'Carrusel'),
-  previewTitle: 'Vista previa en orden de publicación',
-  previewIntro: 'Las diapositivas aparecen en el orden del carrusel, seguidas del texto de publicación y los hashtags.',
-  noElements: 'Este carrusel no tiene elementos.',
+  slideNavigation: 'Diapositivas del carrusel',
+  slidesHeading: (count: number): string => `${count} ${count === 1 ? 'diapositiva' : 'diapositivas'}`,
+  slideButton: (position: number, type: SlideType | null, state: ElementVersionState): string =>
+    `${elementCopy.slide(position, type)}, ${versionStateLabel[state]}`,
+  slidePosition: (position: number, total: number): string => `Diapositiva ${position} de ${total}`,
+  previous: 'Anterior',
+  next: 'Siguiente',
+  noSlides: 'Este carrusel todavía no tiene diapositivas para revisar.',
+  captionEyebrow: 'TEXTO DE PUBLICACIÓN',
 } as const;
 
 export const slideTypeLabel: Record<SlideType, string> = {
@@ -120,6 +135,20 @@ export const elementCopy = {
   slide: (position: number, type: SlideType | null): string =>
     type === null ? `Diapositiva ${position}` : `Diapositiva ${position}: ${slideTypeLabel[type]}`,
   caption: 'Texto de publicación y hashtags',
+  slideEyebrow: 'DIAPOSITIVA DEL CARRUSEL',
+  captionEyebrow: 'COPY PARA PUBLICACIÓN',
+  captionReadable: 'Texto de publicación y hashtags',
+  technicalDetails: 'Detalles y verificaciones',
+  approveSlide: 'Aprobar diapositiva',
+  approveAndNext: 'Aprobar y siguiente',
+  approveCaption: 'Aprobar copy',
+  approvedStatus: 'Aprobada',
+  needsAttention: 'Requiere atención antes de aprobar',
+  noIssues: 'Sin problemas detectados',
+  warningSummary: (count: number): string =>
+    count === 1 ? 'Hay una advertencia del control visual.' : `Hay ${count} advertencias del control visual.`,
+  regenerateLabel: (kind: 'slide' | 'caption'): string =>
+    kind === 'slide' ? 'Regenerar diapositiva' : 'Regenerar copy',
   version: (number: number): string => `Versión ${number}`,
   createdAt: 'creada',
   imageAlt: (name: string, version: number): string => `Imagen de ${name}, versión ${version}`,
@@ -136,6 +165,7 @@ export const elementCopy = {
   qaTitle: 'Control visual',
   qaNone: 'Sin resultados del control visual para esta versión.',
   actionsTitle: 'Acciones',
+  reviewPanel: 'Estado y acciones',
   approve: 'Aprobar esta versión',
   approving: 'Aprobando…',
   withdraw: 'Retirar la aprobación',
@@ -256,7 +286,11 @@ export const qaCopy = {
 } as const;
 
 export const finalCopy = {
-  title: 'Aprobación final del carrusel',
+  title: 'Aprobación final',
+  slideProgress: (approved: number, total: number): string => `${approved} de ${total} diapositivas aprobadas`,
+  captionApproved: 'Copy aprobado',
+  captionPending: 'Copy pendiente de aprobación',
+  pendingDetails: 'Ver elementos pendientes y motivos',
   approve: 'Dar la aprobación final',
   approving: 'Registrando la aprobación final…',
   approvedAt: 'Aprobación final registrada',

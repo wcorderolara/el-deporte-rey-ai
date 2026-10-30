@@ -1,11 +1,11 @@
 import type { Carousel, Element, FinalApproval } from '@edr/contracts';
-import { useId, useState } from 'react';
+import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import { Link } from 'react-router';
 
 import { ApiError } from '../../api/client';
 import { featurePaths } from '../../app/routes';
-import { ErrorBanner, formatDateTime, StatusBadge } from '../../ui';
-import { carouselCopy, finalCopy, finalRefusalLabel } from './copy';
+import { Button, ErrorBanner, formatDateTime, StatusBadge } from '../../ui';
+import { carouselCopy, elementCopy, finalCopy, finalRefusalLabel, slideTypeLabel, versionStateLabel } from './copy';
 import { ElementReview } from './ElementReview';
 import { elementName, finalApprovalObstacles, hasValidFinalApproval, orderedElements, problemItems } from './model';
 import styles from './Review.module.css';
@@ -37,6 +37,9 @@ function FinalApprovalSection({ projectId, carousel, onApproved, onRefused }: Fi
   const obstacles = finalApprovalObstacles(carousel);
   const enabled = carousel.readyForFinalApproval && !valid && !sending;
   const names = new Map(carousel.elements.map((element) => [element.id, elementName(element)]));
+  const slides = carousel.elements.filter((element) => element.kind === 'slide');
+  const approvedCount = slides.filter((element) => element.currentVersion.state === 'approved').length;
+  const caption = carousel.elements.find((element) => element.kind === 'caption');
 
   async function approve() {
     if (!enabled) {
@@ -84,6 +87,12 @@ function FinalApprovalSection({ projectId, carousel, onApproved, onRefused }: Fi
           {finalCopy.invalid}
         </p>
       )}
+      <p className={styles.finalProgress}>
+        <strong>{finalCopy.slideProgress(approvedCount, slides.length)}</strong>
+        <span>
+          {caption?.currentVersion.state === 'approved' ? finalCopy.captionApproved : finalCopy.captionPending}
+        </span>
+      </p>
       {valid ? null : (
         <>
           {carousel.readyForFinalApproval ? (
@@ -95,27 +104,32 @@ function FinalApprovalSection({ projectId, carousel, onApproved, onRefused }: Fi
               ) : (
                 <>
                   <p>{finalCopy.notReady}</p>
-                  <ul className={styles.detailList}>
-                    {obstacles.map((item) => (
-                      <li key={item.elementId}>
-                        {item.name}: {item.reasons.map((reason) => finalRefusalLabel[reason]).join(', ')}
-                      </li>
-                    ))}
-                  </ul>
+                  <details>
+                    <summary>{finalCopy.pendingDetails}</summary>
+                    <ul className={styles.detailList}>
+                      {obstacles.map((item) => (
+                        <li key={item.elementId}>
+                          {item.name}: {item.reasons.map((reason) => finalRefusalLabel[reason]).join(', ')}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
                 </>
               )}
             </div>
           )}
           <p className={styles.hint}>{finalCopy.exportNeedsApproval}</p>
-          <button
-            type="button"
-            className={styles.primaryButton}
+          <Button
+            variant="primary"
+            size="lg"
+            isLoading={sending}
+            loadingLabel={finalCopy.approving}
             disabled={!enabled}
             aria-describedby={carousel.readyForFinalApproval ? undefined : reasonsId}
             onClick={() => void approve()}
           >
-            {sending ? finalCopy.approving : finalCopy.approve}
-          </button>
+            {finalCopy.approve}
+          </Button>
         </>
       )}
       <p role="status" aria-live="polite" className={styles.status}>
@@ -161,8 +175,19 @@ export function CarouselReview({
   onFinalApproved,
   onRefresh,
 }: CarouselReviewProps) {
+  const { api } = useReviewDependencies();
   const titleId = useId();
   const elements = orderedElements(carousel);
+  const slides = elements.filter((element) => element.kind === 'slide');
+  const caption = elements.find((element) => element.kind === 'caption');
+  const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
+  const slideButtons = useRef<Array<HTMLButtonElement | null>>([]);
+  const selectedIndex = Math.max(
+    0,
+    slides.findIndex((element) => element.id === selectedSlideId),
+  );
+  const selectedSlide = slides[selectedIndex];
+
   const handleChanged = (element: Element) => {
     onElementChanged(element);
     onRefresh();
@@ -171,22 +196,129 @@ export function CarouselReview({
     onFinalApproved(approval);
     onRefresh();
   };
+  function navigateByKeyboard(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    const next =
+      event.key === 'ArrowDown' || event.key === 'ArrowRight'
+        ? index + 1
+        : event.key === 'ArrowUp' || event.key === 'ArrowLeft'
+          ? index - 1
+          : -1;
+    if (next >= 0 && next < slides.length) {
+      event.preventDefault();
+      setSelectedSlideId(slides[next]?.id ?? null);
+      slideButtons.current[next]?.focus();
+    }
+  }
+
+  const navigation = (
+    <nav aria-label={carouselCopy.slideNavigation} className={styles.slideNavigation}>
+      <h3>{carouselCopy.slidesHeading(slides.length)}</h3>
+      {slides.length === 0 ? <p className={styles.hint}>{carouselCopy.noSlides}</p> : null}
+      <ol className={styles.thumbnailList}>
+        {slides.map((element, index) => {
+          const version = element.currentVersion;
+          const selected = element.id === selectedSlide?.id;
+          return (
+            <li key={element.id}>
+              <button
+                ref={(node) => {
+                  slideButtons.current[index] = node;
+                }}
+                type="button"
+                aria-current={selected ? 'true' : undefined}
+                aria-label={carouselCopy.slideButton(element.position, element.slideType, version.state)}
+                className={styles.thumbnailButton}
+                data-selected={selected}
+                onClick={() => setSelectedSlideId(element.id)}
+                onKeyDown={(event) => navigateByKeyboard(event, index)}
+              >
+                {version.imageUrl === null ? (
+                  <span className={styles.thumbnailPlaceholder}>{element.position}</span>
+                ) : (
+                  <img src={api.slideImageUrl(version.id)} alt="" loading="lazy" />
+                )}
+                <span className={styles.thumbnailText}>
+                  <strong>
+                    {String(element.position).padStart(2, '0')} ·{' '}
+                    {element.slideType ? slideTypeLabel[element.slideType] : 'Diapositiva'}
+                  </strong>
+                  <span>{versionStateLabel[version.state]}</span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+
+  const selectedControls =
+    selectedSlide === undefined ? null : (
+      <div
+        className={styles.slideControls}
+        role="group"
+        aria-label={carouselCopy.slidePosition(selectedSlide.position, slides.length)}
+      >
+        <Button
+          variant="quiet"
+          size="sm"
+          disabled={selectedIndex === 0}
+          onClick={() => setSelectedSlideId(slides[selectedIndex - 1]?.id ?? null)}
+        >
+          {carouselCopy.previous}
+        </Button>
+        <span aria-live="polite">{carouselCopy.slidePosition(selectedSlide.position, slides.length)}</span>
+        <Button
+          variant="quiet"
+          size="sm"
+          disabled={selectedIndex >= slides.length - 1}
+          onClick={() => setSelectedSlideId(slides[selectedIndex + 1]?.id ?? null)}
+        >
+          {carouselCopy.next}
+        </Button>
+      </div>
+    );
+
   return (
     <section aria-labelledby={titleId} className={styles.carousel}>
-      <h2 id={titleId}>{carouselCopy.title(carousel.sequence, carousel.total)}</h2>
-      <h3>{carouselCopy.previewTitle}</h3>
-      <p className={styles.hint}>{carouselCopy.previewIntro}</p>
-      {elements.length === 0 ? (
-        <p>{carouselCopy.noElements}</p>
-      ) : (
-        <ol className={styles.elementList}>
-          {elements.map((element) => (
-            <li key={element.id}>
-              <ElementReview element={element} onChanged={handleChanged} onRefused={onRefresh} />
-            </li>
-          ))}
-        </ol>
-      )}
+      <h2 id={titleId} className={styles.visuallyHidden}>
+        {carouselCopy.title(carousel.sequence, carousel.total)}
+      </h2>
+      <div className={styles.workspace}>
+        {selectedSlide === undefined ? (
+          <div className={styles.emptyWorkspace}>{carouselCopy.noSlides}</div>
+        ) : (
+          <ElementReview
+            element={selectedSlide}
+            onChanged={handleChanged}
+            onRefused={onRefresh}
+            workspaceNavigation={navigation}
+            workspaceControls={selectedControls}
+            onApproved={
+              selectedIndex < slides.length - 1
+                ? () => setSelectedSlideId(slides[selectedIndex + 1]?.id ?? null)
+                : undefined
+            }
+            approveAndNext={selectedIndex < slides.length - 1}
+          />
+        )}
+      </div>
+      {caption ? (
+        <section aria-labelledby={`${titleId}-caption`} className={styles.captionSection}>
+          <div className={styles.captionHeading}>
+            <div>
+              <p className={styles.eyebrow}>{carouselCopy.captionEyebrow}</p>
+              <h3 id={`${titleId}-caption`}>{elementCopy.caption}</h3>
+            </div>
+            <StatusBadge
+              label={caption.currentVersion.state === 'approved' ? finalCopy.captionApproved : finalCopy.captionPending}
+              tone={caption.currentVersion.state === 'approved' ? 'positive' : 'neutral'}
+              symbol={caption.currentVersion.state === 'approved' ? '✓' : '•'}
+            />
+          </div>
+          <ElementReview key={caption.id} element={caption} onChanged={handleChanged} onRefused={onRefresh} />
+        </section>
+      ) : null}
       <FinalApprovalSection
         projectId={projectId}
         carousel={carousel}
