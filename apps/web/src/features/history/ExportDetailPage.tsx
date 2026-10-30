@@ -1,16 +1,17 @@
 import type { ExportDetail, TextField } from '@edr/contracts';
-import { useId } from 'react';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 
-import { appCopy, DataModeBadge, DemoBanner, ErrorBanner, formatDateTime, ProvenanceLabel } from '../../ui';
+import { appCopy, Badge, ErrorBanner, formatDateTime } from '../../ui';
 import { loadExport, slideImageSource, useHistoryApi } from './api';
 import { exportUsesAttestedFacts } from './attested';
 import { AttestedNote } from './AttestedNote';
 import { detailCopy, historyCopy, textFieldLabel } from './copy';
-import { ExportFiles } from './ExportFiles';
 import { DownloadExportButton } from './DownloadExportButton';
-import styles from './History.module.css';
-import { exportsPath, isUuid, projectPath, tracePath } from './paths';
+import { ReviewThumbnailRail, type ReviewThumbnail } from '../review/ReviewThumbnailRail';
+import { ReviewWorkspace } from '../review/ReviewWorkspace';
+import reviewStyles from '../review/Review.module.css';
+import { exportsPath, isUuid, projectPath } from './paths';
 import { useLoad } from './useLoad';
 
 /**
@@ -38,10 +39,19 @@ export function ExportDetailPage() {
 
 function BackLinks({ projectId }: { projectId: string }) {
   return (
-    <p className={styles.links}>
-      <Link to={exportsPath(projectId)}>{historyCopy.backToExports}</Link>
-      {' · '}
-      <Link to={projectPath(projectId)}>{historyCopy.backToProject}</Link>
+    <p className="m-0 flex flex-wrap gap-4 text-body-sm">
+      <Link
+        className="focus-studio text-text-link underline decoration-border-strong underline-offset-4"
+        to={exportsPath(projectId)}
+      >
+        {historyCopy.backToExports}
+      </Link>
+      <Link
+        className="focus-studio text-text-link underline decoration-border-strong underline-offset-4"
+        to={projectPath(projectId)}
+      >
+        {historyCopy.backToProject}
+      </Link>
     </p>
   );
 }
@@ -79,126 +89,115 @@ function ExportDetailView({ projectId, exportId }: { projectId: string; exportId
 }
 
 function ExportContent({ projectId, detail }: { projectId: string; detail: ExportDetail }) {
-  const contentTitleId = useId();
-  const filesTitleId = useId();
+  const slideCount = detail.files.filter((file) => file.kind === 'slide_image').length;
+  const isDemo = detail.demonstration || detail.dataMode === 'DEMO_DATA';
+  const slides = detail.elements.filter((element) => element.kind === 'slide').sort((a, b) => a.position - b.position);
+  const caption = detail.elements.find((element) => element.kind === 'caption');
+  const [selectedPosition, setSelectedPosition] = useState(slides[0]?.position ?? 1);
+  const selectedSlide = slides.find((element) => element.position === selectedPosition) ?? slides[0];
+  const selectedFields = selectedSlide?.version.fields ?? [];
+  const items: ReviewThumbnail[] = slides.map((element) => ({
+    id: String(element.position),
+    position: element.position,
+    imageUrl: element.version.imageUrl,
+    imageSource: element.version.imageUrl ? slideImageSource(element.version.id) : null,
+    title: 'Diapositiva',
+    ariaLabel: `Diapositiva ${element.position}`,
+  }));
   return (
-    <>
-      <BackLinks projectId={projectId} />
-      <dl className={styles.summary} data-testid="export-summary">
-        <div>
-          <dt>{detailCopy.exportedAt}</dt>
-          <dd>
-            <time dateTime={detail.exportedAt}>{formatDateTime(detail.exportedAt)}</time>
-          </dd>
-        </div>
-        <div>
-          <dt>{detailCopy.dataMode}</dt>
-          <dd>
-            <DataModeBadge mode={detail.dataMode} />
-          </dd>
-        </div>
-        <div>
-          <dt>{detailCopy.finalApproval}</dt>
-          <dd>
-            <code translate="no">{detail.finalApprovalId}</code>
-          </dd>
-        </div>
-        <div>
-          <dt>{detailCopy.carousel}</dt>
-          <dd>
-            <code translate="no">{detail.carouselId}</code>
-          </dd>
-        </div>
-      </dl>
-      {detail.demonstration || detail.dataMode === 'DEMO_DATA' ? <DemoBanner /> : null}
+    <div className="grid min-w-0 gap-4" data-testid="export-summary">
+      {isDemo ? (
+        <p role="note" className="m-0 border-l-2 border-demo px-3 py-1 text-caption text-demo">
+          Datos sintéticos · no verificados ni publicables.
+        </p>
+      ) : null}
       {exportUsesAttestedFacts(detail) ? <AttestedNote /> : null}
-      <p className={styles.note}>{historyCopy.noPublication}</p>
-      <p>
-        <DownloadExportButton exportId={detail.id} className={styles.button} />
-      </p>
-      <section className={styles.section} aria-labelledby={contentTitleId}>
-        <h2 id={contentTitleId}>{detailCopy.contentTitle}</h2>
-        <p className={styles.muted}>{detailCopy.contentIntro}</p>
-        {detail.elements.length === 0 ? (
-          <p>{detailCopy.noElements}</p>
-        ) : (
-          <ol className={styles.elements}>
-            {detail.elements.map((element) => (
-              <ExportedElement
-                key={`${element.kind}-${element.position}`}
-                element={element}
-                projectId={projectId}
-                exportId={detail.id}
-              />
-            ))}
-          </ol>
-        )}
-      </section>
-      <details className={styles.section}>
-        <summary id={filesTitleId}>{detailCopy.filesTitle}</summary>
-        <ExportFiles directory={detail.directory} files={detail.files} />
-      </details>
-    </>
+      {slides.length === 0 ? <p className="m-0 text-text-secondary">{detailCopy.noElements}</p> : null}
+      {selectedSlide ? (
+        <ReviewWorkspace
+          labelledBy="export-title"
+          navigation={
+            <ReviewThumbnailRail
+              label="Diapositivas del carrusel"
+              heading={`${slideCount} diapositivas`}
+              items={items}
+              selectedId={String(selectedSlide.position)}
+              onSelect={(id) => setSelectedPosition(Number(id))}
+            />
+          }
+        >
+          <section className={reviewStyles.elementPreview} aria-label="Vista previa del carrusel exportado">
+            <header className={reviewStyles.elementHeader}>
+              <div>
+                <p className={reviewStyles.elementEyebrow}>Carrusel de Instagram · 4:5</p>
+                <h2>Diapositiva {selectedSlide.position}</h2>
+              </div>
+              <Badge tone="success">Exportado</Badge>
+            </header>
+            <figure data-testid="selected-slide-preview" className={reviewStyles.figure}>
+              {selectedSlide.version.imageUrl ? (
+                <img
+                  className={reviewStyles.slideImage}
+                  src={slideImageSource(selectedSlide.version.id)}
+                  alt={detailCopy.imageAlt(selectedSlide.position, selectedSlide.version.versionNumber)}
+                  width={selectedSlide.version.width ?? undefined}
+                  height={selectedSlide.version.height ?? undefined}
+                />
+              ) : (
+                <p className="m-0 p-8 text-center text-text-secondary">{detailCopy.noImage}</p>
+              )}
+            </figure>
+          </section>
+          <section aria-label="Resumen de la diapositiva" className={reviewStyles.reviewPanel}>
+            <div>
+              <p className="m-0 text-caption font-bold tracking-label text-brand-gold uppercase">Resumen</p>
+              <p className="m-0 mt-1 text-body-sm text-text-secondary">
+                <time dateTime={detail.exportedAt}>{formatDateTime(detail.exportedAt)}</time> · {slideCount}{' '}
+                {slideCount === 1 ? 'imagen' : 'imágenes'}
+              </p>
+            </div>
+            <SummaryFields fields={selectedFields} />
+            <DownloadExportButton exportId={detail.id} />
+            <Link
+              className="focus-studio text-body-sm text-text-link underline decoration-border-strong underline-offset-4 hover:text-text-primary"
+              to={projectPath(projectId)}
+            >
+              Volver al proyecto
+            </Link>
+          </section>
+        </ReviewWorkspace>
+      ) : null}
+      {caption ? (
+        <details className="rounded-card border-hairline border-border-subtle bg-surface-raised p-4">
+          <summary className="focus-studio min-h-touch cursor-pointer text-body-sm font-bold text-text-link underline decoration-border-strong underline-offset-4">
+            Ver texto de publicación
+          </summary>
+          <div className="mt-3">
+            <SummaryFields fields={caption.version.fields.filter((field) => field.field === 'caption')} />
+          </div>
+        </details>
+      ) : null}
+    </div>
   );
 }
 
-type Element = ExportDetail['elements'][number];
-
-function ExportedElement({ element, projectId, exportId }: { element: Element; projectId: string; exportId: string }) {
-  const titleId = useId();
-  const { version } = element;
-  const isSlide = element.kind === 'slide';
-  const title = isSlide ? detailCopy.slide(element.position) : detailCopy.caption;
-  return (
-    <li className={styles.element} data-testid="exported-element" data-kind={element.kind}>
-      <article aria-labelledby={titleId}>
-        <h3 id={titleId}>
-          {title} ({detailCopy.version(version.versionNumber)})
-        </h3>
-        {isSlide ? (
-          <figure className={styles.figure}>
-            {version.imageUrl === null ? (
-              <p className={styles.muted}>{detailCopy.noImage}</p>
-            ) : (
-              <img
-                className={styles.image}
-                src={slideImageSource(version.id)}
-                alt={detailCopy.imageAlt(element.position, version.versionNumber)}
-                width={version.width ?? undefined}
-                height={version.height ?? undefined}
-                loading="lazy"
-              />
-            )}
-          </figure>
-        ) : null}
-        <TextFields fields={version.fields} />
-        {isSlide ? (
-          <p>
-            <Link to={tracePath(projectId, exportId, element.position)}>{detailCopy.trace(element.position)}</Link>
-          </p>
-        ) : null}
-      </article>
-    </li>
+function SummaryFields({ fields }: { fields: readonly TextField[] }) {
+  const summaryFields = fields.filter((field) =>
+    ['title', 'kickoff', 'score', 'team_home', 'team_away', 'caption'].includes(field.field),
   );
-}
-
-/** Text of the exported version, field by field, with the provenance of each segment (OD-01, R-208). */
-function TextFields({ fields }: { fields: readonly TextField[] }) {
-  if (fields.length === 0) {
-    return null;
-  }
+  if (summaryFields.length === 0) return null;
   return (
-    <dl className={styles.fields}>
-      {fields.map((field, fieldIndex) => (
-        <div key={`${field.field}-${fieldIndex}`} data-testid="exported-field" data-field={field.field}>
-          <dt>{textFieldLabel[field.field]}</dt>
-          <dd>
-            {field.segments.map((segment, index) => (
-              <span key={index} className={styles.segment}>
-                <span data-testid="segment-text">{segment.text}</span>{' '}
-                <ProvenanceLabel provenance={segment.provenance} factStatus={segment.factStatus} />
-              </span>
-            ))}
+    <dl className="m-0 grid min-w-0 gap-3">
+      {summaryFields.map((field, index) => (
+        <div
+          key={`${field.field}-${index}`}
+          className="min-w-0"
+          data-testid="export-summary-field"
+          data-field={field.field}
+        >
+          <dt className="text-caption font-bold text-text-secondary">{textFieldLabel[field.field]}</dt>
+          <dd className="m-0 whitespace-pre-wrap break-words text-body-md text-text-primary">
+            {field.segments.map((segment) => segment.text).join(' ')}
           </dd>
         </div>
       ))}

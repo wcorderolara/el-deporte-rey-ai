@@ -1,35 +1,69 @@
 import type { Export, Project } from '@edr/contracts';
-import { useId } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { featurePaths } from '../../app/routes';
-import { appCopy, DataModeBadge, DemoBanner, ErrorBanner, featureCopy, formatDateTime, pageCopy } from '../../ui';
-import { approvalStateLabel } from '../projects/copy';
+import { Card, EmptyState, ErrorBanner, LoadingState } from '../../ui';
 import { loadExportsPage, useHistoryApi } from './api';
-import { exportActionCopy, historyCopy, listCopy } from './copy';
+import { exportActionCopy, historyCopy } from './copy';
 import { ExportAction } from './ExportAction';
-import styles from './History.module.css';
+import { ExportHistoryCard } from './ExportHistoryCard';
 import { exportPath, isUuid, projectPath } from './paths';
 import { useLoad } from './useLoad';
 
-/** Route component: export action and export history of a project (`/projects/:projectId/exports`). */
+/** Export creation and project-scoped history. */
 export function ExportsPage() {
   const { projectId } = useParams();
+  return isUuid(projectId) ? (
+    <ExportsView key={projectId} projectId={projectId} />
+  ) : (
+    <p>{historyCopy.invalidAddress}</p>
+  );
+}
+
+function ProjectLinks({ projectId }: { projectId: string }) {
   return (
-    <section aria-labelledby="history-title">
-      <h1 id="history-title">{featureCopy.history}</h1>
-      <p className={styles.intro}>{historyCopy.intro}</p>
-      {isUuid(projectId) ? (
-        <ExportsView key={projectId} projectId={projectId} />
-      ) : (
-        <>
-          <p>{historyCopy.invalidAddress}</p>
-          <p>
-            <Link to={featurePaths.projectList}>{pageCopy.backToProjects}</Link>
-          </p>
-        </>
-      )}
-    </section>
+    <p className="m-0 flex flex-wrap gap-4 text-body-sm">
+      <Link
+        className="focus-studio text-text-link underline decoration-border-strong underline-offset-4"
+        to={projectPath(projectId)}
+      >
+        {historyCopy.backToProject}
+      </Link>
+      <Link
+        className="focus-studio text-text-link underline decoration-border-strong underline-offset-4"
+        to={featurePaths.review(projectId)}
+      >
+        {historyCopy.toReview}
+      </Link>
+    </p>
+  );
+}
+
+function ExportCard({ project, item }: { project: Project; item: Export }) {
+  return (
+    <ExportHistoryCard
+      title={project.title}
+      exportedAt={item.exportedAt}
+      files={item.files}
+      exportId={item.id}
+      contentHref={exportPath(project.id, item.id)}
+      headingLevel="h3"
+    />
+  );
+}
+
+function ExportRows({ project, items }: { project: Project; items: readonly Export[] }) {
+  return (
+    <ul
+      aria-label="Historial de exportaciones del proyecto"
+      className="m-0 grid min-w-0 list-none gap-3 p-0 lg:grid-cols-2"
+    >
+      {items.map((item) => (
+        <li key={item.id} className="min-w-0">
+          <ExportCard project={project} item={item} />
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -37,147 +71,85 @@ function ExportsView({ projectId }: { projectId: string }) {
   const client = useHistoryApi();
   const page = useLoad(`exports\u0000${projectId}`, (signal) => loadExportsPage(client, projectId, signal));
   const data = page.latest;
-
   if (data === null) {
-    return page.state.status === 'error' ? (
-      <>
-        <ErrorBanner error={page.state.error} title={historyCopy.loadErrorTitle} onRetry={page.reload} />
+    if (page.state.status === 'error') {
+      return (
+        <section className="grid min-w-0 gap-4">
+          <ProjectLinks projectId={projectId} />
+          <header>
+            <p className="m-0 text-caption font-bold tracking-label text-brand-gold uppercase">Tu biblioteca</p>
+            <h1 className="m-0 font-display text-heading-lg font-extrabold tracking-display">Exportaciones</h1>
+          </header>
+          <ErrorBanner error={page.state.error} title={historyCopy.loadErrorTitle} onRetry={page.reload} />
+        </section>
+      );
+    }
+    return (
+      <section className="grid min-w-0 gap-4">
         <ProjectLinks projectId={projectId} />
-      </>
-    ) : (
-      <p role="status" aria-live="polite">
-        {appCopy.loading}
-      </p>
+        <header>
+          <p className="m-0 text-caption font-bold tracking-label text-brand-gold uppercase">Tu biblioteca</p>
+          <h1 className="m-0 font-display text-heading-lg font-extrabold tracking-display">Exportaciones</h1>
+        </header>
+        <LoadingState layout="panel" label="Cargando exportaciones del proyecto…" />
+      </section>
     );
   }
-
   return (
-    <>
-      <ProjectLinks projectId={projectId} />
-      <ProjectSummary project={data.project} />
-      {data.project.demonstration || data.project.dataMode === 'DEMO_DATA' ? <DemoBanner /> : null}
-      <p className={styles.note}>{historyCopy.noPublication}</p>
-      <ExportAction projectId={projectId} onExported={page.reload} />
-      <p>
-        <a href="#export-history">{exportActionCopy.historyLink}</a>
-      </p>
+    <section className="grid min-w-0 gap-6">
+      <header className="grid gap-3">
+        <ProjectLinks projectId={projectId} />
+        <p className="m-0 text-caption font-bold tracking-label text-brand-gold uppercase">Tu biblioteca</p>
+        <h1 className="m-0 font-display text-heading-lg font-extrabold tracking-display">Exportaciones</h1>
+      </header>
+      {data.project.demonstration || data.project.dataMode === 'DEMO_DATA' ? (
+        <p role="note" className="m-0 border-l-2 border-demo px-3 py-1 text-caption text-demo">
+          Datos sintéticos · no verificados ni publicables.
+        </p>
+      ) : null}
+      <Card as="section" aria-label={exportActionCopy.title}>
+        <ExportAction projectId={projectId} onExported={page.reload} />
+      </Card>
       {page.state.status === 'error' ? (
         <ErrorBanner error={page.state.error} title={historyCopy.loadErrorTitle} onRetry={page.reload} />
       ) : null}
-      <ExportList projectId={projectId} exports={data.exports} />
-    </>
-  );
-}
-
-function ProjectLinks({ projectId }: { projectId: string }) {
-  return (
-    <p className={styles.links}>
-      <Link to={projectPath(projectId)}>{historyCopy.backToProject}</Link>
-      {' · '}
-      <Link to={featurePaths.review(projectId)}>{historyCopy.toReview}</Link>
-    </p>
-  );
-}
-
-/** The project in the history: title, data mode, approval state and last export time (R-220, R-269). */
-function ProjectSummary({ project }: { project: Project }) {
-  return (
-    <dl className={styles.summary} data-testid="project-summary">
-      <div>
-        <dt>{historyCopy.projectTitle}</dt>
-        <dd>{project.title}</dd>
-      </div>
-      <div>
-        <dt>{historyCopy.dataMode}</dt>
-        <dd>
-          <DataModeBadge mode={project.dataMode} />
-        </dd>
-      </div>
-      <div>
-        <dt>{historyCopy.approvalState}</dt>
-        <dd>{approvalStateLabel[project.approvalState]}</dd>
-      </div>
-      <div>
-        <dt>{historyCopy.lastExport}</dt>
-        <dd>
-          {project.lastExportAt === null ? (
-            historyCopy.neverExported
-          ) : (
-            <time dateTime={project.lastExportAt}>{formatDateTime(project.lastExportAt)}</time>
-          )}
-        </dd>
-      </div>
-    </dl>
-  );
-}
-
-/**
- * Exports of the project, newest first as the server lists them (R-220), with export time, data mode and the
- * demonstration label (R-269). Exports are kept; there is no deletion control (OD-08).
- */
-function ExportList({ projectId, exports }: { projectId: string; exports: readonly Export[] }) {
-  const titleId = useId();
-  return (
-    <section id="export-history" className={styles.section} aria-labelledby={titleId}>
-      <h2 id={titleId}>{listCopy.title}</h2>
-      <p className={styles.muted}>{listCopy.kept}</p>
-      {exports.length === 0 ? (
-        <p>{listCopy.empty}</p>
-      ) : (
-        <div className={styles.tableWrapper} role="region" aria-labelledby={titleId} tabIndex={0}>
-          <table className={styles.table}>
-            <caption>{listCopy.caption}</caption>
-            <thead>
-              <tr>
-                <th scope="col">{listCopy.exportedAt}</th>
-                <th scope="col">{listCopy.dataMode}</th>
-                <th scope="col">{listCopy.label}</th>
-                <th scope="col">{listCopy.finalApproval}</th>
-                <th scope="col">{listCopy.files}</th>
-                <th scope="col">{listCopy.directory}</th>
-                <th scope="col">{listCopy.open}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {exports.map((item) => {
-                const exportedAt = formatDateTime(item.exportedAt);
-                return (
-                  <tr key={item.id} data-testid="export-row">
-                    <th scope="row">
-                      <time dateTime={item.exportedAt}>{exportedAt}</time>
-                    </th>
-                    <td>
-                      <DataModeBadge mode={item.dataMode} />
-                    </td>
-                    <td data-testid="export-label">
-                      {item.demonstration || item.dataMode === 'DEMO_DATA' ? (
-                        <strong>
-                          <span aria-hidden="true">⚠ </span>
-                          {listCopy.demonstration}
-                        </strong>
-                      ) : (
-                        listCopy.notDemonstration
-                      )}
-                    </td>
-                    <td>{listCopy.finalApprovalRecorded}</td>
-                    <td>{listCopy.fileCount(item.files.length)}</td>
-                    <td>
-                      <code className={styles.path} dir="ltr" translate="no">
-                        {item.directory}
-                      </code>
-                    </td>
-                    <td>
-                      <Link to={exportPath(projectId, item.id)} aria-label={listCopy.openLabel(exportedAt)}>
-                        {listCopy.open}
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      <section aria-labelledby="export-history-title" className="grid min-w-0 gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 id="export-history-title" className="m-0 font-display text-heading-sm font-extrabold">
+              Historial de exportaciones
+            </h2>
+            <p className="m-0 mt-1 text-body-sm text-text-secondary">Tus carruseles listos para descargar.</p>
+          </div>
+          <Link
+            className="focus-studio text-text-link underline decoration-border-strong underline-offset-4"
+            to="/exports"
+          >
+            Ver todas las exportaciones
+          </Link>
         </div>
-      )}
+        {data.exports.length === 0 ? (
+          <EmptyState
+            title="Todavía no hay exportaciones"
+            description="Cuando exportes un carrusel aprobado, aparecerá aquí para volver a descargarlo."
+            icon="⇩"
+          />
+        ) : (
+          <div className="grid min-w-0 gap-3">
+            <ExportRows project={data.project} items={data.exports.slice(0, 3)} />
+            {data.exports.length <= 3 ? null : (
+              <details className="rounded-card border-hairline border-border-subtle bg-surface-raised p-3">
+                <summary className="focus-studio min-h-touch cursor-pointer text-body-sm font-bold text-text-link underline decoration-border-strong underline-offset-4">
+                  Ver historial completo ({data.exports.length - 3} anteriores)
+                </summary>
+                <div className="mt-3">
+                  <ExportRows project={data.project} items={data.exports.slice(3)} />
+                </div>
+              </details>
+            )}
+          </div>
+        )}
+      </section>
     </section>
   );
 }

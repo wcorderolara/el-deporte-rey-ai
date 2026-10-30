@@ -4,12 +4,10 @@ import { Link } from 'react-router';
 
 import { ApiError } from '../../api/client';
 import { featurePaths } from '../../app/routes';
-import { appCopy, DemoBanner, ErrorBanner, formatDateTime } from '../../ui';
+import { appCopy, buttonClassName, Card, ErrorBanner, formatDateTime } from '../../ui';
 import { exportCarousel, loadActiveDraft, useHistoryApi } from './api';
 import { exportActionCopy, historyCopy } from './copy';
-import { ExportFiles } from './ExportFiles';
 import { DownloadExportButton } from './DownloadExportButton';
-import styles from './History.module.css';
 import { exportPath } from './paths';
 import { useLoad } from './useLoad';
 
@@ -83,7 +81,7 @@ export function ExportAction({ projectId, onExported }: ExportActionProps) {
         body = <p>{exportActionCopy.noCarousels}</p>;
       } else {
         body = (
-          <ul className={styles.carousels}>
+          <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2">
             {[...current.carousels]
               .sort((a, b) => a.sequence - b.sequence)
               .map((carousel) => (
@@ -104,32 +102,31 @@ export function ExportAction({ projectId, onExported }: ExportActionProps) {
   }
 
   return (
-    <section className={styles.section} aria-labelledby={titleId}>
-      <h2 id={titleId}>{exportActionCopy.title}</h2>
-      <p role="status" aria-live="polite" data-testid="export-status">
+    <section className="grid min-w-0 gap-4" aria-labelledby={titleId}>
+      <h2 id={titleId} className="m-0 font-display text-heading-sm font-extrabold">
+        {exportActionCopy.title}
+      </h2>
+      <p className="m-0 text-body-sm text-text-secondary" role="status" aria-live="polite" data-testid="export-status">
         {announcement}
       </p>
       {failure === null ? null : <ErrorBanner error={failure} title={exportActionCopy.exportErrorTitle} />}
       {body}
       {result === null ? null : (
-        <div className={styles.result} data-testid="export-result">
-          <h3 ref={resultHeading} tabIndex={-1}>
+        <Card as="section" className="grid gap-4 border-brand-gold/40" data-testid="export-result">
+          <h3 ref={resultHeading} className="m-0 font-display text-heading-sm font-extrabold" tabIndex={-1}>
             {exportActionCopy.resultTitle}
           </h3>
-          {result.demonstration ? <DemoBanner /> : null}
-          <p>
+          <p className="m-0 text-body-sm text-text-secondary">
             {result.files.filter((file) => file.kind === 'slide_image').length} imágenes · Carrusel de Instagram ·{' '}
             {formatDateTime(result.exportedAt)}
           </p>
-          <DownloadExportButton exportId={result.id} className={styles.button} />
-          <details>
-            <summary>Detalles técnicos</summary>
-            <ExportFiles directory={result.directory} files={result.files} />
-          </details>
-          <p>
-            <Link to={exportPath(projectId, result.id)}>{exportActionCopy.openExport}</Link>
-          </p>
-        </div>
+          <div className="flex flex-wrap gap-3">
+            <DownloadExportButton exportId={result.id} className={buttonClassName('primary', 'md')} />
+            <Link className={buttonClassName('secondary', 'md')} to={exportPath(projectId, result.id)}>
+              {exportActionCopy.openExport}
+            </Link>
+          </div>
+        </Card>
       )}
     </section>
   );
@@ -150,26 +147,36 @@ function CarouselExport({ carousel, projectId, busy, exporting, onExport }: Caro
   const approval = carousel.finalApproval;
   const exportable = approval !== null && approval.valid;
   return (
-    <li className={styles.carousel} data-testid="carousel-export">
-      <article aria-labelledby={titleId}>
-        <h3 id={titleId}>{exportActionCopy.carousel(carousel.sequence, carousel.total)}</h3>
+    <li
+      className="min-w-0 rounded-card border-hairline border-border-subtle bg-surface-raised p-4"
+      data-testid="carousel-export"
+    >
+      <article className="grid gap-3" aria-labelledby={titleId}>
+        <h3 id={titleId} className="m-0 font-display text-body-md font-bold">
+          {exportActionCopy.carousel(carousel.sequence, carousel.total)}
+        </h3>
         {exportable ? (
           <>
             <p>
               <span aria-hidden="true">✓ </span>
               {exportActionCopy.approved(formatDateTime(approval.approvedAt))}
             </p>
-            <button type="button" className={styles.button} onClick={onExport} disabled={busy}>
+            <button type="button" className={buttonClassName('primary', 'md')} onClick={onExport} disabled={busy}>
               {exporting ? exportActionCopy.exporting : exportActionCopy.export(carousel.sequence)}
             </button>
           </>
         ) : (
           <>
-            <p className={styles.muted}>
+            <p className="m-0 text-body-sm text-text-secondary">
               {approval === null ? exportActionCopy.notApproved : exportActionCopy.invalidated}
             </p>
             <p>
-              <Link to={featurePaths.review(projectId)}>{historyCopy.toReview}</Link>
+              <Link
+                className="focus-studio text-text-link underline decoration-border-strong underline-offset-4"
+                to={featurePaths.review(projectId)}
+              >
+                {historyCopy.toReview}
+              </Link>
             </p>
           </>
         )}

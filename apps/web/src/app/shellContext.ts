@@ -13,6 +13,9 @@ export function shellContext(pathname: string): ShellContext {
   if (pathname === '/projects/new' || pathname === '/projects/new/') {
     return { title: 'Crear contenido', parent: { label: 'Mis proyectos', to: '/projects' } };
   }
+  if (pathname === '/exports' || pathname === '/exports/') {
+    return { title: 'Exportaciones', parent: { label: 'Mis proyectos', to: '/' } };
+  }
   const project = /^\/projects\/([^/]+)(\/.*)?$/.exec(pathname);
   if (project) {
     const suffix = project[2] ?? '';

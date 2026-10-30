@@ -87,7 +87,7 @@ export const exportFileKindLabel: Record<ExportFileKind, string> = {
 };
 
 export const detailCopy = {
-  title: 'Exportación',
+  title: 'Carrusel exportado',
   invalidAddress: 'La dirección no identifica una exportación válida.',
   loadErrorTitle: 'No se pudo abrir la exportación',
   otherProject: 'Esta exportación no pertenece a este proyecto.',
@@ -101,8 +101,7 @@ export const detailCopy = {
   slide: (position: number): string => `Diapositiva ${position}`,
   caption: 'Texto de la publicación',
   version: (versionNumber: number): string => `versión ${versionNumber}`,
-  imageAlt: (position: number, versionNumber: number): string =>
-    `Imagen exportada de la diapositiva ${position}, versión ${versionNumber}`,
+  imageAlt: (position: number, _versionNumber: number): string => `Imagen exportada de la diapositiva ${position}`,
   noImage: 'No hay imagen registrada para esta versión.',
   trace: (position: number): string => `Ver la trazabilidad de la diapositiva ${position}`,
   filesTitle: 'Archivos',

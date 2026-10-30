@@ -26,6 +26,7 @@ import {
 } from './model';
 import styles from './Review.module.css';
 import { useReviewDependencies } from './ReviewContext';
+import { ReviewThumbnailRail } from './ReviewThumbnailRail';
 
 interface FinalApprovalSectionProps {
   projectId: string;
@@ -499,45 +500,25 @@ export function CarouselReview({
   }
 
   const navigation = (
-    <nav aria-label={carouselCopy.slideNavigation} className={styles.slideNavigation}>
-      <h3>{carouselCopy.slidesHeading(slides.length)}</h3>
-      {slides.length === 0 ? <p className={styles.hint}>{carouselCopy.noSlides}</p> : null}
-      <ol className={styles.thumbnailList}>
-        {slides.map((element, index) => {
-          const version = element.currentVersion;
-          const selected = element.id === selectedSlide?.id;
-          return (
-            <li key={element.id}>
-              <button
-                ref={(node) => {
-                  slideButtons.current[index] = node;
-                }}
-                type="button"
-                aria-current={selected ? 'true' : undefined}
-                aria-label={carouselCopy.slideButton(element.position, element.slideType, version.state)}
-                className={styles.thumbnailButton}
-                data-selected={selected}
-                onClick={() => selectSlide(element.id)}
-                onKeyDown={(event) => navigateByKeyboard(event, index)}
-              >
-                {version.imageUrl === null ? (
-                  <span className={styles.thumbnailPlaceholder}>{element.position}</span>
-                ) : (
-                  <img src={api.slideImageUrl(version.id)} alt="" loading="lazy" />
-                )}
-                <span className={styles.thumbnailText}>
-                  <strong>
-                    {String(element.position).padStart(2, '0')} ·{' '}
-                    {element.slideType ? slideTypeLabel[element.slideType] : 'Diapositiva'}
-                  </strong>
-                  <span>{versionStateLabel[version.state]}</span>
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
-    </nav>
+    <ReviewThumbnailRail
+      label={carouselCopy.slideNavigation}
+      heading={carouselCopy.slidesHeading(slides.length)}
+      selectedId={selectedSlide?.id}
+      items={slides.map((element) => ({
+        id: element.id,
+        position: element.position,
+        imageUrl: element.currentVersion.imageUrl,
+        imageSource: element.currentVersion.imageUrl ? api.slideImageUrl(element.currentVersion.id) : null,
+        title: element.slideType ? slideTypeLabel[element.slideType] : 'Diapositiva',
+        subtitle: versionStateLabel[element.currentVersion.state],
+        ariaLabel: carouselCopy.slideButton(element.position, element.slideType, element.currentVersion.state),
+      }))}
+      onSelect={selectSlide}
+      onItemKeyDown={navigateByKeyboard}
+      setButtonRef={(node, index) => {
+        slideButtons.current[index] = node;
+      }}
+    />
   );
 
   const selectedControls =

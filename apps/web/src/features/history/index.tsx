@@ -7,14 +7,19 @@
  * - any other address is not found.
  * There is no publication action anywhere (R-219) and no deletion (OD-08).
  */
-import { Route, Routes } from 'react-router';
+import { Route, Routes, useParams } from 'react-router';
 
 import { NotFoundPage } from '../../app/pages';
 import { ExportDetailPage } from './ExportDetailPage';
 import { ExportsPage } from './ExportsPage';
+import { GlobalExportHistoryPage } from './GlobalExportHistoryPage';
 import { TracePage } from './TracePage';
 
 export default function HistoryFeature() {
+  const { projectId } = useParams();
+  if (projectId === undefined) {
+    return <GlobalExportHistoryPage />;
+  }
   return (
     <Routes>
       <Route index element={<ExportsPage />} />

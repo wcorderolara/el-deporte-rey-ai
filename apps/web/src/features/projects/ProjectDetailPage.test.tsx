@@ -19,11 +19,14 @@ import {
   run,
   RUN_ID,
 } from './test/support';
+import { draft as activeDraft } from '../review/test/support';
+import { exportRecord } from '../history/test/fixtures';
 
 afterEach(cleanup);
 
 const PROJECT = `GET /api/v1/projects/${PROJECT_ID}`;
 const RUNS = `POST /api/v1/projects/${PROJECT_ID}/runs`;
+const ACTIVE_DRAFT = `GET /api/v1/projects/${PROJECT_ID}/draft`;
 
 function stageRow(name: string): HTMLElement {
   const table = screen.getByRole('table', { name: 'Estado de cada etapa' });
@@ -44,42 +47,72 @@ describe('Project detail: selection and links (R-200, R-269)', () => {
     renderApp(`/projects/${PROJECT_ID}`, server);
 
     expect(await screen.findByRole('heading', { level: 1, name: project().title })).toBeTruthy();
-    const selection = screen.getByRole('region', { name: 'Selección' });
+    const selection = screen.getByRole('region', { name: project().title });
     const text = selection.textContent ?? '';
-    for (const value of [
-      'Copa Continental Demo',
-      '2025-26',
-      'Fase de liga',
-      'Jornada 3',
-      'Fixtures de copa',
-      'Datos de demostración',
-      'En revisión',
-      'Sin exportaciones',
-    ]) {
+    for (const value of ['Copa Continental Demo', '2025-26', 'Jornada 3']) {
       expect(text).toContain(value);
     }
-    const banner = screen.getByRole('note', { name: 'Contenido de demostración' });
-    expect(banner.textContent).toContain('no deben publicarse');
+    expect(screen.getAllByRole('note')).toHaveLength(1);
+    await userEvent.setup().click(within(selection).getByText('Detalles de selección'));
+    expect(selection.textContent).toContain('Fase de liga');
+    expect(selection.textContent).toContain('Fixtures de copa');
+    expect(selection.textContent).toContain('Datos de demostración');
+    const demoNotice = screen.getByText('Datos sintéticos · no verificados ni publicables.');
+    expect(demoNotice.closest('[role="note"]')).toBeTruthy();
 
+    await userEvent.setup().click(screen.getByText('Más opciones del proyecto'));
     const sections = screen.getByRole('navigation', { name: 'Secciones del proyecto' });
     const links = within(sections).getAllByRole('link');
     expect(links.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
       ['Datos y verificación (ejecución 1)', `/projects/${PROJECT_ID}/runs/${RUN_ID}/facts`],
-      ['Revisión y aprobación', `/projects/${PROJECT_ID}/review`],
-      ['Exportaciones e historial', `/projects/${PROJECT_ID}/exports`],
     ]);
   });
 
+  it('shows the active carousel in the shared review workspace with project actions', async () => {
+    const server = fakeServer({
+      [PROJECT]: () => json(project({ activeDraftId: '22222222-2222-4222-8222-222222222222' })),
+      [ACTIVE_DRAFT]: () => json(activeDraft()),
+    });
+    renderApp(`/projects/${PROJECT_ID}`, server);
+
+    expect(await screen.findByRole('navigation', { name: /Miniaturas de/ })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Contenido generado' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Vista previa de la diapositiva' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Contexto del contenido' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Revisar contenido' }).getAttribute('href')).toBe(
+      `/projects/${PROJECT_ID}/review`,
+    );
+    expect(screen.getByRole('link', { name: 'Ver exportaciones' }).getAttribute('href')).toBe(
+      `/projects/${PROJECT_ID}/exports`,
+    );
+  });
+
+  it('offers direct download of the newest saved export when no active draft remains', async () => {
+    const savedExport = exportRecord();
+    const server = fakeServer({
+      [PROJECT]: () => json(project({ lastExportAt: savedExport.exportedAt })),
+      [`GET /api/v1/projects/${PROJECT_ID}/exports`]: () => json({ exports: [savedExport] }),
+    });
+    renderApp(`/projects/${PROJECT_ID}`, server);
+
+    expect(await screen.findByRole('button', { name: 'Descargar carrusel' })).toBeTruthy();
+  });
+
   it('links a MANUAL_DATA project to the import page, without a demonstration banner', async () => {
-    const server = fakeServer({ [`GET /api/v1/projects/${MANUAL_PROJECT_ID}`]: () => json(manualProject()) });
+    const server = fakeServer({
+      [`GET /api/v1/projects/${MANUAL_PROJECT_ID}`]: () => json(manualProject()),
+      [`GET /api/v1/projects/${MANUAL_PROJECT_ID}/exports`]: () => json({ exports: [] }),
+    });
     renderApp(`/projects/${MANUAL_PROJECT_ID}`, server);
 
     await screen.findByRole('heading', { level: 1, name: manualProject().title });
     expect(screen.queryByRole('note', { name: 'Contenido de demostración' })).toBeNull();
-    const selection = screen.getByRole('region', { name: 'Selección' });
-    expect(selection.textContent).toContain('Fase completa');
+    const selection = screen.getByRole('region', { name: manualProject().title });
+    expect(selection.textContent).toContain('Apertura');
+    await userEvent.setup().click(within(selection).getByText('Detalles de selección'));
     expect(selection.textContent).toContain('Datos manuales');
     expect(selection.textContent).toContain('atestiguado por el operador');
+    await userEvent.setup().click(screen.getByText('Más opciones del proyecto'));
     const sections = screen.getByRole('navigation', { name: 'Secciones del proyecto' });
     expect(within(sections).getByRole('link', { name: 'Importaciones manuales' }).getAttribute('href')).toBe(
       '/imports',

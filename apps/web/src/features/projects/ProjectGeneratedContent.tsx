@@ -1,0 +1,209 @@
+import type { Carousel, Element, Project } from '@edr/contracts';
+import { useState } from 'react';
+import { Link } from 'react-router';
+
+import { featurePaths } from '../../app/routes';
+import { ApiError } from '../../api/client';
+import { Badge, buttonClassName, ErrorBanner, LoadingState } from '../../ui';
+import { LatestExportDownload } from '../history/LatestExportDownload';
+import { useReviewDependencies } from '../review/ReviewContext';
+import { useDraft } from '../review/useDraft';
+import { ReviewThumbnailRail, type ReviewThumbnail } from '../review/ReviewThumbnailRail';
+import { ReviewWorkspace } from '../review/ReviewWorkspace';
+import { slideTypeLabel, textFieldLabel, versionStateLabel } from '../review/copy';
+import reviewStyles from '../review/Review.module.css';
+
+function fieldText(element: Element, field: string): string | null {
+  const item = element.currentVersion.fields.find((entry) => entry.field === field);
+  return (
+    item?.segments
+      .map((segment) => segment.text)
+      .join(' ')
+      .trim() || null
+  );
+}
+
+function carouselSlides(carousel: Carousel): Element[] {
+  return carousel.elements.filter((element) => element.kind === 'slide').sort((a, b) => a.position - b.position);
+}
+
+function ProjectPreviewActions({ project }: { project: Project }) {
+  return (
+    <div className="grid gap-2">
+      <Link className={buttonClassName('primary', 'md')} to={featurePaths.review(project.id)}>
+        Revisar contenido
+      </Link>
+      <Link className={buttonClassName('secondary', 'md')} to={featurePaths.history(project.id)}>
+        Ver exportaciones
+      </Link>
+      {project.lastExportAt === null ? null : <LatestExportDownload projectId={project.id} />}
+    </div>
+  );
+}
+
+function ProjectEmptyContent({ project }: { project: Project }) {
+  return (
+    <div className="grid min-w-0 gap-3 rounded-card border-hairline border-border-subtle bg-surface-raised p-4 sm:flex sm:flex-wrap sm:items-center">
+      <p className="m-0 flex-1 text-body-sm text-text-secondary">
+        Todavía no hay contenido generado para este proyecto.
+      </p>
+      <Link className={buttonClassName('primary', 'md')} to="#project-generation">
+        Continuar creación
+      </Link>
+      <Link className={buttonClassName('secondary', 'md')} to={featurePaths.history(project.id)}>
+        Ver exportaciones
+      </Link>
+      {project.lastExportAt === null ? null : <LatestExportDownload projectId={project.id} />}
+    </div>
+  );
+}
+
+function ProjectCarouselPreview({ project, carousel }: { project: Project; carousel: Carousel }) {
+  const { api } = useReviewDependencies();
+  const slides = carouselSlides(carousel);
+  const [selectedId, setSelectedId] = useState<string | undefined>(slides[0]?.id);
+  const selectedSlide = slides.find((slide) => slide.id === selectedId) ?? slides[0];
+  const items: ReviewThumbnail[] = slides.map((slide) => ({
+    id: slide.id,
+    position: slide.position,
+    imageUrl: slide.currentVersion.imageUrl,
+    imageSource: slide.currentVersion.imageUrl ? api.slideImageUrl(slide.currentVersion.id) : null,
+    title: slide.slideType ? slideTypeLabel[slide.slideType] : 'Diapositiva',
+    subtitle: versionStateLabel[slide.currentVersion.state],
+  }));
+
+  if (!selectedSlide) {
+    return <p className="m-0 text-body-sm text-text-secondary">El carrusel aún no contiene diapositivas.</p>;
+  }
+
+  const title = fieldText(selectedSlide, 'title') ?? fieldText(selectedSlide, 'headline');
+  const detailFields = ['kickoff', 'team_home', 'score', 'team_away']
+    .map((field) => ({ field, value: fieldText(selectedSlide, field) }))
+    .filter((item): item is { field: string; value: string } => item.value !== null);
+
+  return (
+    <ReviewWorkspace
+      labelledBy="project-content-heading"
+      navigation={
+        <ReviewThumbnailRail
+          label={`Miniaturas de ${project.title}`}
+          heading={`${slides.length} diapositivas`}
+          items={items}
+          selectedId={selectedSlide.id}
+          onSelect={setSelectedId}
+        />
+      }
+    >
+      <section className={reviewStyles.elementPreview} aria-label="Vista previa de la diapositiva">
+        <header className={reviewStyles.elementHeader}>
+          <div>
+            <p className={reviewStyles.elementEyebrow}>Contenido del carrusel</p>
+            <h3>{title ?? `Diapositiva ${selectedSlide.position}`}</h3>
+          </div>
+        </header>
+        <figure className={reviewStyles.figure}>
+          {selectedSlide.currentVersion.imageUrl ? (
+            <img
+              className={reviewStyles.slideImage}
+              src={api.slideImageUrl(selectedSlide.currentVersion.id)}
+              alt={`Diapositiva ${selectedSlide.position}${title ? `: ${title}` : ''}`}
+              width={selectedSlide.currentVersion.width ?? undefined}
+              height={selectedSlide.currentVersion.height ?? undefined}
+            />
+          ) : (
+            <p className="m-0 text-text-secondary">La vista previa no está disponible.</p>
+          )}
+        </figure>
+      </section>
+      <section className={reviewStyles.reviewPanel} aria-label="Contexto del contenido">
+        <div className={reviewStyles.reviewStatus}>
+          <Badge tone="info">{versionStateLabel[selectedSlide.currentVersion.state]}</Badge>
+          <span className="text-caption text-text-secondary">
+            Diapositiva {selectedSlide.position} de {slides.length}
+          </span>
+        </div>
+        {detailFields.length ? (
+          <dl className="m-0 grid gap-3">
+            {detailFields.map(({ field, value }) => (
+              <div key={field}>
+                <dt className="text-caption font-bold text-text-secondary">
+                  {textFieldLabel[field as keyof typeof textFieldLabel]}
+                </dt>
+                <dd className="m-0 break-words text-body-md text-text-primary">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <p className="m-0 text-body-sm text-text-secondary">Vista previa del contenido generado.</p>
+        )}
+        <ProjectPreviewActions project={project} />
+      </section>
+    </ReviewWorkspace>
+  );
+}
+
+function ActiveProjectContent({ project }: { project: Project }) {
+  const { api } = useReviewDependencies();
+  const draft = useDraft(api, project.id);
+  if (draft.state.status === 'loading') return <LoadingState layout="panel" label="Cargando contenido del proyecto…" />;
+  if (draft.state.status === 'error') {
+    const missingDraft =
+      draft.state.error instanceof ApiError &&
+      draft.state.error.kind === 'problem' &&
+      draft.state.error.problem?.code === 'NOT_FOUND';
+    if (missingDraft) {
+      return <ProjectEmptyContent project={project} />;
+    }
+    return <ErrorBanner title="No se pudo cargar el contenido" error={draft.state.error} onRetry={draft.reload} />;
+  }
+  const carousels = [...draft.state.draft.carousels].sort((a, b) => a.sequence - b.sequence);
+  return <DraftCarousels project={project} carousels={carousels} />;
+}
+
+function DraftCarousels({ project, carousels }: { project: Project; carousels: Carousel[] }) {
+  const [selectedCarouselId, setSelectedCarouselId] = useState(carousels[0]?.id);
+  const carousel = carousels.find((item) => item.id === selectedCarouselId) ?? carousels[0];
+  if (!carousel)
+    return <p className="m-0 text-body-sm text-text-secondary">El proyecto todavía no tiene carruseles.</p>;
+  return (
+    <div className="grid min-w-0 gap-3">
+      {carousels.length > 1 ? (
+        <nav className="flex min-w-0 flex-wrap gap-2" aria-label="Carruseles del proyecto">
+          {carousels.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className="focus-studio min-h-touch rounded-control border-hairline border-border-default bg-surface-raised px-3 text-body-sm text-text-link aria-[current=true]:border-brand-gold aria-[current=true]:text-text-primary"
+              aria-current={item.id === carousel.id ? 'true' : undefined}
+              onClick={() => setSelectedCarouselId(item.id)}
+            >
+              Carrusel {item.sequence} de {item.total}
+            </button>
+          ))}
+        </nav>
+      ) : null}
+      <ProjectCarouselPreview key={carousel.id} project={project} carousel={carousel} />
+    </div>
+  );
+}
+
+export function ProjectGeneratedContent({ project }: { project: Project }) {
+  return (
+    <section aria-labelledby="project-content-heading" className="grid min-w-0 gap-3">
+      <header className="flex min-w-0 flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <p className="m-0 text-caption font-bold tracking-label text-brand-gold uppercase">Carrusel del proyecto</p>
+          <h2 id="project-content-heading" className="m-0 font-display text-heading-md font-extrabold">
+            Contenido generado
+          </h2>
+        </div>
+        <p className="m-0 text-body-sm text-text-secondary">Carrusel de Instagram · 4:5</p>
+      </header>
+      {project.activeDraftId === null ? (
+        <ProjectEmptyContent project={project} />
+      ) : (
+        <ActiveProjectContent project={project} />
+      )}
+    </section>
+  );
+}

@@ -31,6 +31,12 @@ const NAV_ITEMS: readonly NavItem[] = [
     isCurrent: (pathname) => pathname.startsWith('/projects') && pathname !== '/projects/new',
   },
   {
+    to: '/exports',
+    label: 'Exportaciones',
+    symbol: '⇩',
+    isCurrent: (pathname) => pathname === '/exports' || pathname.startsWith('/exports/'),
+  },
+  {
     to: '/brand#brand-templates-title',
     label: 'Plantillas',
     symbol: '▥',
@@ -114,11 +120,14 @@ export function AppShell() {
       navigation={<MainNavigation pathname={location.pathname} hash={location.hash} />}
       title={context.title}
       hideHeaderTitle={context.hideHeaderTitle}
-      hideHeaderDescription={context.hideHeaderTitle}
+      hideHeaderDescription={context.hideHeaderTitle || context.projectPath !== undefined}
       navigationKey={`${location.pathname}${location.hash}`}
       contentVariant={
-        ['/', '/projects', '/projects/', '/projects/new', '/projects/new/'].includes(location.pathname) ||
-        /^\/projects\/[^/]+\/review(?:\/.*)?$/.test(location.pathname)
+        ['/', '/projects', '/projects/', '/projects/new', '/projects/new/', '/exports', '/exports/'].includes(
+          location.pathname,
+        ) ||
+        /^\/projects\/[^/]+\/review(?:\/.*)?$/.test(location.pathname) ||
+        /^\/projects\/[^/]+(?:\/exports(?:\/.*)?)?\/?$/.test(location.pathname)
           ? 'studio'
           : 'legacy'
       }
@@ -132,9 +141,12 @@ export function AppShell() {
       }
       breadcrumbs={
         <nav aria-label="Ruta de navegación">
-          <ol className="m-0 flex list-none flex-wrap items-center gap-2 p-0 text-body-sm text-text-secondary">
+          <ol className="m-0 flex list-none flex-wrap items-center gap-1.5 p-0 text-caption text-text-subtle">
             <li>
-              <Link className="focus-studio text-text-link" to="/">
+              <Link
+                className="focus-studio text-text-link underline decoration-border-strong underline-offset-2 hover:text-text-primary"
+                to="/"
+              >
                 Inicio
               </Link>
             </li>
@@ -142,7 +154,10 @@ export function AppShell() {
               <>
                 <li aria-hidden="true">/</li>
                 <li>
-                  <Link className="focus-studio text-text-link" to="/projects">
+                  <Link
+                    className="focus-studio text-text-link underline decoration-border-strong underline-offset-2 hover:text-text-primary"
+                    to="/projects"
+                  >
                     Mis proyectos
                   </Link>
                 </li>
@@ -151,7 +166,10 @@ export function AppShell() {
                   {context.title === 'Proyecto' ? (
                     <span aria-current="page">Proyecto</span>
                   ) : (
-                    <Link className="focus-studio text-text-link" to={context.projectPath}>
+                    <Link
+                      className="focus-studio text-text-link underline decoration-border-strong underline-offset-2 hover:text-text-primary"
+                      to={context.projectPath}
+                    >
                       Proyecto
                     </Link>
                   )}
@@ -161,7 +179,10 @@ export function AppShell() {
               <>
                 <li aria-hidden="true">/</li>
                 <li>
-                  <Link className="focus-studio text-text-link" to={context.parent.to}>
+                  <Link
+                    className="focus-studio text-text-link underline decoration-border-strong underline-offset-2 hover:text-text-primary"
+                    to={context.parent.to}
+                  >
                     {context.parent.label}
                   </Link>
                 </li>

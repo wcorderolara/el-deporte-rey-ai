@@ -8,6 +8,7 @@ import HistoryFeature from '../index';
 import { EXPORT_ID, PROJECT_ID } from './fixtures';
 
 export const EXPORTS_PATH = `/projects/${PROJECT_ID}/exports`;
+export const GLOBAL_EXPORTS_PATH = '/exports';
 export const DETAIL_PATH = `${EXPORTS_PATH}/${EXPORT_ID}`;
 export const tracePathFor = (position: number | string): string => `${DETAIL_PATH}/slides/${position}/trace`;
 
@@ -15,6 +16,14 @@ export function renderHistory(fetch: FetchFunction, path: string = EXPORTS_PATH)
   const client = createApiClient({ fetch });
   const router = createMemoryRouter(
     [
+      {
+        path: 'exports/*',
+        element: (
+          <HistoryApiContext value={client}>
+            <HistoryFeature />
+          </HistoryApiContext>
+        ),
+      },
       {
         path: 'projects/:projectId/exports/*',
         element: (

@@ -58,6 +58,7 @@ describe('App shell (R-235)', () => {
       'Inicio',
       'Crear contenido',
       'Mis proyectos',
+      'Exportaciones',
       'Plantillas',
       'Mi marca',
       'Datos',
@@ -81,6 +82,18 @@ describe('App shell (R-235)', () => {
     await waitFor(() => {
       expect(document.activeElement).toBe(screen.getByRole('main'));
     });
+  });
+
+  it('opens export history from the main navigation and marks it active', async () => {
+    const user = userEvent.setup();
+    const router = renderAt('/');
+    await screen.findByRole('heading', { level: 1, name: 'Tu próximo contenido empieza aquí' });
+
+    await user.click(screen.getByRole('link', { name: 'Exportaciones' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Exportaciones' })).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/exports');
+    expect(screen.getByRole('link', { name: 'Exportaciones' }).getAttribute('aria-current')).toBe('page');
   });
 
   it('opens the existing creation route through the primary action', async () => {
@@ -128,7 +141,7 @@ describe('Route table: lazy feature stubs', () => {
       'Datos y verificación',
     ],
     [featurePaths.review('00000000-0000-4000-8000-000000000001'), 'Revisión del contenido'],
-    [featurePaths.history('00000000-0000-4000-8000-000000000001'), 'Exportaciones e historial'],
+    [featurePaths.history('00000000-0000-4000-8000-000000000001'), 'Exportaciones'],
     [featurePaths.brand, 'Marca y plantillas'],
     [`${featurePaths.imports}/00000000-0000-4000-8000-000000000003`, 'Importaciones manuales'],
   ])('renders %s with the %s feature', async (path, heading) => {

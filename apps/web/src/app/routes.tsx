@@ -35,6 +35,7 @@ export const featurePaths = {
     `/projects/${encodeURIComponent(projectId)}/runs/${encodeURIComponent(runId)}/facts`,
   review: (projectId: string): string => `/projects/${encodeURIComponent(projectId)}/review`,
   history: (projectId: string): string => `/projects/${encodeURIComponent(projectId)}/exports`,
+  exportHistory: '/exports',
   brand: '/brand',
   imports: '/imports',
 } as const;
@@ -54,6 +55,7 @@ export const appRoutes: RouteObject[] = [
           { path: 'projects/:projectId/runs/:runId/facts/*', lazy: facts },
           { path: 'projects/:projectId/review/*', lazy: review },
           { path: 'projects/:projectId/exports/*', lazy: history },
+          { path: 'exports/*', lazy: history },
           { path: 'brand/*', lazy: brand },
           { path: 'imports/*', lazy: imports },
           { path: '*', Component: NotFoundPage },

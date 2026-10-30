@@ -12,6 +12,9 @@ import { createApiClient, type FetchFunction } from '../../../api/client';
 import { appRoutes } from '../../../app/routes';
 import { createProjectsApi } from '../api';
 import { ProjectsProvider } from '../ProjectsContext';
+import { createReviewApi } from '../../review/api';
+import { ReviewProvider } from '../../review/ReviewContext';
+import { HistoryApiContext } from '../../history/api';
 
 export interface RecordedCall {
   method: string;
@@ -67,10 +70,15 @@ export type FakeServer = ReturnType<typeof fakeServer>;
 /** Mounts the application routes at `path` with the projects API over the fake server. */
 export function renderApp(path: string, server: FakeServer, runPollIntervalMs = 10) {
   const api = createProjectsApi(createApiClient({ fetch: server.fetch }));
+  const reviewApi = createReviewApi(createApiClient({ fetch: server.fetch }));
   const router = createMemoryRouter(appRoutes, { initialEntries: [path] });
   render(
     <ProjectsProvider value={{ api, runPollIntervalMs }}>
-      <RouterProvider router={router} />
+      <ReviewProvider value={{ api: reviewApi }}>
+        <HistoryApiContext.Provider value={createApiClient({ fetch: server.fetch })}>
+          <RouterProvider router={router} />
+        </HistoryApiContext.Provider>
+      </ReviewProvider>
     </ProjectsProvider>,
   );
   return router;

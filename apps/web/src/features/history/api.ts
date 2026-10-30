@@ -14,12 +14,14 @@ import {
   ExportSchema,
   operations,
   ProjectSchema,
+  ProjectListResponseSchema,
   SlideTraceSchema,
   type Draft,
   type Export,
   type ExportDetail,
   type OperationId,
   type Project,
+  type ProjectSummary,
   type SlideTrace,
 } from '@edr/contracts';
 import { createContext, useContext } from 'react';
@@ -52,6 +54,38 @@ export interface ExportsPageData {
   exports: Export[];
 }
 
+export interface GlobalExportHistoryItem {
+  readonly project: ProjectSummary;
+  readonly export: Export;
+}
+
+/** Uses only the existing project list and project-scoped history operations; no global history API is assumed. */
+export async function loadGlobalExportHistory(
+  client: ApiClient,
+  signal?: AbortSignal,
+): Promise<GlobalExportHistoryItem[]> {
+  const projects = await client.get(operationPath('listProjects'), {
+    ...withSignal(signal),
+    schema: ProjectListResponseSchema,
+  });
+  const result: GlobalExportHistoryItem[] = [];
+  // Bound simultaneous requests so large local libraries do not fan out without limit.
+  for (let offset = 0; offset < projects.projects.length; offset += 4) {
+    const batch = projects.projects.slice(offset, offset + 4);
+    const histories = await Promise.all(
+      batch.map(async (project) => {
+        const response = await client.get(operationPath('listProjectExports', { projectId: project.id }), {
+          ...withSignal(signal),
+          schema: ExportListResponseSchema,
+        });
+        return response.exports.map((item) => ({ project, export: item }));
+      }),
+    );
+    result.push(...histories.flat());
+  }
+  return result.sort((a, b) => Date.parse(b.export.exportedAt) - Date.parse(a.export.exportedAt));
+}
+
 /** getProject and listProjectExports (exports newest first, R-220). */
 export async function loadExportsPage(
   client: ApiClient,
@@ -64,6 +98,19 @@ export async function loadExportsPage(
     client.get(operationPath('listProjectExports', { projectId }), { ...options, schema: ExportListResponseSchema }),
   ]);
   return { project, exports: list.exports };
+}
+
+/** Existing project-scoped history operation, used to surface the newest saved ZIP from a project workspace. */
+export async function loadProjectExports(
+  client: ApiClient,
+  projectId: string,
+  signal?: AbortSignal,
+): Promise<Export[]> {
+  const response = await client.get(operationPath('listProjectExports', { projectId }), {
+    ...withSignal(signal),
+    schema: ExportListResponseSchema,
+  });
+  return response.exports.toSorted((a, b) => Date.parse(b.exportedAt) - Date.parse(a.exportedAt));
 }
 
 /** getActiveDraft; null when the project has no active draft (404 NOT_FOUND). */

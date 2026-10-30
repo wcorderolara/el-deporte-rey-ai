@@ -7,6 +7,7 @@ import { BlockingFacts } from './BlockingFacts';
 import { approvalObstacleLabel, contentFlagLabel, elementCopy, textFieldLabel, versionStateLabel } from './copy';
 import { approvalObstacles, elementName, problemFacts } from './model';
 import { QaResults } from './QaResults';
+import { ReviewWorkspace } from './ReviewWorkspace';
 import styles from './Review.module.css';
 import { useReviewDependencies } from './ReviewContext';
 import { TextFields } from './TextFields';
@@ -137,13 +138,13 @@ export function ElementReview({
   const approvalLabel = element.kind === 'caption' ? elementCopy.approveCaption : elementCopy.approveSlide;
 
   return (
-    <article
-      aria-labelledby={titleId}
-      className={`${styles.element} ${element.kind === 'caption' ? styles.captionElement : ''}`}
-      data-blocked={version.blocked ? 'true' : 'false'}
-      data-state={version.state}
+    <ReviewWorkspace
+      navigation={workspaceNavigation}
+      labelledBy={titleId}
+      state={version.state}
+      blocked={version.blocked}
+      caption={element.kind === 'caption'}
     >
-      {workspaceNavigation ? <div className={styles.slideRail}>{workspaceNavigation}</div> : null}
       <section className={styles.elementPreview} aria-label={name}>
         <header className={styles.elementHeader}>
           <div>
@@ -335,6 +336,6 @@ export function ElementReview({
           <p className={styles.hint}>{elementCopy.regenerateHint}</p>
         </details>
       </section>
-    </article>
+    </ReviewWorkspace>
   );
 }

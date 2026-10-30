@@ -1,6 +1,6 @@
 # WI-2.1 — Incremental UX/UI Implementation Plan
 
-Status: UI-01A, UI-01B, UI-02, UI-03, UI-04A, UI-04B, and UI-05A accepted; UI-05B not started
+Status: UI-01A, UI-01B, UI-02, UI-03, UI-04A, UI-04B, UI-05A, and UI-05B accepted
 Date: 2026-10-29
 
 ## 1. Delivery principles
@@ -132,7 +132,7 @@ Review and verification:
 
 ### UI-04 — Visual content editor
 
-Delivery status: UI-04A is accepted on `work/WI-2.1-ui-04`; UI-04B bulk approval is accepted on `work/WI-2.1-ui-04b`; UI-05A export reliability/download is accepted and committed on `work/WI-2.1-ui-05a`; see `ui-05a-export-reliability-implementation-report.md`. UI-05B has not started. Automated E2E and browser accessibility suites are not run under PD-UI-21; targeted component tests and technical checks are recorded in each increment report.
+Delivery status: UI-04A is accepted on `work/WI-2.1-ui-04`; UI-04B bulk approval is accepted on `work/WI-2.1-ui-04b`; UI-05A export reliability/download is accepted and committed on `work/WI-2.1-ui-05a`; see `ui-05a-export-reliability-implementation-report.md`. UI-05B is accepted and committed on `work/WI-2.1-ui-05b`; see `ui-05b-export-history-project-workspace-implementation-report.md`. Automated E2E and browser accessibility suites are not run under PD-UI-21; targeted component tests and technical checks are recorded in each increment report.
 
 Outcome: a creator can preview, customize, review, and approve the existing carousel efficiently.
 

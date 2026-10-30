@@ -7,7 +7,7 @@ import { fakeServer, json, PROJECT_ID, renderApp, summaries } from './test/suppo
 afterEach(cleanup);
 
 describe('Creator dashboard', () => {
-  it('preserves ordered project metadata and demonstration warnings in accessible cards', async () => {
+  it('keeps dashboard cards focused on format, title, status and the primary action', async () => {
     const server = fakeServer({ 'GET /api/v1/projects': () => json({ projects: summaries }) });
     renderApp('/', server);
     const library = await screen.findByRole('list', { name: 'Proyectos e historial' });
@@ -15,20 +15,17 @@ describe('Creator dashboard', () => {
     expect(cards).toHaveLength(2);
     const demo = within(cards[0]!);
     expect(demo.getByRole('heading', { level: 3 }).textContent).toBe(summaries[0]!.title);
-    expect(demo.getByText('Fase de liga · Jornada 3')).toBeTruthy();
-    expect(demo.getByText('Demostración').parentElement?.textContent).toContain('⚠');
-    expect(demo.getByText(/No son datos reales/)).toBeTruthy();
-    expect(demo.getByText('Español')).toBeTruthy();
-    expect(demo.getByText('Para continuar')).toBeTruthy();
-    await userEvent.click(demo.getByText('Detalles del proyecto'));
-    expect(demo.getByText('Fixtures de copa')).toBeTruthy();
-    expect(demo.getByText('Datos de demostración')).toBeTruthy();
-    expect(demo.getByText('En revisión')).toBeTruthy();
-    expect(demo.getByText('Sin exportaciones')).toBeTruthy();
-    expect(within(cards[1]!).getByText('Apertura · Fase completa')).toBeTruthy();
-    expect(within(cards[1]!).getByText('Inglés')).toBeTruthy();
+    expect(demo.getByText('Carrusel de Instagram · 4:5')).toBeTruthy();
+    expect(demo.getByText('Pendiente de revisión')).toBeTruthy();
+    expect(demo.getByRole('link', { name: `Revisar contenido: ${summaries[0]!.title}` }).getAttribute('href')).toBe(
+      `/projects/${summaries[0]!.id}/review`,
+    );
+    expect(demo.queryByText('Demostración')).toBeNull();
+    expect(demo.queryByText('Fase de liga · Jornada 3')).toBeNull();
+    expect(demo.queryByText('Detalles del proyecto')).toBeNull();
+    expect(within(cards[1]!).getByText('Carrusel de Instagram · 4:5')).toBeTruthy();
+    expect(within(cards[1]!).getByText('Exportado')).toBeTruthy();
     expect(within(cards[1]!).queryByText('Demostración')).toBeNull();
-    expect(cards[1]!.querySelector('time')?.dateTime).toBe('2026-10-26T18:30:00Z');
     expect(server.unexpected).toEqual([]);
     expect(server.callsTo('GET', '/api/v1/projects')).toHaveLength(1);
   });

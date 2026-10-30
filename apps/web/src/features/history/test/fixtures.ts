@@ -54,11 +54,13 @@ export const OLDER_EXPORTED_AT = '2026-10-20T09:30:00Z';
 
 const API = '/api/v1';
 export const urls = {
+  projectList: `${API}/projects`,
   project: `${API}/projects/${PROJECT_ID}`,
-  exports: `${API}/projects/${PROJECT_ID}/exports`,
+  exports: (projectId = PROJECT_ID): string => `${API}/projects/${projectId}/exports`,
   draft: `${API}/projects/${PROJECT_ID}/draft`,
   exportCarousel: (carouselId: string): string => `${API}/carousels/${carouselId}/exports`,
   export: (exportId: string): string => `${API}/exports/${exportId}`,
+  download: (exportId: string): string => `${API}/exports/${exportId}/download`,
   trace: (exportId: string, position: number): string => `${API}/exports/${exportId}/slides/${position}/trace`,
   image: (versionId: string): string => `${API}/element-versions/${versionId}/image`,
 } as const;

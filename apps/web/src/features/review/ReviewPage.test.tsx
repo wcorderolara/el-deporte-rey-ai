@@ -106,8 +106,9 @@ describe('Review page: demonstration label and data mode (R-269, OD-21)', () => 
     const server = fakeServer({ [DRAFT_PATH]: draftResponse(modeDraft('DEMO_DATA')) });
     renderApp(REVIEW, server);
     await waitForDraft();
-    const banner = screen.getByRole('note', { name: 'Contenido de demostración' });
-    expect(banner.textContent).toContain('no deben publicarse');
+    const notice = screen.getByRole('note');
+    expect(notice.textContent).toContain('no se consideran verificados ni listos para publicación');
+    expect(screen.getAllByRole('note')).toHaveLength(1);
     const summary = screen.getByRole('region', { name: 'Borrador' });
     expect(summary.textContent).toContain('Datos de demostración');
   });
@@ -116,7 +117,7 @@ describe('Review page: demonstration label and data mode (R-269, OD-21)', () => 
     const server = fakeServer({ [DRAFT_PATH]: draftResponse(modeDraft('MANUAL_DATA')) });
     renderApp(REVIEW, server);
     await waitForDraft();
-    expect(screen.queryByRole('note', { name: 'Contenido de demostración' })).toBeNull();
+    expect(screen.queryByRole('note')).toBeNull();
     expect(screen.getByRole('region', { name: 'Borrador' }).textContent).toContain('Datos manuales');
   });
 });

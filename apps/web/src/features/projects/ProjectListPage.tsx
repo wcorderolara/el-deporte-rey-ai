@@ -43,7 +43,6 @@ export function ProjectListPage() {
   const load = useCallback((signal: AbortSignal) => api.listProjects(signal), [api]);
   const { state, reload } = useApiRequest('projects', load);
   const projects = state.status === 'success' ? state.data : [];
-  const recommended = projects.find((project) => project.approvalState !== 'exported')?.id;
   return (
     <section aria-labelledby="projects-title" className="grid min-w-0 gap-8">
       <div className="relative overflow-hidden rounded-panel border-hairline border-border-subtle bg-gradient-to-br from-brand-purple-deep via-surface-overlay to-surface-raised p-6 shadow-card sm:p-8">
@@ -96,9 +95,8 @@ export function ProjectListPage() {
           <span className="text-caption text-text-subtle">Del más reciente al más antiguo</span>
         </div>
         {state.status === 'loading' || state.status === 'idle' ? (
-          <Card className="min-h-64">
+          <Card className="min-h-36">
             <LoadingState layout="panel" label={listCopy.loading} />
-            <p className="m-0 mt-4 text-center text-body-sm text-text-secondary">Estamos preparando tu biblioteca.</p>
           </Card>
         ) : null}
         {state.status === 'error' ? <DashboardError error={state.error} retry={reload} /> : null}
@@ -118,7 +116,7 @@ export function ProjectListPage() {
           <ul aria-label="Proyectos e historial" className="m-0 grid list-none gap-5 p-0 sm:grid-cols-2 xl:grid-cols-3">
             {projects.map((project) => (
               <li key={project.id} className="min-w-0">
-                <ProjectCard project={project} recommended={recommended === project.id} />
+                <ProjectCard project={project} />
               </li>
             ))}
           </ul>

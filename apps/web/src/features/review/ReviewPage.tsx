@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { ApiError } from '../../api/client';
 import { featurePaths } from '../../app/routes';
-import { DataModeBadge, DemoBanner, ErrorBanner, formatDateTime } from '../../ui';
+import { DataModeBadge, ErrorBanner, formatDateTime } from '../../ui';
 import { CarouselReview } from './CarouselReview';
 import { languageLabel, leftOutCopy, leftOutReasonLabel, matchStatusLabel, reviewCopy } from './copy';
 import { ExclusionsEditor } from './ExclusionsEditor';
@@ -29,9 +29,7 @@ function DraftSummary({ draft }: { draft: Draft }) {
       <h2 id="review-summary-title">{reviewCopy.summaryTitle}</h2>
       <dl className={styles.details}>
         <dt>{reviewCopy.dataMode}</dt>
-        <dd>
-          <DataModeBadge mode={draft.dataMode} />
-        </dd>
+        <dd>{draft.dataMode === 'DEMO_DATA' ? 'Datos de demostración' : <DataModeBadge mode={draft.dataMode} />}</dd>
         <dt>{reviewCopy.language}</dt>
         <dd>{languageLabel[draft.language]}</dd>
         <dt>{reviewCopy.createdAt}</dt>
@@ -139,7 +137,11 @@ function ProjectReview({ projectId }: { projectId: string }) {
           </div>
         ) : null}
       </header>
-      {draft.demonstration || draft.dataMode === 'DEMO_DATA' ? <DemoBanner /> : null}
+      {draft.demonstration || draft.dataMode === 'DEMO_DATA' ? (
+        <p role="note" className={styles.note}>
+          Datos sintéticos: no se consideran verificados ni listos para publicación.
+        </p>
+      ) : null}
       <div className={styles.toolbar}>
         <button
           type="button"

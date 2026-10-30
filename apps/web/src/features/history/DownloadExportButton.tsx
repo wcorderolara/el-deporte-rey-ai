@@ -1,12 +1,27 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ApiError } from '../../api/client';
 import { downloadExport, saveExportZip, useHistoryApi } from './api';
 
-export function DownloadExportButton({ exportId, className }: { exportId: string; className?: string }) {
+export function DownloadExportButton({
+  exportId,
+  className,
+  containerClassName,
+  label = 'Descargar carrusel',
+}: {
+  exportId: string;
+  className?: string;
+  containerClassName?: string;
+  label?: string;
+}) {
   const client = useHistoryApi();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  useEffect(() => {
+    if (message !== 'La descarga está lista.') return;
+    const timeout = window.setTimeout(() => setMessage(''), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [message]);
   async function download() {
     setBusy(true);
     setMessage('');
@@ -27,9 +42,9 @@ export function DownloadExportButton({ exportId, className }: { exportId: string
     }
   }
   return (
-    <span>
+    <span className={containerClassName}>
       <button type="button" className={className} onClick={() => void download()} disabled={busy}>
-        {busy ? 'Preparando descarga…' : 'Descargar carrusel'}
+        {busy ? 'Preparando descarga…' : label}
       </button>
       <span role="status" aria-live="polite">
         {message}

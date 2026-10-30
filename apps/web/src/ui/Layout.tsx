@@ -99,12 +99,14 @@ export function Layout({
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="border-b border-border-subtle bg-surface-raised px-gutter-mobile py-4 sm:px-gutter-tablet lg:px-gutter-desktop">
-          {breadcrumbs}
-          {hideHeaderTitle ? null : (
-            <p className="m-0 mt-2 font-display text-heading-sm font-extrabold tracking-heading sm:text-heading-md">
-              {title}
-            </p>
-          )}
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-5 gap-y-2">
+            {hideHeaderTitle ? null : (
+              <p className="m-0 min-w-0 break-normal text-pretty font-display text-heading-sm font-extrabold tracking-heading sm:text-heading-md">
+                {title}
+              </p>
+            )}
+            {breadcrumbs ? <div className="ml-auto min-w-0">{breadcrumbs}</div> : null}
+          </div>
           {hideHeaderDescription ? null : projectContext ? (
             <p className="m-0 mt-2 text-body-sm text-info">{projectContext}</p>
           ) : (

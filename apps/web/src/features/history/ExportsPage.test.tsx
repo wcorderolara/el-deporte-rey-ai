@@ -8,7 +8,6 @@ import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { formatDateTime } from '../../ui';
 import {
   CAROUSEL_ID,
   draft,
@@ -42,14 +41,14 @@ const listed = () => ({
 function server(overrides: Record<string, Response | Error | Array<Response | Error>> = {}) {
   return fakeServer({
     [`GET ${urls.project}`]: jsonResponse(project()),
-    [`GET ${urls.exports}`]: jsonResponse(listed()),
+    [`GET ${urls.exports()}`]: jsonResponse(listed()),
     [`GET ${urls.draft}`]: jsonResponse(draft()),
     ...overrides,
   });
 }
 
 async function waitForPage(): Promise<void> {
-  await screen.findByTestId('project-summary');
+  await screen.findByRole('heading', { level: 1, name: 'Exportaciones' });
 }
 
 function carouselItem(name: string): HTMLElement {
@@ -75,27 +74,21 @@ describe('history', () => {
     const { fetch, calls } = server();
     renderHistory(fetch);
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Exportaciones e historial' })).toBeTruthy();
-    expect(screen.getByRole('status').textContent).toBe('Cargando…');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Exportaciones' })).toBeTruthy();
     await waitForPage();
 
-    const summary = screen.getByTestId('project-summary');
-    expect(summary.textContent).toContain('Liga de demostración, jornada 3');
-    expect(summary.textContent).toContain('Datos de demostración');
-    expect(summary.textContent).toContain('Estado de aprobaciónExportado');
-    expect(summary.textContent).toContain(formatDateTime('2026-10-26T15:00:00Z'));
-    expect(screen.getByTestId('demo-banner')).toBeTruthy();
+    expect(screen.getByText('Datos sintéticos · no verificados ni publicables.')).toBeTruthy();
 
     await screen.findAllByTestId('carousel-export');
     expect(calls.map((call) => `${call.method} ${call.url}`).sort()).toEqual(
-      [`GET ${urls.draft}`, `GET ${urls.exports}`, `GET ${urls.project}`].sort(),
+      [`GET ${urls.draft}`, `GET ${urls.exports()}`, `GET ${urls.project}`].sort(),
     );
     for (const call of calls) {
       expect(call.headers['X-EDR-Client']).toBeUndefined();
     }
   });
 
-  it('lists the exports in server order with export time, data mode, demonstration label, folder and a link', async () => {
+  it('keeps project export cards focused on title, status, image count and actions', async () => {
     const { fetch } = server();
     renderHistory(fetch);
     await waitForPage();
@@ -103,21 +96,20 @@ describe('history', () => {
     const rows = screen.getAllByTestId('export-row');
     expect(rows).toHaveLength(2);
     const [newest, older] = rows as [HTMLElement, HTMLElement];
-    expect(newest.textContent).toContain(formatDateTime('2026-10-26T15:00:00Z'));
-    expect(newest.querySelector('time')?.getAttribute('dateTime')).toBe('2026-10-26T15:00:00Z');
-    expect(newest.textContent).toContain('Datos de demostración');
-    expect(within(newest).getByTestId('export-label').textContent).toContain('Demostración');
-    expect(newest.textContent).toContain('4 archivos');
-    expect(newest.textContent).toContain(`exports/${project().id}/${EXPORT_ID}`);
-    expect(
-      within(newest)
-        .getByRole('link', { name: /Abrir la exportación/ })
-        .getAttribute('href'),
-    ).toBe(`${EXPORTS_PATH}/${EXPORT_ID}`);
+    expect(newest.textContent).toContain(project().title);
+    expect(within(newest).getByTestId('export-label').textContent).toBe('Exportado');
+    expect(newest.textContent).toContain('2 imágenes');
+    expect(newest.textContent).not.toContain('Datos de demostración');
+    expect(within(newest).queryByRole('img')).toBeNull();
+    expect(newest.textContent).toContain('26 oct 2026');
+    expect(within(newest).getByRole('button', { name: 'Descargar carrusel' })).toBeTruthy();
+    expect(within(newest).getByRole('link', { name: 'Ver contenido' }).getAttribute('href')).toBe(
+      `${EXPORTS_PATH}/${EXPORT_ID}`,
+    );
 
-    expect(older.textContent).toContain(formatDateTime(OLDER_EXPORTED_AT));
-    expect(older.textContent).toContain('Datos manuales');
-    expect(within(older).getByTestId('export-label').textContent).not.toContain('Demostración');
+    expect(older.textContent).toContain(project().title);
+    expect(older.textContent).toContain('2 imágenes');
+    expect(within(older).getByTestId('export-label').textContent).toBe('Exportado');
   });
 
   it('shows an empty history and no demonstration label for a LIVE_DATA project', async () => {
@@ -125,25 +117,21 @@ describe('history', () => {
       [`GET ${urls.project}`]: jsonResponse(
         project({ dataMode: 'LIVE_DATA', demonstration: false, approvalState: 'in_review', lastExportAt: null }),
       ),
-      [`GET ${urls.exports}`]: jsonResponse({ exports: [] }),
+      [`GET ${urls.exports()}`]: jsonResponse({ exports: [] }),
     });
     renderHistory(fetch);
     await waitForPage();
 
-    expect(screen.getByText('Este proyecto todavía no tiene exportaciones.')).toBeTruthy();
-    expect(screen.getByTestId('project-summary').textContent).toContain('Sin exportaciones');
-    expect(screen.getByTestId('project-summary').textContent).toContain('En revisión');
-    expect(screen.queryByTestId('demo-banner')).toBeNull();
+    expect(screen.getByText('Todavía no hay exportaciones')).toBeTruthy();
+    expect(screen.queryByText('Contenido de demostración')).toBeNull();
   });
 
-  it('offers no publication, sharing or deletion control and says that nothing is published', async () => {
+  it('offers no publication, sharing or deletion control', async () => {
     const { fetch } = server();
     renderHistory(fetch);
     await waitForPage();
     await screen.findAllByTestId('carousel-export');
 
-    expect(screen.getAllByText(/no publica nada en ninguna red social/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/la aplicación no las elimina/)).toBeTruthy();
     for (const control of [...screen.queryAllByRole('button'), ...screen.queryAllByRole('link')]) {
       expect(control.textContent).not.toMatch(/publicar|compartir|eliminar|borrar|instagram/i);
     }
@@ -181,7 +169,7 @@ describe('export action', () => {
       release = resolve;
     });
     const { fetch, calls } = server({
-      [`GET ${urls.exports}`]: [jsonResponse(listed()), jsonResponse({ exports: [written, ...listed().exports] })],
+      [`GET ${urls.exports()}`]: [jsonResponse(listed()), jsonResponse({ exports: [written, ...listed().exports] })],
     });
     const baseFetch = fetch.getMockImplementation();
     fetch.mockImplementation(async (url, init) => {
@@ -209,24 +197,20 @@ describe('export action', () => {
     expect(post?.body).toBeUndefined();
 
     expect(within(result).getByRole('button', { name: 'Descargar carrusel' })).toBeTruthy();
-    expect(within(result).getByText('Detalles técnicos')).toBeTruthy();
     expect(document.activeElement).toBe(within(result).getByRole('heading', { name: 'Tu carrusel está listo' }));
-    await user.click(within(result).getByText('Detalles técnicos'));
-    expect(within(result).getByTestId('export-directory').textContent).toBe(written.directory);
-    expect(
-      within(result)
-        .getAllByTestId('export-file')
-        .map((row) => row.querySelector('th')?.textContent),
-    ).toEqual(['01.png', '02.png', 'caption.txt', 'manifest.json']);
+    expect(within(result).queryByRole('img')).toBeNull();
+    expect(within(result).queryByText('Detalles técnicos')).toBeNull();
+    expect(within(result).queryByText(written.directory)).toBeNull();
     expect(result.querySelectorAll('a[href]')).toHaveLength(1);
     expect(within(result).getByRole('link', { name: 'Abrir esta exportación' }).getAttribute('href')).toBe(
       `${EXPORTS_PATH}/${NEW_EXPORT_ID}`,
     );
-    expect(within(result).getByTestId('demo-banner')).toBeTruthy();
+    expect(within(result).queryByRole('note')).toBeNull();
+    expect(screen.getAllByRole('note')).toHaveLength(1);
     expect(screen.getByTestId('export-status').textContent).toBe('Tu carrusel está listo');
 
     await waitFor(() => expect(screen.getAllByTestId('export-row')).toHaveLength(3));
-    expect(calls.filter((call) => call.url === urls.exports)).toHaveLength(2);
+    expect(calls.filter((call) => call.url === urls.exports())).toHaveLength(2);
   });
 
   it('announces a refusal without a valid final approval and reloads the draft', async () => {
@@ -278,7 +262,7 @@ describe('loading errors and addresses', () => {
   it('announces a network failure and loads on retry', async () => {
     const user = userEvent.setup();
     const { fetch } = server({
-      [`GET ${urls.exports}`]: [new TypeError('connection refused'), jsonResponse(listed())],
+      [`GET ${urls.exports()}`]: [new TypeError('connection refused'), jsonResponse(listed())],
     });
     renderHistory(fetch);
 
@@ -301,7 +285,7 @@ describe('loading errors and addresses', () => {
   });
 
   it('refuses a response that does not match the contract', async () => {
-    const { fetch } = server({ [`GET ${urls.exports}`]: jsonResponse({ exports: [{ id: 'x' }] }) });
+    const { fetch } = server({ [`GET ${urls.exports()}`]: jsonResponse({ exports: [{ id: 'x' }] }) });
     renderHistory(fetch);
 
     expect((await screen.findByRole('alert')).textContent).toContain('respuesta inesperada');
