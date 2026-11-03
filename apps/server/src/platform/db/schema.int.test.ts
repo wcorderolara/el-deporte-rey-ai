@@ -262,6 +262,21 @@ const EXPECTED_COLUMNS: Readonly<Record<string, readonly string[]>> = {
     'deactivated_at',
   ],
   competitions: ['id', 'name', 'created_at', 'updated_at'],
+  competition_provider_bindings: [
+    'id',
+    'competition_id',
+    'provider_key',
+    'source_id',
+    'external_competition_id',
+    'mode',
+    'status',
+    'linked_at',
+    'unlinked_at',
+    'created_at',
+    'updated_at',
+    'provider_name',
+    'external_competition_name',
+  ],
   competition_seasons: ['id', 'competition_id', 'label', 'normalized_label', 'created_at'],
   managed_teams: ['id', 'name', 'normalized_name', 'region', 'normalized_region', 'created_at', 'updated_at'],
   season_participants: ['season_id', 'team_id', 'joined_at'],
@@ -359,6 +374,7 @@ const EXPECTED_FOREIGN_KEYS: Readonly<Record<string, readonly string[]>> = {
     'stage_id -> competition_stages',
   ],
   competition_teams: ['competition_id -> competitions', 'team_id -> managed_teams'],
+  competition_provider_bindings: ['competition_id -> competitions'],
 };
 
 /** Indexes of data-model.md section 4 as `table (columns)`. */
@@ -385,6 +401,7 @@ const EXPECTED_INDEXES = [
   'managed_teams (normalized_name, normalized_region, id)',
   'season_participants (team_id, season_id)',
   'competition_teams (team_id, competition_id)',
+  'competition_provider_bindings (competition_id, created_at)',
   'competition_stages (season_id, display_order, created_at, id)',
   'competition_rounds (season_id, normalized_name)',
   'competition_rounds (season_id, stage_id, normalized_name)',
@@ -463,7 +480,7 @@ describe('R-233 schema test: no player-level, person, user-account or credential
 });
 
 describe('structure of the migrated schema', () => {
-  it('applies all migrations through the current competition calendar schema', () => {
+  it('applies all migrations through the current provider binding schema', () => {
     expect(
       db
         .prepare<{ version: number; name: string }>('SELECT version, name FROM schema_migrations ORDER BY version')
@@ -477,6 +494,8 @@ describe('structure of the migrated schema', () => {
       { version: 6, name: 'match_results' },
       { version: 7, name: 'competition_teams' },
       { version: 8, name: 'independent_match_state_and_scores' },
+      { version: 9, name: 'provider_competition_bindings' },
+      { version: 10, name: 'provider_binding_display_names' },
     ]);
   });
 

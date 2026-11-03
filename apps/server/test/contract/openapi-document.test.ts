@@ -64,16 +64,16 @@ describe('contract document', () => {
     );
   });
 
-  it('has 75 operations on 54 paths, 34 of them mutating, with unique operation IDs', () => {
-    expect(Object.keys(child(document, 'paths'))).toHaveLength(54);
-    expect(operations).toHaveLength(75);
-    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(34);
+  it('has 80 operations on 57 paths, 36 of them mutating, with unique operation IDs', () => {
+    expect(Object.keys(child(document, 'paths'))).toHaveLength(57);
+    expect(operations).toHaveLength(80);
+    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(36);
     const ids = operations.map((operation) => operation.operation.operationId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('has 95 component schemas', () => {
-    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(95);
+  it('has 99 component schemas', () => {
+    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(99);
   });
 });
 
@@ -262,6 +262,9 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/tags/12: added',
       `${ack}/requestBody/content/application~1json/schema/properties/checks/items/enum/1: added`,
       '/paths/~1competitions: added',
+      '/paths/~1sports~1providers: added',
+      '/paths/~1sports~1providers~1{providerKey}~1competitions: added',
+      '/paths/~1competitions~1{competitionId}~1provider-binding: added',
       '/paths/~1competitions~1{competitionId}: added',
       '/paths/~1competitions~1{competitionId}~1seasons: added',
       '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}: added',
@@ -302,8 +305,15 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/Problem/properties/code/enum/31: added',
       '/components/schemas/Problem/properties/code/enum/32: added',
       '/components/schemas/Problem/properties/code/enum/33: added',
+      '/components/schemas/Problem/properties/code/enum/34: added',
+      '/components/schemas/Problem/properties/code/enum/35: added',
+      '/components/schemas/Problem/properties/code/enum/36: added',
       '/components/schemas/QaResult/oneOf/5: added',
       '/components/schemas/Competition: added',
+      '/components/schemas/SportsProvider: added',
+      '/components/schemas/ExternalCompetition: added',
+      '/components/schemas/CompetitionProviderBinding: added',
+      '/components/schemas/CompetitionProviderBindingResponse: added',
       '/components/schemas/ManagedSeason: added',
       '/components/schemas/ManagedTeam: added',
       '/components/schemas/CompetitionTeam: added',

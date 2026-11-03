@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-export type StudioIconName = 'table' | 'grid' | 'pencil' | 'trash' | 'arrow-left' | 'x';
+export type StudioIconName = 'table' | 'grid' | 'pencil' | 'trash' | 'arrow-left' | 'eye' | 'x';
 
 const paths: Record<StudioIconName, ReactNode> = {
   table: (
@@ -31,6 +31,12 @@ const paths: Record<StudioIconName, ReactNode> = {
   'arrow-left': (
     <>
       <path d="M19 12H5m7 7-7-7 7-7" />
+    </>
+  ),
+  eye: (
+    <>
+      <path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z" />
+      <circle cx="12" cy="12" r="2.5" />
     </>
   ),
   x: (

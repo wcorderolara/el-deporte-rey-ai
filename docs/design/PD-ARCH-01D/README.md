@@ -2,7 +2,7 @@
 
 ## Estado
 
-Propuesta de arquitectura para revisión del Product Owner. No hay proveedor seleccionado, migración creada ni integración implementada.
+Implementación incremental en curso. PD-ARCH-01D-A fue aprobada funcionalmente por el Product Owner y cerrada técnicamente. La importación/sincronización de datos aún no está implementada; corresponde a los siguientes incrementos de PD-ARCH-01D.
 
 ## Propósito
 
@@ -10,9 +10,10 @@ Conectar el dominio de competiciones locales con las fuentes deportivas ya confi
 
 ## Documento
 
-- [Propuesta de arquitectura](./hybrid-data-integration-proposal.md): diagnóstico, contratos, modelo de persistencia candidato, estrategia de sincronización, tradeoffs, preguntas y plan incremental.
+- [Propuesta de arquitectura](./hybrid-data-integration-proposal.md): diagnóstico, contratos, modelo de persistencia, estrategia de sincronización futura, tradeoffs y plan incremental.
 - [Registro de decisiones](./architecture-decision-register.md): cardinalidad Provider–Competition, configuración/rate limits compartidos y extensibilidad futura.
+- [Informe de PD-ARCH-01D-A](./pd-arch-01d-a-implementation-report.md): alcance implementado, endpoints, persistencia y verificación técnica.
 
 ## Límite
 
-La propuesta no modifica PD-ARCH-01C ni inicia trabajo de implementación. Cualquier schema, endpoint o proveedor concreto requiere revisión y aprobación antes de programarse.
+PD-ARCH-01D-A implementa solo el catálogo de proveedores y la vinculación explícita Competition–external Competition. No importa temporadas, equipos o partidos, no sincroniza ni sobrescribe datos y no modifica el calendario o resultados de PD-ARCH-01C.

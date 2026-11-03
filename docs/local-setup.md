@@ -33,6 +33,7 @@ Always install with `npm ci` from the committed `package-lock.json`.
 | Use | Command | Address |
 | --- | ------- | ------- |
 | Development | `npm run dev` | API `http://127.0.0.1:4300` (watch mode) and Vite `http://127.0.0.1:5173` with `/api` proxied to the API |
+| Development with football-data.org | `EDR_CONFIG=config/dev-live.config.json npm run dev` | Same separate API + Vite workflow; uses the existing `data/` database |
 | Local use | `npm run build`, then `npm start` | UI and API on `http://127.0.0.1:4300` |
 | Verification runs (gates, verify worktree) | started by the end-to-end runner | `http://127.0.0.1:4310` |
 | Product Owner demonstration (demo worktree) | started for the demonstration only | `http://127.0.0.1:4320` |
@@ -46,7 +47,8 @@ Always install with `npm ci` from the committed `package-lock.json`.
   The verification (`4310`) and demonstration (`4320`) configurations list their own port in the same way.
 - Data: `data/` in the working tree (git-ignored), or the directory named by `EDR_DATA_DIR`; created with mode 0700.
   Tests use temporary directories that are removed after the run.
-- Other environment variables: `EDR_CONFIG` (alternative configuration file), `EDR_DATA_DIR`, `EDR_PORT`.
+- Other environment variables: `EDR_CONFIG` (alternative configuration file), `EDR_DATA_DIR`, `EDR_PORT`. The `dev:api` script
+  honors an explicit `EDR_CONFIG`; when unset it uses `config/dev.config.json`.
 
 ## 4. Host assumptions and credentials
 
@@ -71,7 +73,7 @@ precedence.
 
 - only on a single-user workstation, with `.env.local` at mode 0600;
 - a free-plan football-data.org token only; no subscription is purchased or upgraded;
-- the LIVE_DATA configuration (`EDR_CONFIG=config/live.config.json`) is enabled only when needed; otherwise the default
+- a LIVE_DATA configuration is enabled only when needed; otherwise the default
   configuration (DEMO_DATA and MANUAL_DATA) is used;
 - the request-budget controls of the provider adapter stay in place;
 - a new Product Owner decision is required before a paid plan is used, before the platform runs on a shared or
@@ -101,17 +103,24 @@ precedence.
 | ---- | ------------- | --------------- |
 | DEMO_DATA (synthetic fixtures) | default configuration | none |
 | MANUAL_DATA (JSON, CSV or form imports) | default configuration | none |
-| LIVE_DATA (football-data.org API v4) | `EDR_CONFIG=config/live.config.json` and `FOOTBALL_DATA_API_TOKEN` in `.env.local` | `https://api.football-data.org` only |
+| LIVE_DATA (football-data.org API v4), compiled app | `EDR_CONFIG=config/live.config.json` and `FOOTBALL_DATA_API_TOKEN` in `.env.local` | `https://api.football-data.org` only |
+| LIVE_DATA, Vite development | `EDR_CONFIG=config/dev-live.config.json` and `FOOTBALL_DATA_API_TOKEN` in `.env.local` | `https://api.football-data.org` only |
 
 LIVE_DATA setup, step by step:
 
 1. Confirm the PD-16 conditions of section 4 (single-user workstation, free-plan token).
 2. Create `.env.local` as shown in section 4 and put the token in `FOOTBALL_DATA_API_TOKEN=` with an editor.
 3. Check presence with `grep -c '^FOOTBALL_DATA_API_TOKEN=..*' .env.local` (prints a count, never the value).
-4. Start with the LIVE configuration: `npm run build`, then `EDR_CONFIG=config/live.config.json npm start`.
+4. For local development with hot reload, run `EDR_CONFIG=config/dev-live.config.json npm run dev`. This starts the API
+   separately on port 4300 and Vite on port 5173; Vite proxies `/api` to the API. The development configuration keeps
+   the exact local Host/Origin allowlist and uses the existing `data/` database, preserving access to locally managed
+   competitions. Set `EDR_DATA_DIR` if a separate test database is preferred.
+   To use the compiled single-server app instead, run `npm run build`, then
+   `EDR_CONFIG=config/live.config.json npm start`.
    With LIVE_DATA enabled and the token missing or empty, startup stops with an error that names the variable, never
    a value. Without LIVE_DATA the token is neither required nor read.
-5. When you are done, stop the server and return to the default configuration (start without `EDR_CONFIG`).
+5. When done, stop the processes. The normal `npm run dev` uses `config/dev.config.json` by default. `npm start` keeps
+   serving the compiled UI and API on port 4300.
 
 Facts retrieved from football-data.org alone stay unverified (awaiting independent verification) until an independent
 accepted source is configured, and LIVE_DATA content is not publication-approvable until the provider's written

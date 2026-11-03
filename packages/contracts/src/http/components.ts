@@ -20,6 +20,10 @@ import {
 import { BrandAssetKindSchema, BrandAssetSchema, TemplateSchema } from './brand.js';
 import {
   ManagedCompetitionSchema,
+  SportsProviderSchema,
+  ExternalCompetitionSchema,
+  CompetitionProviderBindingSchema,
+  CompetitionProviderBindingResponseSchema,
   ManagedSeasonSchema,
   ManagedTeamSchema,
   CompetitionTeamSchema,
@@ -132,6 +136,10 @@ export const componentSchemas = {
   CatalogueCompetition: CatalogueCompetitionSchema,
   Catalogue: CatalogueSchema,
   Competition: ManagedCompetitionSchema,
+  SportsProvider: SportsProviderSchema,
+  ExternalCompetition: ExternalCompetitionSchema,
+  CompetitionProviderBinding: CompetitionProviderBindingSchema,
+  CompetitionProviderBindingResponse: CompetitionProviderBindingResponseSchema,
   ManagedSeason: ManagedSeasonSchema,
   ManagedTeam: ManagedTeamSchema,
   CompetitionTeam: CompetitionTeamSchema,

@@ -1,5 +1,13 @@
-import type { ManagedCompetition, ManagedSeason, ManagedTeam, SeasonParticipant } from '@edr/contracts';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import type {
+  CompetitionProviderBinding,
+  ExternalCompetition,
+  ManagedCompetition,
+  ManagedSeason,
+  ManagedTeam,
+  SeasonParticipant,
+  SportsProvider,
+} from '@edr/contracts';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -9,8 +17,16 @@ import { CompetitionListPage } from './CompetitionListPage';
 import { CompetitionDetailPage } from './CompetitionDetailPage';
 import { SeasonDetailPage } from './SeasonDetailPage';
 import { CompetitionTeamsPage } from './CompetitionTeamsPage';
+import { ProviderBindingPanel } from '../components/ProviderBindingPanel';
 
 afterEach(cleanup);
+
+async function flushInitialLoad() {
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+}
 
 const first: ManagedCompetition = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -62,8 +78,49 @@ const match = {
   updatedAt: first.updatedAt,
 };
 
+const providerA: SportsProvider = {
+  key: 'test-live',
+  name: 'Proveedor A',
+  capabilities: { competitionCatalogue: true, seasons: true, stages: true },
+  availability: 'available',
+  availabilityMessage: null,
+};
+const providerB: SportsProvider = { ...providerA, key: 'test-other', name: 'Proveedor B' };
+const externalLeague: ExternalCompetition = {
+  externalCompetitionId: 'league-1',
+  name: 'Liga de prueba',
+  areaName: null,
+};
+const binding: CompetitionProviderBinding = {
+  id: '88888888-8888-4888-8888-888888888888',
+  competitionId: first.id,
+  providerKey: providerA.key,
+  providerName: providerA.name,
+  externalCompetitionId: externalLeague.externalCompetitionId,
+  externalCompetitionName: externalLeague.name,
+  mode: 'provider',
+  status: 'active',
+  linkedAt: first.createdAt,
+  unlinkedAt: null,
+  createdAt: first.createdAt,
+  updatedAt: first.updatedAt,
+};
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+
 function apiStub(overrides: Partial<CompetitionsApi> = {}): CompetitionsApi {
   return {
+    listSportsProviders: vi.fn().mockResolvedValue([]),
+    listExternalCompetitions: vi.fn().mockResolvedValue([]),
+    getProviderBinding: vi.fn().mockResolvedValue(null),
+    setProviderBinding: vi.fn(),
+    removeProviderBinding: vi.fn(),
     list: vi.fn().mockResolvedValue([]),
     create: vi.fn(),
     get: vi.fn(),
@@ -103,7 +160,169 @@ function apiStub(overrides: Partial<CompetitionsApi> = {}): CompetitionsApi {
 }
 
 describe('competition foundation page', () => {
-  it('lists persisted competitions and creates a new one without leaving the section', async () => {
+  it.each(['provider', 'hybrid'] as const)(
+    'loads the catalogue automatically when entering %s mode with the preselected provider',
+    async (mode) => {
+      const api = apiStub({
+        listSportsProviders: vi.fn().mockResolvedValue([providerA]),
+        listExternalCompetitions: vi.fn().mockResolvedValue([externalLeague]),
+      });
+      render(
+        <MemoryRouter>
+          <CompetitionsProvider api={api}>
+            <ProviderBindingPanel competitionId={first.id} />
+          </CompetitionsProvider>
+        </MemoryRouter>,
+      );
+      await screen.findByText('Manual · Los datos se administran localmente.');
+      await flushInitialLoad();
+      await userEvent.click(screen.getByRole('button', { name: 'Configurar fuente de datos' }));
+      await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Modo de administración' }), mode);
+      expect((screen.getByRole('combobox', { name: 'Proveedor' }) as HTMLSelectElement).value).toBe(providerA.key);
+      expect(await screen.findByRole('option', { name: 'Liga de prueba' })).toBeTruthy();
+      expect(api.listExternalCompetitions).toHaveBeenCalledWith(providerA.key, expect.any(AbortSignal));
+    },
+  );
+
+  it('does not reload the same provider when changing Provider to Hybrid and preserves the selected competition', async () => {
+    const api = apiStub({
+      listSportsProviders: vi.fn().mockResolvedValue([providerA]),
+      listExternalCompetitions: vi.fn().mockResolvedValue([externalLeague]),
+    });
+    render(
+      <MemoryRouter>
+        <CompetitionsProvider api={api}>
+          <ProviderBindingPanel competitionId={first.id} />
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByText('Manual · Los datos se administran localmente.');
+    await flushInitialLoad();
+    await userEvent.click(await screen.findByRole('button', { name: 'Configurar fuente de datos' }));
+    const modeSelect = screen.getByRole('combobox', { name: 'Modo de administración' });
+    await userEvent.selectOptions(modeSelect, 'provider');
+    const externalSelect = screen.getByRole('combobox', { name: 'Competición externa' });
+    await screen.findByRole('option', { name: externalLeague.name });
+    await userEvent.selectOptions(externalSelect, externalLeague.externalCompetitionId);
+    await userEvent.selectOptions(modeSelect, 'hybrid');
+    expect((externalSelect as HTMLSelectElement).value).toBe(externalLeague.externalCompetitionId);
+    expect(api.listExternalCompetitions).toHaveBeenCalledTimes(1);
+  });
+
+  it('hydrates an existing binding, loads its provider catalogue, and retains the linked external competition', async () => {
+    const api = apiStub({
+      listSportsProviders: vi.fn().mockResolvedValue([providerA]),
+      getProviderBinding: vi.fn().mockResolvedValue(binding),
+      listExternalCompetitions: vi.fn().mockResolvedValue([externalLeague]),
+    });
+    render(
+      <MemoryRouter>
+        <CompetitionsProvider api={api}>
+          <ProviderBindingPanel competitionId={first.id} />
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Configurar fuente' }));
+    const dialog = screen.getByRole('dialog');
+    await waitFor(() => {
+      expect(
+        (within(dialog).getByRole('combobox', { name: 'Modo de administración' }) as HTMLSelectElement).value,
+      ).toBe('provider');
+      expect((within(dialog).getByRole('combobox', { name: 'Proveedor' }) as HTMLSelectElement).value).toBe(
+        providerA.key,
+      );
+      expect((within(dialog).getByRole('combobox', { name: 'Competición externa' }) as HTMLSelectElement).value).toBe(
+        externalLeague.externalCompetitionId,
+      );
+    });
+    expect(api.listExternalCompetitions).toHaveBeenCalledTimes(1);
+  });
+
+  it('discards out-of-order catalogue responses after the selected provider changes', async () => {
+    const firstResponse = deferred<ExternalCompetition[]>();
+    const secondResponse = deferred<ExternalCompetition[]>();
+    const otherLeague: ExternalCompetition = {
+      externalCompetitionId: 'league-2',
+      name: 'Liga del proveedor B',
+      areaName: null,
+    };
+    const api = apiStub({
+      listSportsProviders: vi.fn().mockResolvedValue([providerA, providerB]),
+      listExternalCompetitions: vi.fn((key) =>
+        key === providerA.key ? firstResponse.promise : secondResponse.promise,
+      ),
+    });
+    render(
+      <MemoryRouter>
+        <CompetitionsProvider api={api}>
+          <ProviderBindingPanel competitionId={first.id} />
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByText('Manual · Los datos se administran localmente.');
+    await flushInitialLoad();
+    await userEvent.click(await screen.findByRole('button', { name: 'Configurar fuente de datos' }));
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Modo de administración' }), 'provider');
+    await waitFor(() => expect(api.listExternalCompetitions).toHaveBeenCalledTimes(1));
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Proveedor' }), providerB.key);
+    await waitFor(() => expect(api.listExternalCompetitions).toHaveBeenCalledTimes(2));
+
+    await act(async () => secondResponse.resolve([otherLeague]));
+    expect(await screen.findByRole('option', { name: otherLeague.name })).toBeTruthy();
+    await act(async () => firstResponse.resolve([externalLeague]));
+    expect(screen.queryByRole('option', { name: externalLeague.name })).toBeNull();
+    expect((screen.getByRole('combobox', { name: 'Competición externa' }) as HTMLSelectElement).value).toBe('');
+  });
+
+  it('shows a recoverable error when the catalogue request fails', async () => {
+    const api = apiStub({
+      listSportsProviders: vi.fn().mockResolvedValue([providerA]),
+      listExternalCompetitions: vi.fn().mockRejectedValue(new Error('provider unavailable')),
+    });
+    render(
+      <MemoryRouter>
+        <CompetitionsProvider api={api}>
+          <ProviderBindingPanel competitionId={first.id} />
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByText('Manual · Los datos se administran localmente.');
+    await flushInitialLoad();
+    await userEvent.click(await screen.findByRole('button', { name: 'Configurar fuente de datos' }));
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Modo de administración' }), 'provider');
+    const errorAlert = await screen.findByRole('alert');
+    expect(errorAlert.textContent).toContain('No se pudieron cargar las competiciones');
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeTruthy();
+  });
+
+  it('waits for a provider selection instead of requesting the catalogue with an empty key', async () => {
+    const api = apiStub({
+      listSportsProviders: vi.fn().mockResolvedValue([providerA]),
+      listExternalCompetitions: vi.fn().mockResolvedValue([externalLeague]),
+    });
+    render(
+      <MemoryRouter>
+        <CompetitionsProvider api={api}>
+          <ProviderBindingPanel competitionId={first.id} />
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByText('Manual · Los datos se administran localmente.');
+    await flushInitialLoad();
+    await userEvent.click(await screen.findByRole('button', { name: 'Configurar fuente de datos' }));
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Modo de administración' }), 'provider');
+    await screen.findByRole('option', { name: providerA.name });
+    vi.mocked(api.listExternalCompetitions).mockClear();
+    const providerSelect = screen.getByRole('combobox', { name: 'Proveedor' });
+    await userEvent.selectOptions(providerSelect, '');
+    const externalSelect = screen.getByRole('combobox', { name: 'Competición externa' });
+    expect((externalSelect as HTMLSelectElement).value).toBe('');
+    expect((externalSelect as HTMLSelectElement).disabled).toBe(true);
+    expect(api.listExternalCompetitions).not.toHaveBeenCalled();
+    expect(screen.getByRole('option', { name: 'Selecciona primero un proveedor' })).toBeTruthy();
+  });
+
+  it('shows competitions in a table by default and creates one from a modal', async () => {
     const api = apiStub({
       list: vi.fn().mockResolvedValue([first]),
       create: vi.fn().mockResolvedValue({ ...first, id: '22222222-2222-4222-8222-222222222222', name: 'Copa Local' }),
@@ -115,12 +334,38 @@ describe('competition foundation page', () => {
         </CompetitionsProvider>
       </MemoryRouter>,
     );
-    expect(await screen.findByRole('heading', { name: 'Liga Local' })).toBeTruthy();
-    await userEvent.type(screen.getByRole('textbox', { name: 'Nombre de la competición' }), 'Copa Local');
+    expect(await screen.findByRole('heading', { name: 'Tus competiciones' })).toBeTruthy();
+    expect(screen.getByRole('table')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Ver competición Liga Local' }).getAttribute('href')).toBe(
+      `/competitions/${first.id}`,
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Crear competición' }));
-    expect(await screen.findByRole('heading', { name: 'Copa Local' })).toBeTruthy();
+    const dialog = screen.getByRole('dialog');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: 'Nombre de la competición' }), 'Copa Local');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Crear competición' }));
+    expect(await screen.findByRole('rowheader', { name: 'Copa Local' })).toBeTruthy();
     expect(api.create).toHaveBeenCalledWith({ name: 'Copa Local' });
     expect(api.list).toHaveBeenCalledTimes(1);
+  });
+
+  it('switches competition list to cards and supports modal cancellation without creating', async () => {
+    const api = apiStub({ list: vi.fn().mockResolvedValue([first]) });
+    render(
+      <MemoryRouter>
+        <CompetitionsProvider api={api}>
+          <CompetitionListPage />
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByRole('rowheader', { name: 'Liga Local' });
+    await userEvent.click(screen.getByRole('button', { name: 'Vista de tarjetas' }));
+    expect(screen.queryByRole('table')).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Liga Local' })).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'Crear competición' }));
+    const dialog = screen.getByRole('dialog');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: 'Nombre de la competición' }), 'No crear');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
+    expect(api.create).not.toHaveBeenCalled();
   });
 
   it('loads the selected competition detail through its local identifier', async () => {
@@ -164,6 +409,108 @@ describe('competition foundation page', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Crear' }));
     expect(await screen.findByRole('rowheader', { name: '2026/27' })).toBeTruthy();
     expect(api.createSeason).toHaveBeenCalledWith(first.id, { label: '2026/27' });
+  });
+
+  it('links an external competition only after explicit selection and confirmation', async () => {
+    const external = {
+      externalCompetitionId: 'league-test',
+      name: 'Liga externa de prueba',
+      areaName: 'Región de prueba',
+    };
+    const binding = {
+      id: '88888888-8888-4888-8888-888888888888',
+      competitionId: first.id,
+      providerKey: 'test-provider',
+      providerName: 'Proveedor de prueba',
+      externalCompetitionId: 'league-test',
+      externalCompetitionName: 'Liga externa de prueba',
+      mode: 'provider' as const,
+      status: 'active' as const,
+      linkedAt: first.createdAt,
+      unlinkedAt: null,
+      createdAt: first.createdAt,
+      updatedAt: first.updatedAt,
+    };
+    const api = apiStub({
+      get: vi.fn().mockResolvedValue(first),
+      listSeasons: vi.fn().mockResolvedValue([]),
+      listSportsProviders: vi.fn().mockResolvedValue([
+        {
+          key: 'test-provider',
+          name: 'Proveedor de prueba',
+          capabilities: { competitionCatalogue: true, seasons: true, stages: true },
+          availability: 'available',
+          availabilityMessage: null,
+        },
+      ]),
+      listExternalCompetitions: vi.fn().mockResolvedValue([external]),
+      setProviderBinding: vi.fn().mockResolvedValue(binding),
+    });
+    render(
+      <MemoryRouter initialEntries={[`/competitions/${first.id}`]}>
+        <CompetitionsProvider api={api}>
+          <Routes>
+            <Route path="/competitions/:competitionId" element={<CompetitionDetailPage />} />
+          </Routes>
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByRole('heading', { name: 'Liga Local' });
+    await flushInitialLoad();
+    await userEvent.click(screen.getByRole('button', { name: 'Configurar fuente de datos' }));
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Modo de administración' }), 'provider');
+    await screen.findByRole('option', { name: 'Proveedor de prueba' });
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Proveedor' }), 'test-provider');
+    expect(api.listExternalCompetitions).toHaveBeenCalledWith('test-provider', expect.any(AbortSignal));
+    await screen.findByRole('option', { name: 'Liga externa de prueba · Región de prueba' });
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Competición externa' }), 'league-test');
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar configuración' }));
+    expect(api.setProviderBinding).toHaveBeenCalledWith(first.id, {
+      providerKey: 'test-provider',
+      externalCompetitionId: 'league-test',
+      mode: 'provider',
+    });
+    expect(await screen.findByText(/Proveedor de prueba · Liga externa de prueba/)).toBeTruthy();
+  });
+
+  it('shows Manual by default and explains an unconfigured provider without exposing empty external data', async () => {
+    const api = apiStub({
+      get: vi.fn().mockResolvedValue(first),
+      listSeasons: vi.fn().mockResolvedValue([]),
+      listSportsProviders: vi.fn().mockResolvedValue([
+        {
+          key: 'provider-test',
+          name: 'Fuente de prueba',
+          capabilities: { competitionCatalogue: true, seasons: true, stages: true },
+          availability: 'not_configured',
+          availabilityMessage: 'El administrador debe configurar el proveedor y sus credenciales en el servidor.',
+        },
+      ]),
+    });
+    render(
+      <MemoryRouter initialEntries={[`/competitions/${first.id}`]}>
+        <CompetitionsProvider api={api}>
+          <Routes>
+            <Route path="/competitions/:competitionId" element={<CompetitionDetailPage />} />
+          </Routes>
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByRole('heading', { name: 'Liga Local' });
+    await userEvent.click(screen.getByRole('button', { name: 'Configurar fuente de datos' }));
+    expect((screen.getByRole('combobox', { name: 'Modo de administración' }) as HTMLSelectElement).value).toBe(
+      'manual',
+    );
+    expect(screen.queryByLabelText('Proveedor')).toBeNull();
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Modo de administración' }), 'hybrid');
+    await screen.findByRole('option', { name: 'Fuente de prueba · No disponible' });
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Proveedor' }), 'provider-test');
+    expect(await screen.findByText(/configurar el proveedor y sus credenciales en el servidor/i)).toBeTruthy();
+    expect(api.listExternalCompetitions).not.toHaveBeenCalled();
+    expect((screen.getByRole('button', { name: 'Guardar configuración' }) as HTMLButtonElement).disabled).toBe(true);
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(api.setProviderBinding).not.toHaveBeenCalled();
+    expect(api.removeProviderBinding).not.toHaveBeenCalled();
   });
 
   it('searches reusable catalogue teams and creates new competition teams', async () => {
@@ -361,7 +708,7 @@ describe('competition foundation page', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
   });
 
-  it('creates optional calendar groups and a direct match without inventing a score', async () => {
+  it('creates optional calendar groups without inventing a score', async () => {
     const api = apiStub({
       getSeason: vi.fn().mockResolvedValue(season),
       listTeams: vi.fn().mockResolvedValue([team, awayTeam]),
@@ -419,18 +766,7 @@ describe('competition foundation page', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Crear jornada' }));
     await userEvent.type(screen.getByRole('textbox', { name: 'Nombre de jornada o ronda' }), 'Jornada especial');
     await userEvent.click(screen.getByRole('button', { name: 'Crear' }));
-    await userEvent.click(screen.getAllByRole('button', { name: 'Agregar partido' }).at(-1)!);
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Equipo local' }), team.id);
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Equipo visitante' }), awayTeam.id);
-    await userEvent.click(screen.getAllByRole('button', { name: 'Agregar partido' }).at(-1)!);
-    expect(await screen.findByText('vs')).toBeTruthy();
-    expect(api.createMatch).toHaveBeenCalledWith(first.id, season.id, {
-      homeTeamId: team.id,
-      awayTeamId: awayTeam.id,
-      kickoffAt: null,
-      stageId: stage.id,
-      roundId: round.id,
-    });
+    expect(await screen.findByRole('heading', { name: 'Jornada especial' })).toBeTruthy();
     expect(api.createStageRound).toHaveBeenCalledWith(first.id, season.id, stage.id, { name: 'Jornada especial' });
     expect(api.updateStage).toHaveBeenCalledWith(first.id, season.id, stage.id, { name: 'Fase principal' });
   });

@@ -85,6 +85,7 @@ export class ScriptedSource implements IngestionSource {
 function registryOf(sources: readonly ScriptedSource[]): SourceRegistry {
   const byId = new Map(sources.map((source) => [source.descriptor.id, source]));
   return {
+    providerCatalog: [],
     descriptors: sources.map((source) => source.descriptor),
     sourceIds: sources.map((source) => source.descriptor.id),
     get: (id: string) => byId.get(id),

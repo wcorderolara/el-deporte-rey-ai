@@ -201,6 +201,120 @@ paths:
         '413': { $ref: '#/components/responses/Problem' }
         '415': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
+  /sports/providers:
+    get:
+      tags: [competitions]
+      operationId: listSportsProviders
+      description: List enabled live sports providers and adapter-level capabilities. Credentials and source configuration are never returned.
+      responses:
+        '200':
+          description: Available providers.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [providers]
+                additionalProperties: false
+                properties:
+                  providers: { type: array, items: { $ref: '#/components/schemas/SportsProvider' } }
+        '403': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /sports/providers/{providerKey}/competitions:
+    parameters:
+      - name: providerKey
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/SourceId' }
+    get:
+      tags: [competitions]
+      operationId: listExternalCompetitions
+      description: Query and normalize a provider competition catalogue through its registered adapter.
+      responses:
+        '200':
+          description: Normalized external competitions.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [competitions]
+                additionalProperties: false
+                properties:
+                  competitions: { type: array, items: { $ref: '#/components/schemas/ExternalCompetition' } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/provider-binding:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    get:
+      tags: [competitions]
+      operationId: getCompetitionProviderBinding
+      responses:
+        '200':
+          description: Current provider binding, or null for a manual competition.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [binding]
+                additionalProperties: false
+                properties:
+                  binding: { anyOf: [{ $ref: '#/components/schemas/CompetitionProviderBinding' }, { type: 'null' }] }
+        '403': { $ref: '#/components/responses/Problem' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [competitions]
+      operationId: setCompetitionProviderBinding
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [providerKey, externalCompetitionId, mode]
+              additionalProperties: false
+              properties:
+                providerKey: { $ref: '#/components/schemas/SourceId' }
+                externalCompetitionId: { type: string, minLength: 1, maxLength: 120 }
+                mode: { type: string, enum: [provider, hybrid] }
+                replaceExisting: { type: boolean }
+      responses:
+        '201':
+          description: Provider binding created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CompetitionProviderBindingResponse' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [competitions]
+      operationId: removeCompetitionProviderBinding
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      description: Mark the current binding unlinked while preserving all local sports data and binding history.
+      responses:
+        '204': { description: Binding removed; local data is preserved. }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /competitions/{competitionId}:
     parameters:
       - name: competitionId
@@ -1979,6 +2093,54 @@ components:
         name: { $ref: '#/components/schemas/DisplayName' }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
+    SportsProvider:
+      type: object
+      required: [key, name, capabilities, availability, availabilityMessage]
+      additionalProperties: false
+      properties:
+        key: { $ref: '#/components/schemas/SourceId' }
+        name: { $ref: '#/components/schemas/DisplayName' }
+        capabilities:
+          type: object
+          required: [competitionCatalogue, seasons, stages]
+          additionalProperties: false
+          properties:
+            competitionCatalogue: { type: boolean }
+            seasons: { type: boolean }
+            stages: { type: boolean }
+        availability: { type: string, enum: [available, not_configured, disabled, ambiguous] }
+        availabilityMessage: { anyOf: [{ $ref: '#/components/schemas/DisplayName' }, { type: 'null' }] }
+    ExternalCompetition:
+      type: object
+      required: [externalCompetitionId, name, areaName]
+      additionalProperties: false
+      properties:
+        externalCompetitionId: { type: string, minLength: 1, maxLength: 120 }
+        name: { $ref: '#/components/schemas/DisplayName' }
+        areaName: { anyOf: [{ $ref: '#/components/schemas/DisplayName' }, { type: 'null' }] }
+    CompetitionProviderBinding:
+      type: object
+      required: [id, competitionId, providerKey, providerName, externalCompetitionId, externalCompetitionName, mode, status, linkedAt, unlinkedAt, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        competitionId: { $ref: '#/components/schemas/Uuid' }
+        providerKey: { $ref: '#/components/schemas/SourceId' }
+        providerName: { $ref: '#/components/schemas/DisplayName' }
+        externalCompetitionId: { type: string, minLength: 1, maxLength: 120 }
+        externalCompetitionName: { $ref: '#/components/schemas/DisplayName' }
+        mode: { type: string, enum: [provider, hybrid] }
+        status: { type: string, enum: [active, replaced, unlinked] }
+        linkedAt: { type: string, format: date-time }
+        unlinkedAt: { anyOf: [{ type: string, format: date-time }, { type: 'null' }] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    CompetitionProviderBindingResponse:
+      type: object
+      required: [binding]
+      additionalProperties: false
+      properties:
+        binding: { anyOf: [{ $ref: '#/components/schemas/CompetitionProviderBinding' }, { type: 'null' }] }
     ManagedSeason:
       type: object
       required: [id, competitionId, label, createdAt]
@@ -2150,11 +2312,14 @@ components:
             - DUPLICATE_MATCH
             - TEAM_IN_USE
             - PROVIDER_FAILED
+            - PROVIDER_BINDING_EXISTS
+            - PROVIDER_AMBIGUOUS
             - PROVIDER_RATE_LIMITED
             - SELECTION_UNAVAILABLE
             - IMPORT_REJECTED
             - MANUAL_APPROVAL_REFUSED
             - INTERNAL
+            - PROVIDER_UNAVAILABLE
         detail: { type: string, maxLength: 500, description: 'Fixed text plus sanitized parameters only (T10-F10)' }
         errors:
           type: array

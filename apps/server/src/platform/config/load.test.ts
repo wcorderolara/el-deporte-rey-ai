@@ -143,6 +143,14 @@ describe('committed development configuration (config/dev.config.json)', () => {
     const config = loadConfig({ rootDir: repoRoot, env: { EDR_CONFIG: 'config/dev.config.json' } });
     expect(config.server.allowedOrigins).toContain('http://localhost:5173');
   });
+
+  it('loads the Vite development configuration with a live data source enabled', () => {
+    const config = loadConfig({ rootDir: repoRoot, env: { EDR_CONFIG: 'config/dev-live.config.json' } });
+    const source = config.providers.sports.sources.find((item) => item.mode === 'LIVE_DATA');
+    expect(source).toMatchObject({ enabled: true, mode: 'LIVE_DATA' });
+    expect(config.server.allowedOrigins).toContain('http://127.0.0.1:5173');
+    expect(config.paths.dataDir).toBe(join(repoRoot, 'data'));
+  });
 });
 
 describe('environment (OD-20, R-266, AD-30)', () => {

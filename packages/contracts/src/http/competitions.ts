@@ -1,7 +1,7 @@
 /** Locally managed competition foundation, separate from provider catalogue identifiers and manual import records. */
 import { z } from 'zod';
 
-import { DateTimeSchema, DisplayNameSchema, TeamNameSchema, UuidSchema } from './primitives.js';
+import { DateTimeSchema, DisplayNameSchema, TeamNameSchema, UuidSchema, SourceIdSchema } from './primitives.js';
 
 export const ManagedCompetitionCreateSchema = z.strictObject({ name: DisplayNameSchema });
 export const ManagedCompetitionSchema = z.strictObject({
@@ -15,6 +15,49 @@ export const ManagedCompetitionParamsSchema = z.strictObject({ competitionId: Uu
 
 export type ManagedCompetitionCreate = z.infer<typeof ManagedCompetitionCreateSchema>;
 export type ManagedCompetition = z.infer<typeof ManagedCompetitionSchema>;
+
+/** Stable adapter identity; configured credentials and source instance details remain server-only. */
+export const SportsProviderSchema = z.strictObject({
+  key: SourceIdSchema,
+  name: DisplayNameSchema,
+  capabilities: z.strictObject({ competitionCatalogue: z.boolean(), seasons: z.boolean(), stages: z.boolean() }),
+  availability: z.enum(['available', 'not_configured', 'disabled', 'ambiguous']),
+  availabilityMessage: DisplayNameSchema.nullable(),
+});
+export const SportsProviderListResponseSchema = z.strictObject({ providers: z.array(SportsProviderSchema) });
+export const SportsProviderParamsSchema = z.strictObject({ providerKey: SourceIdSchema });
+export const ExternalCompetitionSchema = z.strictObject({
+  externalCompetitionId: z.string().min(1).max(120),
+  name: DisplayNameSchema,
+  areaName: DisplayNameSchema.nullable(),
+});
+export const ExternalCompetitionListResponseSchema = z.strictObject({ competitions: z.array(ExternalCompetitionSchema) });
+export const CompetitionProviderBindingParamsSchema = ManagedCompetitionParamsSchema;
+export const CompetitionProviderBindingCreateSchema = z.strictObject({
+  providerKey: SourceIdSchema,
+  externalCompetitionId: z.string().min(1).max(120),
+  mode: z.enum(['provider', 'hybrid']),
+  replaceExisting: z.boolean().optional(),
+});
+export const CompetitionProviderBindingSchema = z.strictObject({
+  id: UuidSchema,
+  competitionId: UuidSchema,
+  providerKey: SourceIdSchema,
+  providerName: DisplayNameSchema,
+  externalCompetitionId: z.string().min(1).max(120),
+  externalCompetitionName: DisplayNameSchema,
+  mode: z.enum(['provider', 'hybrid']),
+  status: z.enum(['active', 'replaced', 'unlinked']),
+  linkedAt: DateTimeSchema,
+  unlinkedAt: DateTimeSchema.nullable(),
+  createdAt: DateTimeSchema,
+  updatedAt: DateTimeSchema,
+});
+export const CompetitionProviderBindingResponseSchema = z.strictObject({ binding: CompetitionProviderBindingSchema.nullable() });
+export type SportsProvider = z.infer<typeof SportsProviderSchema>;
+export type ExternalCompetition = z.infer<typeof ExternalCompetitionSchema>;
+export type CompetitionProviderBinding = z.infer<typeof CompetitionProviderBindingSchema>;
+export type CompetitionProviderBindingCreate = z.infer<typeof CompetitionProviderBindingCreateSchema>;
 
 /** Locally managed season; the label preserves operator formatting (for example `2026/27` or `2027`). */
 export const ManagedSeasonCreateSchema = z.strictObject({ label: DisplayNameSchema });

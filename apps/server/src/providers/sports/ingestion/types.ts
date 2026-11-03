@@ -1,7 +1,8 @@
 /**
  * Ingestion port (contracts/provider-ports.md section 1.2; AD-21, AD-22): the provider-neutral interface that every
  * sports-data adapter implements, the listing and selection shapes it returns, and the adapter registration used by
- * the adapter registry. Nothing here names a provider, a provider field or a provider identifier (R-139, R-288).
+ * the adapter registry. Provider catalogue metadata is declared by registrations; ingestion payloads and domain
+ * selection stay provider-neutral and do not encode provider identifiers (R-139, R-288).
  */
 import type { DataMode, SelectionSnapshot, SourceAvailability } from '@edr/contracts';
 
@@ -175,7 +176,19 @@ export interface AdapterRegistration {
   readonly kind: string;
   /** Declared data mode; a source whose mode differs stops startup. */
   readonly mode: DataMode;
+  /** Public catalogue metadata for adapters operators can bind to competitions. */
+  readonly provider?: Readonly<{
+    readonly name: string;
+    readonly capabilities: Readonly<{ competitionCatalogue: boolean; seasons: boolean; stages: boolean }>;
+  }>;
   create(context: AdapterContext): IngestionSource;
+}
+
+/** Public provider metadata from the adapter registry; contains no configured source details. */
+export interface RegisteredSportsProvider {
+  readonly key: string;
+  readonly name: string;
+  readonly capabilities: Readonly<{ competitionCatalogue: boolean; seasons: boolean; stages: boolean }>;
 }
 
 /** The part of the application configuration that the sports-data layer reads. `AppConfig` satisfies it. */

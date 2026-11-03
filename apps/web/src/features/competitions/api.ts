@@ -2,6 +2,12 @@ import {
   ManagedCompetitionCreateSchema,
   ManagedCompetitionListResponseSchema,
   ManagedCompetitionSchema,
+  SportsProviderListResponseSchema,
+  SportsProviderParamsSchema,
+  ExternalCompetitionListResponseSchema,
+  CompetitionProviderBindingParamsSchema,
+  CompetitionProviderBindingCreateSchema,
+  CompetitionProviderBindingResponseSchema,
   CompetitionStageCreateSchema,
   CompetitionCalendarNameUpdateSchema,
   CompetitionRoundUpdateSchema,
@@ -46,6 +52,9 @@ import {
   operations,
   type ManagedCompetition,
   type ManagedCompetitionCreate,
+  type SportsProvider,
+  type ExternalCompetition,
+  type CompetitionProviderBinding,
   type ManagedSeason,
   type ManagedSeasonCreate,
   type ManagedSeasonUpdate,
@@ -79,6 +88,19 @@ function path(id: OperationId, params: Record<string, string> = {}): string {
 }
 
 export interface CompetitionsApi {
+  listSportsProviders(signal?: AbortSignal): Promise<SportsProvider[]>;
+  listExternalCompetitions(providerKey: string, signal?: AbortSignal): Promise<ExternalCompetition[]>;
+  getProviderBinding(competitionId: string, signal?: AbortSignal): Promise<CompetitionProviderBinding | null>;
+  setProviderBinding(
+    competitionId: string,
+    input: {
+      providerKey: string;
+      externalCompetitionId: string;
+      mode: 'provider' | 'hybrid';
+      replaceExisting?: boolean;
+    },
+  ): Promise<CompetitionProviderBinding>;
+  removeProviderBinding(competitionId: string): Promise<void>;
   list(signal?: AbortSignal): Promise<ManagedCompetition[]>;
   create(input: ManagedCompetitionCreate): Promise<ManagedCompetition>;
   get(id: string, signal?: AbortSignal): Promise<ManagedCompetition>;
@@ -157,6 +179,42 @@ export interface CompetitionsApi {
 
 export function createCompetitionsApi(client: ApiClient): CompetitionsApi {
   return {
+    async listSportsProviders(signal) {
+      const result = await client.get(path('listSportsProviders'), {
+        schema: SportsProviderListResponseSchema,
+        ...(signal ? { signal } : {}),
+      });
+      return result.providers;
+    },
+    async listExternalCompetitions(providerKey, signal) {
+      const params = SportsProviderParamsSchema.parse({ providerKey });
+      const result = await client.get(path('listExternalCompetitions', params), {
+        schema: ExternalCompetitionListResponseSchema,
+        ...(signal ? { signal } : {}),
+      });
+      return result.competitions;
+    },
+    async getProviderBinding(competitionId, signal) {
+      const params = CompetitionProviderBindingParamsSchema.parse({ competitionId });
+      const result = await client.get(path('getCompetitionProviderBinding', params), {
+        schema: CompetitionProviderBindingResponseSchema,
+        ...(signal ? { signal } : {}),
+      });
+      return result.binding;
+    },
+    async setProviderBinding(competitionId, input) {
+      const params = CompetitionProviderBindingParamsSchema.parse({ competitionId });
+      const body = CompetitionProviderBindingCreateSchema.parse(input);
+      const result = await client.post(path('setCompetitionProviderBinding', params), body, {
+        schema: CompetitionProviderBindingResponseSchema,
+      });
+      if (!result.binding) throw new Error('La vinculación no fue devuelta por el servidor.');
+      return result.binding;
+    },
+    async removeProviderBinding(competitionId) {
+      const params = CompetitionProviderBindingParamsSchema.parse({ competitionId });
+      await client.delete(path('removeCompetitionProviderBinding', params));
+    },
     async list(signal) {
       const result = await client.get(path('listManagedCompetitions'), {
         schema: ManagedCompetitionListResponseSchema,

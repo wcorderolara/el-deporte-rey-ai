@@ -364,6 +364,33 @@ export const componentSamples: Record<ComponentName, unknown> = {
   CompetitionSource: competitionSource,
   CatalogueCompetition: catalogueCompetition,
   Competition: { id: uuid(80), name: 'Liga de prueba', createdAt: T1, updatedAt: T1 },
+  SportsProvider: {
+    key: 'test-provider',
+    name: 'Proveedor de prueba',
+    capabilities: { competitionCatalogue: true, seasons: true, stages: true },
+    availability: 'available',
+    availabilityMessage: null,
+  },
+  ExternalCompetition: {
+    externalCompetitionId: 'league-test',
+    name: 'Liga de prueba externa',
+    areaName: 'Región de prueba',
+  },
+  CompetitionProviderBinding: {
+    id: uuid(81),
+    competitionId: uuid(80),
+    providerKey: 'test-provider',
+    providerName: 'Proveedor de prueba',
+    externalCompetitionId: 'league-test',
+    externalCompetitionName: 'Liga de prueba externa',
+    mode: 'provider',
+    status: 'active',
+    linkedAt: T1,
+    unlinkedAt: null,
+    createdAt: T1,
+    updatedAt: T1,
+  },
+  CompetitionProviderBindingResponse: { binding: null },
   ManagedSeason: { id: uuid(81), competitionId: uuid(80), label: '2026/27', createdAt: T1 },
   ManagedTeam: { id: uuid(82), name: 'Club Local', region: 'Ciudad Ficticia', createdAt: T1, updatedAt: T1 },
   CompetitionTeam: {
@@ -536,6 +563,11 @@ export const componentSamples: Record<ComponentName, unknown> = {
 
 /** Samples of the JSON request bodies (inline or by reference) of the operations that have one. */
 export const requestSamples: Partial<Record<OperationId, unknown>> = {
+  setCompetitionProviderBinding: {
+    providerKey: 'test-provider',
+    externalCompetitionId: 'league-test',
+    mode: 'provider',
+  },
   createCompetition: { name: 'Liga de prueba' },
   createManagedSeason: { label: '2026/27' },
   updateManagedSeason: { label: '2026/27 actualizada' },
@@ -564,6 +596,10 @@ export const requestSamples: Partial<Record<OperationId, unknown>> = {
 
 /** Samples of the JSON success responses of every operation that returns JSON. */
 export const responseSamples: Partial<Record<OperationId, unknown>> = {
+  listSportsProviders: { providers: [componentSamples.SportsProvider] },
+  listExternalCompetitions: { competitions: [componentSamples.ExternalCompetition] },
+  getCompetitionProviderBinding: { binding: componentSamples.CompetitionProviderBinding },
+  setCompetitionProviderBinding: { binding: componentSamples.CompetitionProviderBinding },
   getHealth: { status: 'ok' },
   getSettings: componentSamples.Settings,
   listCompetitions: componentSamples.Catalogue,

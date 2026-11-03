@@ -25,6 +25,7 @@ import type {
   SourceRef,
   SourceSeason,
   SourceStage,
+  RegisteredSportsProvider,
   SportsConfig,
   SportsDeps,
   SportsLogger,
@@ -41,6 +42,8 @@ const ADAPTER_KIND = /^[a-z0-9][a-z0-9-]{0,40}$/;
 
 /** Registry of the enabled sports-data sources. */
 export interface SourceRegistry {
+  /** Public provider catalogue derived from the adapter registry, including providers not configured at runtime. */
+  readonly providerCatalog: readonly RegisteredSportsProvider[];
   /** Descriptors of the enabled sources, in configuration order. */
   readonly descriptors: readonly SourceDescriptor[];
   /** IDs of the enabled sources, in configuration order. */
@@ -221,8 +224,22 @@ export function createSourceRegistry(
   const ordered = Object.freeze([...sources.values()]);
   const descriptors = Object.freeze(ordered.map((source) => source.descriptor));
   const sourceIds = Object.freeze(descriptors.map((descriptor) => descriptor.id));
+  const providerCatalog = Object.freeze(
+    registrations.flatMap((registration) =>
+      registration.mode === 'LIVE_DATA' && registration.provider
+        ? [
+            {
+              key: registration.kind,
+              name: registration.provider.name,
+              capabilities: registration.provider.capabilities,
+            },
+          ]
+        : [],
+    ),
+  );
 
   return Object.freeze({
+    providerCatalog,
     descriptors,
     sourceIds,
     get: (sourceId: string): IngestionSource | undefined => sources.get(sourceId),

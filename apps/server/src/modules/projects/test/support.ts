@@ -135,6 +135,8 @@ export interface ProjectsTestOptions {
   /** Run the module's startup hook (default true). */
   readonly startup?: boolean;
   readonly includeCompetitions?: boolean;
+  /** Optional persistent SQLite file for restart/persistence integration tests. */
+  readonly dbLocation?: string;
 }
 
 /** Builds the app with the projects module over a fresh in-memory database. */
@@ -150,7 +152,7 @@ export async function projectsTestApp(options: ProjectsTestOptions = {}): Promis
     stub.documents.set('stub-b', stubFixture());
   }
   const config = buildConfig(options.sources ?? testSources(), options.catalogue ?? testCatalogue(), fixtures.rootDir);
-  const { db } = openMigratedDatabase({ location: ':memory:' });
+  const { db } = openMigratedDatabase({ location: options.dbLocation ?? ':memory:' });
   const container = createContainer({
     config,
     db,

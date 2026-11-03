@@ -45,11 +45,14 @@ export const PROBLEM_CODES = [
   'ROUND_HAS_MATCHES',
   'TEAM_IN_USE',
   'PROVIDER_FAILED',
+  'PROVIDER_BINDING_EXISTS',
+  'PROVIDER_AMBIGUOUS',
   'PROVIDER_RATE_LIMITED',
   'SELECTION_UNAVAILABLE',
   'IMPORT_REJECTED',
   'MANUAL_APPROVAL_REFUSED',
   'INTERNAL',
+  'PROVIDER_UNAVAILABLE',
 ] as const;
 export type ProblemCode = (typeof PROBLEM_CODES)[number];
 
@@ -179,6 +182,9 @@ const TITLES: Readonly<Record<ProblemCode, string>> = {
   ROUND_HAS_MATCHES: 'The round has matches or history and cannot be removed',
   TEAM_IN_USE: 'The team cannot be unlinked while the season has matches using it',
   PROVIDER_FAILED: 'The data provider failed',
+  PROVIDER_BINDING_EXISTS: 'A provider is already linked to this competition',
+  PROVIDER_AMBIGUOUS: 'The provider configuration is ambiguous',
+  PROVIDER_UNAVAILABLE: 'The data provider is not configured',
   PROVIDER_RATE_LIMITED: 'The data provider request budget is exhausted',
   SELECTION_UNAVAILABLE: 'The selection is unavailable',
   IMPORT_REJECTED: 'The import was rejected',

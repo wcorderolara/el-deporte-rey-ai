@@ -415,6 +415,14 @@ export function stubAdapter(kind: string, mode: DataMode): StubAdapter {
   const registration: AdapterRegistration = {
     kind,
     mode,
+    ...(mode === 'LIVE_DATA'
+      ? {
+          provider: {
+            name: 'Test live provider',
+            capabilities: { competitionCatalogue: true, seasons: true, stages: true },
+          },
+        }
+      : {}),
     create({ descriptor }): IngestionSource {
       const id = descriptor.id;
       const doc = (): Record<string, unknown> => {

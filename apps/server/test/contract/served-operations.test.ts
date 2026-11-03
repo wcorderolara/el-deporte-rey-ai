@@ -144,6 +144,27 @@ beforeAll(async () => {
   await d.call('listManagedCompetitions');
   const createdCompetition = await d.call('createCompetition', { json: { name: 'Competición de prueba' } });
   const managedCompetitionId = String((createdCompetition.body as { id: string }).id);
+  const providersResponse = await l.call('listSportsProviders');
+  const providerEntry = (providersResponse.body as { providers: { key: string }[] }).providers[0];
+  if (!providerEntry) throw new Error('The test live adapter must be listed.');
+  const externalList = await l.call('listExternalCompetitions', { params: { providerKey: providerEntry.key } });
+  if (externalList.status !== 200)
+    throw new Error(`External provider fixture failed (${externalList.status}): ${externalList.text}`);
+  const firstExternal = (externalList.body as { competitions: { externalCompetitionId: string }[] }).competitions[0];
+  const bindingCompetition = await l.call('createCompetition', { json: { name: 'Competición vinculada' } });
+  const bindingCompetitionId = String((bindingCompetition.body as { id: string }).id);
+  await l.call('getCompetitionProviderBinding', { params: { competitionId: bindingCompetitionId } });
+  if (!firstExternal) throw new Error('The live fixture must provide one external competition.');
+  await l.call('setCompetitionProviderBinding', {
+    params: { competitionId: bindingCompetitionId },
+    json: {
+      providerKey: providerEntry.key,
+      externalCompetitionId: firstExternal.externalCompetitionId,
+      mode: 'provider',
+    },
+  });
+  await l.call('getCompetitionProviderBinding', { params: { competitionId: bindingCompetitionId } });
+  await l.call('removeCompetitionProviderBinding', { params: { competitionId: bindingCompetitionId } });
   await d.call('getCompetition', { params: { competitionId: managedCompetitionId } });
   await d.call('listManagedSeasons', { params: { competitionId: managedCompetitionId } });
   const createdSeason = await d.call('createManagedSeason', {

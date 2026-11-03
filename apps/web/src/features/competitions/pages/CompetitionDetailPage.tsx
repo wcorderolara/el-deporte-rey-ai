@@ -15,6 +15,7 @@ import {
   describeError,
 } from '../../../ui';
 import { useCompetitionsApi } from '../CompetitionsContext';
+import { ProviderBindingPanel } from '../components/ProviderBindingPanel';
 
 export function CompetitionDetailPage() {
   const { competitionId } = useParams();
@@ -131,6 +132,7 @@ export function CompetitionDetailPage() {
           <p className="m-0">{problem.message}</p>
         </Alert>
       ) : null}
+      <ProviderBindingPanel competitionId={competition.id} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="m-0 font-display text-heading-sm font-bold text-text-primary">
           Temporadas <span className="text-body-sm font-normal text-text-secondary">({seasons.length})</span>
