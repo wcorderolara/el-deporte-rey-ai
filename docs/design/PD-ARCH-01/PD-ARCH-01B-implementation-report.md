@@ -1,6 +1,6 @@
 # PD-ARCH-01B — Seasons & Participants
 
-**Status:** accepted by Product Owner on 2026-10-30. **Branch:** `work/PD-ARCH-01B`, based on accepted 01A commit `14dfb1f`. **Checkpoint commit:** recorded after acceptance.
+**Status:** accepted by Product Owner on 2026-10-30. **Branch:** `work/PD-ARCH-01B`, based on accepted 01A commit `14dfb1f`. **Checkpoint commit:** `4087eec`.
 
 ## Delivered
 
