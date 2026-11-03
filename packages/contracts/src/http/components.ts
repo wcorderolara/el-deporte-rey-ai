@@ -22,7 +22,13 @@ import {
   ManagedCompetitionSchema,
   ManagedSeasonSchema,
   ManagedTeamSchema,
+  CompetitionTeamSchema,
   SeasonParticipantSchema,
+  CompetitionStageSchema,
+  CompetitionRoundSchema,
+  CompetitionMatchSchema,
+  CompetitionMatchStatusSchema,
+  MatchResultHistorySchema,
 } from './competitions.js';
 import { ExportDetailSchema, ExportFieldsSchema, ExportSchema, SlideTraceSchema } from './exports.js';
 import {
@@ -128,7 +134,13 @@ export const componentSchemas = {
   Competition: ManagedCompetitionSchema,
   ManagedSeason: ManagedSeasonSchema,
   ManagedTeam: ManagedTeamSchema,
+  CompetitionTeam: CompetitionTeamSchema,
   SeasonParticipant: SeasonParticipantSchema,
+  CompetitionStage: CompetitionStageSchema,
+  CompetitionRound: CompetitionRoundSchema,
+  CompetitionMatch: CompetitionMatchSchema,
+  CompetitionMatchStatus: CompetitionMatchStatusSchema,
+  MatchResultHistory: MatchResultHistorySchema,
   Season: SeasonSchema,
   SeasonList: SeasonListSchema,
   Stage: StageSchema,

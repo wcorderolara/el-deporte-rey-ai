@@ -39,12 +39,42 @@ export class CompetitionAdministrationService {
       createdAt: at,
     });
   }
+  updateSeason(competitionId: string, seasonId: string, rawLabel: string): LocalSeason {
+    const label = displayValue(rawLabel);
+    if (!label) throw new CompetitionAdministrationError('invalid_season_label');
+    return this.#repository.updateSeason(competitionId, seasonId, label, identityKey(label));
+  }
 
   listTeams(): LocalTeam[] {
     return this.#repository.listTeams();
   }
   getTeam(teamId: string): LocalTeam {
     return this.#repository.getTeam(teamId);
+  }
+  listCompetitionTeams(competitionId: string) {
+    return this.#repository.listCompetitionTeams(competitionId);
+  }
+  addCompetitionTeam(competitionId: string, teamId: string) {
+    return this.#repository.addCompetitionTeam(competitionId, teamId, this.#now().toISOString());
+  }
+  removeCompetitionTeam(competitionId: string, teamId: string): void {
+    this.#repository.removeCompetitionTeam(competitionId, teamId);
+  }
+  createAndAssociateCompetitionTeam(competitionId: string, rawName: string, rawRegion: string | null) {
+    const name = displayValue(rawName);
+    const region = rawRegion === null ? null : displayValue(rawRegion);
+    if (!name) throw new CompetitionAdministrationError('invalid_team_name');
+    if (region !== null && !region) throw new CompetitionAdministrationError('invalid_team_region');
+    const at = this.#now().toISOString();
+    return this.#repository.createAndAssociateCompetitionTeam(competitionId, {
+      id: this.#newId(),
+      name,
+      normalizedName: identityKey(name),
+      region,
+      normalizedRegion: region === null ? '' : identityKey(region),
+      createdAt: at,
+      updatedAt: at,
+    });
   }
   createTeam(rawName: string, rawRegion: string | null): LocalTeam {
     const name = displayValue(rawName);
@@ -63,11 +93,28 @@ export class CompetitionAdministrationService {
     });
   }
 
+  updateTeam(teamId: string, rawName: string, rawRegion: string | null): LocalTeam {
+    const name = displayValue(rawName);
+    const region = rawRegion === null ? null : displayValue(rawRegion);
+    if (!name) throw new CompetitionAdministrationError('invalid_team_name');
+    if (region !== null && !region) throw new CompetitionAdministrationError('invalid_team_region');
+    return this.#repository.updateTeam(teamId, {
+      name,
+      normalizedName: identityKey(name),
+      region,
+      normalizedRegion: region === null ? '' : identityKey(region),
+      updatedAt: this.#now().toISOString(),
+    });
+  }
+
   listParticipants(competitionId: string, seasonId: string): SeasonParticipant[] {
     return this.#repository.listParticipants(competitionId, seasonId);
   }
   addParticipant(competitionId: string, seasonId: string, teamId: string): SeasonParticipant {
     return this.#repository.addParticipant(competitionId, seasonId, teamId, this.#now().toISOString());
+  }
+  addParticipants(competitionId: string, seasonId: string, teamIds: string[]): SeasonParticipant[] {
+    return this.#repository.addParticipants(competitionId, seasonId, teamIds, this.#now().toISOString());
   }
   removeParticipant(competitionId: string, seasonId: string, teamId: string): void {
     this.#repository.removeParticipant(competitionId, seasonId, teamId);

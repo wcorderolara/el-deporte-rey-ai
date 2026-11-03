@@ -19,6 +19,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { startTestApp, type TestApp } from '../support/index.js';
 
+import { operations } from '@edr/contracts';
+
 import { OPERATION_IDS, oversizedRequest, syntheticPng, validRequest } from './support/requests.js';
 import { requestSamples } from './support/samples.js';
 import {
@@ -64,8 +66,8 @@ function withHeaders(options: CallOptions, headers: Record<string, string | unde
   return { ...options, headers: { ...options.headers, ...headers } };
 }
 
-it('lists the contract operations in the order of the document', () => {
-  expect([...OPERATION_IDS]).toEqual(spec.operationIds);
+it('covers exactly the contract operations', () => {
+  expect([...OPERATION_IDS].sort()).toEqual([...spec.operationIds].sort());
 });
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -81,35 +83,13 @@ function hasBody(operationId: string): boolean {
   return (WITH_BODY as readonly string[]).includes(operationId);
 }
 
-const MUTATING = [
-  'createProject',
-  'updateProject',
-  'startRun',
-  'approveFactManually',
-  'revokeManualFactApproval',
-  'setExcludedMatches',
-  'regenerateElement',
-  'approveElement',
-  'withdrawElementApproval',
-  'acknowledgeQaWarnings',
-  'approveCarousel',
-  'exportCarousel',
-  'createImport',
-  'registerBrandAsset',
-  'updateBrandAsset',
-] as const;
+const MUTATING = Object.values(operations)
+  .filter((operation) => operation.method !== 'get')
+  .map((operation) => operation.operationId);
 
-const WITH_BODY = [
-  'createProject',
-  'updateProject',
-  'startRun',
-  'setExcludedMatches',
-  'approveElement',
-  'acknowledgeQaWarnings',
-  'createImport',
-  'registerBrandAsset',
-  'updateBrandAsset',
-] as const;
+const WITH_BODY = Object.values(operations)
+  .filter((operation) => operation.body !== null)
+  .map((operation) => operation.operationId);
 
 describe.each(OPERATION_IDS)('request protection of %s', (operationId) => {
   it('answers 421 MISDIRECTED_HOST for a Host outside the allow-list', async () => {
@@ -216,22 +196,7 @@ const POSITION_PROBES: readonly string[] = ['0', '100', '-1', '1.5', 'abc', '1e1
 /** Over-long probes beyond the router's parameter length (Fastify `maxParamLength`, 100). */
 const OVERLONG_PROBES: readonly string[] = ['a'.repeat(101), 'a'.repeat(300), `..%2F${'a'.repeat(200)}`];
 
-const WITH_PATH_PARAMS = OPERATION_IDS.filter(
-  (id) =>
-    ![
-      'getHealth',
-      'getSettings',
-      'listCompetitions',
-      'listProjects',
-      'createProject',
-      'listImports',
-      'createImport',
-      'listManualSelections',
-      'listBrandAssets',
-      'registerBrandAsset',
-      'listTemplates',
-    ].includes(id),
-);
+const WITH_PATH_PARAMS = OPERATION_IDS.filter((id) => operations[id as keyof typeof operations].params !== null);
 
 describe.each(WITH_PATH_PARAMS)('path parameters of %s (T10-F03, R-224)', (operationId) => {
   it('reaches the handler with well-formed unknown IDs', async () => {

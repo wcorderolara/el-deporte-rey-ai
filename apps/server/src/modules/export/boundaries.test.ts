@@ -1,6 +1,7 @@
 /**
  * Boundaries of the export module (R-219, BR-11, T10-F08): no source file of the module (tests included) imports a
- * network module, the egress client or a provider; the module offers no publication route; and its service
+ * network module, the egress client or a provider; the module offers only export, history, download and trace routes;
+ * and its service
  * dependencies leave out every network-capable member of the container. Complements the ESLint rule of T10-F08.
  */
 import { readFileSync, readdirSync } from 'node:fs';
@@ -60,7 +61,7 @@ describe('export module boundaries (R-219, T10-F08)', () => {
     },
   );
 
-  it('registers only the export, history and trace routes: nothing publishes (BR-11)', () => {
+  it('registers only the export, history, download and trace routes: nothing publishes (BR-11)', () => {
     const routes = readFileSync(join(MODULE_DIR, 'routes.ts'), 'utf8');
     const registered = [...routes.matchAll(/app\.(get|post|put|patch|delete)\('([^']+)'/g)].map(
       (match) => `${match[1] ?? ''} ${match[2] ?? ''}`,
@@ -69,6 +70,7 @@ describe('export module boundaries (R-219, T10-F08)', () => {
       'post /carousels/:carouselId/exports',
       'get /projects/:projectId/exports',
       'get /exports/:exportId',
+      'get /exports/:exportId/download',
       'get /exports/:exportId/slides/:position/trace',
     ]);
   });

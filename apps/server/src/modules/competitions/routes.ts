@@ -4,13 +4,21 @@ import {
   ManagedCompetitionParamsSchema,
   ManagedCompetitionSchema,
   ManagedSeasonCreateSchema,
+  ManagedSeasonUpdateSchema,
   ManagedSeasonListResponseSchema,
   ManagedSeasonParamsSchema,
   ManagedSeasonSchema,
   ManagedTeamCreateSchema,
+  ManagedTeamUpdateSchema,
   ManagedTeamListResponseSchema,
   ManagedTeamParamsSchema,
   ManagedTeamSchema,
+  CompetitionTeamAddSchema,
+  CompetitionTeamListResponseSchema,
+  CompetitionTeamSchema,
+  CompetitionTeamsParamsSchema,
+  CompetitionTeamParamsSchema,
+  SeasonParticipantBatchCreateSchema,
   SeasonParticipantCreateSchema,
   SeasonParticipantListResponseSchema,
   SeasonParticipantParamsSchema,
@@ -45,6 +53,24 @@ function httpError(error: unknown): unknown {
       );
     case 'duplicate_participant':
       return new HttpProblem(409, 'DUPLICATE_PARTICIPANT', 'El equipo ya está asociado a esta temporada.');
+    case 'participant_in_use':
+      return new HttpProblem(
+        409,
+        'TEAM_IN_USE',
+        'No puedes desvincular este equipo mientras tenga partidos en el calendario de la temporada.',
+      );
+    case 'team_not_in_competition':
+      return new HttpProblem(400, 'TEAM_NOT_IN_COMPETITION', 'Asocia primero el equipo a esta competición.');
+    case 'duplicate_competition_team':
+      return new HttpProblem(409, 'DUPLICATE_COMPETITION_TEAM', 'El equipo ya está asociado a esta competición.');
+    case 'competition_team_not_found':
+      return new HttpProblem(404, 'NOT_FOUND', 'El equipo no está asociado a esta competición.');
+    case 'competition_team_in_use':
+      return new HttpProblem(
+        409,
+        'COMPETITION_TEAM_IN_USE',
+        'No se puede quitar este equipo porque participa en una o más temporadas de la competición.',
+      );
     case 'invalid_season_label':
       return new HttpProblem(400, 'VALIDATION_FAILED', 'Escribe un nombre de temporada.', {
         errors: [{ path: '/label', message: 'El nombre debe contener al menos un carácter visible.' }],
@@ -106,6 +132,13 @@ export function registerCompetitionRoutes(
       return contractResponse(ManagedSeasonSchema, administration.getSeason(competitionId, seasonId));
     }),
   );
+  app.patch('/competitions/:competitionId/seasons/:seasonId', async (request) =>
+    translated(() => {
+      const { competitionId, seasonId } = ManagedSeasonParamsSchema.parse(request.params);
+      const body = ManagedSeasonUpdateSchema.parse(request.body);
+      return contractResponse(ManagedSeasonSchema, administration.updateSeason(competitionId, seasonId, body.label));
+    }),
+  );
   app.get('/teams', async () => contractResponse(ManagedTeamListResponseSchema, { teams: administration.listTeams() }));
   app.post('/teams', async (request, reply) =>
     translated(() => {
@@ -118,6 +151,39 @@ export function registerCompetitionRoutes(
     translated(() => {
       const { teamId } = ManagedTeamParamsSchema.parse(request.params);
       return contractResponse(ManagedTeamSchema, administration.getTeam(teamId));
+    }),
+  );
+  app.patch('/teams/:teamId', async (request) =>
+    translated(() => {
+      const { teamId } = ManagedTeamParamsSchema.parse(request.params);
+      const body = ManagedTeamUpdateSchema.parse(request.body);
+      return contractResponse(ManagedTeamSchema, administration.updateTeam(teamId, body.name, body.region));
+    }),
+  );
+  app.get('/competitions/:competitionId/teams', async (request) =>
+    translated(() => {
+      const { competitionId } = CompetitionTeamsParamsSchema.parse(request.params);
+      return contractResponse(CompetitionTeamListResponseSchema, {
+        teams: administration.listCompetitionTeams(competitionId),
+      });
+    }),
+  );
+  app.post('/competitions/:competitionId/teams', async (request, reply) =>
+    translated(() => {
+      const { competitionId } = CompetitionTeamsParamsSchema.parse(request.params);
+      const body = CompetitionTeamAddSchema.parse(request.body);
+      const team =
+        'teamId' in body
+          ? administration.addCompetitionTeam(competitionId, body.teamId)
+          : administration.createAndAssociateCompetitionTeam(competitionId, body.name, body.region ?? null);
+      return reply.code(201).send(contractResponse(CompetitionTeamSchema, team));
+    }),
+  );
+  app.delete('/competitions/:competitionId/teams/:teamId', async (request, reply) =>
+    translated(() => {
+      const { competitionId, teamId } = CompetitionTeamParamsSchema.parse(request.params);
+      administration.removeCompetitionTeam(competitionId, teamId);
+      return reply.code(204).send();
     }),
   );
   app.get('/competitions/:competitionId/seasons/:seasonId/participants', async (request) =>
@@ -137,6 +203,17 @@ export function registerCompetitionRoutes(
         .send(
           contractResponse(SeasonParticipantSchema, administration.addParticipant(competitionId, seasonId, teamId)),
         );
+    }),
+  );
+  app.post('/competitions/:competitionId/seasons/:seasonId/participants/batch', async (request, reply) =>
+    translated(() => {
+      const { competitionId, seasonId } = SeasonParticipantsParamsSchema.parse(request.params);
+      const { teamIds } = SeasonParticipantBatchCreateSchema.parse(request.body);
+      return reply.code(201).send(
+        contractResponse(SeasonParticipantListResponseSchema, {
+          participants: administration.addParticipants(competitionId, seasonId, teamIds),
+        }),
+      );
     }),
   );
   app.delete('/competitions/:competitionId/seasons/:seasonId/participants/:teamId', async (request, reply) =>

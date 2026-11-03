@@ -299,6 +299,489 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [competitions]
+      operationId: updateManagedSeason
+      parameters: [{ $ref: '#/components/parameters/ClientHeader' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [label]
+              additionalProperties: false
+              properties:
+                label: { $ref: '#/components/schemas/DisplayName' }
+      responses:
+        '200': { description: Updated season., content: { application/json: { schema: { $ref: '#/components/schemas/ManagedSeason' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/seasons/{seasonId}/stages:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: seasonId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    get:
+      tags: [competitions]
+      operationId: listCompetitionStages
+      description: List optional phases of a managed season. A season with no stages remains valid.
+      responses:
+        '200':
+          description: Season phases in presentation order.
+          content:
+            application/json:
+              schema: { type: object, required: [stages], additionalProperties: false, properties: { stages: { type: array, items: { $ref: '#/components/schemas/CompetitionStage' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [competitions]
+      operationId: createCompetitionStage
+      parameters: [{ $ref: '#/components/parameters/ClientHeader' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              additionalProperties: false
+              properties:
+                name: { $ref: '#/components/schemas/DisplayName' }
+                displayOrder: { type: integer, minimum: 0 }
+      responses:
+        '201': { description: Phase created., content: { application/json: { schema: { $ref: '#/components/schemas/CompetitionStage' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/seasons/{seasonId}/stages/{stageId}:
+    parameters:
+      - { name: competitionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: seasonId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: stageId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    get:
+      tags: [competitions]
+      operationId: getCompetitionStage
+      responses:
+        '200': { description: Phase., content: { application/json: { schema: { $ref: '#/components/schemas/CompetitionStage' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [competitions]
+      operationId: updateCompetitionStage
+      parameters: [{ $ref: '#/components/parameters/ClientHeader' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              additionalProperties: false
+              properties:
+                name: { $ref: '#/components/schemas/DisplayName' }
+      responses:
+        '200': { description: Updated phase name., content: { application/json: { schema: { $ref: '#/components/schemas/CompetitionStage' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/seasons/{seasonId}/rounds:
+    parameters:
+      - { name: competitionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: seasonId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    get:
+      tags: [competitions]
+      operationId: listSeasonRounds
+      description: List jornadas or rounds organized directly within a season, without a phase.
+      responses:
+        '200':
+          description: Direct season rounds.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [rounds]
+                additionalProperties: false
+                properties:
+                  rounds:
+                    type: array
+                    items: { $ref: '#/components/schemas/CompetitionRound' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [competitions]
+      operationId: createSeasonRound
+      parameters: [{ $ref: '#/components/parameters/ClientHeader' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              additionalProperties: false
+              properties:
+                name: { $ref: '#/components/schemas/DisplayName' }
+                displayOrder: { type: integer, minimum: 0 }
+      responses:
+        '201': { description: Round created directly under the season., content: { application/json: { schema: { $ref: '#/components/schemas/CompetitionRound' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/seasons/{seasonId}/rounds/{roundId}:
+    parameters:
+      - { name: competitionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: seasonId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: roundId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    get:
+      tags: [competitions]
+      operationId: getSeasonRound
+      responses:
+        '200': { description: Round in the season., content: { application/json: { schema: { $ref: '#/components/schemas/CompetitionRound' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [competitions]
+      operationId: updateCompetitionRound
+      parameters: [{ $ref: '#/components/parameters/ClientHeader' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                name: { $ref: '#/components/schemas/DisplayName' }
+                stageId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+      responses:
+        '200': { description: Updated round name., content: { application/json: { schema: { $ref: '#/components/schemas/CompetitionRound' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [competitions]
+      operationId: deleteCompetitionRound
+      parameters: [{ $ref: '#/components/parameters/ClientHeader' }]
+      responses:
+        '204': { description: Round removed when it has no matches or result history. }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/seasons/{seasonId}/stages/{stageId}/rounds:
+    parameters:
+      - { name: competitionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: seasonId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: stageId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    get:
+      tags: [competitions]
+      operationId: listStageRounds
+      responses:
+        '200':
+          description: Rounds in the phase.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [rounds]
+                additionalProperties: false
+                properties:
+                  rounds:
+                    type: array
+                    items: { $ref: '#/components/schemas/CompetitionRound' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [competitions]
+      operationId: createStageRound
+      parameters: [{ $ref: '#/components/parameters/ClientHeader' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              additionalProperties: false
+              properties:
+                name: { $ref: '#/components/schemas/DisplayName' }
+                displayOrder: { type: integer, minimum: 0 }
+      responses:
+        '201': { description: Round created in a phase., content: { application/json: { schema: { $ref: '#/components/schemas/CompetitionRound' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/seasons/{seasonId}/matches:
+    parameters:
+      - { name: competitionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: seasonId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    get:
+      tags: [competitions]
+      operationId: listCompetitionMatches
+      responses:
+        '200':
+          description: Season matches in calendar order.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [matches]
+                additionalProperties: false
+                properties:
+                  matches:
+                    type: array
+                    items: { $ref: '#/components/schemas/CompetitionMatch' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [competitions]
+      operationId: createCompetitionMatch
+      parameters: [{ $ref: '#/components/parameters/ClientHeader' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [homeTeamId, awayTeamId]
+              additionalProperties: false
+              properties:
+                homeTeamId: { $ref: '#/components/schemas/Uuid' }
+                awayTeamId: { $ref: '#/components/schemas/Uuid' }
+                kickoffAt: { anyOf: [{ type: string, format: date-time }, { type: 'null' }] }
+                stageId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+                roundId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+      responses:
+        '201': { description: 'Match created as scheduled without an inferred score.', content: { application/json: { schema: { $ref: '#/components/schemas/CompetitionMatch' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/seasons/{seasonId}/matches/{matchId}:
+    parameters:
+      - { name: competitionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: seasonId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: matchId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    get:
+      tags: [competitions]
+      operationId: getCompetitionMatch
+      responses:
+        '200': { description: Match details., content: { application/json: { schema: { $ref: '#/components/schemas/CompetitionMatch' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/seasons/{seasonId}/matches/{matchId}/schedule:
+    parameters:
+      - { name: competitionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: seasonId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: matchId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    patch:
+      tags: [competitions]
+      operationId: updateCompetitionMatchSchedule
+      parameters: [{ $ref: '#/components/parameters/ClientHeader' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                kickoffAt: { anyOf: [{ type: string, format: date-time }, { type: 'null' }] }
+                stageId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+                roundId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+      responses:
+        '200': { description: Updated schedule; match identity and result are preserved., content: { application/json: { schema: { $ref: '#/components/schemas/CompetitionMatch' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/seasons/{seasonId}/matches/{matchId}/result:
+    parameters:
+      - { name: competitionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: seasonId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: matchId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    post:
+      tags: [competitions]
+      operationId: updateCompetitionMatchResult
+      parameters: [{ $ref: '#/components/parameters/ClientHeader' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              additionalProperties: false
+              properties:
+                status: { $ref: '#/components/schemas/CompetitionMatchStatus' }
+                homeScore: { anyOf: [{ type: integer, minimum: 0 }, { type: 'null' }] }
+                awayScore: { anyOf: [{ type: integer, minimum: 0 }, { type: 'null' }] }
+      responses:
+        '200': { description: Match status/result updated; prior snapshots remain in history., content: { application/json: { schema: { $ref: '#/components/schemas/CompetitionMatch' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/seasons/{seasonId}/matches/{matchId}/result-history:
+    parameters:
+      - { name: competitionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: seasonId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: matchId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    get:
+      tags: [competitions]
+      operationId: listCompetitionMatchResultHistory
+      responses:
+        '200':
+          description: Complete match result/status/schedule history, oldest first.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [history]
+                additionalProperties: false
+                properties:
+                  history:
+                    type: array
+                    items: { $ref: '#/components/schemas/MatchResultHistory' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/teams:
+    parameters:
+      - { name: competitionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    get:
+      tags: [competitions]
+      operationId: listCompetitionTeams
+      description: List global team identities associated with this competition.
+      responses:
+        '200':
+          description: Competition teams.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [teams]
+                additionalProperties: false
+                properties:
+                  teams:
+                    type: array
+                    items: { $ref: '#/components/schemas/CompetitionTeam' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [competitions]
+      operationId: addCompetitionTeam
+      description: Associate a catalogue team or atomically create a global team identity and associate it with this competition.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  required: [teamId]
+                  additionalProperties: false
+                  properties: { teamId: { $ref: '#/components/schemas/Uuid' } }
+                - type: object
+                  required: [name]
+                  additionalProperties: false
+                  properties:
+                    name: { $ref: '#/components/schemas/TeamName' }
+                    region: { anyOf: [{ $ref: '#/components/schemas/DisplayName' }, { type: 'null' }] }
+      responses:
+        '201':
+          description: Associated team.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CompetitionTeam' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/teams/{teamId}:
+    parameters:
+      - { name: competitionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: teamId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    delete:
+      tags: [competitions]
+      operationId: removeCompetitionTeam
+      description: Remove only the competition/team association. Removal is refused while the team participates in any season of this competition; the global Team record is retained.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '204': { description: Competition association removed; global team identity retained. }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /teams:
     get:
       tags: [teams]
@@ -368,6 +851,32 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [teams]
+      operationId: updateManagedTeam
+      description: Update the global local team identity. This affects the same Team record anywhere it is reused.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, region]
+              additionalProperties: false
+              properties:
+                name: { $ref: '#/components/schemas/TeamName' }
+                region: { anyOf: [{ $ref: '#/components/schemas/DisplayName' }, { type: 'null' }] }
+      responses:
+        '200': { description: Updated global team., content: { application/json: { schema: { $ref: '#/components/schemas/ManagedTeam' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /competitions/{competitionId}/seasons/{seasonId}/participants:
     parameters:
       - name: competitionId
@@ -426,6 +935,51 @@ paths:
         '413': { $ref: '#/components/responses/Problem' }
         '415': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/seasons/{seasonId}/participants/batch:
+    parameters:
+      - { name: competitionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: seasonId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    post:
+      tags: [competitions]
+      operationId: addSeasonParticipantsBatch
+      description: Add all requested competition teams to a season in one transaction. If any participant is invalid, the operation makes no changes.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [teamIds]
+              additionalProperties: false
+              properties:
+                teamIds:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  uniqueItems: true
+                  items: { $ref: '#/components/schemas/Uuid' }
+      responses:
+        '201':
+          description: All participants added.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [participants]
+                additionalProperties: false
+                properties:
+                  participants:
+                    type: array
+                    items: { $ref: '#/components/schemas/SeasonParticipant' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /competitions/{competitionId}/seasons/{seasonId}/participants/{teamId}:
     parameters:
       - name: competitionId
@@ -451,6 +1005,7 @@ paths:
         '400': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
         '415': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
   /projects:
@@ -1443,6 +1998,13 @@ components:
         region: { anyOf: [{ $ref: '#/components/schemas/DisplayName' }, { type: 'null' }] }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
+    CompetitionTeam:
+      type: object
+      required: [team, associatedAt]
+      additionalProperties: false
+      properties:
+        team: { $ref: '#/components/schemas/ManagedTeam' }
+        associatedAt: { type: string, format: date-time }
     SeasonParticipant:
       type: object
       required: [team, joinedAt]
@@ -1450,6 +2012,78 @@ components:
       properties:
         team: { $ref: '#/components/schemas/ManagedTeam' }
         joinedAt: { type: string, format: date-time }
+    CompetitionStage:
+      type: object
+      required: [id, seasonId, name, displayOrder, createdAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        seasonId: { $ref: '#/components/schemas/Uuid' }
+        name: { $ref: '#/components/schemas/DisplayName' }
+        displayOrder: { type: integer, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+    CompetitionRound:
+      type: object
+      required: [id, seasonId, stageId, name, displayOrder, createdAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        seasonId: { $ref: '#/components/schemas/Uuid' }
+        stageId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        name: { $ref: '#/components/schemas/DisplayName' }
+        displayOrder: { type: integer, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+    CompetitionMatchStatus:
+      type: string
+      enum: [scheduled, in_progress, finished, postponed, cancelled]
+    CompetitionMatch:
+      type: object
+      required: [id, seasonId, stage, round, homeTeam, awayTeam, kickoffAt, status, homeScore, awayScore, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        seasonId: { $ref: '#/components/schemas/Uuid' }
+        stage:
+          anyOf:
+            - type: object
+              required: [id, name]
+              additionalProperties: false
+              properties:
+                id: { $ref: '#/components/schemas/Uuid' }
+                name: { $ref: '#/components/schemas/DisplayName' }
+            - type: 'null'
+        round:
+          anyOf:
+            - type: object
+              required: [id, name]
+              additionalProperties: false
+              properties:
+                id: { $ref: '#/components/schemas/Uuid' }
+                name: { $ref: '#/components/schemas/DisplayName' }
+            - type: 'null'
+        homeTeam: { $ref: '#/components/schemas/ManagedTeam' }
+        awayTeam: { $ref: '#/components/schemas/ManagedTeam' }
+        kickoffAt: { anyOf: [{ type: string, format: date-time }, { type: 'null' }] }
+        status: { $ref: '#/components/schemas/CompetitionMatchStatus' }
+        homeScore: { anyOf: [{ type: integer, minimum: 0 }, { type: 'null' }] }
+        awayScore: { anyOf: [{ type: integer, minimum: 0 }, { type: 'null' }] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    MatchResultHistory:
+      type: object
+      required: [id, matchId, changeType, stageId, roundId, status, homeScore, awayScore, kickoffAt, recordedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        matchId: { $ref: '#/components/schemas/Uuid' }
+        changeType: { type: string, enum: [created, schedule_updated, status_updated, result_recorded, result_corrected] }
+        stageId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        roundId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        status: { $ref: '#/components/schemas/CompetitionMatchStatus' }
+        homeScore: { anyOf: [{ type: integer, minimum: 0 }, { type: 'null' }] }
+        awayScore: { anyOf: [{ type: integer, minimum: 0 }, { type: 'null' }] }
+        kickoffAt: { anyOf: [{ type: string, format: date-time }, { type: 'null' }] }
+        recordedAt: { type: string, format: date-time }
     StageName:
       description: Stage name as the source gives it; letters, marks, digits, spaces and . ' & ( ) / _ - only.
       type: string
@@ -1508,6 +2142,13 @@ components:
             - DUPLICATE_SEASON
             - DUPLICATE_TEAM
             - DUPLICATE_PARTICIPANT
+            - DUPLICATE_COMPETITION_TEAM
+            - COMPETITION_TEAM_IN_USE
+            - TEAM_NOT_IN_COMPETITION
+            - DUPLICATE_STAGE
+            - DUPLICATE_ROUND
+            - DUPLICATE_MATCH
+            - TEAM_IN_USE
             - PROVIDER_FAILED
             - PROVIDER_RATE_LIMITED
             - SELECTION_UNAVAILABLE

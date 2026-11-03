@@ -64,16 +64,16 @@ describe('contract document', () => {
     );
   });
 
-  it('has 52 operations on 41 paths, 20 of them mutating, with unique operation IDs', () => {
-    expect(Object.keys(child(document, 'paths'))).toHaveLength(41);
-    expect(operations).toHaveLength(52);
-    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(20);
+  it('has 75 operations on 54 paths, 34 of them mutating, with unique operation IDs', () => {
+    expect(Object.keys(child(document, 'paths'))).toHaveLength(54);
+    expect(operations).toHaveLength(75);
+    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(34);
     const ids = operations.map((operation) => operation.operation.operationId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('has 89 component schemas', () => {
-    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(89);
+  it('has 95 component schemas', () => {
+    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(95);
   });
 });
 
@@ -265,9 +265,22 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/paths/~1competitions~1{competitionId}: added',
       '/paths/~1competitions~1{competitionId}~1seasons: added',
       '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}: added',
+      '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1stages: added',
+      '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1stages~1{stageId}: added',
+      '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1rounds: added',
+      '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1rounds~1{roundId}: added',
+      '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1stages~1{stageId}~1rounds: added',
+      '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1matches: added',
+      '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1matches~1{matchId}: added',
+      '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1matches~1{matchId}~1schedule: added',
+      '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1matches~1{matchId}~1result: added',
+      '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1matches~1{matchId}~1result-history: added',
+      '/paths/~1competitions~1{competitionId}~1teams: added',
+      '/paths/~1competitions~1{competitionId}~1teams~1{teamId}: added',
       '/paths/~1teams: added',
       '/paths/~1teams~1{teamId}: added',
       '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1participants: added',
+      '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1participants~1batch: added',
       '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1participants~1{teamId}: added',
       '/paths/~1exports~1{exportId}~1download: added',
       '/components/schemas/Problem/properties/code/enum/15: changed',
@@ -282,11 +295,24 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/Problem/properties/code/enum/24: added',
       '/components/schemas/Problem/properties/code/enum/25: added',
       '/components/schemas/Problem/properties/code/enum/26: added',
+      '/components/schemas/Problem/properties/code/enum/27: added',
+      '/components/schemas/Problem/properties/code/enum/28: added',
+      '/components/schemas/Problem/properties/code/enum/29: added',
+      '/components/schemas/Problem/properties/code/enum/30: added',
+      '/components/schemas/Problem/properties/code/enum/31: added',
+      '/components/schemas/Problem/properties/code/enum/32: added',
+      '/components/schemas/Problem/properties/code/enum/33: added',
       '/components/schemas/QaResult/oneOf/5: added',
       '/components/schemas/Competition: added',
       '/components/schemas/ManagedSeason: added',
       '/components/schemas/ManagedTeam: added',
+      '/components/schemas/CompetitionTeam: added',
       '/components/schemas/SeasonParticipant: added',
+      '/components/schemas/CompetitionStage: added',
+      '/components/schemas/CompetitionRound: added',
+      '/components/schemas/CompetitionMatchStatus: added',
+      '/components/schemas/CompetitionMatch: added',
+      '/components/schemas/MatchResultHistory: added',
     ]);
   });
 

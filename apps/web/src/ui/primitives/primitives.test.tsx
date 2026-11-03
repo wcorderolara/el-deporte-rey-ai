@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { FormEvent } from 'react';
 
 import { Alert } from './Alert';
 import { Badge } from './Badge';
@@ -10,12 +11,108 @@ import { EmptyState } from './EmptyState';
 import { IconButton } from './IconButton';
 import { Input } from './Input';
 import { LoadingState } from './LoadingState';
+import { Modal, ModalFooter } from './Modal';
+import { Tabs } from './Tabs';
 import { Select } from './Select';
 import { Textarea } from './Textarea';
+import { ViewModeToggle } from './Modal';
 
 afterEach(cleanup);
 
 describe('design-system actions', () => {
+  it('groups modal actions together at the right without spacing them apart', () => {
+    render(
+      <ModalFooter onCancel={vi.fn()}>
+        <Button type="submit">Guardar cambios</Button>
+      </ModalFooter>,
+    );
+    const footer = screen.getByRole('button', { name: 'Cancelar' }).parentElement;
+    expect(footer?.className).toContain('justify-end');
+    expect(footer?.className).toContain('gap-3');
+    expect(footer?.className).not.toContain('justify-between');
+    expect(footer?.textContent).toBe('CancelarGuardar cambios');
+  });
+
+  it('provides accessible tabs with arrow-key navigation', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Tabs
+        id="calendar-tabs"
+        label="Organización"
+        options={[
+          { value: 'stages', label: 'Fases' },
+          { value: 'direct', label: 'Jornadas directas' },
+        ]}
+        value="stages"
+        onChange={onChange}
+      />,
+    );
+    const tablist = screen.getByRole('tablist', { name: 'Organización' });
+    const stages = screen.getByRole('tab', { name: 'Fases' });
+    const direct = screen.getByRole('tab', { name: 'Jornadas directas' });
+    expect(stages.getAttribute('aria-selected')).toBe('true');
+    expect(stages.getAttribute('aria-controls')).toBe('calendar-tabs-panel-stages');
+    expect(direct.getAttribute('tabindex')).toBe('-1');
+    stages.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(document.activeElement).toBe(direct);
+    expect(onChange).toHaveBeenCalledWith('direct');
+    expect(tablist.getAttribute('aria-label')).toBe('Organización');
+  });
+
+  it('closes a form dialog with Cancel or Escape without submitting it', async () => {
+    const onClose = vi.fn();
+    const onSubmit = vi.fn((event: FormEvent<HTMLFormElement>) => event.preventDefault());
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <Modal title="Crear fase" onClose={onClose}>
+        <form onSubmit={onSubmit}>
+          <Input id="modal-name" label="Nombre" />
+          <ModalFooter onCancel={onClose}>
+            <Button type="submit">Crear</Button>
+          </ModalFooter>
+        </form>
+      </Modal>,
+    );
+    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Nombre' }));
+    expect(screen.getByRole('button', { name: 'Cerrar' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onSubmit).not.toHaveBeenCalled();
+    onClose.mockClear();
+    await user.click(screen.getByRole('button', { name: 'Cerrar' }));
+    expect(onClose).toHaveBeenCalledOnce();
+    onClose.mockClear();
+    rerender(
+      <Modal title="Crear fase" onClose={onClose}>
+        <form onSubmit={onSubmit}>
+          <Input id="modal-name" label="Nombre" />
+          <ModalFooter onCancel={onClose}>
+            <Button type="submit">Crear</Button>
+          </ModalFooter>
+        </form>
+      </Modal>,
+    );
+    await user.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('exposes icon view controls with labels, tooltips and a selected state', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<ViewModeToggle value="table" onChange={onChange} />);
+    const table = screen.getByRole('button', { name: 'Vista de tabla' });
+    const cards = screen.getByRole('button', { name: 'Vista de tarjetas' });
+    expect(table.getAttribute('aria-pressed')).toBe('true');
+    expect(cards.getAttribute('aria-pressed')).toBe('false');
+    expect(table.getAttribute('title')).toBe('Vista de tabla');
+    expect(cards.getAttribute('title')).toBe('Vista de tarjetas');
+    await user.click(cards);
+    expect(onChange).toHaveBeenCalledWith('cards');
+  });
+
   it('keeps Button native, actionable and loading-safe', async () => {
     const onClick = vi.fn();
     const user = userEvent.setup();

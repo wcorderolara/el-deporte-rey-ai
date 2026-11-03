@@ -154,19 +154,104 @@ beforeAll(async () => {
   await d.call('getManagedSeason', {
     params: { competitionId: managedCompetitionId, seasonId: managedSeasonId },
   });
+  await d.call('updateManagedSeason', {
+    params: { competitionId: managedCompetitionId, seasonId: managedSeasonId },
+    json: { label: 'Temporada contractual actualizada' },
+  });
   const createdTeam = await d.call('createManagedTeam', {
     json: { name: 'Equipo contractual', region: 'Región de prueba' },
   });
   const managedTeamId = String((createdTeam.body as { id: string }).id);
+  await d.call('updateManagedTeam', {
+    params: { teamId: managedTeamId },
+    json: { name: 'Equipo contractual actualizado', region: 'Región de prueba' },
+  });
   await d.call('listManagedTeams');
   await d.call('getManagedTeam', { params: { teamId: managedTeamId } });
   const participantParams = { competitionId: managedCompetitionId, seasonId: managedSeasonId };
+  await d.call('listCompetitionTeams', { params: { competitionId: managedCompetitionId } });
+  await d.call('addCompetitionTeam', {
+    params: { competitionId: managedCompetitionId },
+    json: { teamId: managedTeamId },
+  });
   await d.call('listSeasonParticipants', { params: participantParams });
   await d.call('addSeasonParticipant', { params: participantParams, json: { teamId: managedTeamId } });
   await d.call('listSeasonParticipants', { params: participantParams });
-  await d.call('removeSeasonParticipant', {
-    params: { ...participantParams, teamId: managedTeamId },
+  const awayTeam = await d.call('createManagedTeam', { json: { name: 'Otro equipo contractual' } });
+  const awayTeamId = String((awayTeam.body as { id: string }).id);
+  await d.call('addCompetitionTeam', {
+    params: { competitionId: managedCompetitionId },
+    json: { teamId: awayTeamId },
   });
+  await d.call('addSeasonParticipant', { params: participantParams, json: { teamId: awayTeamId } });
+  const phase = await d.call('createCompetitionStage', {
+    params: participantParams,
+    json: { name: 'Fase contractual' },
+  });
+  const stageId = String((phase.body as { id: string }).id);
+  await d.call('listCompetitionStages', { params: participantParams });
+  await d.call('getCompetitionStage', { params: { ...participantParams, stageId } });
+  await d.call('updateCompetitionStage', {
+    params: { ...participantParams, stageId },
+    json: { name: 'Fase contractual editada' },
+  });
+  const directRound = await d.call('createSeasonRound', {
+    params: participantParams,
+    json: { name: 'Jornada contractual' },
+  });
+  const directRoundId = String((directRound.body as { id: string }).id);
+  await d.call('listSeasonRounds', { params: participantParams });
+  await d.call('getSeasonRound', { params: { ...participantParams, roundId: directRoundId } });
+  await d.call('updateCompetitionRound', {
+    params: { ...participantParams, roundId: directRoundId },
+    json: { name: 'Jornada contractual editada' },
+  });
+  await d.call('deleteCompetitionRound', {
+    params: { ...participantParams, roundId: directRoundId },
+  });
+  const stageRound = await d.call('createStageRound', {
+    params: { ...participantParams, stageId },
+    json: { name: 'Ronda contractual' },
+  });
+  const stageRoundId = String((stageRound.body as { id: string }).id);
+  await d.call('listStageRounds', { params: { ...participantParams, stageId } });
+  const fixture = await d.call('createCompetitionMatch', {
+    params: participantParams,
+    json: { homeTeamId: managedTeamId, awayTeamId, stageId, roundId: stageRoundId },
+  });
+  const matchId = String((fixture.body as { id: string }).id);
+  await d.call('listCompetitionMatches', { params: participantParams });
+  await d.call('getCompetitionMatch', { params: { ...participantParams, matchId } });
+  await d.call('updateCompetitionMatchSchedule', {
+    params: { ...participantParams, matchId },
+    json: { kickoffAt: '2027-05-10T18:00:00Z' },
+  });
+  await d.call('updateCompetitionMatchResult', {
+    params: { ...participantParams, matchId },
+    json: { status: 'finished', homeScore: 2, awayScore: 1 },
+  });
+  await d.call('listCompetitionMatchResultHistory', { params: { ...participantParams, matchId } });
+  const unusedTeam = await d.call('createManagedTeam', { json: { name: 'Equipo sin partidos' } });
+  const unusedTeamId = String((unusedTeam.body as { id: string }).id);
+  await d.call('addSeasonParticipant', { params: participantParams, json: { teamId: unusedTeamId } });
+  await d.call('removeSeasonParticipant', {
+    params: { ...participantParams, teamId: unusedTeamId },
+  });
+  await d.call('removeCompetitionTeam', {
+    params: { competitionId: managedCompetitionId, teamId: unusedTeamId },
+  });
+  const batchTeams = await Promise.all([
+    d.call('createManagedTeam', { json: { name: 'Equipo lote uno' } }),
+    d.call('createManagedTeam', { json: { name: 'Equipo lote dos' } }),
+  ]);
+  const batchTeamIds = batchTeams.map((entry) => String((entry.body as { id: string }).id));
+  for (const teamId of batchTeamIds) {
+    await d.call('addCompetitionTeam', { params: { competitionId: managedCompetitionId }, json: { teamId } });
+  }
+  await d.call('addSeasonParticipantsBatch', { params: participantParams, json: { teamIds: batchTeamIds } });
+  for (const teamId of batchTeamIds) {
+    await d.call('removeSeasonParticipant', { params: { ...participantParams, teamId } });
+  }
 }, RUN_TIMEOUT);
 
 afterAll(async () => {

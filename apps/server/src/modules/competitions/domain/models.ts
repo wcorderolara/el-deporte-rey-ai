@@ -18,3 +18,8 @@ export interface SeasonParticipant {
   readonly team: LocalTeam;
   readonly joinedAt: string;
 }
+
+export interface CompetitionTeam {
+  readonly team: LocalTeam;
+  readonly associatedAt: string;
+}

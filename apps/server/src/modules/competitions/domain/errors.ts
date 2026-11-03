@@ -6,6 +6,11 @@ export type CompetitionAdministrationErrorCode =
   | 'duplicate_season'
   | 'duplicate_team'
   | 'duplicate_participant'
+  | 'participant_in_use'
+  | 'team_not_in_competition'
+  | 'duplicate_competition_team'
+  | 'competition_team_not_found'
+  | 'competition_team_in_use'
   | 'invalid_season_label'
   | 'invalid_team_name'
   | 'invalid_team_region';

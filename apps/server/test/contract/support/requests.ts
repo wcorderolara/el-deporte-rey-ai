@@ -5,7 +5,7 @@
  */
 import { deflateSync } from 'node:zlib';
 
-import type { OperationId } from '@edr/contracts';
+import { operationList, type OperationId } from '@edr/contracts';
 
 import { requestSamples } from './samples.js';
 import { type CallOptions, type ContractSpec, wellFormedParams } from './served.js';
@@ -56,64 +56,8 @@ export function syntheticPng(width = 8, height = 8, note = 'contract'): Buffer {
   ]);
 }
 
-/**
- * The contract operation IDs in document order, listed statically so that `describe.each` can enumerate them before
- * the contract is loaded; a test checks the list against the document.
- */
-export const OPERATION_IDS = [
-  'getHealth',
-  'getSettings',
-  'listCompetitions',
-  'listManagedCompetitions',
-  'createCompetition',
-  'getCompetition',
-  'listManagedSeasons',
-  'createManagedSeason',
-  'getManagedSeason',
-  'listManagedTeams',
-  'createManagedTeam',
-  'getManagedTeam',
-  'listSeasonParticipants',
-  'addSeasonParticipant',
-  'removeSeasonParticipant',
-  'listSeasons',
-  'listStages',
-  'listProjects',
-  'createProject',
-  'getProject',
-  'updateProject',
-  'listRuns',
-  'startRun',
-  'getRun',
-  'listFacts',
-  'approveFactManually',
-  'revokeManualFactApproval',
-  'getActiveDraft',
-  'setExcludedMatches',
-  'getSlideImage',
-  'regenerateElement',
-  'approveElement',
-  'withdrawElementApproval',
-  'acknowledgeQaWarnings',
-  'approveCarousel',
-  'exportCarousel',
-  'listProjectExports',
-  'getExport',
-  'downloadExport',
-  'traceExportedSlide',
-  'listImports',
-  'createImport',
-  'getImport',
-  'getImportOriginal',
-  'listManualSelections',
-  'getManualVersion',
-  'listBrandAssets',
-  'registerBrandAsset',
-  'updateBrandAsset',
-  'getBrandAssetFile',
-  'listTemplates',
-  'previewTemplate',
-] as const;
+/** All contract operation IDs, enumerated before `describe.each` creates its cases. */
+export const OPERATION_IDS = operationList.map((operation) => operation.operationId);
 
 /** Required query parameters of the operations that have them. */
 export const VALID_QUERY: Partial<Record<OperationId, Record<string, string>>> = {

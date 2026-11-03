@@ -261,6 +261,40 @@ const EXPECTED_COLUMNS: Readonly<Record<string, readonly string[]>> = {
     'registered_at',
     'deactivated_at',
   ],
+  competitions: ['id', 'name', 'created_at', 'updated_at'],
+  competition_seasons: ['id', 'competition_id', 'label', 'normalized_label', 'created_at'],
+  managed_teams: ['id', 'name', 'normalized_name', 'region', 'normalized_region', 'created_at', 'updated_at'],
+  season_participants: ['season_id', 'team_id', 'joined_at'],
+  competition_stages: ['id', 'season_id', 'name', 'normalized_name', 'display_order', 'created_at'],
+  competition_rounds: ['id', 'season_id', 'stage_id', 'name', 'normalized_name', 'display_order', 'created_at'],
+  competition_matches: [
+    'id',
+    'season_id',
+    'stage_id',
+    'round_id',
+    'home_team_id',
+    'away_team_id',
+    'kickoff_at',
+    'status',
+    'home_score',
+    'away_score',
+    'created_at',
+    'updated_at',
+  ],
+  match_results: ['match_id', 'home_score', 'away_score', 'updated_at'],
+  match_result_history: [
+    'id',
+    'match_id',
+    'change_type',
+    'status',
+    'home_score',
+    'away_score',
+    'kickoff_at',
+    'recorded_at',
+    'stage_id',
+    'round_id',
+  ],
+  competition_teams: ['competition_id', 'team_id', 'associated_at'],
 };
 
 /** Foreign keys of data-model.md section 3 as `column -> table`. */
@@ -298,6 +332,33 @@ const EXPECTED_FOREIGN_KEYS: Readonly<Record<string, readonly string[]>> = {
   final_approvals: ['carousel_id -> carousels'],
   exports: ['carousel_id -> carousels', 'final_approval_id -> final_approvals'],
   export_files: ['element_version_id -> element_versions', 'export_id -> exports'],
+  competition_seasons: ['competition_id -> competitions'],
+  season_participants: ['season_id -> competition_seasons', 'team_id -> managed_teams'],
+  competition_stages: ['season_id -> competition_seasons'],
+  competition_rounds: [
+    'season_id -> competition_seasons',
+    'season_id -> competition_stages',
+    'stage_id -> competition_stages',
+  ],
+  competition_matches: [
+    'away_team_id -> season_participants',
+    'home_team_id -> season_participants',
+    'round_id -> competition_rounds',
+    'season_id -> competition_rounds',
+    'season_id -> competition_seasons',
+    'season_id -> competition_stages',
+    'season_id -> season_participants',
+    'season_id -> season_participants',
+    'stage_id -> competition_rounds',
+    'stage_id -> competition_stages',
+  ],
+  match_results: ['match_id -> competition_matches'],
+  match_result_history: [
+    'match_id -> competition_matches',
+    'round_id -> competition_rounds',
+    'stage_id -> competition_stages',
+  ],
+  competition_teams: ['competition_id -> competitions', 'team_id -> managed_teams'],
 };
 
 /** Indexes of data-model.md section 4 as `table (columns)`. */
@@ -319,6 +380,19 @@ const EXPECTED_INDEXES = [
   'brand_assets (kind, active)',
   'imports (received_at)',
   'manual_selection_versions (competition_id, season_id, stage_id, matchday_key, superseded_at)',
+  'competitions (created_at, id)',
+  'competition_seasons (competition_id, created_at, id)',
+  'managed_teams (normalized_name, normalized_region, id)',
+  'season_participants (team_id, season_id)',
+  'competition_teams (team_id, competition_id)',
+  'competition_stages (season_id, display_order, created_at, id)',
+  'competition_rounds (season_id, normalized_name)',
+  'competition_rounds (season_id, stage_id, normalized_name)',
+  'competition_rounds (season_id, stage_id, display_order, created_at, id)',
+  'competition_matches (season_id, home_team_id, away_team_id, , , kickoff_at)',
+  'competition_matches (season_id, kickoff_at, created_at, id)',
+  'competition_matches (season_id, stage_id, round_id, kickoff_at, id)',
+  'match_result_history (match_id, recorded_at, id)',
 ];
 
 let dir: string;
@@ -388,8 +462,8 @@ describe('R-233 schema test: no player-level, person, user-account or credential
   });
 });
 
-describe('structure of the migrated schema (0001_initial.sql, 0002_qa_capitalized_tokens.sql)', () => {
-  it('is at version 2', () => {
+describe('structure of the migrated schema', () => {
+  it('applies all migrations through the current competition calendar schema', () => {
     expect(
       db
         .prepare<{ version: number; name: string }>('SELECT version, name FROM schema_migrations ORDER BY version')
@@ -397,6 +471,12 @@ describe('structure of the migrated schema (0001_initial.sql, 0002_qa_capitalize
     ).toEqual([
       { version: 1, name: 'initial' },
       { version: 2, name: 'qa_capitalized_tokens' },
+      { version: 3, name: 'competitions' },
+      { version: 4, name: 'seasons_and_participants' },
+      { version: 5, name: 'calendar_and_results' },
+      { version: 6, name: 'match_results' },
+      { version: 7, name: 'competition_teams' },
+      { version: 8, name: 'independent_match_state_and_scores' },
     ]);
   });
 

@@ -15,10 +15,23 @@ PD-ARCH-01A (Competition Foundation) and PD-ARCH-01B (Seasons & Participants) re
 | ADR-ARCH-07 | A season is unique by normalized label within one managed competition and is retained as history. | Adopted in 01B; `2026/27` and `2027` remain valid labels. |
 | ADR-ARCH-08 | Reuse one global managed team by exact normalized name+optional region; do not fuzzy-merge similar names. | Adopted in 01B. A region distinguishes same-named clubs when needed; provider IDs are absent. |
 | ADR-ARCH-09 | Season membership is unique per `(season, team)`; unlinking removes only that relation. | Adopted in 01B; team catalog entries are retained. |
+| ADR-ARCH-10 | Stages and rounds are optional calendar groupings, not required season structure. Rounds may be direct to a season or nested under a stage; matches can be direct, stage-only, round-only or stage-round. | Adopted in 01C; no synthetic phase or numeric/consecutive round assumption. Season is always required. |
+| ADR-ARCH-11 | A match has one current result pair and append-only state/schedule/result snapshots. | Adopted in 01C; manual status transitions are unrestricted and state is independent from a nullable, paired nonnegative score. No-op updates do not append history. |
+| ADR-ARCH-12 | A season participant referenced by a match cannot be unlinked. | Adopted in 01C to preserve season membership and match foreign-key integrity; unused participants remain unlinkable. |
+| ADR-ARCH-13 | Evolve applied calendar storage only through an additive migration; preserve legacy score columns while introducing normalized current-result rows and optional history context. | Adopted for the 01C blocking compatibility correction after reproducing `no such table: match_results` against a database already at migration 0005. |
+| ADR-ARCH-14 | Separate global Team identity, competition association and season participation as `Team`, `CompetitionTeam` and `SeasonParticipant`. Backfill historical participants through an additive migration; enroll multiple teams transactionally. | Adopted in PD-ARCH-01C. No team identity or existing season/match relation is rebuilt or deleted. |
+| ADR-ARCH-15 | Edit global Team fields through its stable team ID; remove a competition association only when no season in that competition uses the team. | Adopted in PD-ARCH-01C. Team updates are visible anywhere that identity is reused; unlinking never deletes the catalog Team and is blocked while season participants depend on it. |
+| ADR-ARCH-16 | Manual match administration permits any status-to-status change; score pairs may be present in any status. | Adopted in PD-ARCH-01C. `null/null` represents no result; `0/0` is a recorded score. Migration 0008 relaxes the legacy status/score CHECK without changing match IDs or history. |
 
 ## PD-ARCH-01B acceptance
 
-The Product Owner approved PD-ARCH-01B on 2026-10-30 after functional and visual review. The approved implementation and documentation are committed on `work/PD-ARCH-01B`; see the implementation report for the checkpoint SHA. It is not merged.
+The Product Owner approved PD-ARCH-01B on 2026-10-30 after functional and visual review. The approved implementation and documentation are committed at `4087eec` on `work/PD-ARCH-01B`. It is not merged.
+
+## PD-ARCH-01C status
+
+The Product Owner accepted PD-ARCH-01C on 2026-11-03. Implementation is on `work/PD-ARCH-01C`, based on PD-ARCH-01B checkpoint `4087eec`. Technical checks passed and the accepted implementation was closed in the branch checkpoint; see the 01C implementation report for verification and commit SHA.
+
+PD-ARCH-01D is in architecture proposal/review only. No provider, migration or implementation is approved.
 
 ## Preserved WI-1/WI-2 decisions
 

@@ -86,6 +86,10 @@ const COMMITTED = [
   { version: 2, name: 'qa_capitalized_tokens' },
   { version: 3, name: 'competitions' },
   { version: 4, name: 'seasons_and_participants' },
+  { version: 5, name: 'calendar_and_results' },
+  { version: 6, name: 'match_results' },
+  { version: 7, name: 'competition_teams' },
+  { version: 8, name: 'independent_match_state_and_scores' },
 ];
 
 describe('committed migrations', () => {
@@ -99,6 +103,14 @@ describe('committed migrations', () => {
       { version: 2, name: 'qa_capitalized_tokens', fileName: '0002_qa_capitalized_tokens.sql' },
       { version: 3, name: 'competitions', fileName: '0003_competitions.sql' },
       { version: 4, name: 'seasons_and_participants', fileName: '0004_seasons_and_participants.sql' },
+      { version: 5, name: 'calendar_and_results', fileName: '0005_calendar_and_results.sql' },
+      { version: 6, name: 'match_results', fileName: '0006_match_results.sql' },
+      { version: 7, name: 'competition_teams', fileName: '0007_competition_teams.sql' },
+      {
+        version: 8,
+        name: 'independent_match_state_and_scores',
+        fileName: '0008_independent_match_state_and_scores.sql',
+      },
     ]);
   });
 
@@ -106,27 +118,103 @@ describe('committed migrations', () => {
     const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
     const first = openMigratedDatabase({ location, now: () => FIXED_NOW });
     try {
-      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 4 });
+      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 8 });
       expect(first.db.prepare('PRAGMA journal_mode').get()).toEqual({ journal_mode: 'wal' });
       expect(first.db.prepare('PRAGMA foreign_keys').get()).toEqual({ foreign_keys: 1 });
       expect(appliedMigrations(first.db)).toEqual(
         COMMITTED.map((record) => ({ ...record, appliedAt: '2026-10-27T16:32:21.123Z' })),
       );
-      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 4 });
+      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 8 });
     } finally {
       first.db.close();
     }
 
     const second = openMigratedDatabase({ location });
     try {
-      expect(second.report).toEqual({ applied: [], currentVersion: 4 });
+      expect(second.report).toEqual({ applied: [], currentVersion: 8 });
+      expect(tableExists(second.db, 'competition_teams')).toBe(true);
       expect(tableExists(second.db, 'facts')).toBe(true);
       expect(tableExists(second.db, 'competitions')).toBe(true);
       expect(tableExists(second.db, 'competition_seasons')).toBe(true);
       expect(tableExists(second.db, 'managed_teams')).toBe(true);
       expect(tableExists(second.db, 'season_participants')).toBe(true);
+      expect(tableExists(second.db, 'match_results')).toBe(true);
+      expect(
+        second.db
+          .prepare<{ name: string }>('PRAGMA table_info(match_result_history)')
+          .all()
+          .map((column) => column.name),
+      ).toContain('stage_id');
     } finally {
       second.db.close();
+    }
+  });
+
+  it('adds result storage to an already migrated 0005 database and preserves existing scores', () => {
+    const committed = defaultMigrationsDirectory();
+    const throughFive = migrationDir(
+      Object.fromEntries(
+        readMigrations(committed)
+          .filter(({ version }) => version <= 5)
+          .map(({ fileName }) => [fileName, readFileSync(path.join(committed, fileName), 'utf8')]),
+      ),
+    );
+    const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
+    const { db } = openMigratedDatabase({ location, directory: throughFive });
+    try {
+      db.transaction(() => {
+        db.prepare('INSERT INTO competitions (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)').run([
+          'c1',
+          'Liga',
+          FIXED_NOW.toISOString(),
+          FIXED_NOW.toISOString(),
+        ]);
+        db.prepare(
+          'INSERT INTO competition_seasons (id, competition_id, label, normalized_label, created_at) VALUES (?, ?, ?, ?, ?)',
+        ).run(['s1', 'c1', '2026/27', '2026/27', FIXED_NOW.toISOString()]);
+        for (const [id, name] of [
+          ['t1', 'Local'],
+          ['t2', 'Visitante'],
+        ] as const) {
+          db.prepare(
+            'INSERT INTO managed_teams (id, name, normalized_name, region, normalized_region, created_at, updated_at) VALUES (?, ?, ?, NULL, ?, ?, ?)',
+          ).run([id, name, name.toLowerCase(), '', FIXED_NOW.toISOString(), FIXED_NOW.toISOString()]);
+          db.prepare('INSERT INTO season_participants (season_id, team_id, joined_at) VALUES (?, ?, ?)').run([
+            's1',
+            id,
+            FIXED_NOW.toISOString(),
+          ]);
+        }
+        db.prepare(
+          "INSERT INTO competition_matches (id, season_id, stage_id, round_id, home_team_id, away_team_id, kickoff_at, status, home_score, away_score, created_at, updated_at) VALUES ('m1', 's1', NULL, NULL, 't1', 't2', NULL, 'finished', 2, 1, ?, ?)",
+        ).run([FIXED_NOW.toISOString(), FIXED_NOW.toISOString()]);
+        db.prepare(
+          "INSERT INTO match_result_history (id, match_id, change_type, status, home_score, away_score, kickoff_at, recorded_at) VALUES ('h1', 'm1', 'result_recorded', 'finished', 2, 1, NULL, ?)",
+        ).run([FIXED_NOW.toISOString()]);
+      });
+
+      expect(runMigrations(db)).toEqual({
+        applied: [
+          { version: 6, name: 'match_results' },
+          { version: 7, name: 'competition_teams' },
+          { version: 8, name: 'independent_match_state_and_scores' },
+        ],
+        currentVersion: 8,
+      });
+      expect(db.prepare('SELECT competition_id, team_id FROM competition_teams ORDER BY team_id').all()).toEqual([
+        { competition_id: 'c1', team_id: 't1' },
+        { competition_id: 'c1', team_id: 't2' },
+      ]);
+      expect(db.prepare('SELECT match_id, home_score, away_score FROM match_results').all()).toEqual([
+        { match_id: 'm1', home_score: 2, away_score: 1 },
+      ]);
+      expect(db.prepare('SELECT stage_id, round_id FROM match_result_history WHERE id = ?').get(['h1'])).toEqual({
+        stage_id: null,
+        round_id: null,
+      });
+      expect(db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
+    } finally {
+      db.close();
     }
   });
 });
@@ -452,8 +540,12 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
           { version: 2, name: 'qa_capitalized_tokens' },
           { version: 3, name: 'competitions' },
           { version: 4, name: 'seasons_and_participants' },
+          { version: 5, name: 'calendar_and_results' },
+          { version: 6, name: 'match_results' },
+          { version: 7, name: 'competition_teams' },
+          { version: 8, name: 'independent_match_state_and_scores' },
         ],
-        currentVersion: 4,
+        currentVersion: 8,
       });
 
       expect(db.prepare(QA_RESULT_BYTES).all()).toEqual(bytesBefore);
@@ -488,7 +580,7 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
     // Reopening applies nothing more.
     const reopened = openMigratedDatabase({ location });
     try {
-      expect(reopened.report).toEqual({ applied: [], currentVersion: 4 });
+      expect(reopened.report).toEqual({ applied: [], currentVersion: 8 });
     } finally {
       reopened.db.close();
     }

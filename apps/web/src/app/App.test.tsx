@@ -58,6 +58,7 @@ describe('App shell (R-235)', () => {
       'Inicio',
       'Crear contenido',
       'Mis proyectos',
+      'Competiciones',
       'Exportaciones',
       'Plantillas',
       'Mi marca',

@@ -6,5 +6,8 @@ export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { IconButton, type IconButtonProps } from './IconButton';
 export { Input, type InputProps } from './Input';
 export { LoadingState, type LoadingStateProps } from './LoadingState';
+export { Modal, ModalFooter, ViewModeToggle } from './Modal';
+export { Icon, type StudioIconName } from './Icon';
 export { Select, type SelectProps } from './Select';
+export { Tabs, tabPanelId, type TabOption } from './Tabs';
 export { Textarea, type TextareaProps } from './Textarea';
