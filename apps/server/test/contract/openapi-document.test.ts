@@ -64,16 +64,16 @@ describe('contract document', () => {
     );
   });
 
-  it('has 88 operations on 65 paths, 39 of them mutating, with unique operation IDs', () => {
-    expect(Object.keys(child(document, 'paths'))).toHaveLength(65);
-    expect(operations).toHaveLength(88);
-    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(39);
+  it('has 93 operations on 70 paths, 42 of them mutating, with unique operation IDs', () => {
+    expect(Object.keys(child(document, 'paths'))).toHaveLength(70);
+    expect(operations).toHaveLength(93);
+    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(42);
     const ids = operations.map((operation) => operation.operation.operationId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('has 115 component schemas', () => {
-    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(115);
+  it('has 127 component schemas', () => {
+    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(127);
   });
 });
 
@@ -278,6 +278,11 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/paths/~1competitions~1{competitionId}~1import-operations~1{operationId}~1events: added',
       '/paths/~1competitions~1{competitionId}~1import-previews: added',
       '/paths/~1competitions~1{competitionId}~1import-previews~1{previewId}: added',
+      '/paths/~1competitions~1{competitionId}~1import-previews~1{previewId}~1application-plan: added',
+      '/paths/~1competitions~1{competitionId}~1import-previews~1{previewId}~1applications: added',
+      '/paths/~1competitions~1{competitionId}~1import-applications~1{operationId}: added',
+      '/paths/~1competitions~1{competitionId}~1import-applications~1{operationId}~1cancel: added',
+      '/paths/~1competitions~1{competitionId}~1import-applications~1{operationId}~1events: added',
       '/paths/~1competitions~1{competitionId}: added',
       '/paths/~1competitions~1{competitionId}~1seasons: added',
       '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}: added',
@@ -344,6 +349,18 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/ImportPreviewWarning: added',
       '/components/schemas/ImportPreview: added',
       '/components/schemas/ImportPreviewResponse: added',
+      '/components/schemas/ImportApplyDecision: added',
+      '/components/schemas/ImportApplyPlanRequest: added',
+      '/components/schemas/ImportApplyStartRequest: added',
+      '/components/schemas/ImportApplyCounts: added',
+      '/components/schemas/ImportApplyPlanItem: added',
+      '/components/schemas/ImportApplyBlocker: added',
+      '/components/schemas/ImportApplyPlan: added',
+      '/components/schemas/ImportApplyPlanResponse: added',
+      '/components/schemas/ImportApplication: added',
+      '/components/schemas/ImportApplyOperation: added',
+      '/components/schemas/ImportApplyOperationResponse: added',
+      '/components/schemas/ImportApplyOperationStartResponse: added',
       '/components/schemas/ManagedSeason: added',
       '/components/schemas/ManagedTeam: added',
       '/components/schemas/CompetitionTeam: added',

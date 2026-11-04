@@ -14,6 +14,11 @@
 | ADR-01D-A-01 | El primer binding mantiene `provider_key` estable y una referencia interna `source_id` hacia la instancia configurada del adapter. | Implementado. El backend reutiliza el `SourceRegistry`; la UI y los contratos no reciben `source_id`, opciones ni credenciales. La misma instancia y sus presupuestos existentes sirven a todas las competiciones vinculadas. |
 | ADR-01D-A-02 | El binding conserva historial con estados `active`, `replaced` y `unlinked`. | Implementado. Reemplazo requiere `replaceExisting: true`; desvincular marca el registro como `unlinked` y no borra datos deportivos locales. Un índice único parcial restringe cada competición a un solo binding activo. |
 | ADR-01D-A-03 | La primera implementación expone la consulta normalizada del catálogo externo, sin guardar datos deportivos importados. | Implementado para football-data.org mediante su adapter registrado. La respuesta pública ofrece `externalCompetitionId`, nombre y área; la referencia opaca del adapter nunca sale del backend. |
+| ADR-01D-C-01 | La aplicación usa únicamente el snapshot persistido de 01D-B y nunca consulta el proveedor. | Implementado, pendiente de aceptación. Snapshot expirado, obsoleto, re-vinculado, aplicado o con huella distinta se rechaza y exige otro preview. |
+| ADR-01D-C-02 | Un plan de solo lectura con `planHash` es el contrato de confirmación; la persistencia recalcula el plan dentro de `BEGIN IMMEDIATE` y exige el mismo hash. | Implementado, pendiente de aceptación. Nunca se aplica una propuesta que el operador no vio. |
+| ADR-01D-C-03 | Una aplicación es una transacción por temporada que incluye entidades, mappings, auditoría y el estado `completed` de la operación. | Implementado, pendiente de aceptación. Un fallo o reinicio no deja aplicación parcial. |
+| ADR-01D-C-04 | Las identidades externas tienen ámbito de competición, también para equipos globales; un mapping de otra competición solo se ofrece como candidato. | Implementado, pendiente de aceptación (cumple ADR-01D-04 y ADR-01D-07). |
+| ADR-01D-C-05 | La provenance inicial es el baseline por campo sincronizado en el mapping; los valores protegidos solo cambian con `accept_incoming` auditado. | Implementado, pendiente de aceptación. Campos sincronizados en 01D-C: fecha, estado y marcador del partido. |
 
 ## Cardinalidad
 

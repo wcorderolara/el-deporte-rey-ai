@@ -490,6 +490,132 @@ paths:
         '404': { $ref: '#/components/responses/Problem' }
         '410': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/import-previews/{previewId}/application-plan:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: previewId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    post:
+      tags: [competitions]
+      operationId: planCompetitionImportApplication
+      description: Read-only dry run of a confirmed import from the stored snapshot. Returns what would be created, updated, kept or skipped, the explicit decisions still required and the plan hash to confirm. Never contacts the provider and writes no sports data.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ImportApplyPlanRequest' }
+      responses:
+        '200': { description: Current application plan., content: { application/json: { schema: { $ref: '#/components/schemas/ImportApplyPlanResponse' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '410': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/import-previews/{previewId}/applications:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: previewId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    post:
+      tags: [competitions]
+      operationId: startCompetitionImportApplication
+      description: Explicitly confirm a reviewed plan and start its durable application. The backend re-validates expiry, snapshot hash, binding, local fingerprint, decisions and the confirmed plan hash, then applies the season in one SQLite transaction. Repeating the request for the same snapshot returns the same operation. Never contacts the provider.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ImportApplyStartRequest' }
+      responses:
+        '202': { description: 'Queued, running or already completed application.', content: { application/json: { schema: { $ref: '#/components/schemas/ImportApplyOperationStartResponse' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '410': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/import-applications/{operationId}:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: operationId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    get:
+      tags: [competitions]
+      operationId: getCompetitionImportApplication
+      description: Status of a confirmed application and, once completed, its persisted result. Survives preview expiry.
+      responses:
+        '200': { description: Application operation., content: { application/json: { schema: { $ref: '#/components/schemas/ImportApplyOperationResponse' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/import-applications/{operationId}/cancel:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: operationId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    post:
+      tags: [competitions]
+      operationId: cancelCompetitionImportApplication
+      description: Request cancellation before persistence starts. Once the write transaction starts the application cannot be cancelled (409) and either commits completely or rolls back.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '200': { description: Application operation after the request., content: { application/json: { schema: { $ref: '#/components/schemas/ImportApplyOperationResponse' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/import-applications/{operationId}/events:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: operationId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    get:
+      tags: [competitions]
+      operationId: streamCompetitionImportApplication
+      description: SSE notifications of confirmed application stages with resumable sequence IDs. SQLite remains authoritative.
+      responses:
+        '200': { description: Server-sent progress events., content: { text/event-stream: { schema: { type: string } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /competitions/{competitionId}:
     parameters:
       - name: competitionId
@@ -2471,6 +2597,161 @@ components:
       additionalProperties: false
       properties:
         preview: { $ref: '#/components/schemas/ImportPreview' }
+    ImportApplyDecision:
+      type: object
+      required: [resource, externalId, externalScope, action, localId]
+      additionalProperties: false
+      properties:
+        resource: { $ref: '#/components/schemas/ImportResource' }
+        externalId: { type: string, minLength: 1, maxLength: 200 }
+        externalScope: { anyOf: [{ type: string, maxLength: 200 }, { type: 'null' }] }
+        action: { type: string, enum: [link, skip, accept_incoming] }
+        localId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+    ImportApplyPlanRequest:
+      type: object
+      required: [decisions]
+      additionalProperties: false
+      properties:
+        decisions: { type: array, maxItems: 2000, items: { $ref: '#/components/schemas/ImportApplyDecision' } }
+    ImportApplyStartRequest:
+      type: object
+      required: [decisions, planHash]
+      additionalProperties: false
+      properties:
+        decisions: { type: array, maxItems: 2000, items: { $ref: '#/components/schemas/ImportApplyDecision' } }
+        planHash: { type: string, pattern: '^[0-9a-f]{64}$' }
+    ImportApplyCounts:
+      type: object
+      required: [seasonsCreated, teamsCreated, teamsReused, associationsCreated, participantsCreated, stagesCreated, roundsCreated, matchesCreated, matchesUpdated, resultsApplied, mappingsCreated, unchanged, skipped, conflictsNotApplied]
+      additionalProperties: false
+      properties:
+        seasonsCreated: { type: integer, minimum: 0 }
+        teamsCreated: { type: integer, minimum: 0 }
+        teamsReused: { type: integer, minimum: 0 }
+        associationsCreated: { type: integer, minimum: 0 }
+        participantsCreated: { type: integer, minimum: 0 }
+        stagesCreated: { type: integer, minimum: 0 }
+        roundsCreated: { type: integer, minimum: 0 }
+        matchesCreated: { type: integer, minimum: 0 }
+        matchesUpdated: { type: integer, minimum: 0 }
+        resultsApplied: { type: integer, minimum: 0 }
+        mappingsCreated: { type: integer, minimum: 0 }
+        unchanged: { type: integer, minimum: 0 }
+        skipped: { type: integer, minimum: 0 }
+        conflictsNotApplied: { type: integer, minimum: 0 }
+    ImportApplyPlanItem:
+      type: object
+      required: [resource, externalId, externalScope, title, action, reason, localId, localLabel, candidates, options, decision, changes]
+      additionalProperties: false
+      properties:
+        resource: { $ref: '#/components/schemas/ImportResource' }
+        externalId: { type: string, minLength: 1, maxLength: 200 }
+        externalScope: { anyOf: [{ type: string, maxLength: 200 }, { type: 'null' }] }
+        title: { $ref: '#/components/schemas/DisplayName' }
+        action: { type: string, enum: [create, link, reuse, update, unchanged, keep_local, skip, blocked] }
+        reason: { anyOf: [{ type: string, maxLength: 240 }, { type: 'null' }] }
+        localId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        localLabel: { anyOf: [{ type: string, maxLength: 160 }, { type: 'null' }] }
+        candidates: { type: array, maxItems: 20, items: { type: object, required: [id, label], additionalProperties: false, properties: { id: { $ref: '#/components/schemas/Uuid' }, label: { type: string, minLength: 1, maxLength: 160 } } } }
+        options: { type: array, maxItems: 3, items: { type: string, enum: [link, skip, accept_incoming] } }
+        decision: { anyOf: [{ type: string, enum: [link, skip, accept_incoming] }, { type: 'null' }] }
+        changes: { type: array, maxItems: 10, items: { type: object, required: [field, localValue, incomingValue, applied], additionalProperties: false, properties: { field: { type: string, minLength: 1, maxLength: 80 }, localValue: { anyOf: [{ type: string, maxLength: 500 }, { type: number }, { type: boolean }, { type: 'null' }] }, incomingValue: { anyOf: [{ type: string, maxLength: 500 }, { type: number }, { type: boolean }, { type: 'null' }] }, applied: { type: boolean } } } }
+    ImportApplyBlocker:
+      type: object
+      required: [code, message, count]
+      additionalProperties: false
+      properties:
+        code: { type: string, minLength: 1, maxLength: 80 }
+        message: { type: string, minLength: 1, maxLength: 240 }
+        count: { type: integer, minimum: 1 }
+    ImportApplyPlan:
+      type: object
+      required: [previewId, competitionId, providerName, externalCompetitionName, externalSeasonLabel, destinationSeasonId, destinationLabel, destinationIsNew, expiresAt, planHash, ready, totals, counts, blockers, warnings, reviewItems, reviewItemsTruncated]
+      additionalProperties: false
+      properties:
+        previewId: { $ref: '#/components/schemas/Uuid' }
+        competitionId: { $ref: '#/components/schemas/Uuid' }
+        providerName: { $ref: '#/components/schemas/DisplayName' }
+        externalCompetitionName: { $ref: '#/components/schemas/DisplayName' }
+        externalSeasonLabel: { $ref: '#/components/schemas/DisplayName' }
+        destinationSeasonId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        destinationLabel: { type: string, minLength: 1, maxLength: 160 }
+        destinationIsNew: { type: boolean }
+        expiresAt: { type: string, format: date-time }
+        planHash: { type: string, pattern: '^[0-9a-f]{64}$' }
+        ready: { type: boolean }
+        totals:
+          type: object
+          required: [create, update, unchanged, keepLocal, skip, blocked]
+          additionalProperties: false
+          properties:
+            create: { type: integer, minimum: 0 }
+            update: { type: integer, minimum: 0 }
+            unchanged: { type: integer, minimum: 0 }
+            keepLocal: { type: integer, minimum: 0 }
+            skip: { type: integer, minimum: 0 }
+            blocked: { type: integer, minimum: 0 }
+        counts: { $ref: '#/components/schemas/ImportApplyCounts' }
+        blockers: { type: array, maxItems: 50, items: { $ref: '#/components/schemas/ImportApplyBlocker' } }
+        warnings: { type: array, maxItems: 50, items: { type: string, minLength: 1, maxLength: 240 } }
+        reviewItems: { type: array, maxItems: 2000, items: { $ref: '#/components/schemas/ImportApplyPlanItem' } }
+        reviewItemsTruncated: { type: boolean }
+    ImportApplyPlanResponse:
+      type: object
+      required: [plan]
+      additionalProperties: false
+      properties:
+        plan: { $ref: '#/components/schemas/ImportApplyPlan' }
+    ImportApplication:
+      type: object
+      required: [applicationId, operationId, previewId, competitionId, providerName, externalSeasonLabel, destinationSeasonId, destinationSeasonLabel, appliedAt, counts, notApplied]
+      additionalProperties: false
+      properties:
+        applicationId: { $ref: '#/components/schemas/Uuid' }
+        operationId: { $ref: '#/components/schemas/Uuid' }
+        previewId: { $ref: '#/components/schemas/Uuid' }
+        competitionId: { $ref: '#/components/schemas/Uuid' }
+        providerName: { $ref: '#/components/schemas/DisplayName' }
+        externalSeasonLabel: { $ref: '#/components/schemas/DisplayName' }
+        destinationSeasonId: { $ref: '#/components/schemas/Uuid' }
+        destinationSeasonLabel: { $ref: '#/components/schemas/DisplayName' }
+        appliedAt: { type: string, format: date-time }
+        counts: { $ref: '#/components/schemas/ImportApplyCounts' }
+        notApplied: { type: array, maxItems: 500, items: { type: object, required: [resource, externalId, title, action, reason], additionalProperties: false, properties: { resource: { $ref: '#/components/schemas/ImportResource' }, externalId: { type: string, minLength: 1, maxLength: 200 }, title: { $ref: '#/components/schemas/DisplayName' }, action: { type: string, enum: [keep_local, skip] }, reason: { anyOf: [{ type: string, maxLength: 240 }, { type: 'null' }] } } } }
+    ImportApplyOperation:
+      type: object
+      required: [operationId, competitionId, previewId, status, currentStage, completedStages, cancellationRequested, cancellable, application, errorCode, errorMessage, createdAt, startedAt, updatedAt, completedAt]
+      additionalProperties: false
+      properties:
+        operationId: { $ref: '#/components/schemas/Uuid' }
+        competitionId: { $ref: '#/components/schemas/Uuid' }
+        previewId: { $ref: '#/components/schemas/Uuid' }
+        status: { type: string, enum: [queued, running, completed, failed, cancelled] }
+        currentStage: { anyOf: [{ type: string, enum: [validating, resolving_identities, transforming, persisting] }, { type: 'null' }] }
+        completedStages: { type: array, maxItems: 4, items: { type: string, enum: [validating, resolving_identities, transforming, persisting] } }
+        cancellationRequested: { type: boolean }
+        cancellable: { type: boolean }
+        application: { anyOf: [{ $ref: '#/components/schemas/ImportApplication' }, { type: 'null' }] }
+        errorCode: { anyOf: [{ type: string, maxLength: 80 }, { type: 'null' }] }
+        errorMessage: { anyOf: [{ type: string, maxLength: 240 }, { type: 'null' }] }
+        createdAt: { type: string, format: date-time }
+        startedAt: { anyOf: [{ type: string, format: date-time }, { type: 'null' }] }
+        updatedAt: { type: string, format: date-time }
+        completedAt: { anyOf: [{ type: string, format: date-time }, { type: 'null' }] }
+    ImportApplyOperationResponse:
+      type: object
+      required: [operation]
+      additionalProperties: false
+      properties:
+        operation: { $ref: '#/components/schemas/ImportApplyOperation' }
+    ImportApplyOperationStartResponse:
+      type: object
+      required: [operation, statusUrl, eventsUrl]
+      additionalProperties: false
+      properties:
+        operation: { $ref: '#/components/schemas/ImportApplyOperation' }
+        statusUrl: { type: string, pattern: '^/api/v1/competitions/' }
+        eventsUrl: { type: string, pattern: '^/api/v1/competitions/' }
     ManagedSeason:
       type: object
       required: [id, competitionId, label, createdAt]

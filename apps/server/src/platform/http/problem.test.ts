@@ -91,11 +91,12 @@ describe('HttpProblem', () => {
   });
 
   it('lists the contract problem codes and refusal reasons', () => {
-    expect(PROBLEM_CODES).toHaveLength(38);
+    expect(PROBLEM_CODES).toHaveLength(39);
     expect(PROBLEM_CODES).toContain('MISDIRECTED_HOST');
     expect(PROBLEM_CODES).toContain('FORBIDDEN_ORIGIN');
     expect(PROBLEM_CODES).toContain('PROVIDER_BINDING_EXISTS');
     expect(PROBLEM_CODES).toContain('PROVIDER_UNAVAILABLE');
+    expect(PROBLEM_CODES).toContain('IMPORT_PREVIEW_EXPIRED');
     expect(REFUSAL_REASONS).toContain('source_not_selectable');
   });
 });

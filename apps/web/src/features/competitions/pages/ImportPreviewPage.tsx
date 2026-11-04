@@ -28,6 +28,13 @@ import {
   describeError,
 } from '../../../ui';
 import { useCompetitionsApi } from '../CompetitionsContext';
+import {
+  ConfirmImportModal,
+  ImportApplyProgress,
+  ImportApplyResult,
+  ImportApplyReview,
+  useImportApplication,
+} from '../components/ImportApplication';
 
 const labels: Record<ImportResource, string> = {
   season: 'Temporada',
@@ -352,6 +359,7 @@ export function ImportPreviewPage() {
   const [capabilityLoading, setCapabilityLoading] = useState(false);
   const [error, setError] = useState<unknown>();
   const [expired, setExpired] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [verification, setVerification] = useState<{
     tone: 'success' | 'warning' | 'danger';
     title: string;
@@ -415,6 +423,18 @@ export function ImportPreviewPage() {
     return () => controller.abort();
   }, [api, competitionId, externalSeasonId]);
 
+  const application = useImportApplication(api, competitionId, preview && showResults ? preview : undefined);
+  const applied = application.operation?.status === 'completed' && application.operation.application !== null;
+  useEffect(() => {
+    // Local views fetch on mount; refresh the seasons this page lists once an import committed.
+    if (!competitionId || !applied) return;
+    const controller = new AbortController();
+    void api
+      .listSeasons(competitionId, controller.signal)
+      .then(setLocalSeasons)
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [api, competitionId, applied]);
   const selectedSeason = useMemo(
     () => seasons.find((season) => season.externalSeasonId === externalSeasonId),
     [externalSeasonId, seasons],
@@ -777,526 +797,589 @@ export function ImportPreviewPage() {
           Importar datos
         </h1>
         <p className="m-0 max-w-3xl text-body-sm text-text-secondary">
-          Consulta información de la fuente vinculada y revisa la propuesta antes de importarla. Ningún registro
-          deportivo local ha sido modificado.
+          {applied
+            ? 'Los datos confirmados se guardaron en la base de datos local.'
+            : 'Consulta información de la fuente vinculada y revisa la propuesta antes de importarla. Ningún registro deportivo local cambia hasta que confirmes la importación.'}
         </p>
       </header>
-      {processFailed ? (
-        <ProcessPanel
-          completed={false}
-          failed={true}
-          operation={operation}
-          competition={competition?.name ?? 'Competición'}
-          season={selectedSeason?.label ?? operation?.externalSeasonId ?? externalSeasonId}
-          provider={providerName}
-        />
-      ) : null}
-      {problem && !preview ? (
-        <Alert role="alert" tone="danger" title="No se pudo consultar la información">
-          <p className="m-0">{operation?.errorMessage ?? problem.message}</p>
-          <Button variant="secondaryFilled" onClick={() => void (processFailed ? createPreview() : load())}>
-            Reintentar
-          </Button>
-        </Alert>
-      ) : null}
-      {operation?.status === 'cancelled' ? (
-        <Alert role="status" tone="info" title="Consulta cancelada">
-          <p className="m-0">No se importaron datos deportivos. Puedes preparar otra vista previa.</p>
-        </Alert>
-      ) : null}
-      {!problem && !operation && seasons.length === 0 ? (
-        <EmptyState
-          title="No hay temporadas disponibles"
-          description="El proveedor no devolvió temporadas para esta competición externa."
-          icon="⌁"
-        />
-      ) : null}
-      {seasons.length > 0 && !busy && !preview ? (
-        <form onSubmit={(event) => void create(event)} className="grid min-w-0 gap-4">
-          <Card className="grid min-w-0 gap-4">
-            <Select
-              id="external-season"
-              label="Temporada externa"
-              disabled={busy}
-              value={externalSeasonId}
-              onChange={(event) => {
-                setExternalSeasonId(event.target.value);
-                setResources([]);
-                setPreview(undefined);
-              }}
-            >
-              <option value="">Selecciona una temporada</option>
-              {seasons.map((option) => (
-                <option key={option.externalSeasonId} value={option.externalSeasonId}>
-                  {option.label}
-                  {option.current ? ' · Actual' : ''}
-                </option>
-              ))}
-            </Select>
-            {selectedSeason?.localCandidates.length ? (
-              <p className="m-0 text-body-sm text-warning">
-                Hay temporadas locales con nombre coincidente. La vinculación no se selecciona automáticamente.
-              </p>
-            ) : null}
-            <Select
-              id="destination-season"
-              label="Destino local (opcional)"
-              disabled={busy}
-              value={destinationSeasonId}
-              onChange={(event) => {
-                setDestinationSeasonId(event.target.value);
-                setPreview(undefined);
-              }}
-            >
-              <option value="">Preparar una temporada local nueva</option>
-              {localSeasons.map((season) => (
-                <option key={season.id} value={season.id}>
-                  {season.label}
-                </option>
-              ))}
-            </Select>
-            {capabilityLoading ? <LoadingState layout="inline" label="Consultando recursos disponibles…" /> : null}
-            {externalSeasonId && !capabilityLoading ? (
-              <fieldset className="grid gap-2 border-0 p-0">
-                <legend className="mb-2 text-body-sm font-bold text-text-primary">Información a consultar</legend>
-                {capabilities.map((capability) => (
-                  <label
-                    key={capability.resource}
-                    className={`flex min-h-touch items-start gap-3 rounded-xl border border-border-subtle px-3 py-2 ${capability.available ? 'text-text-primary' : 'text-text-muted'}`}
-                  >
-                    <input
-                      type="checkbox"
-                      disabled={busy || !capability.available}
-                      checked={resources.includes(capability.resource)}
-                      onChange={() => toggleResource(capability.resource)}
-                    />
-                    <span>
-                      <strong>{labels[capability.resource]}</strong>
-                      {!capability.available && capability.reason ? (
-                        <small className="block text-text-secondary">{capability.reason}</small>
-                      ) : null}
-                    </span>
-                  </label>
-                ))}
-              </fieldset>
-            ) : null}
-            <div>
-              <Button type="submit" disabled={busy || capabilityLoading || !externalSeasonId || resources.length === 0}>
-                {busy ? 'Consultando proveedor…' : 'Consultar y preparar vista previa'}
-              </Button>
-            </div>
-          </Card>
-        </form>
-      ) : null}
-      {busy ? (
-        <section aria-live="polite">
-          <ProcessPanel
-            completed={false}
-            failed={false}
-            operation={operation}
-            competition={competition?.name ?? 'Competición'}
-            season={selectedSeason?.label ?? operation?.externalSeasonId ?? externalSeasonId}
-            provider={providerName}
-            onCancel={() => void cancelWait()}
+      {application.operation && competitionId ? (
+        applied ? (
+          <ImportApplyResult
+            competitionId={competitionId}
+            operation={application.operation}
+            onNewImport={() => {
+              application.reset();
+              if (operationKey) sessionStorage.removeItem(operationKey);
+              setOperation(undefined);
+              setPreview(undefined);
+              setShowResults(false);
+              setVerification(undefined);
+              void api.listExternalSeasons(competitionId).then(setSeasons).catch(setError);
+            }}
           />
-        </section>
+        ) : (
+          <ImportApplyProgress state={application} />
+        )
       ) : null}
-      {preview && !showResults ? (
-        <ProcessPanel
-          completed={true}
-          failed={false}
-          competition={preview.externalCompetitionName}
-          season={preview.externalSeasonLabel}
-          provider={preview.providerName}
-          preview={preview}
-          onView={() => setShowResults(true)}
-          backTo={`/competitions/${competitionId}`}
-        />
-      ) : null}
-      {preview && showResults ? (
-        <section className="grid min-w-0 gap-4" aria-labelledby="preview-results-title">
-          <Card className="grid min-w-0 gap-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h2 id="preview-results-title" className="m-0 font-display text-heading-sm font-bold text-text-primary">
-                  Propuesta para {competition?.name ?? preview.externalCompetitionName}
-                </h2>
-                <p className="m-0 mt-1 text-body-sm text-text-secondary">
-                  Temporada externa: {preview.externalSeasonLabel} · {preview.providerName}
-                </p>
-              </div>
-              <span className="rounded-full border border-warning bg-warning-surface px-3 py-1 text-caption font-semibold text-warning">
-                Pendiente de importación
-              </span>
-            </div>
-            <ol aria-label="Estado del proceso" className="m-0 grid list-none gap-2 p-0 sm:grid-cols-4">
-              {['Datos consultados', 'Datos normalizados', 'Vista previa preparada', 'Pendiente de importación'].map(
-                (step, index) => (
-                  <li
-                    key={step}
-                    className={`rounded-lg border px-3 py-2 text-body-sm ${index < 3 ? 'border-success bg-success-surface text-success' : 'border-warning bg-warning-surface text-warning'}`}
-                  >
-                    <span className="mr-2 font-bold">{index < 3 ? '✓' : '4'}</span>
-                    {step}
-                  </li>
-                ),
-              )}
-            </ol>
-            <Alert role="note" tone="info" title="Los datos aún no se han importado">
-              <p className="m-0">
-                La vista previa está preparada para revisar. Los datos todavía no se han importado y ningún registro
-                deportivo local cambió. La confirmación e importación se implementarán en PD-ARCH-01D-C.
-              </p>
+      {application.operation &&
+      application.operation.status !== 'failed' &&
+      application.operation.status !== 'cancelled' ? null : (
+        <>
+          {processFailed ? (
+            <ProcessPanel
+              completed={false}
+              failed={true}
+              operation={operation}
+              competition={competition?.name ?? 'Competición'}
+              season={selectedSeason?.label ?? operation?.externalSeasonId ?? externalSeasonId}
+              provider={providerName}
+            />
+          ) : null}
+          {problem && !preview ? (
+            <Alert role="alert" tone="danger" title="No se pudo consultar la información">
+              <p className="m-0">{operation?.errorMessage ?? problem.message}</p>
+              <Button variant="secondaryFilled" onClick={() => void (processFailed ? createPreview() : load())}>
+                Reintentar
+              </Button>
             </Alert>
-            <dl className="grid min-w-0 grid-cols-1 gap-x-5 gap-y-3 text-body-sm sm:grid-cols-2 xl:grid-cols-3">
-              <div>
-                <dt className="text-text-secondary">Competición externa</dt>
-                <dd className="m-0 font-semibold text-text-primary">{preview.externalCompetitionName}</dd>
-              </div>
-              <div>
-                <dt className="text-text-secondary">Destino local</dt>
-                <dd className="m-0 font-semibold text-text-primary">
-                  {localSeasons.find((season) => season.id === preview.destinationSeasonId)?.label ??
-                    'Temporada local nueva'}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-text-secondary">Consultada</dt>
-                <dd className="m-0 font-semibold text-text-primary">
-                  {new Date(preview.retrievedAt).toLocaleString()}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-text-secondary">Expira</dt>
-                <dd className="m-0 font-semibold text-text-primary">{new Date(preview.expiresAt).toLocaleString()}</dd>
-              </div>
-              <div>
-                <dt className="text-text-secondary">Vigencia local</dt>
-                <dd className="m-0 font-semibold text-text-primary">
-                  {preview.stale ? 'Obsoleta: hubo cambios locales' : 'Vigente'}
-                </dd>
-              </div>
-            </dl>
-            <div>
-              <h3 className="mb-2 mt-0 text-body-sm font-bold text-text-primary">Registros por recurso</h3>
-              <dl className="m-0 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
-                {grouped.map((resource) => (
-                  <div key={resource} className="rounded-lg border border-border-subtle bg-surface-raised p-3">
-                    <dt className="text-caption text-text-secondary">{labels[resource]}</dt>
-                    <dd className="m-0 mt-1 text-heading-sm font-bold text-text-primary">
-                      {preview.items.filter((item) => item.resource === resource).length}
+          ) : null}
+          {operation?.status === 'cancelled' ? (
+            <Alert role="status" tone="info" title="Consulta cancelada">
+              <p className="m-0">No se importaron datos deportivos. Puedes preparar otra vista previa.</p>
+            </Alert>
+          ) : null}
+          {!problem && !operation && seasons.length === 0 ? (
+            <EmptyState
+              title="No hay temporadas disponibles"
+              description="El proveedor no devolvió temporadas para esta competición externa."
+              icon="⌁"
+            />
+          ) : null}
+          {seasons.length > 0 && !busy && !preview ? (
+            <form onSubmit={(event) => void create(event)} className="grid min-w-0 gap-4">
+              <Card className="grid min-w-0 gap-4">
+                <Select
+                  id="external-season"
+                  label="Temporada externa"
+                  disabled={busy}
+                  value={externalSeasonId}
+                  onChange={(event) => {
+                    setExternalSeasonId(event.target.value);
+                    setResources([]);
+                    setPreview(undefined);
+                  }}
+                >
+                  <option value="">Selecciona una temporada</option>
+                  {seasons.map((option) => (
+                    <option key={option.externalSeasonId} value={option.externalSeasonId}>
+                      {option.label}
+                      {option.current ? ' · Actual' : ''}
+                    </option>
+                  ))}
+                </Select>
+                {selectedSeason?.localCandidates.length ? (
+                  <p className="m-0 text-body-sm text-warning">
+                    Hay temporadas locales con nombre coincidente. La vinculación no se selecciona automáticamente.
+                  </p>
+                ) : null}
+                <Select
+                  id="destination-season"
+                  label="Destino local (opcional)"
+                  disabled={busy}
+                  value={destinationSeasonId}
+                  onChange={(event) => {
+                    setDestinationSeasonId(event.target.value);
+                    setPreview(undefined);
+                  }}
+                >
+                  <option value="">Preparar una temporada local nueva</option>
+                  {localSeasons.map((season) => (
+                    <option key={season.id} value={season.id}>
+                      {season.label}
+                    </option>
+                  ))}
+                </Select>
+                {capabilityLoading ? <LoadingState layout="inline" label="Consultando recursos disponibles…" /> : null}
+                {externalSeasonId && !capabilityLoading ? (
+                  <fieldset className="grid gap-2 border-0 p-0">
+                    <legend className="mb-2 text-body-sm font-bold text-text-primary">Información a consultar</legend>
+                    {capabilities.map((capability) => (
+                      <label
+                        key={capability.resource}
+                        className={`flex min-h-touch items-start gap-3 rounded-xl border border-border-subtle px-3 py-2 ${capability.available ? 'text-text-primary' : 'text-text-muted'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          disabled={busy || !capability.available}
+                          checked={resources.includes(capability.resource)}
+                          onChange={() => toggleResource(capability.resource)}
+                        />
+                        <span>
+                          <strong>{labels[capability.resource]}</strong>
+                          {!capability.available && capability.reason ? (
+                            <small className="block text-text-secondary">{capability.reason}</small>
+                          ) : null}
+                        </span>
+                      </label>
+                    ))}
+                  </fieldset>
+                ) : null}
+                <div>
+                  <Button
+                    type="submit"
+                    disabled={busy || capabilityLoading || !externalSeasonId || resources.length === 0}
+                  >
+                    {busy ? 'Consultando proveedor…' : 'Consultar y preparar vista previa'}
+                  </Button>
+                </div>
+              </Card>
+            </form>
+          ) : null}
+          {busy ? (
+            <section aria-live="polite">
+              <ProcessPanel
+                completed={false}
+                failed={false}
+                operation={operation}
+                competition={competition?.name ?? 'Competición'}
+                season={selectedSeason?.label ?? operation?.externalSeasonId ?? externalSeasonId}
+                provider={providerName}
+                onCancel={() => void cancelWait()}
+              />
+            </section>
+          ) : null}
+          {preview && !showResults ? (
+            <ProcessPanel
+              completed={true}
+              failed={false}
+              competition={preview.externalCompetitionName}
+              season={preview.externalSeasonLabel}
+              provider={preview.providerName}
+              preview={preview}
+              onView={() => setShowResults(true)}
+              backTo={`/competitions/${competitionId}`}
+            />
+          ) : null}
+          {preview && showResults ? (
+            <section className="grid min-w-0 gap-4" aria-labelledby="preview-results-title">
+              <Card className="grid min-w-0 gap-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2
+                      id="preview-results-title"
+                      className="m-0 font-display text-heading-sm font-bold text-text-primary"
+                    >
+                      Propuesta para {competition?.name ?? preview.externalCompetitionName}
+                    </h2>
+                    <p className="m-0 mt-1 text-body-sm text-text-secondary">
+                      Temporada externa: {preview.externalSeasonLabel} · {preview.providerName}
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-warning bg-warning-surface px-3 py-1 text-caption font-semibold text-warning">
+                    Pendiente de importación
+                  </span>
+                </div>
+                <ol aria-label="Estado del proceso" className="m-0 grid list-none gap-2 p-0 sm:grid-cols-4">
+                  {[
+                    'Datos consultados',
+                    'Datos normalizados',
+                    'Vista previa preparada',
+                    'Pendiente de importación',
+                  ].map((step, index) => (
+                    <li
+                      key={step}
+                      className={`rounded-lg border px-3 py-2 text-body-sm ${index < 3 ? 'border-success bg-success-surface text-success' : 'border-warning bg-warning-surface text-warning'}`}
+                    >
+                      <span className="mr-2 font-bold">{index < 3 ? '✓' : '4'}</span>
+                      {step}
+                    </li>
+                  ))}
+                </ol>
+                <Alert role="note" tone="info" title="Los datos aún no se han importado">
+                  <p className="m-0">
+                    Revisa los registros y las decisiones pendientes. Ningún registro deportivo local cambia hasta que
+                    confirmes la importación.
+                  </p>
+                </Alert>
+                <dl className="grid min-w-0 grid-cols-1 gap-x-5 gap-y-3 text-body-sm sm:grid-cols-2 xl:grid-cols-3">
+                  <div>
+                    <dt className="text-text-secondary">Competición externa</dt>
+                    <dd className="m-0 font-semibold text-text-primary">{preview.externalCompetitionName}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-text-secondary">Destino local</dt>
+                    <dd className="m-0 font-semibold text-text-primary">
+                      {localSeasons.find((season) => season.id === preview.destinationSeasonId)?.label ??
+                        'Temporada local nueva'}
                     </dd>
                   </div>
-                ))}
-              </dl>
-            </div>
-            <div>
-              <h3 className="mb-2 mt-0 text-body-sm font-bold text-text-primary">Operaciones propuestas</h3>
-              <dl className="m-0 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-                {operationKeys
-                  .filter((key) => preview.summary[key] > 0)
-                  .map((key) => (
-                    <div key={key} className="rounded-lg border border-border-subtle p-3">
-                      <dt className="text-caption text-text-secondary">{operationNames[key]}</dt>
-                      <dd className="m-0 mt-1 font-bold text-text-primary">{preview.summary[key]}</dd>
-                    </div>
-                  ))}
-              </dl>
-            </div>
-            {preview.stale ? (
-              <Alert tone="warning" title="Los datos locales cambiaron">
-                <p className="m-0">
-                  Esta propuesta se generó antes de los cambios locales. Vuelve a consultar para revisar el estado
-                  actual antes de una futura importación.
-                </p>
-              </Alert>
-            ) : null}
-            {preview.warnings.length ? (
-              <Alert tone="warning" title={`${warningCount} advertencias en ${preview.warnings.length} tipos`}>
-                <p className="m-0">
-                  Consulta la pestaña Advertencias para revisar los grupos y sus registros relacionados.
-                </p>
-              </Alert>
-            ) : null}
-          </Card>
-          {verification ? (
-            <Alert role="status" tone={verification.tone} title={verification.title}>
-              <p className="m-0">{verification.message}</p>
-            </Alert>
-          ) : null}
-          {problem && preview && !verification ? (
-            <Alert
-              role="alert"
-              tone={expired ? 'warning' : 'danger'}
-              title={expired ? 'Vista previa expirada' : 'No se completó la verificación'}
-            >
-              <p className="m-0">{problem.message}</p>
-            </Alert>
-          ) : null}
-          <div className="grid min-w-0 gap-3">
-            <Tabs
-              id="import-preview-resources"
-              label="Recursos de la vista previa"
-              options={tabOptions}
-              value={activeTab || tabOptions[0]?.value || ''}
-              onChange={(value) => {
-                setActiveTab(value);
-                setPage(0);
-              }}
-            />
-            {isWarningTab ? (
-              <div
-                id={tabPanelId('import-preview-resources', 'warnings')}
-                role="tabpanel"
-                aria-labelledby="import-preview-resources-tab-warnings"
-                className="grid gap-3"
-              >
-                {preview.warnings.map((warning) => (
-                  <Alert
-                    key={warning.code}
-                    tone={warning.severity === 'error' ? 'danger' : warning.severity === 'info' ? 'info' : 'warning'}
-                    title={`${warning.severity === 'conflict' ? 'Conflicto' : warning.severity === 'error' ? 'Error' : warning.severity === 'info' ? 'Información' : 'Advertencia'} · ${warning.occurrenceCount} ${warning.occurrenceCount === 1 ? 'ocurrencia' : 'ocurrencias'}`}
-                  >
-                    <p className="m-0">{warning.message}</p>
-                    {warning.affectedExternalIds.length ? (
-                      <details className="mt-2">
-                        <DisclosureSummary>
-                          Ver registros afectados ({warning.affectedExternalIds.length})
-                        </DisclosureSummary>
-                        <ul className="mb-0 mt-2 grid gap-1">
-                          {warning.affectedExternalIds.map((id) => (
-                            <li key={id}>{id}</li>
-                          ))}
-                        </ul>
-                      </details>
-                    ) : null}
-                  </Alert>
-                ))}
-              </div>
-            ) : activeResource ? (
-              <div
-                id={tabPanelId('import-preview-resources', activeResource)}
-                role="tabpanel"
-                aria-labelledby={`import-preview-resources-tab-${activeResource}`}
-                className="grid min-w-0 gap-3"
-              >
-                <div className="flex min-w-0 flex-wrap items-end gap-3">
-                  <div className="min-w-[min(100%,15rem)] flex-1">
-                    <Input
-                      id="preview-search"
-                      label="Buscar por equipo o referencia"
-                      value={search}
-                      onChange={(event) => {
-                        setSearch(event.target.value);
-                        setPage(0);
-                      }}
-                    />
+                  <div>
+                    <dt className="text-text-secondary">Consultada</dt>
+                    <dd className="m-0 font-semibold text-text-primary">
+                      {new Date(preview.retrievedAt).toLocaleString()}
+                    </dd>
                   </div>
-                  {activeResource === 'matches' ? (
-                    <>
+                  <div>
+                    <dt className="text-text-secondary">Expira</dt>
+                    <dd className="m-0 font-semibold text-text-primary">
+                      {new Date(preview.expiresAt).toLocaleString()}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-text-secondary">Vigencia local</dt>
+                    <dd className="m-0 font-semibold text-text-primary">
+                      {preview.stale ? 'Obsoleta: hubo cambios locales' : 'Vigente'}
+                    </dd>
+                  </div>
+                </dl>
+                <div>
+                  <h3 className="mb-2 mt-0 text-body-sm font-bold text-text-primary">Registros por recurso</h3>
+                  <dl className="m-0 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
+                    {grouped.map((resource) => (
+                      <div key={resource} className="rounded-lg border border-border-subtle bg-surface-raised p-3">
+                        <dt className="text-caption text-text-secondary">{labels[resource]}</dt>
+                        <dd className="m-0 mt-1 text-heading-sm font-bold text-text-primary">
+                          {preview.items.filter((item) => item.resource === resource).length}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+                <div>
+                  <h3 className="mb-2 mt-0 text-body-sm font-bold text-text-primary">Operaciones propuestas</h3>
+                  <dl className="m-0 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+                    {operationKeys
+                      .filter((key) => preview.summary[key] > 0)
+                      .map((key) => (
+                        <div key={key} className="rounded-lg border border-border-subtle p-3">
+                          <dt className="text-caption text-text-secondary">{operationNames[key]}</dt>
+                          <dd className="m-0 mt-1 font-bold text-text-primary">{preview.summary[key]}</dd>
+                        </div>
+                      ))}
+                  </dl>
+                </div>
+                {preview.stale ? (
+                  <Alert tone="warning" title="Los datos locales cambiaron">
+                    <p className="m-0">
+                      Esta propuesta se generó antes de los cambios locales. Vuelve a consultar para revisar el estado
+                      actual antes de una futura importación.
+                    </p>
+                  </Alert>
+                ) : null}
+                {preview.warnings.length ? (
+                  <Alert tone="warning" title={`${warningCount} advertencias en ${preview.warnings.length} tipos`}>
+                    <p className="m-0">
+                      Consulta la pestaña Advertencias para revisar los grupos y sus registros relacionados.
+                    </p>
+                  </Alert>
+                ) : null}
+              </Card>
+              {verification ? (
+                <Alert role="status" tone={verification.tone} title={verification.title}>
+                  <p className="m-0">{verification.message}</p>
+                </Alert>
+              ) : null}
+              {problem && preview && !verification ? (
+                <Alert
+                  role="alert"
+                  tone={expired ? 'warning' : 'danger'}
+                  title={expired ? 'Vista previa expirada' : 'No se completó la verificación'}
+                >
+                  <p className="m-0">{problem.message}</p>
+                </Alert>
+              ) : null}
+              <div className="grid min-w-0 gap-3">
+                <Tabs
+                  id="import-preview-resources"
+                  label="Recursos de la vista previa"
+                  options={tabOptions}
+                  value={activeTab || tabOptions[0]?.value || ''}
+                  onChange={(value) => {
+                    setActiveTab(value);
+                    setPage(0);
+                  }}
+                />
+                {isWarningTab ? (
+                  <div
+                    id={tabPanelId('import-preview-resources', 'warnings')}
+                    role="tabpanel"
+                    aria-labelledby="import-preview-resources-tab-warnings"
+                    className="grid gap-3"
+                  >
+                    {preview.warnings.map((warning) => (
+                      <Alert
+                        key={warning.code}
+                        tone={
+                          warning.severity === 'error' ? 'danger' : warning.severity === 'info' ? 'info' : 'warning'
+                        }
+                        title={`${warning.severity === 'conflict' ? 'Conflicto' : warning.severity === 'error' ? 'Error' : warning.severity === 'info' ? 'Información' : 'Advertencia'} · ${warning.occurrenceCount} ${warning.occurrenceCount === 1 ? 'ocurrencia' : 'ocurrencias'}`}
+                      >
+                        <p className="m-0">{warning.message}</p>
+                        {warning.affectedExternalIds.length ? (
+                          <details className="mt-2">
+                            <DisclosureSummary>
+                              Ver registros afectados ({warning.affectedExternalIds.length})
+                            </DisclosureSummary>
+                            <ul className="mb-0 mt-2 grid gap-1">
+                              {warning.affectedExternalIds.map((id) => (
+                                <li key={id}>{id}</li>
+                              ))}
+                            </ul>
+                          </details>
+                        ) : null}
+                      </Alert>
+                    ))}
+                  </div>
+                ) : activeResource ? (
+                  <div
+                    id={tabPanelId('import-preview-resources', activeResource)}
+                    role="tabpanel"
+                    aria-labelledby={`import-preview-resources-tab-${activeResource}`}
+                    className="grid min-w-0 gap-3"
+                  >
+                    <div className="flex min-w-0 flex-wrap items-end gap-3">
+                      <div className="min-w-[min(100%,15rem)] flex-1">
+                        <Input
+                          id="preview-search"
+                          label="Buscar por equipo o referencia"
+                          value={search}
+                          onChange={(event) => {
+                            setSearch(event.target.value);
+                            setPage(0);
+                          }}
+                        />
+                      </div>
+                      {activeResource === 'matches' ? (
+                        <>
+                          <div className="min-w-44">
+                            <Select
+                              id="preview-round"
+                              label="Jornada"
+                              value={roundFilter}
+                              onChange={(event) => {
+                                setRoundFilter(event.target.value);
+                                setPage(0);
+                              }}
+                            >
+                              <option value="all">Todas</option>
+                              {rounds.map((round) => (
+                                <option key={round} value={round}>
+                                  {round}
+                                </option>
+                              ))}
+                            </Select>
+                          </div>
+                          <div className="min-w-44">
+                            <Select
+                              id="preview-status"
+                              label="Estado"
+                              value={statusFilter}
+                              onChange={(event) => {
+                                setStatusFilter(event.target.value);
+                                setPage(0);
+                              }}
+                            >
+                              <option value="all">Todos</option>
+                              {[
+                                ...new Set(
+                                  records.map((item) => String(itemField(item, 'estado') ?? '')).filter(Boolean),
+                                ),
+                              ].map((status) => (
+                                <option key={status} value={status}>
+                                  {status}
+                                </option>
+                              ))}
+                            </Select>
+                          </div>
+                        </>
+                      ) : null}
                       <div className="min-w-44">
                         <Select
-                          id="preview-round"
-                          label="Jornada"
-                          value={roundFilter}
+                          id="preview-operation"
+                          label="Operación"
+                          value={operationFilter}
                           onChange={(event) => {
-                            setRoundFilter(event.target.value);
+                            setOperationFilter(event.target.value);
                             setPage(0);
                           }}
                         >
                           <option value="all">Todas</option>
-                          {rounds.map((round) => (
-                            <option key={round} value={round}>
-                              {round}
-                            </option>
-                          ))}
+                          {operationKeys
+                            .filter((key) => preview.summary[key] > 0)
+                            .map((key) => (
+                              <option key={key} value={key}>
+                                {operationNames[key]}
+                              </option>
+                            ))}
                         </Select>
                       </div>
-                      <div className="min-w-44">
-                        <Select
-                          id="preview-status"
-                          label="Estado"
-                          value={statusFilter}
-                          onChange={(event) => {
-                            setStatusFilter(event.target.value);
-                            setPage(0);
-                          }}
-                        >
-                          <option value="all">Todos</option>
-                          {[
-                            ...new Set(records.map((item) => String(itemField(item, 'estado') ?? '')).filter(Boolean)),
-                          ].map((status) => (
-                            <option key={status} value={status}>
-                              {status}
-                            </option>
-                          ))}
-                        </Select>
+                      <ViewModeToggle value={view} onChange={setView} />
+                    </div>
+                    <p role="status" className="m-0 text-caption text-text-secondary">
+                      {filtered.length
+                        ? `Mostrando ${page * pageSize + 1}–${Math.min((page + 1) * pageSize, filtered.length)} de ${filtered.length}`
+                        : 'No hay registros que coincidan con estos filtros.'}
+                    </p>
+                    {visibleItems.length === 0 ? (
+                      <EmptyState
+                        title="No hay registros para mostrar"
+                        description="Modifica la búsqueda o los filtros para ver otros registros."
+                        icon="⌁"
+                      />
+                    ) : view === 'table' ? (
+                      <div className="overflow-x-auto rounded-card border border-border-subtle bg-surface-raised">
+                        <table className="w-full min-w-[650px] text-left text-body-sm">
+                          <thead>
+                            <tr className="border-b border-border-subtle text-text-secondary">
+                              <th className="p-3">Registro</th>
+                              <th className="p-3">Datos principales</th>
+                              <th className="p-3">Propuesta</th>
+                              <th className="p-3">Detalle</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {visibleItems.map((item, index) => (
+                              <tr
+                                key={`${item.resource}-${item.externalScope}-${item.externalId}-${index}`}
+                                className="border-b border-border-subtle last:border-0 align-top"
+                              >
+                                <th scope="row" className="max-w-md p-3 font-semibold text-text-primary">
+                                  {item.title}
+                                  {item.localCandidate ? (
+                                    <small className="mt-1 block text-warning">
+                                      Posible registro local: {item.localCandidate.label}
+                                    </small>
+                                  ) : null}
+                                </th>
+                                <td className="p-3">
+                                  <ItemSummary item={item} />
+                                  {item.resource === 'teams' ? (
+                                    <span>{item.fields.find((field) => field.name === 'name')?.incomingValue}</span>
+                                  ) : null}
+                                </td>
+                                <td className="p-3">
+                                  <OperationBadge operation={item.operation} />
+                                </td>
+                                <td className="min-w-48 p-3">
+                                  <ItemDetail item={item} />
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
-                    </>
-                  ) : null}
-                  <div className="min-w-44">
-                    <Select
-                      id="preview-operation"
-                      label="Operación"
-                      value={operationFilter}
-                      onChange={(event) => {
-                        setOperationFilter(event.target.value);
-                        setPage(0);
-                      }}
-                    >
-                      <option value="all">Todas</option>
-                      {operationKeys
-                        .filter((key) => preview.summary[key] > 0)
-                        .map((key) => (
-                          <option key={key} value={key}>
-                            {operationNames[key]}
-                          </option>
-                        ))}
-                    </Select>
-                  </div>
-                  <ViewModeToggle value={view} onChange={setView} />
-                </div>
-                <p role="status" className="m-0 text-caption text-text-secondary">
-                  {filtered.length
-                    ? `Mostrando ${page * pageSize + 1}–${Math.min((page + 1) * pageSize, filtered.length)} de ${filtered.length}`
-                    : 'No hay registros que coincidan con estos filtros.'}
-                </p>
-                {visibleItems.length === 0 ? (
-                  <EmptyState
-                    title="No hay registros para mostrar"
-                    description="Modifica la búsqueda o los filtros para ver otros registros."
-                    icon="⌁"
-                  />
-                ) : view === 'table' ? (
-                  <div className="overflow-x-auto rounded-card border border-border-subtle bg-surface-raised">
-                    <table className="w-full min-w-[650px] text-left text-body-sm">
-                      <thead>
-                        <tr className="border-b border-border-subtle text-text-secondary">
-                          <th className="p-3">Registro</th>
-                          <th className="p-3">Datos principales</th>
-                          <th className="p-3">Propuesta</th>
-                          <th className="p-3">Detalle</th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                    ) : (
+                      <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 xl:grid-cols-3">
                         {visibleItems.map((item, index) => (
-                          <tr
-                            key={`${item.resource}-${item.externalScope}-${item.externalId}-${index}`}
-                            className="border-b border-border-subtle last:border-0 align-top"
-                          >
-                            <th scope="row" className="max-w-md p-3 font-semibold text-text-primary">
-                              {item.title}
-                              {item.localCandidate ? (
-                                <small className="mt-1 block text-warning">
-                                  Posible registro local: {item.localCandidate.label}
-                                </small>
-                              ) : null}
-                            </th>
-                            <td className="p-3">
+                          <li key={`${item.resource}-${item.externalScope}-${item.externalId}-${index}`}>
+                            <Card className="grid min-w-0 gap-2">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <span className="text-caption text-text-secondary">{labels[item.resource]}</span>
+                                <OperationBadge operation={item.operation} />
+                              </div>
+                              <h3 className="m-0 break-words text-body-md font-bold text-text-primary">{item.title}</h3>
                               <ItemSummary item={item} />
-                              {item.resource === 'teams' ? (
-                                <span>{item.fields.find((field) => field.name === 'name')?.incomingValue}</span>
-                              ) : null}
-                            </td>
-                            <td className="p-3">
-                              <OperationBadge operation={item.operation} />
-                            </td>
-                            <td className="min-w-48 p-3">
                               <ItemDetail item={item} />
-                            </td>
-                          </tr>
+                            </Card>
+                          </li>
                         ))}
-                      </tbody>
-                    </table>
+                      </ul>
+                    )}
+                    {filtered.length > pageSize ? (
+                      <nav
+                        aria-label="Paginación de registros"
+                        className="flex flex-wrap items-center justify-between gap-2"
+                      >
+                        <Button
+                          variant="secondaryFilled"
+                          disabled={page === 0}
+                          onClick={() => setPage((current) => Math.max(0, current - 1))}
+                        >
+                          Anterior
+                        </Button>
+                        <span aria-live="polite" className="text-body-sm text-text-secondary">
+                          Página {page + 1} de {pageCount}
+                        </span>
+                        <Button
+                          variant="secondaryFilled"
+                          disabled={page + 1 >= pageCount}
+                          onClick={() => setPage((current) => Math.min(pageCount - 1, current + 1))}
+                        >
+                          Siguiente
+                        </Button>
+                      </nav>
+                    ) : null}
                   </div>
-                ) : (
-                  <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 xl:grid-cols-3">
-                    {visibleItems.map((item, index) => (
-                      <li key={`${item.resource}-${item.externalScope}-${item.externalId}-${index}`}>
-                        <Card className="grid min-w-0 gap-2">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="text-caption text-text-secondary">{labels[item.resource]}</span>
-                            <OperationBadge operation={item.operation} />
-                          </div>
-                          <h3 className="m-0 break-words text-body-md font-bold text-text-primary">{item.title}</h3>
-                          <ItemSummary item={item} />
-                          <ItemDetail item={item} />
-                        </Card>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {filtered.length > pageSize ? (
-                  <nav
-                    aria-label="Paginación de registros"
-                    className="flex flex-wrap items-center justify-between gap-2"
-                  >
-                    <Button
-                      variant="secondaryFilled"
-                      disabled={page === 0}
-                      onClick={() => setPage((current) => Math.max(0, current - 1))}
-                    >
-                      Anterior
-                    </Button>
-                    <span aria-live="polite" className="text-body-sm text-text-secondary">
-                      Página {page + 1} de {pageCount}
-                    </span>
-                    <Button
-                      variant="secondaryFilled"
-                      disabled={page + 1 >= pageCount}
-                      onClick={() => setPage((current) => Math.min(pageCount - 1, current + 1))}
-                    >
-                      Siguiente
-                    </Button>
-                  </nav>
                 ) : null}
               </div>
-            ) : null}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="secondaryFilled"
-              onClick={() => {
-                if (preview) {
-                  setExternalSeasonId(preview.externalSeasonId);
-                  setDestinationSeasonId(preview.destinationSeasonId ?? '');
-                  setResources(preview.resources);
-                }
-                if (operationKey) sessionStorage.removeItem(operationKey);
-                setOperation(undefined);
-                setPreview(undefined);
-                setVerification(undefined);
-                if (competitionId && seasons.length === 0)
-                  void api.listExternalSeasons(competitionId).then(setSeasons).catch(setError);
-              }}
-            >
-              Modificar selección
-            </Button>
-            <span className="group relative inline-flex">
-              <Button
-                variant="secondaryFilled"
-                isLoading={verifying}
-                loadingLabel="Verificando…"
-                title="Comprueba si los datos locales cambiaron desde que se generó esta vista previa. No importa datos."
-                onClick={() => void verifyLocalChanges()}
-              >
-                Verificar cambios locales
-              </Button>
-              <span
-                role="tooltip"
-                className="pointer-events-none absolute bottom-full left-0 z-20 mb-2 hidden w-72 rounded-md border border-border-subtle bg-surface-overlay px-2 py-1 text-caption text-text-primary shadow-card group-hover:block group-focus-within:block"
-              >
-                Comprueba si los datos locales cambiaron desde que se generó esta vista previa. No importa datos.
-              </span>
-            </span>
-            {expired ? (
-              <Button disabled={busy} onClick={() => void createPreview()}>
-                {busy ? 'Consultando proveedor…' : 'Generar otra vista previa'}
-              </Button>
-            ) : null}
-          </div>
-        </section>
-      ) : null}
+              <ImportApplyReview state={application} />
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="secondaryFilled"
+                  onClick={() => {
+                    if (preview) {
+                      setExternalSeasonId(preview.externalSeasonId);
+                      setDestinationSeasonId(preview.destinationSeasonId ?? '');
+                      setResources(preview.resources);
+                    }
+                    if (operationKey) sessionStorage.removeItem(operationKey);
+                    setOperation(undefined);
+                    setPreview(undefined);
+                    setVerification(undefined);
+                    if (competitionId && seasons.length === 0)
+                      void api.listExternalSeasons(competitionId).then(setSeasons).catch(setError);
+                  }}
+                >
+                  Modificar selección
+                </Button>
+                <span className="group relative inline-flex">
+                  <Button
+                    variant="secondaryFilled"
+                    isLoading={verifying}
+                    loadingLabel="Verificando…"
+                    title="Comprueba si los datos locales cambiaron desde que se generó esta vista previa. No importa datos."
+                    onClick={() => void verifyLocalChanges()}
+                  >
+                    Verificar cambios locales
+                  </Button>
+                  <span
+                    role="tooltip"
+                    className="pointer-events-none absolute bottom-full left-0 z-20 mb-2 hidden w-72 rounded-md border border-border-subtle bg-surface-overlay px-2 py-1 text-caption text-text-primary shadow-card group-hover:block group-focus-within:block"
+                  >
+                    Comprueba si los datos locales cambiaron desde que se generó esta vista previa. No importa datos.
+                  </span>
+                </span>
+                {expired ? (
+                  <Button disabled={busy} onClick={() => void createPreview()}>
+                    {busy ? 'Consultando proveedor…' : 'Generar otra vista previa'}
+                  </Button>
+                ) : null}
+                <div className="ml-auto grid justify-items-end gap-1">
+                  <Button
+                    aria-describedby={application.disabledReason ? 'confirm-import-reason' : undefined}
+                    disabled={!application.canConfirm || expired}
+                    onClick={() => setConfirming(true)}
+                  >
+                    Confirmar importación
+                  </Button>
+                  {application.disabledReason ? (
+                    <p id="confirm-import-reason" className="m-0 max-w-sm text-right text-caption text-text-secondary">
+                      {application.disabledReason}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+              {confirming ? (
+                <ConfirmImportModal
+                  state={application}
+                  competitionName={competition?.name ?? preview.externalCompetitionName}
+                  onClose={() => setConfirming(false)}
+                />
+              ) : null}
+            </section>
+          ) : null}
+        </>
+      )}
     </section>
   );
 }

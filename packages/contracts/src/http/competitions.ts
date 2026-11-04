@@ -358,3 +358,152 @@ export const ImportOperationEventSchema = z.strictObject({
 });
 export type ImportOperation = z.infer<typeof ImportOperationSchema>;
 export type ImportOperationEvent = z.infer<typeof ImportOperationEventSchema>;
+
+/**
+ * PD-ARCH-01D-C confirmed application. The plan is derived only from the stored preview snapshot plus current local
+ * data and mappings; it never contacts the provider. Identities are never inferred from names: a possible duplicate
+ * needs an explicit `link` (to a listed candidate) or `skip` decision.
+ */
+export const ImportApplyActionSchema = z.enum(['link', 'skip', 'accept_incoming']);
+export const ImportApplyDecisionSchema = z.strictObject({
+  resource: ImportResourceSchema,
+  externalId: z.string().min(1).max(200),
+  externalScope: z.string().max(200).nullable(),
+  action: ImportApplyActionSchema,
+  localId: UuidSchema.nullable(),
+});
+const ImportApplyDecisionListSchema = z.array(ImportApplyDecisionSchema).max(2000);
+export const ImportApplyPlanRequestSchema = z.strictObject({ decisions: ImportApplyDecisionListSchema });
+export const ImportApplyStartSchema = z.strictObject({
+  decisions: ImportApplyDecisionListSchema,
+  planHash: z.string().regex(/^[0-9a-f]{64}$/),
+});
+export const ImportApplyCountsSchema = z.strictObject({
+  seasonsCreated: z.number().int().nonnegative(),
+  teamsCreated: z.number().int().nonnegative(),
+  teamsReused: z.number().int().nonnegative(),
+  associationsCreated: z.number().int().nonnegative(),
+  participantsCreated: z.number().int().nonnegative(),
+  stagesCreated: z.number().int().nonnegative(),
+  roundsCreated: z.number().int().nonnegative(),
+  matchesCreated: z.number().int().nonnegative(),
+  matchesUpdated: z.number().int().nonnegative(),
+  resultsApplied: z.number().int().nonnegative(),
+  mappingsCreated: z.number().int().nonnegative(),
+  unchanged: z.number().int().nonnegative(),
+  skipped: z.number().int().nonnegative(),
+  conflictsNotApplied: z.number().int().nonnegative(),
+});
+export const ImportApplyPlanActionSchema = z.enum([
+  'create', 'link', 'reuse', 'update', 'unchanged', 'keep_local', 'skip', 'blocked',
+]);
+const ImportApplyValueSchema = z.union([z.string().max(500), z.number(), z.boolean(), z.null()]);
+export const ImportApplyPlanItemSchema = z.strictObject({
+  resource: ImportResourceSchema,
+  externalId: z.string().min(1).max(200),
+  externalScope: z.string().max(200).nullable(),
+  title: DisplayNameSchema,
+  action: ImportApplyPlanActionSchema,
+  reason: z.string().max(240).nullable(),
+  localId: UuidSchema.nullable(),
+  localLabel: z.string().max(160).nullable(),
+  candidates: z.array(z.strictObject({ id: UuidSchema, label: z.string().min(1).max(160) })).max(20),
+  options: z.array(ImportApplyActionSchema).max(3),
+  decision: ImportApplyActionSchema.nullable(),
+  changes: z.array(z.strictObject({
+    field: z.string().min(1).max(80),
+    localValue: ImportApplyValueSchema,
+    incomingValue: ImportApplyValueSchema,
+    applied: z.boolean(),
+  })).max(10),
+});
+export const ImportApplyBlockerSchema = z.strictObject({
+  code: z.string().min(1).max(80),
+  message: z.string().min(1).max(240),
+  count: z.number().int().positive(),
+});
+export const ImportApplyPlanSchema = z.strictObject({
+  previewId: UuidSchema,
+  competitionId: UuidSchema,
+  providerName: DisplayNameSchema,
+  externalCompetitionName: DisplayNameSchema,
+  externalSeasonLabel: DisplayNameSchema,
+  destinationSeasonId: UuidSchema.nullable(),
+  destinationLabel: z.string().min(1).max(160),
+  destinationIsNew: z.boolean(),
+  expiresAt: DateTimeSchema,
+  planHash: z.string().regex(/^[0-9a-f]{64}$/),
+  ready: z.boolean(),
+  totals: z.strictObject({
+    create: z.number().int().nonnegative(),
+    update: z.number().int().nonnegative(),
+    unchanged: z.number().int().nonnegative(),
+    keepLocal: z.number().int().nonnegative(),
+    skip: z.number().int().nonnegative(),
+    blocked: z.number().int().nonnegative(),
+  }),
+  counts: ImportApplyCountsSchema,
+  blockers: z.array(ImportApplyBlockerSchema).max(50),
+  warnings: z.array(z.string().min(1).max(240)).max(50),
+  reviewItems: z.array(ImportApplyPlanItemSchema).max(2000),
+  reviewItemsTruncated: z.boolean(),
+});
+export const ImportApplyPlanResponseSchema = z.strictObject({ plan: ImportApplyPlanSchema });
+export const ImportApplicationSchema = z.strictObject({
+  applicationId: UuidSchema,
+  operationId: UuidSchema,
+  previewId: UuidSchema,
+  competitionId: UuidSchema,
+  providerName: DisplayNameSchema,
+  externalSeasonLabel: DisplayNameSchema,
+  destinationSeasonId: UuidSchema,
+  destinationSeasonLabel: DisplayNameSchema,
+  appliedAt: DateTimeSchema,
+  counts: ImportApplyCountsSchema,
+  notApplied: z.array(z.strictObject({
+    resource: ImportResourceSchema,
+    externalId: z.string().min(1).max(200),
+    title: DisplayNameSchema,
+    action: z.enum(['keep_local', 'skip']),
+    reason: z.string().max(240).nullable(),
+  })).max(500),
+});
+export const ImportApplyStageSchema = z.enum(['validating', 'resolving_identities', 'transforming', 'persisting']);
+export const ImportApplyOperationSchema = z.strictObject({
+  operationId: UuidSchema,
+  competitionId: UuidSchema,
+  previewId: UuidSchema,
+  status: ImportOperationStatusSchema,
+  currentStage: ImportApplyStageSchema.nullable(),
+  completedStages: z.array(ImportApplyStageSchema).max(4),
+  cancellationRequested: z.boolean(),
+  cancellable: z.boolean(),
+  application: ImportApplicationSchema.nullable(),
+  errorCode: z.string().max(80).nullable(),
+  errorMessage: z.string().max(240).nullable(),
+  createdAt: z.iso.datetime(), startedAt: z.iso.datetime().nullable(),
+  updatedAt: z.iso.datetime(), completedAt: z.iso.datetime().nullable(),
+});
+export const ImportApplyOperationResponseSchema = z.strictObject({ operation: ImportApplyOperationSchema });
+export const ImportApplyOperationStartResponseSchema = z.strictObject({
+  operation: ImportApplyOperationSchema,
+  statusUrl: z.string().startsWith('/api/v1/competitions/'),
+  eventsUrl: z.string().startsWith('/api/v1/competitions/'),
+});
+export const ImportApplyOperationParamsSchema = z.strictObject({ competitionId: UuidSchema, operationId: UuidSchema });
+export const ImportApplyEventSchema = z.strictObject({
+  id: z.number().int().positive(),
+  type: z.enum(['operation.queued', 'operation.started', 'stage.started', 'stage.completed', 'operation.completed', 'operation.failed', 'operation.cancelled']),
+  operationId: UuidSchema, status: ImportOperationStatusSchema, stage: ImportApplyStageSchema.nullable(),
+  applicationId: UuidSchema.nullable(), timestamp: z.iso.datetime(),
+});
+export type ImportApplyAction = z.infer<typeof ImportApplyActionSchema>;
+export type ImportApplyDecision = z.infer<typeof ImportApplyDecisionSchema>;
+export type ImportApplyStart = z.infer<typeof ImportApplyStartSchema>;
+export type ImportApplyCounts = z.infer<typeof ImportApplyCountsSchema>;
+export type ImportApplyPlanItem = z.infer<typeof ImportApplyPlanItemSchema>;
+export type ImportApplyPlan = z.infer<typeof ImportApplyPlanSchema>;
+export type ImportApplication = z.infer<typeof ImportApplicationSchema>;
+export type ImportApplyStage = z.infer<typeof ImportApplyStageSchema>;
+export type ImportApplyOperation = z.infer<typeof ImportApplyOperationSchema>;
+export type ImportApplyEvent = z.infer<typeof ImportApplyEventSchema>;

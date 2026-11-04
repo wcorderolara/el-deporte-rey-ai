@@ -132,7 +132,8 @@ export class CompetitionImportPreviewService {
     const resourceSet = new Set(input.resources);
     const existing = this.#db
       .prepare<{ preview_json: string; local_fingerprint: string }>(
-        'SELECT preview_json, local_fingerprint FROM competition_import_previews WHERE competition_id = ? AND binding_id = ? AND external_season_id = ? AND destination_season_id IS ? AND expires_at > ? ORDER BY retrieved_at DESC LIMIT 10',
+        // A snapshot that was already applied (PD-ARCH-01D-C) is never offered again as a new preview.
+        'SELECT preview_json, local_fingerprint FROM competition_import_previews WHERE competition_id = ? AND binding_id = ? AND external_season_id = ? AND destination_season_id IS ? AND expires_at > ? AND id NOT IN (SELECT preview_id FROM competition_import_applications) ORDER BY retrieved_at DESC LIMIT 10',
       )
       .all([
         competitionId,

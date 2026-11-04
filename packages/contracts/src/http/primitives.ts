@@ -24,6 +24,8 @@ export const ContractPatterns = {
   ExportFileName: '^([0-9]{2}\\.png|caption\\.txt|manifest\\.json)$',
   ExternalSeasonId: '^(?!\\.{1,2}$)[A-Za-z0-9._-]{1,120}$',
   Base64: '^[A-Za-z0-9+/]*={0,2}$',
+  /** Prefix of the status/events URLs returned when an asynchronous operation starts. */
+  CompetitionOperationUrl: '^/api/v1/competitions/',
 } as const;
 
 export type ContractPatternName = keyof typeof ContractPatterns;

@@ -1,6 +1,8 @@
 import { StrictMode } from 'react';
 import type {
   CompetitionProviderBinding,
+  ImportApplyOperation,
+  ImportApplyPlan,
   ImportOperation,
   ImportPreview,
   ImportResourceCapability,
@@ -8,7 +10,7 @@ import type {
   ManagedSeason,
   ExternalSeasonOption,
 } from '@edr/contracts';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -111,6 +113,106 @@ const completed: ImportOperation = {
   completedAt: time,
 };
 
+const applyOperationId = '55555555-5555-4555-8555-555555555555';
+const seasonId = '66666666-6666-4666-8666-666666666666';
+const teamId = '77777777-7777-4777-8777-777777777777';
+const counts = {
+  seasonsCreated: 1,
+  teamsCreated: 20,
+  teamsReused: 0,
+  associationsCreated: 20,
+  participantsCreated: 20,
+  stagesCreated: 1,
+  roundsCreated: 38,
+  matchesCreated: 380,
+  matchesUpdated: 0,
+  resultsApplied: 120,
+  mappingsCreated: 440,
+  unchanged: 0,
+  skipped: 0,
+  conflictsNotApplied: 0,
+};
+const readyPlan = {
+  previewId,
+  competitionId,
+  providerName: 'Proveedor de prueba',
+  externalCompetitionName: 'Liga de ejemplo',
+  externalSeasonLabel: '2025/26',
+  destinationSeasonId: null,
+  destinationLabel: '2025/26',
+  destinationIsNew: true,
+  expiresAt: '2026-11-03T12:30:00.000Z',
+  planHash: 'c'.repeat(64),
+  ready: true,
+  totals: { create: 460, update: 0, unchanged: 0, keepLocal: 0, skip: 0, blocked: 0 },
+  counts,
+  blockers: [],
+  warnings: [],
+  reviewItems: [],
+  reviewItemsTruncated: false,
+} satisfies ImportApplyPlan;
+const blockedPlan: ImportApplyPlan = {
+  ...readyPlan,
+  planHash: 'd'.repeat(64),
+  ready: false,
+  totals: { ...readyPlan.totals, blocked: 1 },
+  blockers: [{ code: 'TEAM_IDENTITY_REQUIRED', message: 'Posible equipo duplicado: vincúlalo u omítelo.', count: 1 }],
+  reviewItems: [
+    {
+      resource: 'teams',
+      externalId: '57',
+      externalScope: null,
+      title: 'Arsenal FC',
+      action: 'blocked',
+      reason: 'Posible equipo duplicado: vincúlalo con un equipo local u omítelo.',
+      localId: null,
+      localLabel: null,
+      candidates: [{ id: teamId, label: 'Arsenal FC' }],
+      options: ['link', 'skip'],
+      decision: null,
+      changes: [],
+    },
+  ],
+};
+const queuedApply = {
+  operationId: applyOperationId,
+  competitionId,
+  previewId,
+  status: 'queued',
+  currentStage: null,
+  completedStages: [],
+  cancellationRequested: false,
+  cancellable: true,
+  application: null,
+  errorCode: null,
+  errorMessage: null,
+  createdAt: time,
+  startedAt: null,
+  updatedAt: time,
+  completedAt: null,
+} satisfies ImportApplyOperation;
+const completedApply: ImportApplyOperation = {
+  ...queuedApply,
+  status: 'completed',
+  completedStages: ['validating', 'resolving_identities', 'transforming'],
+  cancellable: false,
+  startedAt: time,
+  completedAt: time,
+  application: {
+    applicationId: '88888888-8888-4888-8888-888888888888',
+    operationId: applyOperationId,
+    previewId,
+    competitionId,
+    providerName: 'Proveedor de prueba',
+    externalSeasonLabel: '2025/26',
+    destinationSeasonId: seasonId,
+    destinationSeasonLabel: '2025/26',
+    appliedAt: time,
+    counts,
+    notApplied: [],
+  },
+};
+
 class FakeEventSource {
   static instances: FakeEventSource[] = [];
   readonly url: string;
@@ -143,6 +245,25 @@ class FakeEventSource {
       }),
     );
   }
+  emitApply(
+    type: string,
+    status: 'running' | 'completed' | 'failed' = 'running',
+    stage: 'validating' | 'resolving_identities' | 'transforming' | 'persisting' | null = null,
+  ) {
+    this.listeners.get(type)?.(
+      new MessageEvent(type, {
+        data: JSON.stringify({
+          id: 2,
+          type,
+          operationId: applyOperationId,
+          status,
+          stage,
+          applicationId: null,
+          timestamp: time,
+        }),
+      }),
+    );
+  }
   close() {
     this.closed = true;
   }
@@ -159,6 +280,10 @@ function renderPage(overrides: Partial<CompetitionsApi> = {}, strict = false) {
     getImportOperation: vi.fn().mockResolvedValue(running),
     cancelImportOperation: vi.fn().mockResolvedValue({ ...running, cancellationRequested: true }),
     getImportPreview: vi.fn().mockResolvedValue(preview),
+    planImportApplication: vi.fn().mockResolvedValue(readyPlan),
+    startImportApplication: vi.fn().mockResolvedValue(queuedApply),
+    getImportApplication: vi.fn().mockResolvedValue(completedApply),
+    cancelImportApplication: vi.fn().mockResolvedValue({ ...queuedApply, status: 'cancelled' }),
     ...overrides,
   } as unknown as CompetitionsApi;
   const page = (
@@ -254,17 +379,22 @@ describe('ImportPreviewPage async operations', () => {
     expect(cancel).not.toHaveProperty('disabled', true);
     expect(api.startImportOperation).toHaveBeenCalledTimes(1);
   });
-  it('explains that import is unavailable and keeps review actions solid', async () => {
+  it('adds a solid gold confirmation as the primary action next to the review actions', async () => {
     sessionStorage.setItem(`import-operation:${competitionId}`, operationId);
     renderPage({ getImportOperation: vi.fn().mockResolvedValue(completed) });
     await screen.findByRole('heading', { name: 'Vista previa preparada correctamente' });
     expect(screen.getByRole('link', { name: 'Volver a competición' }).className).toContain('bg-surface-overlay');
     expect(screen.getByRole('button', { name: 'Ver vista previa' }).className).toContain('bg-brand-gold');
     await userEvent.click(screen.getByRole('button', { name: 'Ver vista previa' }));
-    expect(screen.getByText(/La confirmación e importación se implementarán en PD-ARCH-01D-C/)).toBeTruthy();
+    expect(
+      screen.getAllByText(/Ningún registro deportivo local cambia hasta que confirmes la importación/).length,
+    ).toBe(2);
     expect(screen.getByRole('button', { name: 'Modificar selección' }).className).toContain('bg-surface-overlay');
     expect(screen.getByRole('button', { name: 'Verificar cambios locales' }).className).toContain('bg-surface-overlay');
-    expect(screen.queryByRole('button', { name: /Confirmar importación/i })).toBeNull();
+    const confirm = await screen.findByRole('button', { name: 'Confirmar importación' });
+    expect(confirm.className).toContain('bg-brand-gold');
+    expect(confirm.className).toContain('text-text-inverse');
+    await waitFor(() => expect((confirm as HTMLButtonElement).disabled).toBe(false));
   });
   it('presents record differences as a solid native disclosure control', async () => {
     sessionStorage.setItem(`import-operation:${competitionId}`, operationId);
@@ -390,5 +520,153 @@ describe('ImportPreviewPage async operations', () => {
     await screen.findByRole('heading', { name: 'Vista previa preparada correctamente' });
     expect(api.startImportOperation).not.toHaveBeenCalled();
     expect(api.listExternalSeasons).not.toHaveBeenCalled();
+  });
+});
+
+async function openReview(overrides: Partial<CompetitionsApi> = {}) {
+  sessionStorage.setItem(`import-operation:${competitionId}`, operationId);
+  const api = renderPage({ getImportOperation: vi.fn().mockResolvedValue(completed), ...overrides });
+  await screen.findByRole('heading', { name: 'Vista previa preparada correctamente' });
+  await userEvent.click(screen.getByRole('button', { name: 'Ver vista previa' }));
+  return api;
+}
+
+describe('ImportPreviewPage confirmed import', () => {
+  it('keeps confirmation disabled with the backend reason until an explicit identity decision', async () => {
+    const plan = vi.fn().mockResolvedValueOnce(blockedPlan).mockResolvedValue(readyPlan);
+    const api = await openReview({ planImportApplication: plan });
+    const confirm = await screen.findByRole('button', { name: 'Confirmar importación' });
+    await waitFor(() => expect(screen.getByText('Requiere revisión')).toBeTruthy());
+    expect((confirm as HTMLButtonElement).disabled).toBe(true);
+    const reason = document.getElementById(confirm.getAttribute('aria-describedby')!);
+    expect(reason?.textContent).toBe('Posible equipo duplicado: vincúlalo u omítelo.');
+    const decision = screen.getByLabelText('Decisión para equipo «Arsenal FC»');
+    expect(within(decision).getByRole('option', { name: 'Vincular con «Arsenal FC»' })).toBeTruthy();
+    await userEvent.selectOptions(decision, `link:${teamId}`);
+    await waitFor(() =>
+      expect(plan).toHaveBeenLastCalledWith(
+        competitionId,
+        previewId,
+        [{ resource: 'teams', externalId: '57', externalScope: null, action: 'link', localId: teamId }],
+        expect.any(AbortSignal),
+      ),
+    );
+    await waitFor(() => expect((confirm as HTMLButtonElement).disabled).toBe(false));
+    expect(api.startImportApplication).not.toHaveBeenCalled();
+  });
+
+  it('opens an accessible summary without persisting and cancels without starting', async () => {
+    const api = await openReview();
+    const confirm = await screen.findByRole('button', { name: 'Confirmar importación' });
+    await waitFor(() => expect((confirm as HTMLButtonElement).disabled).toBe(false));
+    await userEvent.click(confirm);
+    const dialog = screen.getByRole('dialog', { name: 'Confirmar importación' });
+    expect(
+      within(dialog).getByText(
+        'Esta acción guardará los datos seleccionados en la base de datos local. Revisa los cambios antes de continuar.',
+      ),
+    ).toBeTruthy();
+    for (const label of [
+      'Competición',
+      'Temporada',
+      'Proveedor',
+      'Destino local',
+      'Registros que se crearán',
+      'Conflictos bloqueantes',
+    ])
+      expect(within(dialog).getByText(label)).toBeTruthy();
+    expect(within(dialog).getByText('460')).toBeTruthy();
+    expect(within(dialog).getByText('2025/26 (nueva)')).toBeTruthy();
+    expect(api.startImportApplication).not.toHaveBeenCalled();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(api.startImportApplication).not.toHaveBeenCalled();
+  });
+
+  it('starts once, shows only backend-confirmed stages and the committed result with navigation', async () => {
+    let resolveStart: (value: ImportApplyOperation) => void = () => {};
+    const startApplication = vi.fn(() => new Promise<ImportApplyOperation>((resolve) => (resolveStart = resolve)));
+    const api = await openReview({ startImportApplication: startApplication });
+    const confirm = await screen.findByRole('button', { name: 'Confirmar importación' });
+    await waitFor(() => expect((confirm as HTMLButtonElement).disabled).toBe(false));
+    await userEvent.click(confirm);
+    const dialog = screen.getByRole('dialog');
+    const submit = within(dialog).getByRole('button', { name: 'Confirmar importación' });
+    await userEvent.click(submit);
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Iniciando importación…' }));
+    expect(startApplication).toHaveBeenCalledTimes(1);
+    expect(startApplication).toHaveBeenCalledWith(competitionId, previewId, {
+      decisions: [],
+      planHash: readyPlan.planHash,
+    });
+    resolveStart(queuedApply);
+    await screen.findByRole('heading', { name: 'Importando datos' });
+    expect(sessionStorage.getItem(`import-application:${competitionId}`)).toBe(applyOperationId);
+    const stream = FakeEventSource.instances.find((source) => source.url.includes('import-applications'))!;
+    expect(stream.url).toContain(applyOperationId);
+    stream.emitApply('stage.started', 'running', 'validating');
+    const stages = await screen.findByRole('list', { name: 'Etapas de importación' });
+    await waitFor(() => expect(within(stages).getAllByText('En proceso')).toHaveLength(1));
+    expect(within(stages).getAllByText('Pendiente')).toHaveLength(3);
+    expect(screen.queryByText(/%/)).toBeNull();
+    stream.emitApply('operation.completed', 'completed');
+    await screen.findByRole('heading', { name: 'Importación completada' });
+    expect(api.getImportApplication).toHaveBeenCalledWith(competitionId, applyOperationId);
+    const saved = screen.getByRole('region', { name: 'Cambios guardados' });
+    expect(within(saved).getByText('Partidos creados').nextElementSibling?.textContent).toBe('380');
+    expect(within(saved).getByText('Resultados aplicados').nextElementSibling?.textContent).toBe('120');
+    expect(screen.getByRole('link', { name: 'Ver temporada' }).getAttribute('href')).toBe(
+      `/competitions/${competitionId}/seasons/${seasonId}`,
+    );
+    expect(screen.getByRole('link', { name: 'Ver equipos' }).getAttribute('href')).toBe(
+      `/competitions/${competitionId}/teams`,
+    );
+    expect(screen.getByRole('link', { name: 'Volver a competición' }).getAttribute('href')).toBe(
+      `/competitions/${competitionId}`,
+    );
+    await waitFor(() => expect(api.listSeasons).toHaveBeenCalledTimes(2));
+  });
+
+  it('reports a failed application without claiming persisted data', async () => {
+    const failed: ImportApplyOperation = {
+      ...queuedApply,
+      status: 'failed',
+      currentStage: 'persisting',
+      completedStages: ['validating', 'resolving_identities', 'transforming'],
+      cancellable: false,
+      errorCode: 'IMPORT_PREVIEW_STALE',
+      errorMessage: 'Los datos locales cambiaron desde la vista previa. No se guardó ningún cambio.',
+      completedAt: time,
+    };
+    await openReview({ getImportApplication: vi.fn().mockResolvedValue(failed) });
+    const confirm = await screen.findByRole('button', { name: 'Confirmar importación' });
+    await waitFor(() => expect((confirm as HTMLButtonElement).disabled).toBe(false));
+    await userEvent.click(confirm);
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirmar importación' }));
+    await waitFor(() =>
+      expect(FakeEventSource.instances.some((source) => source.url.includes('import-applications'))).toBe(true),
+    );
+    FakeEventSource.instances
+      .find((source) => source.url.includes('import-applications'))!
+      .emitApply('operation.failed', 'failed', 'persisting');
+    await screen.findByRole('heading', { name: 'No se completó la importación' });
+    expect(
+      screen.getByText('Los datos locales cambiaron desde la vista previa. No se guardó ningún cambio.'),
+    ).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Importación completada' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Volver a la revisión' }));
+    expect(sessionStorage.getItem(`import-application:${competitionId}`)).toBeNull();
+    expect(await screen.findByRole('button', { name: 'Confirmar importación' })).toBeTruthy();
+  });
+
+  it('recovers a completed application after a reload without applying it again', async () => {
+    sessionStorage.setItem(`import-application:${competitionId}`, applyOperationId);
+    const api = renderPage();
+    await screen.findByRole('heading', { name: 'Importación completada' });
+    expect(api.startImportApplication).not.toHaveBeenCalled();
+    expect(api.planImportApplication).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Preparar otra importación' }));
+    expect(sessionStorage.getItem(`import-application:${competitionId}`)).toBeNull();
+    expect(await screen.findByLabelText('Temporada externa')).toBeTruthy();
   });
 });

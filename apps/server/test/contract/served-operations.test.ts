@@ -189,6 +189,27 @@ beforeAll(async () => {
   await l.call('getCompetitionImportOperation', { params: { competitionId: bindingCompetitionId, operationId } });
   await l.call('streamCompetitionImportOperation', { params: { competitionId: bindingCompetitionId, operationId } });
   await l.call('cancelCompetitionImportOperation', { params: { competitionId: bindingCompetitionId, operationId } });
+  const applicationPlan = await l.call('planCompetitionImportApplication', {
+    params: { competitionId: bindingCompetitionId, previewId },
+    json: { decisions: [] },
+  });
+  const planHash = String((applicationPlan.body as { plan: { planHash: string } }).plan.planHash);
+  const startedApplication = await l.call('startCompetitionImportApplication', {
+    params: { competitionId: bindingCompetitionId, previewId },
+    json: { decisions: [], planHash },
+  });
+  const applicationOperationId = String(
+    (startedApplication.body as { operation: { operationId: string } }).operation.operationId,
+  );
+  await l.call('streamCompetitionImportApplication', {
+    params: { competitionId: bindingCompetitionId, operationId: applicationOperationId },
+  });
+  await l.call('getCompetitionImportApplication', {
+    params: { competitionId: bindingCompetitionId, operationId: applicationOperationId },
+  });
+  await l.call('cancelCompetitionImportApplication', {
+    params: { competitionId: bindingCompetitionId, operationId: applicationOperationId },
+  });
   await l.call('removeCompetitionProviderBinding', { params: { competitionId: bindingCompetitionId } });
   await d.call('getCompetition', { params: { competitionId: managedCompetitionId } });
   await d.call('listManagedSeasons', { params: { competitionId: managedCompetitionId } });
