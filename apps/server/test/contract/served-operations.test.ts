@@ -164,6 +164,31 @@ beforeAll(async () => {
     },
   });
   await l.call('getCompetitionProviderBinding', { params: { competitionId: bindingCompetitionId } });
+  const externalSeasons = await l.call('listCompetitionExternalSeasons', {
+    params: { competitionId: bindingCompetitionId },
+  });
+  const externalSeasonId = (externalSeasons.body as { seasons: { externalSeasonId: string }[] }).seasons[0]
+    ?.externalSeasonId;
+  if (!externalSeasonId) throw new Error('The live fixture must provide one external season.');
+  await l.call('getCompetitionImportCapabilities', {
+    params: { competitionId: bindingCompetitionId, externalSeasonId },
+  });
+  const importPreview = await l.call('createCompetitionImportPreview', {
+    params: { competitionId: bindingCompetitionId },
+    json: { externalSeasonId, resources: ['season'] },
+  });
+  const previewId = String((importPreview.body as { preview: { previewId: string } }).preview.previewId);
+  await l.call('getCompetitionImportPreview', {
+    params: { competitionId: bindingCompetitionId, previewId },
+  });
+  const startedOperation = await l.call('startCompetitionImportOperation', {
+    params: { competitionId: bindingCompetitionId },
+    json: { externalSeasonId, resources: ['season'] },
+  });
+  const operationId = String((startedOperation.body as { operation: { operationId: string } }).operation.operationId);
+  await l.call('getCompetitionImportOperation', { params: { competitionId: bindingCompetitionId, operationId } });
+  await l.call('streamCompetitionImportOperation', { params: { competitionId: bindingCompetitionId, operationId } });
+  await l.call('cancelCompetitionImportOperation', { params: { competitionId: bindingCompetitionId, operationId } });
   await l.call('removeCompetitionProviderBinding', { params: { competitionId: bindingCompetitionId } });
   await d.call('getCompetition', { params: { competitionId: managedCompetitionId } });
   await d.call('listManagedSeasons', { params: { competitionId: managedCompetitionId } });

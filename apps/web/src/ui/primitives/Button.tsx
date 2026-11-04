@@ -2,7 +2,7 @@ import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
 import { classNames } from '../format';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'quiet' | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'secondaryFilled' | 'quiet' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -24,6 +24,8 @@ const variants: Record<ButtonVariant, string> = {
     'border-brand-gold bg-brand-gold text-text-inverse shadow-gold-glow hover:brightness-110 active:brightness-95',
   secondary:
     'border-brand-blue bg-surface-card text-text-primary shadow-control hover:bg-brand-blue hover:text-brand-white',
+  secondaryFilled:
+    'border-brand-purple bg-surface-overlay text-text-primary shadow-control hover:border-brand-gold hover:bg-brand-purple hover:text-brand-white active:brightness-95',
   quiet:
     'border-border-default bg-transparent text-text-secondary hover:border-border-strong hover:bg-surface-card hover:text-text-primary',
   danger: 'border-danger bg-danger-surface text-danger hover:bg-danger hover:text-text-inverse active:brightness-95',

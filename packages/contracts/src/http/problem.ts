@@ -51,6 +51,7 @@ export const PROBLEM_CODES = [
   'MANUAL_APPROVAL_REFUSED',
   'INTERNAL',
   'PROVIDER_UNAVAILABLE',
+  'IMPORT_PREVIEW_EXPIRED',
 ] as const;
 
 export const ProblemCodeSchema = z.enum(PROBLEM_CODES);

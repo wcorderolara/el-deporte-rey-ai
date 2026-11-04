@@ -64,16 +64,16 @@ describe('contract document', () => {
     );
   });
 
-  it('has 80 operations on 57 paths, 36 of them mutating, with unique operation IDs', () => {
-    expect(Object.keys(child(document, 'paths'))).toHaveLength(57);
-    expect(operations).toHaveLength(80);
-    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(36);
+  it('has 88 operations on 65 paths, 39 of them mutating, with unique operation IDs', () => {
+    expect(Object.keys(child(document, 'paths'))).toHaveLength(65);
+    expect(operations).toHaveLength(88);
+    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(39);
     const ids = operations.map((operation) => operation.operation.operationId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('has 99 component schemas', () => {
-    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(99);
+  it('has 115 component schemas', () => {
+    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(115);
   });
 });
 
@@ -126,8 +126,13 @@ describe('local request protection declared on every operation (AD-14, T10-F17, 
       for (const parameter of operation.parameters.filter((entry) => entry.in === 'path')) {
         const schema = child(parameter, 'schema');
         const ref = typeof schema.$ref === 'string' ? schema.$ref : '';
-        const bounded = ref.endsWith('/Uuid') || ref.endsWith('/Slug') || ref.endsWith('/SourceId');
-        if (!bounded && !(schema.type === 'integer' && schema.maximum !== undefined)) {
+        const bounded =
+          ref.endsWith('/Uuid') ||
+          ref.endsWith('/Slug') ||
+          ref.endsWith('/SourceId') ||
+          ref.endsWith('/ExternalSeasonId');
+        const patterned = typeof schema.pattern === 'string' && schema.pattern.length > 0;
+        if (!bounded && !patterned && !(schema.type === 'integer' && schema.maximum !== undefined)) {
           unconstrained.push(`${label(operation)} ${String(parameter.name)}`);
         }
       }
@@ -265,6 +270,14 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/paths/~1sports~1providers: added',
       '/paths/~1sports~1providers~1{providerKey}~1competitions: added',
       '/paths/~1competitions~1{competitionId}~1provider-binding: added',
+      '/paths/~1competitions~1{competitionId}~1provider-binding~1seasons: added',
+      '/paths/~1competitions~1{competitionId}~1provider-binding~1seasons~1{externalSeasonId}~1capabilities: added',
+      '/paths/~1competitions~1{competitionId}~1import-operations: added',
+      '/paths/~1competitions~1{competitionId}~1import-operations~1{operationId}: added',
+      '/paths/~1competitions~1{competitionId}~1import-operations~1{operationId}~1cancel: added',
+      '/paths/~1competitions~1{competitionId}~1import-operations~1{operationId}~1events: added',
+      '/paths/~1competitions~1{competitionId}~1import-previews: added',
+      '/paths/~1competitions~1{competitionId}~1import-previews~1{previewId}: added',
       '/paths/~1competitions~1{competitionId}: added',
       '/paths/~1competitions~1{competitionId}~1seasons: added',
       '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}: added',
@@ -308,12 +321,29 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/Problem/properties/code/enum/34: added',
       '/components/schemas/Problem/properties/code/enum/35: added',
       '/components/schemas/Problem/properties/code/enum/36: added',
+      '/components/schemas/Problem/properties/code/enum/37: added',
       '/components/schemas/QaResult/oneOf/5: added',
       '/components/schemas/Competition: added',
       '/components/schemas/SportsProvider: added',
       '/components/schemas/ExternalCompetition: added',
       '/components/schemas/CompetitionProviderBinding: added',
       '/components/schemas/CompetitionProviderBindingResponse: added',
+      '/components/schemas/ImportResource: added',
+      '/components/schemas/ExternalSeasonId: added',
+      '/components/schemas/ExternalSeasonOption: added',
+      '/components/schemas/ExternalSeasonListResponse: added',
+      '/components/schemas/ImportResourceCapability: added',
+      '/components/schemas/ImportCapabilitiesResponse: added',
+      '/components/schemas/ImportOperation: added',
+      '/components/schemas/ImportOperationResponse: added',
+      '/components/schemas/ImportOperationStartResponse: added',
+      '/components/schemas/ImportPreviewRequest: added',
+      '/components/schemas/ImportPreviewItem: added',
+      '/components/schemas/ImportPreviewSummary: added',
+      '/components/schemas/ImportExternalReference: added',
+      '/components/schemas/ImportPreviewWarning: added',
+      '/components/schemas/ImportPreview: added',
+      '/components/schemas/ImportPreviewResponse: added',
       '/components/schemas/ManagedSeason: added',
       '/components/schemas/ManagedTeam: added',
       '/components/schemas/CompetitionTeam: added',

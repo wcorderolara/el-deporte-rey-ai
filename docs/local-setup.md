@@ -115,6 +115,9 @@ LIVE_DATA setup, step by step:
    separately on port 4300 and Vite on port 5173; Vite proxies `/api` to the API. The development configuration keeps
    the exact local Host/Origin allowlist and uses the existing `data/` database, preserving access to locally managed
    competitions. Set `EDR_DATA_DIR` if a separate test database is preferred.
+   Open **http://127.0.0.1:5173** to see React edits through Vite HMR. Port 4300 serves the last compiled frontend;
+   editing `apps/web/src/ui/Layout.tsx` will not change that page until `npm run build` runs again. Check the browser
+   address bar if an edit appears unchanged. The two processes still run separately under the root `dev` command.
    To use the compiled single-server app instead, run `npm run build`, then
    `EDR_CONFIG=config/live.config.json npm start`.
    With LIVE_DATA enabled and the token missing or empty, startup stops with an error that names the variable, never

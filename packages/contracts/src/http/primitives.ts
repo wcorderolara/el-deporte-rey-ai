@@ -22,6 +22,7 @@ export const ContractPatterns = {
   Sha256: '^[0-9a-f]{64}$',
   ColorHex: '^#[0-9a-f]{6}$',
   ExportFileName: '^([0-9]{2}\\.png|caption\\.txt|manifest\\.json)$',
+  ExternalSeasonId: '^(?!\\.{1,2}$)[A-Za-z0-9._-]{1,120}$',
   Base64: '^[A-Za-z0-9+/]*={0,2}$',
 } as const;
 

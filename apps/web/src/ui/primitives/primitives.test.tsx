@@ -133,6 +133,26 @@ describe('design-system actions', () => {
     expect(loading.getAttribute('aria-busy')).toBe('true');
   });
 
+  it('offers a filled secondary action without changing the regular secondary variant', () => {
+    render(
+      <>
+        <Button variant="secondaryFilled">Revisar cambios</Button>
+        <Button variant="secondary">Ver detalle</Button>
+        <Button variant="danger" disabled>
+          Cancelar consulta
+        </Button>
+      </>,
+    );
+    const filled = screen.getByRole('button', { name: 'Revisar cambios' });
+    expect(filled.className).toContain('bg-surface-overlay');
+    expect(filled.className).toContain('hover:bg-brand-purple');
+    expect(filled.className).toContain('focus-studio');
+    expect(screen.getByRole('button', { name: 'Ver detalle' }).className).toContain('bg-surface-card');
+    const cancel = screen.getByRole('button', { name: 'Cancelar consulta' });
+    expect(cancel.className).toContain('bg-danger-surface');
+    expect((cancel as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it('requires IconButton callers to supply its accessible name', async () => {
     const onClick = vi.fn();
     const user = userEvent.setup();

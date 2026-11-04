@@ -315,6 +315,181 @@ paths:
         '409': { $ref: '#/components/responses/Problem' }
         '415': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/provider-binding/seasons:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    get:
+      tags: [competitions]
+      operationId: listCompetitionExternalSeasons
+      description: List external seasons for the active competition binding. Season-name matches are candidates only and are never linked automatically.
+      responses:
+        '200': { description: External seasons., content: { application/json: { schema: { $ref: '#/components/schemas/ExternalSeasonListResponse' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/provider-binding/seasons/{externalSeasonId}/capabilities:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: externalSeasonId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/ExternalSeasonId' }
+    get:
+      tags: [competitions]
+      operationId: getCompetitionImportCapabilities
+      description: Query provider availability for data resources in one selected external season.
+      responses:
+        '200': { description: Supported and unavailable resources., content: { application/json: { schema: { $ref: '#/components/schemas/ImportCapabilitiesResponse' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/import-operations:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    post:
+      tags: [competitions]
+      operationId: startCompetitionImportOperation
+      description: Accept explicit preview work and return immediately with a durable operation identifier.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ImportPreviewRequest' }
+      responses:
+        '202': { description: Preview work accepted or equivalent operation reused., content: { application/json: { schema: { $ref: '#/components/schemas/ImportOperationStartResponse' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/import-operations/{operationId}:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: operationId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    get:
+      tags: [competitions]
+      operationId: getCompetitionImportOperation
+      responses:
+        '200': { description: Persisted operation state., content: { application/json: { schema: { $ref: '#/components/schemas/ImportOperationResponse' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/import-operations/{operationId}/cancel:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: operationId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    post:
+      tags: [competitions]
+      operationId: cancelCompetitionImportOperation
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '200': { description: Cancellation requested or terminal state returned., content: { application/json: { schema: { $ref: '#/components/schemas/ImportOperationResponse' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/import-operations/{operationId}/events:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: operationId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    get:
+      tags: [competitions]
+      operationId: streamCompetitionImportOperation
+      description: SSE notifications with resumable sequence IDs. SQLite remains authoritative.
+      responses:
+        '200': { description: Server-sent progress events., content: { text/event-stream: { schema: { type: string } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/import-previews:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    post:
+      tags: [competitions]
+      operationId: createCompetitionImportPreview
+      description: Explicitly query and persist a temporary normalized, read-only snapshot. Does not apply imported data to local sports entities.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ImportPreviewRequest' }
+      responses:
+        '201': { description: Temporary import preview., content: { application/json: { schema: { $ref: '#/components/schemas/ImportPreviewResponse' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/import-previews/{previewId}:
+    parameters:
+      - name: competitionId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: previewId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    get:
+      tags: [competitions]
+      operationId: getCompetitionImportPreview
+      description: Reopen the same cached snapshot without contacting the provider; reports expiry or relevant local staleness.
+      responses:
+        '200': { description: Existing preview snapshot., content: { application/json: { schema: { $ref: '#/components/schemas/ImportPreviewResponse' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '410': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /competitions/{competitionId}:
     parameters:
       - name: competitionId
@@ -2141,6 +2316,161 @@ components:
       additionalProperties: false
       properties:
         binding: { anyOf: [{ $ref: '#/components/schemas/CompetitionProviderBinding' }, { type: 'null' }] }
+    ImportResource:
+      type: string
+      enum: [season, teams, participants, stages, rounds, matches, results]
+    ExternalSeasonId:
+      type: string
+      minLength: 1
+      maxLength: 120
+      pattern: '^(?!\.{1,2}$)[A-Za-z0-9._-]{1,120}$'
+    ExternalSeasonOption:
+      type: object
+      required: [externalSeasonId, label, startDate, endDate, current, localCandidates]
+      additionalProperties: false
+      properties:
+        externalSeasonId: { type: string, minLength: 1, maxLength: 120 }
+        label: { $ref: '#/components/schemas/DisplayName' }
+        startDate: { anyOf: [{ type: string, format: date }, { type: 'null' }] }
+        endDate: { anyOf: [{ type: string, format: date }, { type: 'null' }] }
+        current: { type: boolean }
+        localCandidates: { type: array, maxItems: 20, items: { type: object, required: [id, label], additionalProperties: false, properties: { id: { $ref: '#/components/schemas/Uuid' }, label: { $ref: '#/components/schemas/DisplayName' } } } }
+    ExternalSeasonListResponse:
+      type: object
+      required: [seasons]
+      additionalProperties: false
+      properties:
+        seasons: { type: array, items: { $ref: '#/components/schemas/ExternalSeasonOption' } }
+    ImportResourceCapability:
+      type: object
+      required: [resource, available, reason]
+      additionalProperties: false
+      properties:
+        resource: { $ref: '#/components/schemas/ImportResource' }
+        available: { type: boolean }
+        reason: { anyOf: [{ type: string, maxLength: 240 }, { type: 'null' }] }
+    ImportCapabilitiesResponse:
+      type: object
+      required: [capabilities]
+      additionalProperties: false
+      properties:
+        capabilities: { type: array, items: { $ref: '#/components/schemas/ImportResourceCapability' } }
+    ImportOperation:
+      type: object
+      required: [operationId, competitionId, providerKey, externalSeasonId, destinationSeasonId, resources, status, currentStage, completedStages, cancellationRequested, previewId, errorCode, errorMessage, createdAt, startedAt, updatedAt, completedAt]
+      additionalProperties: false
+      properties:
+        operationId: { $ref: '#/components/schemas/Uuid' }
+        competitionId: { $ref: '#/components/schemas/Uuid' }
+        providerKey: { type: string, minLength: 1, maxLength: 40 }
+        externalSeasonId: { type: string, minLength: 1, maxLength: 120 }
+        destinationSeasonId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        resources: { type: array, minItems: 1, maxItems: 7, items: { $ref: '#/components/schemas/ImportResource' } }
+        status: { type: string, enum: [queued, running, completed, failed, cancelled] }
+        currentStage: { anyOf: [{ type: string, enum: [fetching, normalizing, comparing, preparing_preview] }, { type: 'null' }] }
+        completedStages: { type: array, maxItems: 4, items: { type: string, enum: [fetching, normalizing, comparing, preparing_preview] } }
+        cancellationRequested: { type: boolean }
+        previewId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        errorCode: { anyOf: [{ type: string, maxLength: 80 }, { type: 'null' }] }
+        errorMessage: { anyOf: [{ type: string, maxLength: 240 }, { type: 'null' }] }
+        createdAt: { type: string, format: date-time }
+        startedAt: { anyOf: [{ type: string, format: date-time }, { type: 'null' }] }
+        updatedAt: { type: string, format: date-time }
+        completedAt: { anyOf: [{ type: string, format: date-time }, { type: 'null' }] }
+    ImportOperationResponse:
+      type: object
+      required: [operation]
+      additionalProperties: false
+      properties:
+        operation: { $ref: '#/components/schemas/ImportOperation' }
+    ImportOperationStartResponse:
+      type: object
+      required: [operation, statusUrl, eventsUrl]
+      additionalProperties: false
+      properties:
+        operation: { $ref: '#/components/schemas/ImportOperation' }
+        statusUrl: { type: string, pattern: '^/api/v1/competitions/' }
+        eventsUrl: { type: string, pattern: '^/api/v1/competitions/' }
+    ImportPreviewRequest:
+      type: object
+      required: [externalSeasonId, resources]
+      additionalProperties: false
+      properties:
+        externalSeasonId: { type: string, minLength: 1, maxLength: 120 }
+        destinationSeasonId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        resources: { type: array, minItems: 1, maxItems: 7, uniqueItems: true, items: { $ref: '#/components/schemas/ImportResource' } }
+    ImportPreviewItem:
+      type: object
+      required: [resource, externalId, externalScope, title, operation, localCandidate, relationships, fields, warnings]
+      additionalProperties: false
+      properties:
+        resource: { $ref: '#/components/schemas/ImportResource' }
+        externalId: { type: string, minLength: 1, maxLength: 200 }
+        externalScope: { anyOf: [{ type: string, maxLength: 200 }, { type: 'null' }] }
+        title: { $ref: '#/components/schemas/DisplayName' }
+        operation: { type: string, enum: [new, changed, unchanged, conflict, invalid, skipped] }
+        localCandidate: { anyOf: [{ type: object, required: [id, label], additionalProperties: false, properties: { id: { $ref: '#/components/schemas/Uuid' }, label: { $ref: '#/components/schemas/DisplayName' } } }, { type: 'null' }] }
+        relationships: { type: array, maxItems: 10, items: { $ref: '#/components/schemas/ImportExternalReference' } }
+        fields: { type: array, maxItems: 40, items: { type: object, required: [name, localValue, incomingValue, baselineValue, protected], additionalProperties: false, properties: { name: { type: string, minLength: 1, maxLength: 80 }, localValue: { anyOf: [{ type: string, maxLength: 500 }, { type: number }, { type: boolean }, { type: 'null' }] }, incomingValue: { anyOf: [{ type: string, maxLength: 500 }, { type: number }, { type: boolean }, { type: 'null' }] }, baselineValue: { anyOf: [{ type: string, maxLength: 500 }, { type: number }, { type: boolean }, { type: 'null' }] }, protected: { type: boolean } } } }
+        warnings: { type: array, maxItems: 20, items: { type: string, maxLength: 240 } }
+    ImportPreviewSummary:
+      type: object
+      required: [new, changed, unchanged, conflicts, invalid, skipped]
+      additionalProperties: false
+      properties:
+        new: { type: integer, minimum: 0 }
+        changed: { type: integer, minimum: 0 }
+        unchanged: { type: integer, minimum: 0 }
+        conflicts: { type: integer, minimum: 0 }
+        invalid: { type: integer, minimum: 0 }
+        skipped: { type: integer, minimum: 0 }
+    ImportExternalReference:
+      type: object
+      required: [role, externalId, externalScope]
+      additionalProperties: false
+      properties:
+        role: { type: string, enum: [season, team, home_team, away_team, stage, round, match] }
+        externalId: { type: string, minLength: 1, maxLength: 200 }
+        externalScope: { anyOf: [{ type: string, maxLength: 200 }, { type: 'null' }] }
+    ImportPreviewWarning:
+      type: object
+      required: [code, severity, message, occurrenceCount, affectedExternalIds]
+      additionalProperties: false
+      properties:
+        code: { type: string, minLength: 1, maxLength: 80 }
+        severity: { type: string, enum: [info, warning, error, conflict] }
+        message: { type: string, minLength: 1, maxLength: 240 }
+        occurrenceCount: { type: integer, minimum: 1 }
+        affectedExternalIds: { type: array, maxItems: 500, items: { type: string, minLength: 1, maxLength: 200 } }
+    ImportPreview:
+      type: object
+      required: [previewId, competitionId, providerKey, providerName, externalCompetitionName, externalSeasonId, externalSeasonLabel, destinationSeasonId, retrievedAt, expiresAt, snapshotHash, localFingerprint, stale, resources, summary, capabilities, warnings, items]
+      additionalProperties: false
+      properties:
+        previewId: { $ref: '#/components/schemas/Uuid' }
+        competitionId: { $ref: '#/components/schemas/Uuid' }
+        providerKey: { $ref: '#/components/schemas/SourceId' }
+        providerName: { $ref: '#/components/schemas/DisplayName' }
+        externalCompetitionName: { $ref: '#/components/schemas/DisplayName' }
+        externalSeasonId: { type: string, minLength: 1, maxLength: 120 }
+        externalSeasonLabel: { $ref: '#/components/schemas/DisplayName' }
+        destinationSeasonId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        retrievedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        snapshotHash: { type: string, pattern: '^[0-9a-f]{64}$' }
+        localFingerprint: { type: string, pattern: '^[0-9a-f]{64}$' }
+        stale: { type: boolean }
+        resources: { type: array, items: { $ref: '#/components/schemas/ImportResource' } }
+        summary: { $ref: '#/components/schemas/ImportPreviewSummary' }
+        capabilities: { type: array, items: { $ref: '#/components/schemas/ImportResourceCapability' } }
+        warnings: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/ImportPreviewWarning' } }
+        items: { type: array, maxItems: 10000, items: { $ref: '#/components/schemas/ImportPreviewItem' } }
+    ImportPreviewResponse:
+      type: object
+      required: [preview]
+      additionalProperties: false
+      properties:
+        preview: { $ref: '#/components/schemas/ImportPreview' }
     ManagedSeason:
       type: object
       required: [id, competitionId, label, createdAt]
@@ -2320,6 +2650,7 @@ components:
             - MANUAL_APPROVAL_REFUSED
             - INTERNAL
             - PROVIDER_UNAVAILABLE
+            - IMPORT_PREVIEW_EXPIRED
         detail: { type: string, maxLength: 500, description: 'Fixed text plus sanitized parameters only (T10-F10)' }
         errors:
           type: array

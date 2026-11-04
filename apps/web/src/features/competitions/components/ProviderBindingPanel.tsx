@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router';
 import type { CompetitionProviderBinding, ExternalCompetition, SportsProvider } from '@edr/contracts';
 import { Alert, Button, Card, Modal, ModalFooter, describeError } from '../../../ui';
 import { useCompetitionsApi } from '../CompetitionsContext';
@@ -189,6 +190,14 @@ export function ProviderBindingPanel({ competitionId }: { competitionId: string 
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {binding ? (
+            <Link
+              className="inline-flex min-h-touch items-center rounded-control border border-border-subtle px-4 py-2.5 text-body-sm font-bold text-text-link underline decoration-border-strong underline-offset-2 hover:bg-surface-card focus-studio"
+              to={`/competitions/${competitionId}/import`}
+            >
+              Importar datos
+            </Link>
+          ) : null}
           <Button variant="secondary" onClick={openConfigure}>
             {binding ? 'Configurar fuente' : 'Configurar fuente de datos'}
           </Button>

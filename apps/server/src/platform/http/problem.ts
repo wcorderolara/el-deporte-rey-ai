@@ -53,6 +53,7 @@ export const PROBLEM_CODES = [
   'MANUAL_APPROVAL_REFUSED',
   'INTERNAL',
   'PROVIDER_UNAVAILABLE',
+  'IMPORT_PREVIEW_EXPIRED',
 ] as const;
 export type ProblemCode = (typeof PROBLEM_CODES)[number];
 
@@ -185,6 +186,7 @@ const TITLES: Readonly<Record<ProblemCode, string>> = {
   PROVIDER_BINDING_EXISTS: 'A provider is already linked to this competition',
   PROVIDER_AMBIGUOUS: 'The provider configuration is ambiguous',
   PROVIDER_UNAVAILABLE: 'The data provider is not configured',
+  IMPORT_PREVIEW_EXPIRED: 'The import preview has expired',
   PROVIDER_RATE_LIMITED: 'The data provider request budget is exhausted',
   SELECTION_UNAVAILABLE: 'The selection is unavailable',
   IMPORT_REJECTED: 'The import was rejected',

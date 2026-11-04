@@ -8,16 +8,20 @@ import type { z } from 'zod';
 
 export class ContractResponseError extends Error {
   override readonly name = 'ContractResponseError';
+  readonly contract: string;
+  readonly paths: readonly string[];
 
-  constructor() {
+  constructor(contract = 'response', paths: readonly string[] = []) {
     super('a response does not match its contract schema');
+    this.contract = contract;
+    this.paths = paths.map((path) => path.replace(/[^A-Za-z0-9.]/g, '*').slice(0, 120));
   }
 }
 
-export function contractResponse<T>(schema: z.ZodType<T>, value: unknown): T {
+export function contractResponse<T>(schema: z.ZodType<T>, value: unknown, contract?: string): T {
   const parsed = schema.safeParse(value);
   if (!parsed.success) {
-    throw new ContractResponseError();
+    throw new ContractResponseError(contract, parsed.error.issues.slice(0, 12).map((issue) => issue.path.join('.') || 'root'));
   }
   return parsed.data;
 }

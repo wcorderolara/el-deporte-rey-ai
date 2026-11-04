@@ -211,11 +211,13 @@ describe.each(WITH_PATH_PARAMS)('path parameters of %s (T10-F03, R-224)', (opera
     const egress = t.egress.requests.length;
     for (const parameter of spec.pathParameters(operationId)) {
       const probes =
-        parameter.schema === 'integer'
-          ? POSITION_PROBES
-          : parameter.schema === 'Uuid'
-            ? [...ID_PROBES, ...UUID_PROBES]
-            : ID_PROBES;
+        parameter.schema === 'ExternalSeasonId'
+          ? ['bad id', 'bad!id']
+          : parameter.schema === 'integer'
+            ? POSITION_PROBES
+            : parameter.schema === 'Uuid'
+              ? [...ID_PROBES, ...UUID_PROBES]
+              : ID_PROBES;
       for (const probe of probes) {
         const problem = await expectProblem(
           operationId,
@@ -265,7 +267,9 @@ describe.each(WITH_PATH_PARAMS)('path parameters of %s (T10-F03, R-224)', (opera
     const request = validRequest(spec, operationId);
     const before = t.databaseText();
     for (const parameter of spec.pathParameters(operationId)) {
-      for (const probe of OVERLONG_PROBES) {
+      const overlongProbes =
+        parameter.schema === 'ExternalSeasonId' ? ['x'.repeat(121), 'x'.repeat(300)] : OVERLONG_PROBES;
+      for (const probe of overlongProbes) {
         const exchange = await client.call(operationId, { ...request, rawParams: { [parameter.name]: probe } });
         expect(exchange.violations, describeExchange(exchange)).toEqual([]);
         expect(exchange.status, describeExchange(exchange)).toBe(400);

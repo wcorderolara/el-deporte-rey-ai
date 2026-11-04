@@ -8,6 +8,12 @@ import {
   CompetitionProviderBindingParamsSchema,
   CompetitionProviderBindingCreateSchema,
   CompetitionProviderBindingResponseSchema,
+  ExternalSeasonListResponseSchema,
+  ImportCapabilitiesResponseSchema,
+  ImportPreviewCreateSchema,
+  ImportPreviewResponseSchema,
+  ImportOperationStartResponseSchema,
+  ImportOperationResponseSchema,
   CompetitionStageCreateSchema,
   CompetitionCalendarNameUpdateSchema,
   CompetitionRoundUpdateSchema,
@@ -55,6 +61,11 @@ import {
   type SportsProvider,
   type ExternalCompetition,
   type CompetitionProviderBinding,
+  type ExternalSeasonOption,
+  type ImportPreview,
+  type ImportPreviewCreate,
+  type ImportOperation,
+  type ImportResourceCapability,
   type ManagedSeason,
   type ManagedSeasonCreate,
   type ManagedSeasonUpdate,
@@ -101,6 +112,21 @@ export interface CompetitionsApi {
     },
   ): Promise<CompetitionProviderBinding>;
   removeProviderBinding(competitionId: string): Promise<void>;
+  listExternalSeasons(competitionId: string, signal?: AbortSignal): Promise<ExternalSeasonOption[]>;
+  getImportCapabilities(
+    competitionId: string,
+    externalSeasonId: string,
+    signal?: AbortSignal,
+  ): Promise<ImportResourceCapability[]>;
+  startImportOperation(
+    competitionId: string,
+    input: ImportPreviewCreate,
+    signal?: AbortSignal,
+  ): Promise<ImportOperation>;
+  getImportOperation(competitionId: string, operationId: string, signal?: AbortSignal): Promise<ImportOperation>;
+  cancelImportOperation(competitionId: string, operationId: string): Promise<ImportOperation>;
+  createImportPreview(competitionId: string, input: ImportPreviewCreate, signal?: AbortSignal): Promise<ImportPreview>;
+  getImportPreview(competitionId: string, previewId: string, signal?: AbortSignal): Promise<ImportPreview>;
   list(signal?: AbortSignal): Promise<ManagedCompetition[]>;
   create(input: ManagedCompetitionCreate): Promise<ManagedCompetition>;
   get(id: string, signal?: AbortSignal): Promise<ManagedCompetition>;
@@ -214,6 +240,61 @@ export function createCompetitionsApi(client: ApiClient): CompetitionsApi {
     async removeProviderBinding(competitionId) {
       const params = CompetitionProviderBindingParamsSchema.parse({ competitionId });
       await client.delete(path('removeCompetitionProviderBinding', params));
+    },
+    async listExternalSeasons(competitionId, signal) {
+      const result = await client.get(path('listCompetitionExternalSeasons', { competitionId }), {
+        schema: ExternalSeasonListResponseSchema,
+        ...(signal ? { signal } : {}),
+      });
+      return result.seasons;
+    },
+    async getImportCapabilities(competitionId, externalSeasonId, signal) {
+      const result = await client.get(path('getCompetitionImportCapabilities', { competitionId, externalSeasonId }), {
+        schema: ImportCapabilitiesResponseSchema,
+        ...(signal ? { signal } : {}),
+      });
+      return result.capabilities;
+    },
+    async startImportOperation(competitionId, input, signal) {
+      const result = await client.post(
+        path('startCompetitionImportOperation', { competitionId }),
+        ImportPreviewCreateSchema.parse(input),
+        { schema: ImportOperationStartResponseSchema, ...(signal ? { signal } : {}) },
+      );
+      return result.operation;
+    },
+    async getImportOperation(competitionId, operationId, signal) {
+      const result = await client.get(path('getCompetitionImportOperation', { competitionId, operationId }), {
+        schema: ImportOperationResponseSchema,
+        ...(signal ? { signal } : {}),
+      });
+      return result.operation;
+    },
+    async cancelImportOperation(competitionId, operationId) {
+      const result = await client.post(
+        path('cancelCompetitionImportOperation', { competitionId, operationId }),
+        undefined,
+        { schema: ImportOperationResponseSchema },
+      );
+      return result.operation;
+    },
+    async createImportPreview(competitionId, input, signal) {
+      const result = await client.post(
+        path('createCompetitionImportPreview', { competitionId }),
+        ImportPreviewCreateSchema.parse(input),
+        {
+          schema: ImportPreviewResponseSchema,
+          ...(signal ? { signal } : {}),
+        },
+      );
+      return result.preview;
+    },
+    async getImportPreview(competitionId, previewId, signal) {
+      const result = await client.get(path('getCompetitionImportPreview', { competitionId, previewId }), {
+        schema: ImportPreviewResponseSchema,
+        ...(signal ? { signal } : {}),
+      });
+      return result.preview;
     },
     async list(signal) {
       const result = await client.get(path('listManagedCompetitions'), {

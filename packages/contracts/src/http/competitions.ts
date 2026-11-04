@@ -1,7 +1,7 @@
 /** Locally managed competition foundation, separate from provider catalogue identifiers and manual import records. */
 import { z } from 'zod';
 
-import { DateTimeSchema, DisplayNameSchema, TeamNameSchema, UuidSchema, SourceIdSchema } from './primitives.js';
+import { ContractPatterns, DateTimeSchema, DisplayNameSchema, TeamNameSchema, UuidSchema, SourceIdSchema } from './primitives.js';
 
 export const ManagedCompetitionCreateSchema = z.strictObject({ name: DisplayNameSchema });
 export const ManagedCompetitionSchema = z.strictObject({
@@ -58,6 +58,99 @@ export type SportsProvider = z.infer<typeof SportsProviderSchema>;
 export type ExternalCompetition = z.infer<typeof ExternalCompetitionSchema>;
 export type CompetitionProviderBinding = z.infer<typeof CompetitionProviderBindingSchema>;
 export type CompetitionProviderBindingCreate = z.infer<typeof CompetitionProviderBindingCreateSchema>;
+
+export const ExternalSeasonIdSchema = z.string().min(1).max(120).regex(new RegExp(ContractPatterns.ExternalSeasonId, 'u'));
+export const ImportResourceSchema = z.enum([
+  'season', 'teams', 'participants', 'stages', 'rounds', 'matches', 'results',
+]);
+export const ExternalSeasonOptionSchema = z.strictObject({
+  externalSeasonId: z.string().min(1).max(120),
+  label: DisplayNameSchema,
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  current: z.boolean(),
+  localCandidates: z.array(z.strictObject({ id: UuidSchema, label: DisplayNameSchema })).max(20),
+});
+export const ExternalSeasonListResponseSchema = z.strictObject({ seasons: z.array(ExternalSeasonOptionSchema) });
+export const ImportResourceCapabilitySchema = z.strictObject({
+  resource: ImportResourceSchema,
+  available: z.boolean(),
+  reason: z.string().max(240).nullable(),
+});
+export const ImportCapabilitiesResponseSchema = z.strictObject({ capabilities: z.array(ImportResourceCapabilitySchema) });
+export const ImportPreviewCreateSchema = z.strictObject({
+  externalSeasonId: z.string().min(1).max(120),
+  destinationSeasonId: UuidSchema.nullable().optional(),
+  resources: z.array(ImportResourceSchema).min(1).max(7).refine((items) => new Set(items).size === items.length),
+});
+const ImportValueSchema = z.union([z.string().max(500), z.number(), z.boolean(), z.null()]);
+export const ImportExternalReferenceSchema = z.strictObject({
+  role: z.enum(['season', 'team', 'home_team', 'away_team', 'stage', 'round', 'match']),
+  externalId: z.string().min(1).max(200),
+  externalScope: z.string().max(200).nullable(),
+});
+export const ImportPreviewWarningSchema = z.strictObject({
+  code: z.string().min(1).max(80),
+  severity: z.enum(['info', 'warning', 'error', 'conflict']),
+  message: z.string().min(1).max(240),
+  occurrenceCount: z.number().int().positive(),
+  affectedExternalIds: z.array(z.string().min(1).max(200)).max(500),
+});
+export const ImportPreviewItemSchema = z.strictObject({
+  resource: ImportResourceSchema,
+  externalId: z.string().min(1).max(200),
+  externalScope: z.string().max(200).nullable(),
+  title: DisplayNameSchema,
+  operation: z.enum(['new', 'changed', 'unchanged', 'conflict', 'invalid', 'skipped']),
+  localCandidate: z.strictObject({ id: UuidSchema, label: DisplayNameSchema }).nullable(),
+  relationships: z.array(ImportExternalReferenceSchema).max(10),
+  fields: z.array(z.strictObject({
+    name: z.string().min(1).max(80),
+    localValue: ImportValueSchema,
+    incomingValue: ImportValueSchema,
+    baselineValue: ImportValueSchema,
+    protected: z.boolean(),
+  })).max(40),
+  warnings: z.array(z.string().min(1).max(240)).max(20),
+});
+export const ImportPreviewSummarySchema = z.strictObject({
+  new: z.number().int().nonnegative(),
+  changed: z.number().int().nonnegative(),
+  unchanged: z.number().int().nonnegative(),
+  conflicts: z.number().int().nonnegative(),
+  invalid: z.number().int().nonnegative(),
+  skipped: z.number().int().nonnegative(),
+});
+export const ImportPreviewSchema = z.strictObject({
+  previewId: UuidSchema,
+  competitionId: UuidSchema,
+  providerKey: SourceIdSchema,
+  providerName: DisplayNameSchema,
+  externalCompetitionName: DisplayNameSchema,
+  externalSeasonId: z.string().min(1).max(120),
+  externalSeasonLabel: DisplayNameSchema,
+  destinationSeasonId: UuidSchema.nullable(),
+  retrievedAt: DateTimeSchema,
+  expiresAt: DateTimeSchema,
+  snapshotHash: z.string().regex(/^[a-f0-9]{64}$/),
+  localFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+  stale: z.boolean(),
+  resources: z.array(ImportResourceSchema),
+  summary: ImportPreviewSummarySchema,
+  capabilities: z.array(ImportResourceCapabilitySchema),
+  warnings: z.array(ImportPreviewWarningSchema).max(100),
+  items: z.array(ImportPreviewItemSchema).max(10000),
+});
+export const ImportExternalSeasonsParamsSchema = ManagedCompetitionParamsSchema;
+export const ImportSeasonCapabilitiesParamsSchema = z.strictObject({ competitionId: UuidSchema, externalSeasonId: ExternalSeasonIdSchema });
+export const ImportPreviewParamsSchema = z.strictObject({ competitionId: UuidSchema, previewId: UuidSchema });
+export const ImportPreviewResponseSchema = z.strictObject({ preview: ImportPreviewSchema });
+export type ImportResource = z.infer<typeof ImportResourceSchema>;
+export type ImportPreviewCreate = z.infer<typeof ImportPreviewCreateSchema>;
+export type ImportPreview = z.infer<typeof ImportPreviewSchema>;
+export type ImportPreviewItem = z.infer<typeof ImportPreviewItemSchema>;
+export type ExternalSeasonOption = z.infer<typeof ExternalSeasonOptionSchema>;
+export type ImportResourceCapability = z.infer<typeof ImportResourceCapabilitySchema>;
 
 /** Locally managed season; the label preserves operator formatting (for example `2026/27` or `2027`). */
 export const ManagedSeasonCreateSchema = z.strictObject({ label: DisplayNameSchema });
@@ -231,3 +324,37 @@ export type CompetitionMatchCreate = z.infer<typeof CompetitionMatchCreateSchema
 export type CompetitionMatchScheduleUpdate = z.infer<typeof CompetitionMatchScheduleUpdateSchema>;
 export type CompetitionMatchResultUpdate = z.infer<typeof CompetitionMatchResultUpdateSchema>;
 export type MatchResultHistory = z.infer<typeof MatchResultHistorySchema>;
+
+export const ImportOperationStatusSchema = z.enum(['queued', 'running', 'completed', 'failed', 'cancelled']);
+export const ImportOperationStageSchema = z.enum(['fetching', 'normalizing', 'comparing', 'preparing_preview']);
+export const ImportOperationSchema = z.strictObject({
+  operationId: UuidSchema,
+  competitionId: UuidSchema,
+  providerKey: z.string().min(1).max(40),
+  externalSeasonId: z.string().min(1).max(120),
+  destinationSeasonId: UuidSchema.nullable(),
+  resources: z.array(ImportResourceSchema).min(1).max(7),
+  status: ImportOperationStatusSchema,
+  currentStage: ImportOperationStageSchema.nullable(),
+  completedStages: z.array(ImportOperationStageSchema).max(4),
+  cancellationRequested: z.boolean(),
+  previewId: UuidSchema.nullable(),
+  errorCode: z.string().max(80).nullable(),
+  errorMessage: z.string().max(240).nullable(),
+  createdAt: z.iso.datetime(), startedAt: z.iso.datetime().nullable(),
+  updatedAt: z.iso.datetime(), completedAt: z.iso.datetime().nullable(),
+});
+export const ImportOperationResponseSchema = z.strictObject({ operation: ImportOperationSchema });
+export const ImportOperationStartResponseSchema = z.strictObject({
+  operation: ImportOperationSchema,
+  statusUrl: z.string().startsWith('/api/v1/competitions/'),
+  eventsUrl: z.string().startsWith('/api/v1/competitions/'),
+});
+export const ImportOperationParamsSchema = z.strictObject({ competitionId: UuidSchema, operationId: UuidSchema });
+export const ImportOperationEventSchema = z.strictObject({
+  id: z.number().int().positive(), type: z.enum(['operation.queued','operation.started','stage.started','stage.completed','operation.completed','operation.failed','operation.cancelled']),
+  operationId: UuidSchema, status: ImportOperationStatusSchema, stage: ImportOperationStageSchema.nullable(),
+  previewId: UuidSchema.nullable(), timestamp: z.iso.datetime(),
+});
+export type ImportOperation = z.infer<typeof ImportOperationSchema>;
+export type ImportOperationEvent = z.infer<typeof ImportOperationEventSchema>;

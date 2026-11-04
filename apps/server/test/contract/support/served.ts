@@ -346,6 +346,7 @@ export const UNKNOWN_IDS: Readonly<Record<string, string>> = Object.freeze({
   Uuid: '00000000-0000-4000-8000-0000000000ff',
   Slug: 'sin-registro',
   SourceId: 'fuente-sin-registro',
+  ExternalSeasonId: '9999',
   integer: '7',
 });
 

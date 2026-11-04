@@ -92,6 +92,8 @@ const COMMITTED = [
   { version: 8, name: 'independent_match_state_and_scores' },
   { version: 9, name: 'provider_competition_bindings' },
   { version: 10, name: 'provider_binding_display_names' },
+  { version: 11, name: 'competition_import_previews' },
+  { version: 12, name: 'import_preview_operations' },
 ];
 
 describe('committed migrations', () => {
@@ -115,6 +117,8 @@ describe('committed migrations', () => {
       },
       { version: 9, name: 'provider_competition_bindings', fileName: '0009_provider_competition_bindings.sql' },
       { version: 10, name: 'provider_binding_display_names', fileName: '0010_provider_binding_display_names.sql' },
+      { version: 11, name: 'competition_import_previews', fileName: '0011_competition_import_previews.sql' },
+      { version: 12, name: 'import_preview_operations', fileName: '0012_import_preview_operations.sql' },
     ]);
   });
 
@@ -163,8 +167,12 @@ describe('committed migrations', () => {
       ]);
 
       expect(runMigrations(db)).toEqual({
-        applied: [{ version: 10, name: 'provider_binding_display_names' }],
-        currentVersion: 10,
+        applied: [
+          { version: 10, name: 'provider_binding_display_names' },
+          { version: 11, name: 'competition_import_previews' },
+          { version: 12, name: 'import_preview_operations' },
+        ],
+        currentVersion: 12,
       });
       expect(
         db
@@ -186,20 +194,20 @@ describe('committed migrations', () => {
     const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
     const first = openMigratedDatabase({ location, now: () => FIXED_NOW });
     try {
-      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 10 });
+      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 12 });
       expect(first.db.prepare('PRAGMA journal_mode').get()).toEqual({ journal_mode: 'wal' });
       expect(first.db.prepare('PRAGMA foreign_keys').get()).toEqual({ foreign_keys: 1 });
       expect(appliedMigrations(first.db)).toEqual(
         COMMITTED.map((record) => ({ ...record, appliedAt: '2026-10-27T16:32:21.123Z' })),
       );
-      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 10 });
+      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 12 });
     } finally {
       first.db.close();
     }
 
     const second = openMigratedDatabase({ location });
     try {
-      expect(second.report).toEqual({ applied: [], currentVersion: 10 });
+      expect(second.report).toEqual({ applied: [], currentVersion: 12 });
       expect(tableExists(second.db, 'competition_teams')).toBe(true);
       expect(tableExists(second.db, 'facts')).toBe(true);
       expect(tableExists(second.db, 'competitions')).toBe(true);
@@ -275,8 +283,10 @@ describe('committed migrations', () => {
           { version: 8, name: 'independent_match_state_and_scores' },
           { version: 9, name: 'provider_competition_bindings' },
           { version: 10, name: 'provider_binding_display_names' },
+          { version: 11, name: 'competition_import_previews' },
+          { version: 12, name: 'import_preview_operations' },
         ],
-        currentVersion: 10,
+        currentVersion: 12,
       });
       expect(db.prepare('SELECT competition_id, team_id FROM competition_teams ORDER BY team_id').all()).toEqual([
         { competition_id: 'c1', team_id: 't1' },
@@ -623,8 +633,10 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
           { version: 8, name: 'independent_match_state_and_scores' },
           { version: 9, name: 'provider_competition_bindings' },
           { version: 10, name: 'provider_binding_display_names' },
+          { version: 11, name: 'competition_import_previews' },
+          { version: 12, name: 'import_preview_operations' },
         ],
-        currentVersion: 10,
+        currentVersion: 12,
       });
 
       expect(db.prepare(QA_RESULT_BYTES).all()).toEqual(bytesBefore);
@@ -659,7 +671,7 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
     // Reopening applies nothing more.
     const reopened = openMigratedDatabase({ location });
     try {
-      expect(reopened.report).toEqual({ applied: [], currentVersion: 10 });
+      expect(reopened.report).toEqual({ applied: [], currentVersion: 12 });
     } finally {
       reopened.db.close();
     }
