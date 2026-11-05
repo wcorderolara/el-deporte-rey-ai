@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 
 import { ApiError } from '../../api/client';
 import { featurePaths } from '../../app/routes';
-import { Button, ErrorBanner, formatDateTime, StatusBadge } from '../../ui';
+import { Button, buttonClassName, ErrorBanner, formatDateTime, StatusBadge } from '../../ui';
 import {
   approvalObstacleLabel,
   carouselCopy,
@@ -95,7 +95,9 @@ function FinalApprovalSection({ projectId, carousel, onApproved, onRefused }: Fi
           </p>
           <p>{finalCopy.valid}</p>
           <p>
-            <Link to={featurePaths.history(projectId)}>{finalCopy.goToExports}</Link>
+            <Link className={buttonClassName('primary')} to={featurePaths.history(projectId)}>
+              {finalCopy.goToExports}
+            </Link>
           </p>
         </div>
       ) : (

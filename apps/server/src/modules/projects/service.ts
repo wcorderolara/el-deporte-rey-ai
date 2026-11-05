@@ -19,6 +19,8 @@ import { HttpProblem } from '../../platform/http/index.js';
 import { type RunKind, RunStartRefused, type WorkflowRunner } from '../../workflow/index.js';
 
 import { availabilityOf, catalogueOf, discoveryContext } from './catalog.js';
+import { ContentBatchRepository } from './content-batches/repository.js';
+import { projectSportsContext } from './content-batches/service.js';
 import { type ProjectRecord, ProjectRepository } from './repository.js';
 
 /** Longest project title (contract `ProjectSummaryFields.title`). */
@@ -56,12 +58,14 @@ export class ProjectsService {
   readonly #container: AppContainer;
   readonly #runner: WorkflowRunner;
   readonly #projects: ProjectRepository;
+  readonly #batches: ContentBatchRepository;
   readonly #newId: () => string;
 
   constructor(options: ProjectsServiceOptions) {
     this.#container = options.container;
     this.#runner = options.runner;
     this.#projects = new ProjectRepository(options.container.db);
+    this.#batches = new ContentBatchRepository(options.container.db);
     this.#newId = options.newId ?? randomUUID;
   }
 
@@ -81,11 +85,22 @@ export class ProjectsService {
     return language;
   }
 
+  /** The display title; a per-match piece of a content batch also names its match (PD-ARCH-01E-A). */
+  #title(project: ProjectRecord): string {
+    const title = projectTitle(project);
+    const piece = projectSportsContext(this.#batches, project.id);
+    if (piece === null || piece.context.kind !== 'match_result') {
+      return title;
+    }
+    const full = `${title} · ${piece.title}`;
+    return full.length > MAX_TITLE_LENGTH ? full.slice(0, MAX_TITLE_LENGTH) : full;
+  }
+
   #summary(project: ProjectRecord): ProjectSummary {
     const state = this.#projects.draftState(project.id);
     return {
       id: project.id,
-      title: projectTitle(project),
+      title: this.#title(project),
       competitionName: project.competitionName,
       seasonLabel: project.seasonLabel,
       stageLabel: project.stageLabel,
@@ -109,6 +124,7 @@ export class ProjectsService {
       stageId: project.stageId,
       latestRun: this.#runner.runs.latestView(project.id),
       activeDraftId: this.#projects.draftState(project.id).activeDraftId,
+      sportsContext: projectSportsContext(this.#batches, project.id)?.context ?? null,
     };
   }
 

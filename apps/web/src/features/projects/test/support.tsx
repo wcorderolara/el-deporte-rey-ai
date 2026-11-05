@@ -356,6 +356,7 @@ export function project(overrides: Partial<Project> = {}): Project {
     stageId: 'fase-liga',
     latestRun: null,
     activeDraftId: null,
+    sportsContext: null,
     ...overrides,
   };
 }
@@ -373,6 +374,7 @@ export function manualProject(overrides: Partial<Project> = {}): Project {
     stageId: 'apertura',
     latestRun: null,
     activeDraftId: null,
+    sportsContext: null,
     ...overrides,
   };
 }

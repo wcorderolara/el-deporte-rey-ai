@@ -43,6 +43,9 @@ import { writeOriginal } from './originals.js';
 import { type ImportChannel, type ImportRecord, ImportRepository, type VersionHeader } from './repository.js';
 import { checkDocument } from './semantic.js';
 
+/** Adapter kind of the local competitions source (a configuration value). */
+export const LOCAL_COMPETITIONS_ADAPTER = 'local-competitions';
+
 /** Catalogue limits of one source's listings (domain listing schemas) and of a catalogue ID. */
 export const CATALOGUE_LIMITS = Object.freeze({ seasons: 200, stages: 64, matchdays: 99, catalogueId: 64 });
 
@@ -134,18 +137,38 @@ export class ImportService {
     this.#newId = deps.newId ?? randomUUID;
   }
 
-  /** The source imports belong to: the first enabled MANUAL_DATA source in configuration order. */
+  /**
+   * The source operator imports belong to: the first enabled MANUAL_DATA source in configuration order, other than
+   * the local competitions source, whose versions are only the frozen selections of content batches (PD-ARCH-01E-A).
+   */
   manualSource(): SourceConfig {
-    const source = this.#deps.sources.find((candidate) => candidate.enabled && candidate.mode === 'MANUAL_DATA');
+    const source = this.#deps.sources.find(
+      (candidate) =>
+        candidate.enabled && candidate.mode === 'MANUAL_DATA' && candidate.adapter !== LOCAL_COMPETITIONS_ADAPTER,
+    );
     if (source === undefined) {
       throw new NoManualSourceError();
     }
     return source;
   }
 
-  /** Runs the whole pipeline; returns the summary of the applied import or every error of the rejected one. */
-  createImport(request: ImportRequest): ImportOutcome {
-    const source = this.manualSource();
+  /** An enabled MANUAL_DATA source by ID (the target of a content batch's frozen selection). */
+  #sourceById(sourceId: string): SourceConfig {
+    const source = this.#deps.sources.find(
+      (candidate) => candidate.id === sourceId && candidate.enabled && candidate.mode === 'MANUAL_DATA',
+    );
+    if (source === undefined) {
+      throw new NoManualSourceError();
+    }
+    return source;
+  }
+
+  /**
+   * Runs the whole pipeline; returns the summary of the applied import or every error of the rejected one. Operator
+   * imports use `manualSource()`; a content batch names its local source with `options.sourceId`.
+   */
+  createImport(request: ImportRequest, options: { readonly sourceId?: string } = {}): ImportOutcome {
+    const source = options.sourceId === undefined ? this.manualSource() : this.#sourceById(options.sourceId);
     const errors = new ImportErrorList(request.channel === 'form' ? 'form' : 'file');
     try {
       const { candidate, original } = this.#parse(request, errors);

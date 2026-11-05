@@ -118,6 +118,17 @@ import {
 } from './primitives.js';
 import { ProblemSchema } from './problem.js';
 import {
+  ContentBatchContextSchema,
+  ContentBatchCreateSchema,
+  ContentBatchItemSchema,
+  ContentBatchMatchSchema,
+  ContentBatchPreviewSchema,
+  ContentBatchSchema,
+  ContentBatchSelectionSchema,
+  ContentPiecePlanSchema,
+  ProjectSportsContextSchema,
+} from './content-batches.js';
+import {
   ProjectCreateSchema,
   ProjectSchema,
   ProjectSummaryFieldsSchema,
@@ -223,6 +234,15 @@ export const componentSchemas = {
   RunStart: RunStartSchema,
   Run: RunSchema,
   RunStatus: RunStatusSchema,
+  ProjectSportsContext: ProjectSportsContextSchema,
+  ContentBatchSelection: ContentBatchSelectionSchema,
+  ContentBatchCreate: ContentBatchCreateSchema,
+  ContentBatchContext: ContentBatchContextSchema,
+  ContentBatchMatch: ContentBatchMatchSchema,
+  ContentPiecePlan: ContentPiecePlanSchema,
+  ContentBatchPreview: ContentBatchPreviewSchema,
+  ContentBatchItem: ContentBatchItemSchema,
+  ContentBatch: ContentBatchSchema,
   StageStatus: StageStatusSchema,
   FactStatus: FactStatusSchema,
   UnverifiedReason: UnverifiedReasonSchema,

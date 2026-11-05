@@ -81,6 +81,72 @@ const projectSummary = {
   approvalState: 'in_review',
   lastExportAt: null,
 };
+const sportsContextBase = {
+  competitionId: uuid(120),
+  competitionName: 'Liga Local',
+  seasonId: uuid(121),
+  seasonLabel: '2026/27',
+  stageId: null,
+  stageName: null,
+  roundId: uuid(122),
+  roundName: 'Jornada 12',
+};
+const projectSportsContext = {
+  batchId: uuid(123),
+  itemId: uuid(124),
+  kind: 'match_result',
+  ...sportsContextBase,
+  matchIds: [uuid(125)],
+};
+const contentBatchSelection = {
+  competitionId: uuid(120),
+  seasonId: uuid(121),
+  stageId: null,
+  roundId: uuid(122),
+  matchIds: [uuid(125), uuid(126)],
+  kinds: ['round_results', 'match_result'],
+  language: 'es',
+};
+const contentBatchMatch = {
+  matchId: uuid(125),
+  homeTeamName: 'Club Alfa',
+  awayTeamName: 'Club Beta',
+  kickoffAt: T1,
+  status: 'finished',
+  homeScore: 2,
+  awayScore: 1,
+  ineligibility: null,
+};
+const contentPiecePlan = {
+  position: 1,
+  kind: 'round_results',
+  title: 'Resultados · Jornada 12',
+  matchIds: [uuid(125)],
+  status: 'ready',
+  skipReason: null,
+};
+const contentBatchItem = {
+  id: uuid(124),
+  position: 1,
+  kind: 'round_results',
+  title: 'Resultados · Jornada 12',
+  matchIds: [uuid(125)],
+  status: 'failed',
+  skipReason: null,
+  failure,
+  projectId: uuid(1),
+  runId: uuid(2),
+};
+const contentBatch = {
+  id: uuid(123),
+  requestKey: uuid(127),
+  createdAt: T1,
+  context: sportsContextBase,
+  language: 'es',
+  state: 'failed',
+  totals: { requested: 1, generated: 0, failed: 1, skipped: 0, pending: 0 },
+  items: [contentBatchItem],
+};
 const project = {
   ...projectSummary,
   competitionId: 'demo-a-liga-demo',
@@ -89,6 +155,7 @@ const project = {
   stageId: 'fase-liga',
   latestRun: run,
   activeDraftId: uuid(3),
+  sportsContext: projectSportsContext,
 };
 const matchScoreValue = { home: 2, away: 1 };
 const factRef = {
@@ -851,6 +918,32 @@ export const componentSamples: Record<ComponentName, unknown> = {
     badgeSlots: 0,
     imageSlots: ['brand_logo', 'decoration'],
   },
+  ProjectSportsContext: projectSportsContext,
+  ContentBatchSelection: contentBatchSelection,
+  ContentBatchCreate: { requestKey: uuid(127), selection: contentBatchSelection },
+  ContentBatchContext: sportsContextBase,
+  ContentBatchMatch: contentBatchMatch,
+  ContentPiecePlan: contentPiecePlan,
+  ContentBatchPreview: {
+    context: sportsContextBase,
+    selectionLabel: 'Jornada 12',
+    language: 'es',
+    matches: [contentBatchMatch],
+    templates: [
+      {
+        id: 'match-result',
+        version: '1.0.0',
+        slideType: 'match_result',
+        label: 'Resultado',
+        badgeSlots: 0,
+        imageSlots: ['brand_logo', 'decoration'],
+      },
+    ],
+    pieces: [contentPiecePlan],
+    totals: { requested: 1, ready: 1, skipped: 0 },
+  },
+  ContentBatchItem: contentBatchItem,
+  ContentBatch: contentBatch,
 };
 
 /** Samples of the JSON request bodies (inline or by reference) of the operations that have one. */
@@ -881,6 +974,8 @@ export const requestSamples: Partial<Record<OperationId, unknown>> = {
   updateCompetitionMatchSchedule: { kickoffAt: '2027-05-10T18:00:00Z' },
   updateCompetitionMatchResult: { status: 'finished', homeScore: 2, awayScore: 1 },
   createProject: componentSamples.ProjectCreate,
+  previewContentBatch: componentSamples.ContentBatchSelection,
+  createContentBatch: componentSamples.ContentBatchCreate,
   updateProject: componentSamples.ProjectUpdate,
   startRun: componentSamples.RunStart,
   setExcludedMatches: { excludedMatchKeys: ['liga-demo:2026-27:m1', 'liga-demo:2026-27:m2'] },
@@ -1052,6 +1147,9 @@ export const responseSamples: Partial<Record<OperationId, unknown>> = {
   listRuns: { runs: [run] },
   startRun: run,
   getRun: run,
+  previewContentBatch: componentSamples.ContentBatchPreview,
+  createContentBatch: contentBatch,
+  getContentBatch: contentBatch,
   listFacts: {
     dataMode: 'DEMO_DATA',
     facts: [fact],

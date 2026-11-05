@@ -42,6 +42,7 @@ describe('config/live.config.json', () => {
       ['demo-a', 'DEMO_DATA', true],
       ['demo-b', 'DEMO_DATA', true],
       ['manual', 'MANUAL_DATA', true],
+      ['local', 'MANUAL_DATA', true],
       ['football-data', 'LIVE_DATA', true],
     ]);
     expect(config.verificationPolicy).toEqual({
@@ -64,7 +65,7 @@ describe('config/live.config.json', () => {
 
   it('uses the section 1.4 defaults, the reference competition CL and a 1 MiB stage-discovery override', () => {
     const live = liveConfig().providers.sports.sources.find((source) => source.id === 'football-data');
-    const parsed = parseFootballDataOptions(live?.options, 'providers.sports.sources[3]');
+    const parsed = parseFootballDataOptions(live?.options, 'providers.sports.sources[4]');
     expect(parsed.ok).toBe(true);
     expect(parsed.ok && parsed.options).toEqual({
       baseUrl: `${PINNED_ORIGIN}/v4`,
@@ -94,7 +95,7 @@ describe('config/live.config.json', () => {
 
   it('keeps the stage-discovery override within the reviewed 2 MiB bound and above the 512 KiB default (FU-4, Q8)', () => {
     const live = liveConfig().providers.sports.sources.find((source) => source.id === 'football-data');
-    const parsed = parseFootballDataOptions(live?.options, 'providers.sports.sources[3]');
+    const parsed = parseFootballDataOptions(live?.options, 'providers.sports.sources[4]');
     const limit = parsed.ok ? parsed.options.maxResponseBytesByResource.stageDiscovery : null;
     expect(limit).toBe(1_048_576);
     expect(limit).toBeLessThanOrEqual(2 * 1024 * 1024);

@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { Link } from 'react-router';
 import { Alert, Button, buttonClassName, Card, describeError, EmptyState, LoadingState } from '../../ui';
 import { listCopy } from './copy';
-import { newProjectPath } from './paths';
+import { generateContentPath, newProjectPath } from './paths';
 import { ProjectCard } from './ProjectCard';
 import { useProjectsDependencies } from './ProjectsContext';
 import { useApiRequest } from './useApiRequest';
@@ -60,9 +60,14 @@ export function ProjectListPage() {
             <p className="m-0 mt-4 text-body-lg text-text-secondary">
               Convierte resultados deportivos en contenido visual listo para descargar.
             </p>
-            <Link className={buttonClassName('primary', 'md', 'mt-6')} to={newProjectPath}>
-              <span aria-hidden="true">＋</span>Crear contenido
-            </Link>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link className={buttonClassName('primary', 'md')} to={newProjectPath}>
+                <span aria-hidden="true">＋</span>Crear contenido
+              </Link>
+              <Link className={buttonClassName('secondary', 'md')} to={generateContentPath}>
+                Generar desde una competición
+              </Link>
+            </div>
           </div>
           <div
             aria-hidden="true"

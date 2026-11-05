@@ -6,6 +6,13 @@
  */
 import {
   CatalogueSchema,
+  CompetitionMatchListResponseSchema,
+  CompetitionRoundListResponseSchema,
+  CompetitionStageListResponseSchema,
+  ContentBatchPreviewSchema,
+  ContentBatchSchema,
+  ManagedCompetitionListResponseSchema,
+  ManagedSeasonListResponseSchema,
   operations,
   ProjectListResponseSchema,
   ProjectSchema,
@@ -13,6 +20,15 @@ import {
   SeasonListSchema,
   StageListSchema,
   type Catalogue,
+  type CompetitionMatch,
+  type CompetitionRound,
+  type CompetitionStage,
+  type ContentBatch,
+  type ContentBatchCreate,
+  type ContentBatchPreview,
+  type ContentBatchSelection,
+  type ManagedCompetition,
+  type ManagedSeason,
   type OperationId,
   type Project,
   type ProjectCreate,
@@ -45,6 +61,22 @@ export interface ProjectsApi {
   listSeasons(competitionId: string, sourceId: string, signal?: AbortSignal): Promise<SeasonList>;
   /** listStages: stages of the season by the source's names, with matchdays and standings expectation. */
   listStages(competitionId: string, sourceId: string, seasonId: string, signal?: AbortSignal): Promise<StageList>;
+  /** listManagedCompetitions: locally managed competitions (content batches, PD-ARCH-01E-A). */
+  listLocalCompetitions(signal?: AbortSignal): Promise<ManagedCompetition[]>;
+  /** listManagedSeasons. */
+  listLocalSeasons(competitionId: string, signal?: AbortSignal): Promise<ManagedSeason[]>;
+  /** listCompetitionStages. */
+  listLocalStages(competitionId: string, seasonId: string, signal?: AbortSignal): Promise<CompetitionStage[]>;
+  /** listSeasonRounds and listStageRounds: every round of the season, direct and staged. */
+  listLocalRounds(competitionId: string, seasonId: string, signal?: AbortSignal): Promise<CompetitionRound[]>;
+  /** listCompetitionMatches: the season's matches with their current local values. */
+  listLocalMatches(competitionId: string, seasonId: string, signal?: AbortSignal): Promise<CompetitionMatch[]>;
+  /** previewContentBatch: read-only plan of a selection. */
+  previewContentBatch(body: ContentBatchSelection, signal?: AbortSignal): Promise<ContentBatchPreview>;
+  /** createContentBatch: confirms a selection; a retry with the same request key returns the same batch. */
+  createContentBatch(body: ContentBatchCreate): Promise<ContentBatch>;
+  /** getContentBatch: real state of every piece, polled while pieces are pending. */
+  getContentBatch(batchId: string, signal?: AbortSignal): Promise<ContentBatch>;
 }
 
 /** Builds the path of a contract operation, encoding every path parameter. */
@@ -64,6 +96,13 @@ function withSignal(signal: AbortSignal | undefined): { signal?: AbortSignal } {
 
 /** Projects API on top of the shared client (which adds `X-EDR-Client` to the mutating requests). */
 export function createProjectsApi(client: ApiClient): ProjectsApi {
+  const listLocalStages = async (competitionId: string, seasonId: string, signal?: AbortSignal) => {
+    const body = await client.get(operationPath('listCompetitionStages', { competitionId, seasonId }), {
+      schema: CompetitionStageListResponseSchema,
+      ...withSignal(signal),
+    });
+    return body.stages;
+  };
   return {
     async listProjects(signal) {
       const body = await client.get(operationPath('listProjects'), {
@@ -99,6 +138,60 @@ export function createProjectsApi(client: ApiClient): ProjectsApi {
     listStages(competitionId, sourceId, seasonId, signal) {
       return client.get(operationPath('listStages', { competitionId, sourceId, seasonId }), {
         schema: StageListSchema,
+        ...withSignal(signal),
+      });
+    },
+    async listLocalCompetitions(signal) {
+      const body = await client.get(operationPath('listManagedCompetitions'), {
+        schema: ManagedCompetitionListResponseSchema,
+        ...withSignal(signal),
+      });
+      return body.competitions;
+    },
+    async listLocalSeasons(competitionId, signal) {
+      const body = await client.get(operationPath('listManagedSeasons', { competitionId }), {
+        schema: ManagedSeasonListResponseSchema,
+        ...withSignal(signal),
+      });
+      return body.seasons;
+    },
+    listLocalStages,
+    async listLocalRounds(competitionId, seasonId, signal) {
+      const direct = await client.get(operationPath('listSeasonRounds', { competitionId, seasonId }), {
+        schema: CompetitionRoundListResponseSchema,
+        ...withSignal(signal),
+      });
+      const stages = await listLocalStages(competitionId, seasonId, signal);
+      const staged = await Promise.all(
+        stages.map((stage) =>
+          client.get(operationPath('listStageRounds', { competitionId, seasonId, stageId: stage.id }), {
+            schema: CompetitionRoundListResponseSchema,
+            ...withSignal(signal),
+          }),
+        ),
+      );
+      const all = [...direct.rounds, ...staged.flatMap((list) => list.rounds)];
+      return all.filter((round, index) => all.findIndex((other) => other.id === round.id) === index);
+    },
+    async listLocalMatches(competitionId, seasonId, signal) {
+      const body = await client.get(operationPath('listCompetitionMatches', { competitionId, seasonId }), {
+        schema: CompetitionMatchListResponseSchema,
+        ...withSignal(signal),
+      });
+      return body.matches;
+    },
+    previewContentBatch(body, signal) {
+      return client.post(operationPath('previewContentBatch'), body, {
+        schema: ContentBatchPreviewSchema,
+        ...withSignal(signal),
+      });
+    },
+    createContentBatch(body) {
+      return client.post(operationPath('createContentBatch'), body, { schema: ContentBatchSchema });
+    },
+    getContentBatch(batchId, signal) {
+      return client.get(operationPath('getContentBatch', { batchId }), {
+        schema: ContentBatchSchema,
         ...withSignal(signal),
       });
     },

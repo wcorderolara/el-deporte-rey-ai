@@ -80,6 +80,13 @@ import {
   SportsFieldProvenanceParamsSchema,
   SportsFieldProvenanceResponseSchema,
 } from './competitions.js';
+import {
+  ContentBatchCreateSchema,
+  ContentBatchParamsSchema,
+  ContentBatchPreviewSchema,
+  ContentBatchSchema,
+  ContentBatchSelectionSchema,
+} from './content-batches.js';
 import { ExportDetailSchema, ExportSchema, SlideTraceSchema } from './exports.js';
 import { FactSchema, LeftOutMatchSchema, StandingsAvailabilitySchema } from './facts.js';
 import { ImportCreateSchema, ImportSummarySchema, ManualSelectionHistorySchema, ManualVersionSchema } from './imports.js';
@@ -662,6 +669,42 @@ export const operations = {
     clientHeader: false,
     body: null,
     success: json(200, RunSchema),
+    problemStatuses: READ_BY_ID,
+  },
+  previewContentBatch: {
+    operationId: 'previewContentBatch',
+    method: 'post',
+    path: '/content-batches/previews',
+    tag: 'projects',
+    params: null,
+    query: null,
+    clientHeader: true,
+    body: jsonBody(ContentBatchSelectionSchema),
+    success: json(200, ContentBatchPreviewSchema),
+    problemStatuses: [400, 403, 404, 413, 415, 421],
+  },
+  createContentBatch: {
+    operationId: 'createContentBatch',
+    method: 'post',
+    path: '/content-batches',
+    tag: 'projects',
+    params: null,
+    query: null,
+    clientHeader: true,
+    body: jsonBody(ContentBatchCreateSchema),
+    success: json(202, ContentBatchSchema),
+    problemStatuses: WRITE_BODY,
+  },
+  getContentBatch: {
+    operationId: 'getContentBatch',
+    method: 'get',
+    path: '/content-batches/{batchId}',
+    tag: 'projects',
+    params: ContentBatchParamsSchema,
+    query: null,
+    clientHeader: false,
+    body: null,
+    success: json(200, ContentBatchSchema),
     problemStatuses: READ_BY_ID,
   },
   listFacts: {

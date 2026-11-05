@@ -113,7 +113,27 @@ const MANUAL_SELECTION: ProjectSelection = {
 beforeAll(async () => {
   spec = await ContractSpec.load();
   provider = providerValues();
-  demo = await startTestApp({ base: 'demo-manual', scenario: 'default' });
+  demo = await startTestApp({
+    base: 'demo-manual',
+    scenario: 'default',
+    // The local competitions source of PD-ARCH-01E-A, so content batches can be created.
+    mutate: (document) => {
+      const sports = (document['providers'] as Json)['sports'] as Json;
+      (sports['sources'] as Json[]).push({
+        id: 'local',
+        name: 'Datos deportivos locales',
+        mode: 'MANUAL_DATA',
+        enabled: true,
+        role: 'primary',
+        accepted: false,
+        independenceGroup: 'local',
+        officialPublication: false,
+        publicationPermission: 'not_applicable',
+        adapter: 'local-competitions',
+        options: {},
+      });
+    },
+  });
   live = await startTestApp({
     base: 'live',
     egress: replayTransport(),
@@ -302,6 +322,19 @@ beforeAll(async () => {
     json: { status: 'finished', homeScore: 2, awayScore: 1 },
   });
   await d.call('listCompetitionMatchResultHistory', { params: { ...participantParams, matchId } });
+  const batchSelection = {
+    competitionId: managedCompetitionId,
+    seasonId: participantParams.seasonId,
+    stageId,
+    roundId: stageRoundId,
+    matchIds: [matchId],
+    kinds: ['round_results', 'match_result'],
+  };
+  await d.call('previewContentBatch', { json: batchSelection });
+  const batch = await d.call('createContentBatch', {
+    json: { requestKey: '00000000-0000-4000-8000-0000000001e0', selection: batchSelection },
+  });
+  await d.call('getContentBatch', { params: { batchId: String((batch.body as { id: string }).id) } });
   const unusedTeam = await d.call('createManagedTeam', { json: { name: 'Equipo sin partidos' } });
   const unusedTeamId = String((unusedTeam.body as { id: string }).id);
   await d.call('addSeasonParticipant', { params: participantParams, json: { teamId: unusedTeamId } });
@@ -648,7 +681,10 @@ describe('DEMO_DATA and MANUAL_DATA operations on the running app', { timeout: R
     expect(rejected.importErrors?.map((error) => error.problem)).toContain('duplicate_match');
 
     const imports = await ok<{ imports: ImportSummary[] }>(d, 'listImports');
-    expect(imports.imports).toHaveLength(3);
+    // The content batch of the setup froze its local selection as one more form import (PD-ARCH-01E-A).
+    const frozen = imports.imports.filter((entry) => entry.declaredSource === 'Selección local confirmada');
+    expect(frozen.map((entry) => entry.channel)).toEqual(['form']);
+    expect(imports.imports.filter((entry) => !frozen.includes(entry))).toHaveLength(3);
     const read = await ok<ImportSummary>(d, 'getImport', { params: { importId: csv.id } });
     expect(read.originalSha256).toBe(sha256(csvBytes));
     expect(read.channel).toBe('csv_file');

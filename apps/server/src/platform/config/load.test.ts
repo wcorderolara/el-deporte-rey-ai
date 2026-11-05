@@ -59,7 +59,7 @@ function recordingEnvironment(values: Record<string, string>): { env: Record<str
 describe('committed configuration (config/app.config.json)', () => {
   const config = loadConfig({ rootDir: repoRoot, env: {} });
 
-  it('enables the DEMO_DATA sources demo-a and demo-b, the MANUAL_DATA source manual and the stub AI only', () => {
+  it('enables the DEMO_DATA sources demo-a and demo-b, the MANUAL_DATA sources manual and local and the stub AI only', () => {
     expect(
       config.providers.sports.sources.map((source) => [
         source.id,
@@ -73,6 +73,7 @@ describe('committed configuration (config/app.config.json)', () => {
       ['demo-a', 'DEMO_DATA', 'primary', true, false, true],
       ['demo-b', 'DEMO_DATA', 'verification', true, true, true],
       ['manual', 'MANUAL_DATA', 'primary', false, false, true],
+      ['local', 'MANUAL_DATA', 'primary', false, false, true],
     ]);
     expect(config.providers.sports.sources.some((source) => source.mode === 'LIVE_DATA')).toBe(false);
     expect(config.providers.ai.adapter).toBe('stub');

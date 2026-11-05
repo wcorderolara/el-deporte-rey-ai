@@ -64,16 +64,16 @@ describe('contract document', () => {
     );
   });
 
-  it('has 93 operations on 70 paths, 42 of them mutating, with unique operation IDs', () => {
-    expect(Object.keys(child(document, 'paths'))).toHaveLength(72);
-    expect(operations).toHaveLength(95);
-    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(42);
+  it('has 98 operations on 75 paths, 44 of them mutating, with unique operation IDs', () => {
+    expect(Object.keys(child(document, 'paths'))).toHaveLength(75);
+    expect(operations).toHaveLength(98);
+    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(44);
     const ids = operations.map((operation) => operation.operation.operationId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('has 130 component schemas', () => {
-    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(130);
+  it('has 139 component schemas', () => {
+    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(139);
   });
 });
 
@@ -305,6 +305,9 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1participants: added',
       '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1participants~1batch: added',
       '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1participants~1{teamId}: added',
+      '/paths/~1content-batches~1previews: added',
+      '/paths/~1content-batches: added',
+      '/paths/~1content-batches~1{batchId}: added',
       '/paths/~1exports~1{exportId}~1download: added',
       '/components/schemas/Problem/properties/code/enum/15: changed',
       '/components/schemas/Problem/properties/code/enum/16: changed',
@@ -329,6 +332,10 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/Problem/properties/code/enum/35: added',
       '/components/schemas/Problem/properties/code/enum/36: added',
       '/components/schemas/Problem/properties/code/enum/37: added',
+      '/components/schemas/Problem/properties/code/enum/38: added',
+      '/components/schemas/Problem/properties/code/enum/39: added',
+      '/components/schemas/Project/allOf/1/required/6: added',
+      '/components/schemas/Project/allOf/1/properties/sportsContext: added',
       '/components/schemas/QaResult/oneOf/5: added',
       '/components/schemas/Competition: added',
       '/components/schemas/SportsProvider: added',
@@ -375,6 +382,15 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/CompetitionMatchStatus: added',
       '/components/schemas/CompetitionMatch: added',
       '/components/schemas/MatchResultHistory: added',
+      '/components/schemas/ProjectSportsContext: added',
+      '/components/schemas/ContentBatchSelection: added',
+      '/components/schemas/ContentBatchCreate: added',
+      '/components/schemas/ContentBatchContext: added',
+      '/components/schemas/ContentBatchMatch: added',
+      '/components/schemas/ContentPiecePlan: added',
+      '/components/schemas/ContentBatchPreview: added',
+      '/components/schemas/ContentBatchItem: added',
+      '/components/schemas/ContentBatch: added',
     ]);
   });
 

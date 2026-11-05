@@ -5,7 +5,8 @@ import { Link, useLocation, useParams } from 'react-router';
 import { featurePaths } from '../../app/routes';
 import { Badge, buttonClassName, Card, dataModeLabel, ErrorBanner, featureCopy, formatDateTime } from '../../ui';
 import { createCopy, detailCopy, languageLabel, runCopy } from './copy';
-import { isProjectId } from './paths';
+import { pieceKindCopy } from './generationCopy';
+import { contentBatchPath, isProjectId } from './paths';
 import styles from './Projects.module.css';
 import { useProjectsDependencies } from './ProjectsContext';
 import { isRunActive, RunProgress, runSummary } from './RunProgress';
@@ -52,6 +53,7 @@ function SelectionSummary({ project }: { project: Project }) {
       <div className="flex min-w-0 flex-wrap items-center gap-3">
         <ProjectStatus project={project} />
       </div>
+      {project.sportsContext === null ? null : <SportsContext context={project.sportsContext} />}
       {project.demonstration || project.dataMode === 'DEMO_DATA' ? (
         <p role="note" className="m-0 border-l-2 border-demo px-3 py-1 text-caption text-demo">
           Datos sintéticos · no verificados ni publicables.
@@ -82,6 +84,50 @@ function SelectionSummary({ project }: { project: Project }) {
         ) : null}
       </details>
     </Card>
+  );
+}
+
+/** The local sports context of a project generated from a competition (PD-ARCH-01E-A). */
+function SportsContext({ context }: { context: NonNullable<Project['sportsContext']> }) {
+  return (
+    <section
+      aria-labelledby="project-sports-context-title"
+      className="grid gap-2 rounded-control border-hairline border-border-subtle bg-surface-subtle p-3"
+    >
+      <h2 id="project-sports-context-title" className="m-0 text-body-md font-bold">
+        Contexto deportivo
+      </h2>
+      <dl className="m-0 grid gap-2 text-body-sm text-text-secondary sm:grid-cols-2">
+        <div>
+          <dt className="font-bold">Competición</dt>
+          <dd className="m-0">
+            <Link className="text-text-link underline" to={`${featurePaths.competitions}/${context.competitionId}`}>
+              {context.competitionName}
+            </Link>
+          </dd>
+        </div>
+        <div>
+          <dt className="font-bold">Temporada</dt>
+          <dd className="m-0">{context.seasonLabel}</dd>
+        </div>
+        <div>
+          <dt className="font-bold">Fase y jornada</dt>
+          <dd className="m-0">
+            {context.stageName === null ? context.roundName : `${context.stageName} · ${context.roundName}`}
+          </dd>
+        </div>
+        <div>
+          <dt className="font-bold">Pieza</dt>
+          <dd className="m-0">
+            {pieceKindCopy[context.kind].label} · {context.matchIds.length}{' '}
+            {context.matchIds.length === 1 ? 'partido' : 'partidos'} ·{' '}
+            <Link className="text-text-link underline" to={contentBatchPath(context.batchId)}>
+              Ver generación
+            </Link>
+          </dd>
+        </div>
+      </dl>
+    </section>
   );
 }
 

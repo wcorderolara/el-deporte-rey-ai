@@ -51,6 +51,20 @@
           "publicationPermission": "not_applicable",
           "adapter": "manual",
           "options": {}
+        },
+        {
+          "id": "local",
+          "name": "Datos deportivos locales",
+          "mode": "MANUAL_DATA",
+          "enabled": true,
+          "role": "primary",
+          "accepted": false,
+          "independenceGroup": "local",
+          "officialPublication": false,
+          "publicationPermission": "not_applicable",
+          "adapter": "local-competitions",
+          "operatorValidated": true,
+          "options": {}
         }
       ]
     },

@@ -77,7 +77,7 @@ const SQL = {
     'INSERT INTO disputes (id, fact_id, source_values, consulted_source_id, consulted_observation_id, consulted_at, ' +
     'outcome, resolved_value) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
   insertApproval:
-    'INSERT INTO manual_approvals (id, fact_id, action, carried_over_from_fact_id, at) VALUES (?, ?, ?, ?, ?)',
+    'INSERT INTO manual_approvals (id, fact_id, action, carried_over_from_fact_id, at, origin) VALUES (?, ?, ?, ?, ?, ?)',
   factsOfRun:
     'SELECT id, fact_key, kind, subject, status, unverified_reason, value, candidate_value, manual_eligible, reason ' +
     'FROM facts WHERE run_id = ? ORDER BY rowid',
@@ -449,8 +449,9 @@ export class VerificationRepository {
     action: 'approved' | 'revoked',
     carriedOverFromFactId: string | null,
     at: string,
+    origin: 'operator' | 'operator_validated_source' = 'operator',
   ): void {
-    this.#db.prepare(SQL.insertApproval).run([id, factId, action, carriedOverFromFactId, at]);
+    this.#db.prepare(SQL.insertApproval).run([id, factId, action, carriedOverFromFactId, at, origin]);
   }
 
   /** Invalidates the open final approvals of carousels whose element versions use the fact; returns the count. */

@@ -2,10 +2,13 @@
  * MANUAL_DATA import module (contracts/provider-ports.md section 1.6; architecture.md section 15.3; AD-29, AD-35;
  * T50). JSON-file, CSV-file and form imports are converted to one `ManualImportDocument`, validated, applied as a
  * whole and versioned per selection, with their originals preserved byte for byte. The ManualDataProvider
- * (`providers/sports/adapters/manual`) reads the stored versions; this module never imports it.
+ * (`providers/sports/adapters/manual`) reads the stored versions; this module never imports it. Content batches
+ * (PD-ARCH-01E-A) record their frozen local selections through the same pipeline, under the local source.
  */
 import type { ServerModule } from '../module-kit.js';
 
 import { registerImportRoutes } from './routes.js';
+
+export { type ImportRequest, ImportService, LOCAL_COMPETITIONS_ADAPTER } from './service.js';
 
 export const serverModule: ServerModule = { name: 'imports', routes: registerImportRoutes };

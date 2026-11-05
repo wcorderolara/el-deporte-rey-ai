@@ -50,6 +50,11 @@ export interface SourceConfig {
   /** Adapter kind slug, resolved only by the adapter registry. */
   readonly adapter: string;
   readonly options: AdapterOptions;
+  /**
+   * The operator validated the source's values before generation (PD-ARCH-01E-PD-01): its eligible facts are recorded
+   * as approved by the operator when a run verifies them. Only for MANUAL_DATA sources; never makes a fact verified.
+   */
+  readonly operatorValidated: boolean;
 }
 
 export interface AiProviderConfig {

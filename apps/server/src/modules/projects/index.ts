@@ -7,6 +7,7 @@
  * - The runner reads the stages registered by the modules (`ServerModule.stages`) when a run executes, so stage
  *   modules are picked up without changes here. The registry is imported lazily to avoid an import cycle
  *   (`registry.ts` imports this module).
+ * - Content generation batches (PD-ARCH-01E-A) create projects and start runs through the same runner.
  * - One runner per container; it is shut down (active runs cancelled and failed with `interrupted`) when the
  *   Fastify instance closes.
  */
@@ -15,6 +16,8 @@ import { type StageProvider, WorkflowRunner, failInterruptedRuns } from '../../w
 import type { ServerModule } from '../module-kit.js';
 
 import { registerCatalogRoutes } from './catalog.js';
+import { registerContentBatchRoutes } from './content-batches/routes.js';
+import { ContentBatchService } from './content-batches/service.js';
 import { registerProjectRoutes } from './routes.js';
 import { ProjectsService } from './service.js';
 
@@ -77,6 +80,14 @@ export function createProjectsModule(options: ProjectsModuleOptions = {}): Proje
       const service = serviceFor(container);
       registerCatalogRoutes(app, container);
       registerProjectRoutes(app, service);
+      registerContentBatchRoutes(
+        app,
+        new ContentBatchService({
+          container,
+          runner: runnerFor(container),
+          ...(options.newId === undefined ? {} : { newId: options.newId }),
+        }),
+      );
       app.addHook('onClose', async () => {
         const runner = runners.get(container);
         runners.delete(container);

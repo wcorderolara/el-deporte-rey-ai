@@ -10,6 +10,7 @@ export * from './http/catalog.js';
 export * from './http/facts.js';
 export * from './http/projects.js';
 export * from './http/competitions.js';
+export * from './http/content-batches.js';
 export * from './http/review.js';
 export * from './http/exports.js';
 export * from './http/imports.js';

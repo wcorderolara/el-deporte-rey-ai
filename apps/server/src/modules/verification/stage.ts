@@ -13,7 +13,9 @@
  *   provider or a competition (R-118, R-268).
  * - `persist` writes, in one transaction, the retrievals and observations of the verification and consultation
  *   retrievals, the teams and their aliases, the facts with their evidence and disputes, and the carried-over manual
- *   approvals (R-068, R-278). Facts are written only here; no API operation sets a status (R-412).
+ *   approvals (R-068, R-278). The eligible facts of an operator-validated MANUAL_DATA source (PD-ARCH-01E-PD-01) get
+ *   a manual approval with the origin `operator_validated_source`. Facts are written only here; no API operation sets
+ *   a status (R-412).
  */
 import { randomUUID } from 'node:crypto';
 
@@ -45,7 +47,7 @@ import { ResearchObservationValueSchema, ResearchRepository, researchSnapshot } 
 import { type SourceObservation, type VerifyResult, verifyRun } from './core.js';
 import type { SourceInfo } from './decision.js';
 import { IdentityMapSchema, loadIdentityMap } from './identity.js';
-import { isOperatorAttestedCompetition } from './publishability.js';
+import { isOperatorAttestedCompetition, isOperatorValidatedSource } from './publishability.js';
 import {
   type NewObservation,
   type NewRetrieval,
@@ -473,6 +475,11 @@ export function persistVerification(
     if (project === null) {
       throw new StageFailure('no_data');
     }
+    // PD-ARCH-01E-PD-01: the operator validated the values of this source before generation, so its eligible facts
+    // are recorded as manually approved, with their own origin; they are never recorded as verified.
+    const operatorValidated =
+      project.dataMode === 'MANUAL_DATA' &&
+      isOperatorValidatedSource(container.config.providers.sports.sources, project.sourceId);
     for (const retrieval of output.retrievals) {
       repository.insertRetrieval(runId, retrieval);
     }
@@ -495,6 +502,8 @@ export function persistVerification(
       }
       if (fact.carriedOverFrom !== null) {
         repository.insertApproval(newId(), fact.id, 'approved', fact.carriedOverFrom, at);
+      } else if (operatorValidated && fact.manualEligible) {
+        repository.insertApproval(newId(), fact.id, 'approved', null, at, 'operator_validated_source');
       }
     }
   });

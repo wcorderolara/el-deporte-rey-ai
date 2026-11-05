@@ -54,6 +54,8 @@ export const PROBLEM_CODES = [
   'INTERNAL',
   'PROVIDER_UNAVAILABLE',
   'IMPORT_PREVIEW_EXPIRED',
+  'CONTENT_BATCH_NOT_GENERATABLE',
+  'REQUEST_KEY_REUSED',
 ] as const;
 export type ProblemCode = (typeof PROBLEM_CODES)[number];
 
@@ -191,6 +193,8 @@ const TITLES: Readonly<Record<ProblemCode, string>> = {
   SELECTION_UNAVAILABLE: 'The selection is unavailable',
   IMPORT_REJECTED: 'The import was rejected',
   MANUAL_APPROVAL_REFUSED: 'Manual approval refused',
+  CONTENT_BATCH_NOT_GENERATABLE: 'The selection has no content piece that can be generated',
+  REQUEST_KEY_REUSED: 'The request key was already used for another selection',
   INTERNAL: 'Internal error',
 };
 

@@ -49,6 +49,13 @@ export function resolveSources(raw: readonly RawSource[], issues: ConfigIssue[])
     const permission = source.publicationPermission ?? defaultPermission(source.mode);
     const decision = source.publicationPermissionDecision ?? null;
 
+    if (source.operatorValidated && source.mode !== 'MANUAL_DATA') {
+      issues.push({
+        setting: `${at}.operatorValidated`,
+        problem: `must be false for the ${source.mode} source '${source.id}': only operator-managed MANUAL_DATA is validated by the operator`,
+      });
+    }
+
     if (source.mode === 'MANUAL_DATA' && source.accepted) {
       issues.push({
         setting: `${at}.accepted`,
@@ -118,6 +125,7 @@ export function resolveSources(raw: readonly RawSource[], issues: ConfigIssue[])
       publicationPermissionDecision: decision,
       adapter: source.adapter,
       options: source.options,
+      operatorValidated: source.operatorValidated,
     };
   });
 }

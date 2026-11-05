@@ -79,6 +79,16 @@ export function isOperatorAttestedCompetition(
   );
 }
 
+/**
+ * Whether the source is an enabled MANUAL_DATA source whose values the operator validated before generation
+ * (PD-ARCH-01E-PD-01): the local competitions data, managed and reviewed in the studio.
+ */
+export function isOperatorValidatedSource(sources: readonly SourceConfig[], sourceId: string): boolean {
+  return sources.some(
+    (source) => source.id === sourceId && source.enabled && source.mode === 'MANUAL_DATA' && source.operatorValidated,
+  );
+}
+
 /** The publishability settings of a project under the current configuration. */
 export function publishabilitySettings(
   config: {
@@ -94,7 +104,10 @@ export function publishabilitySettings(
   return {
     manuallyApprovedPublication: config.verificationPolicy.manuallyApprovedPublication,
     livePublicationPermissionRule: config.verificationPolicy.livePublicationPermissionRule,
-    operatorAttestedCompetition: isOperatorAttestedCompetition(config.catalogue, project),
+    // A competition attested in the catalogue (AD-38) or the data of an operator-validated source (PD-ARCH-01E-PD-01).
+    operatorAttestedCompetition:
+      isOperatorAttestedCompetition(config.catalogue, project) ||
+      isOperatorValidatedSource(config.providers.sports.sources, project.sourceId),
     publicationPermission: (sourceId) => permissions.get(sourceId),
   };
 }

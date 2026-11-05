@@ -52,6 +52,8 @@ export const PROBLEM_CODES = [
   'INTERNAL',
   'PROVIDER_UNAVAILABLE',
   'IMPORT_PREVIEW_EXPIRED',
+  'CONTENT_BATCH_NOT_GENERATABLE',
+  'REQUEST_KEY_REUSED',
 ] as const;
 
 export const ProblemCodeSchema = z.enum(PROBLEM_CODES);

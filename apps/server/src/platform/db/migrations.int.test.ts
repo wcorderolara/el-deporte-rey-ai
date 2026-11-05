@@ -98,6 +98,9 @@ const COMMITTED = [
   { version: 14, name: 'import_application_operations' },
   { version: 15, name: 'competition_scoped_identity_uniqueness' },
   { version: 16, name: 'sports_field_provenance' },
+  { version: 17, name: 'content_generation_batches' },
+  { version: 18, name: 'content_generation_batches_reconcile' },
+  { version: 19, name: 'operator_validated_approvals' },
 ];
 
 describe('committed migrations', () => {
@@ -131,6 +134,13 @@ describe('committed migrations', () => {
         fileName: '0015_competition_scoped_identity_uniqueness.sql',
       },
       { version: 16, name: 'sports_field_provenance', fileName: '0016_sports_field_provenance.sql' },
+      { version: 17, name: 'content_generation_batches', fileName: '0017_content_generation_batches.sql' },
+      {
+        version: 18,
+        name: 'content_generation_batches_reconcile',
+        fileName: '0018_content_generation_batches_reconcile.sql',
+      },
+      { version: 19, name: 'operator_validated_approvals', fileName: '0019_operator_validated_approvals.sql' },
     ]);
   });
 
@@ -187,8 +197,11 @@ describe('committed migrations', () => {
           { version: 14, name: 'import_application_operations' },
           { version: 15, name: 'competition_scoped_identity_uniqueness' },
           { version: 16, name: 'sports_field_provenance' },
+          { version: 17, name: 'content_generation_batches' },
+          { version: 18, name: 'content_generation_batches_reconcile' },
+          { version: 19, name: 'operator_validated_approvals' },
         ],
-        currentVersion: 16,
+        currentVersion: 19,
       });
       expect(
         db
@@ -206,24 +219,131 @@ describe('committed migrations', () => {
     }
   });
 
+  it('adds content generation batches to a database at 0016 without changing any existing row (PD-ARCH-01E-A)', () => {
+    const committed = defaultMigrationsDirectory();
+    const throughSixteen = migrationDir(
+      Object.fromEntries(
+        readMigrations(committed)
+          .filter(({ version }) => version <= 16)
+          .map(({ fileName }) => [fileName, readFileSync(path.join(committed, fileName), 'utf8')]),
+      ),
+    );
+    const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
+    const { db } = openMigratedDatabase({ location, directory: throughSixteen });
+    try {
+      const at = FIXED_NOW.toISOString();
+      db.prepare('INSERT INTO competitions (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)').run([
+        'c1',
+        'Liga',
+        at,
+        at,
+      ]);
+      db.prepare(
+        'INSERT INTO competition_seasons (id, competition_id, label, normalized_label, created_at) VALUES (?, ?, ?, ?, ?)',
+      ).run(['s1', 'c1', '2026/27', '2026/27', at]);
+      const snapshot = (): unknown[] => [
+        db.prepare('SELECT * FROM competitions').all(),
+        db.prepare('SELECT * FROM competition_seasons').all(),
+      ];
+      const before = JSON.stringify(snapshot());
+      expect(tableExists(db, 'content_generation_batches')).toBe(false);
+
+      expect(runMigrations(db)).toEqual({
+        applied: [
+          { version: 17, name: 'content_generation_batches' },
+          { version: 18, name: 'content_generation_batches_reconcile' },
+          { version: 19, name: 'operator_validated_approvals' },
+        ],
+        currentVersion: 19,
+      });
+      expect(JSON.stringify(snapshot())).toBe(before);
+      for (const table of [
+        'content_generation_batches',
+        'content_generation_items',
+        'content_generation_item_matches',
+      ]) {
+        expect(tableExists(db, table)).toBe(true);
+      }
+      expect(db.prepare('SELECT COUNT(*) AS n FROM content_generation_batches').get()).toEqual({ n: 0 });
+      expect(db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('reconciles a database that applied the draft 0017 tables, and refuses to drop rows (PD-ARCH-01E-A)', () => {
+    const committed = defaultMigrationsDirectory();
+    const draft17 = `CREATE TABLE content_generation_batches (id TEXT PRIMARY KEY, request_key TEXT NOT NULL UNIQUE) STRICT;
+CREATE INDEX idx_content_generation_batches_competition ON content_generation_batches (request_key);
+CREATE TABLE content_generation_items (id TEXT PRIMARY KEY, batch_id TEXT NOT NULL) STRICT;
+CREATE TABLE content_generation_item_matches (item_id TEXT NOT NULL, match_id TEXT NOT NULL) STRICT;
+CREATE INDEX idx_content_generation_item_matches_match ON content_generation_item_matches (match_id);`;
+    const withDraft = (): string =>
+      migrationDir({
+        ...Object.fromEntries(
+          readMigrations(committed)
+            .filter(({ version }) => version <= 16)
+            .map(({ fileName }) => [fileName, readFileSync(path.join(committed, fileName), 'utf8')]),
+        ),
+        '0017_content_generation_batches.sql': draft17,
+      });
+    const columns = (db: SqliteDatabase): string[] =>
+      db
+        .prepare<{ name: string }>("SELECT name FROM pragma_table_info('content_generation_batches')")
+        .all()
+        .map((row) => row.name);
+
+    const empty = openMigratedDatabase({
+      location: path.join(freshDir('data'), DATABASE_FILE_NAME),
+      directory: withDraft(),
+    });
+    try {
+      expect(columns(empty.db)).toEqual(['id', 'request_key']);
+      expect(runMigrations(empty.db)).toEqual({
+        applied: [
+          { version: 18, name: 'content_generation_batches_reconcile' },
+          { version: 19, name: 'operator_validated_approvals' },
+        ],
+        currentVersion: 19,
+      });
+      expect(columns(empty.db)).toContain('import_id');
+      expect(empty.db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
+    } finally {
+      empty.db.close();
+    }
+
+    const used = openMigratedDatabase({
+      location: path.join(freshDir('data'), DATABASE_FILE_NAME),
+      directory: withDraft(),
+    });
+    try {
+      used.db.prepare("INSERT INTO content_generation_batches (id, request_key) VALUES ('b1', 'k1')").run();
+      expect(() => runMigrations(used.db)).toThrow();
+      expect(columns(used.db)).toEqual(['id', 'request_key']);
+      expect(used.db.prepare('SELECT id FROM content_generation_batches').all()).toEqual([{ id: 'b1' }]);
+    } finally {
+      used.db.close();
+    }
+  });
+
   it('apply to a new file database in WAL mode with foreign keys, once', () => {
     const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
     const first = openMigratedDatabase({ location, now: () => FIXED_NOW });
     try {
-      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 16 });
+      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 19 });
       expect(first.db.prepare('PRAGMA journal_mode').get()).toEqual({ journal_mode: 'wal' });
       expect(first.db.prepare('PRAGMA foreign_keys').get()).toEqual({ foreign_keys: 1 });
       expect(appliedMigrations(first.db)).toEqual(
         COMMITTED.map((record) => ({ ...record, appliedAt: '2026-10-27T16:32:21.123Z' })),
       );
-      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 16 });
+      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 19 });
     } finally {
       first.db.close();
     }
 
     const second = openMigratedDatabase({ location });
     try {
-      expect(second.report).toEqual({ applied: [], currentVersion: 16 });
+      expect(second.report).toEqual({ applied: [], currentVersion: 19 });
       expect(tableExists(second.db, 'competition_teams')).toBe(true);
       expect(tableExists(second.db, 'facts')).toBe(true);
       expect(tableExists(second.db, 'competitions')).toBe(true);
@@ -305,8 +425,11 @@ describe('committed migrations', () => {
           { version: 14, name: 'import_application_operations' },
           { version: 15, name: 'competition_scoped_identity_uniqueness' },
           { version: 16, name: 'sports_field_provenance' },
+          { version: 17, name: 'content_generation_batches' },
+          { version: 18, name: 'content_generation_batches_reconcile' },
+          { version: 19, name: 'operator_validated_approvals' },
         ],
-        currentVersion: 16,
+        currentVersion: 19,
       });
       expect(db.prepare('SELECT competition_id, team_id FROM competition_teams ORDER BY team_id').all()).toEqual([
         { competition_id: 'c1', team_id: 't1' },
@@ -659,8 +782,11 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
           { version: 14, name: 'import_application_operations' },
           { version: 15, name: 'competition_scoped_identity_uniqueness' },
           { version: 16, name: 'sports_field_provenance' },
+          { version: 17, name: 'content_generation_batches' },
+          { version: 18, name: 'content_generation_batches_reconcile' },
+          { version: 19, name: 'operator_validated_approvals' },
         ],
-        currentVersion: 16,
+        currentVersion: 19,
       });
 
       expect(db.prepare(QA_RESULT_BYTES).all()).toEqual(bytesBefore);
@@ -695,7 +821,7 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
     // Reopening applies nothing more.
     const reopened = openMigratedDatabase({ location });
     try {
-      expect(reopened.report).toEqual({ applied: [], currentVersion: 16 });
+      expect(reopened.report).toEqual({ applied: [], currentVersion: 19 });
     } finally {
       reopened.db.close();
     }

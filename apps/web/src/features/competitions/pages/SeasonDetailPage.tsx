@@ -1565,6 +1565,18 @@ export function SeasonDetailPage() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  {roundMatches.length ? (
+                    <Link
+                      className={buttonClassName('secondary')}
+                      to={`/projects/generate?${new URLSearchParams({
+                        competitionId: competitionId ?? '',
+                        seasonId: seasonId ?? '',
+                        roundId: selectedRound.id,
+                      }).toString()}`}
+                    >
+                      Generar contenido
+                    </Link>
+                  ) : null}
                   <Button variant="secondary" onClick={() => setEditingRound(selectedRound)}>
                     Editar
                   </Button>

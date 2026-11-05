@@ -174,6 +174,9 @@ export const problemCodeMessage: Record<ProblemCode, string> = {
   PROVIDER_AMBIGUOUS: 'El proveedor tiene más de una configuración activa. Contacta al administrador.',
   PROVIDER_UNAVAILABLE: 'El proveedor no está configurado en el servidor. Solicita su configuración al administrador.',
   IMPORT_PREVIEW_EXPIRED: 'La vista previa expiró. Consulta nuevamente los datos del proveedor.',
+  CONTENT_BATCH_NOT_GENERATABLE:
+    'Ninguna pieza de la selección se puede generar con los datos locales. Revisa los partidos y los tipos elegidos.',
+  REQUEST_KEY_REUSED: 'Esta confirmación ya se usó para otra selección. Revisa la propuesta y confirma de nuevo.',
   PROVIDER_RATE_LIMITED: 'Se alcanzó el límite de solicitudes de la fuente de datos.',
   SELECTION_UNAVAILABLE: 'La selección no está disponible en la fuente elegida.',
   IMPORT_REJECTED: 'La importación fue rechazada. No se guardó ningún dato.',
