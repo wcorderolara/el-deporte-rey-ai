@@ -375,7 +375,7 @@ describe('ImportPreviewPage async operations', () => {
       expect(indicator.className).toContain('rounded-full');
     }
     const cancel = screen.getByRole('button', { name: 'Cancelar consulta' });
-    expect(cancel.className).toContain('bg-danger-surface');
+    expect(cancel.className).toContain('bg-button-danger-bg');
     expect(cancel).not.toHaveProperty('disabled', true);
     expect(api.startImportOperation).toHaveBeenCalledTimes(1);
   });
@@ -383,17 +383,19 @@ describe('ImportPreviewPage async operations', () => {
     sessionStorage.setItem(`import-operation:${competitionId}`, operationId);
     renderPage({ getImportOperation: vi.fn().mockResolvedValue(completed) });
     await screen.findByRole('heading', { name: 'Vista previa preparada correctamente' });
-    expect(screen.getByRole('link', { name: 'Volver a competición' }).className).toContain('bg-surface-overlay');
-    expect(screen.getByRole('button', { name: 'Ver vista previa' }).className).toContain('bg-brand-gold');
+    expect(screen.getByRole('link', { name: 'Volver a competición' }).className).toContain('bg-button-secondary-bg');
+    expect(screen.getByRole('button', { name: 'Ver vista previa' }).className).toContain('bg-button-primary-bg');
     await userEvent.click(screen.getByRole('button', { name: 'Ver vista previa' }));
     expect(
       screen.getAllByText(/Ningún registro deportivo local cambia hasta que confirmes la importación/).length,
     ).toBe(2);
-    expect(screen.getByRole('button', { name: 'Modificar selección' }).className).toContain('bg-surface-overlay');
-    expect(screen.getByRole('button', { name: 'Verificar cambios locales' }).className).toContain('bg-surface-overlay');
+    expect(screen.getByRole('button', { name: 'Modificar selección' }).className).toContain('bg-button-secondary-bg');
+    expect(screen.getByRole('button', { name: 'Verificar cambios locales' }).className).toContain(
+      'bg-button-secondary-bg',
+    );
     const confirm = await screen.findByRole('button', { name: 'Confirmar importación' });
-    expect(confirm.className).toContain('bg-brand-gold');
-    expect(confirm.className).toContain('text-text-inverse');
+    expect(confirm.className).toContain('bg-button-primary-bg');
+    expect(confirm.className).toContain('text-button-primary-text');
     await waitFor(() => expect((confirm as HTMLButtonElement).disabled).toBe(false));
   });
   it('presents record differences as a solid native disclosure control', async () => {
@@ -404,7 +406,7 @@ describe('ImportPreviewPage async operations', () => {
     const summary = screen.getByText('Revisar datos y diferencias');
     const details = summary.closest('details');
     expect(summary.tagName).toBe('SUMMARY');
-    expect(summary.className).toContain('bg-surface-overlay');
+    expect(summary.className).toContain('bg-button-secondary-bg');
     expect(summary.querySelector('svg')).toBeTruthy();
     expect(details?.open).toBe(false);
     await userEvent.click(summary);
@@ -425,7 +427,7 @@ describe('ImportPreviewPage async operations', () => {
     const busy = await screen.findByRole('button', { name: 'Verificando…' });
     expect((busy as HTMLButtonElement).disabled).toBe(true);
     expect(busy.getAttribute('aria-busy')).toBe('true');
-    expect(busy.className).toContain('bg-surface-overlay');
+    expect(busy.className).toContain('bg-button-secondary-bg');
     expect(readPreview).toHaveBeenCalledTimes(2);
   });
   it('shows counts from the selected preview resources, including teams when returned', async () => {
@@ -494,7 +496,7 @@ describe('ImportPreviewPage async operations', () => {
     FakeEventSource.instances.at(-1)!.emit('operation.failed', 'failed', 'fetching');
     await screen.findByRole('heading', { name: 'No se pudo preparar la vista previa' });
     const retry = screen.getByRole('button', { name: 'Reintentar' });
-    expect(retry.className).toContain('bg-surface-overlay');
+    expect(retry.className).toContain('bg-button-secondary-bg');
     await userEvent.click(retry);
     expect(api.startImportOperation).toHaveBeenCalledTimes(2);
   });

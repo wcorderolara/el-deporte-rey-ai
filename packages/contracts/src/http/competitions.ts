@@ -359,6 +359,28 @@ export const ImportOperationEventSchema = z.strictObject({
 export type ImportOperation = z.infer<typeof ImportOperationSchema>;
 export type ImportOperationEvent = z.infer<typeof ImportOperationEventSchema>;
 
+/** PD-ARCH-01D-D field provenance. Effective values stay in the sports entity contracts. */
+export const SportsEntityTypeSchema = z.enum(['season', 'team', 'stage', 'round', 'match', 'result']);
+export const SportsFieldProvenanceParamsSchema = z.strictObject({
+  competitionId: UuidSchema,
+  entityType: SportsEntityTypeSchema,
+  entityId: UuidSchema,
+});
+export const SportsFieldProvenanceSchema = z.strictObject({
+  field: z.string().min(1).max(80),
+  origin: z.enum(['manual', 'provider', 'manual_override']),
+  providerKey: z.string().min(1).max(64).nullable(),
+  externalReference: z.string().min(1).max(200).nullable(),
+  providerValue: z.union([z.string().max(500), z.number(), z.boolean(), z.null()]).optional(),
+  protected: z.boolean(),
+  lastApplicationId: UuidSchema.nullable(),
+  updatedAt: DateTimeSchema,
+});
+export const SportsFieldProvenanceResponseSchema = z.strictObject({
+  fields: z.array(SportsFieldProvenanceSchema).max(50),
+});
+export type SportsFieldProvenance = z.infer<typeof SportsFieldProvenanceSchema>;
+
 /**
  * PD-ARCH-01D-C confirmed application. The plan is derived only from the stored preview snapshot plus current local
  * data and mappings; it never contacts the provider. Identities are never inferred from names: a possible duplicate
@@ -467,6 +489,9 @@ export const ImportApplicationSchema = z.strictObject({
     action: z.enum(['keep_local', 'skip']),
     reason: z.string().max(240).nullable(),
   })).max(500),
+});
+export const ImportApplicationHistoryResponseSchema = z.strictObject({
+  applications: z.array(ImportApplicationSchema).max(100),
 });
 export const ImportApplyStageSchema = z.enum(['validating', 'resolving_identities', 'transforming', 'persisting']);
 export const ImportApplyOperationSchema = z.strictObject({

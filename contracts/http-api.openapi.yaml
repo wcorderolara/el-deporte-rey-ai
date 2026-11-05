@@ -635,6 +635,42 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/provenance/{entityType}/{entityId}:
+    parameters:
+      - { name: competitionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      - { name: entityType, in: path, required: true, schema: { type: string, pattern: '^(season|team|stage|round|match|result)$' } }
+      - { name: entityId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    get:
+      tags: [competitions]
+      operationId: getSportsFieldProvenance
+      description: Field provenance and manual-override protection for one local sports entity. Effective values remain in the entity itself.
+      responses:
+        '200':
+          description: Field provenance.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SportsFieldProvenanceResponse' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /competitions/{competitionId}/import-applications:
+    parameters:
+      - { name: competitionId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    get:
+      tags: [competitions]
+      operationId: listCompetitionImportApplications
+      description: Completed confirmed imports for traceability, newest first.
+      responses:
+        '200':
+          description: Import history.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportApplicationHistoryResponse' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /competitions/{competitionId}/seasons:
     parameters:
       - name: competitionId
@@ -2752,6 +2788,31 @@ components:
         operation: { $ref: '#/components/schemas/ImportApplyOperation' }
         statusUrl: { type: string, pattern: '^/api/v1/competitions/' }
         eventsUrl: { type: string, pattern: '^/api/v1/competitions/' }
+    SportsFieldProvenance:
+      type: object
+      required: [field, origin, providerKey, externalReference, protected, lastApplicationId, updatedAt]
+      additionalProperties: false
+      properties:
+        field: { type: string, minLength: 1, maxLength: 80 }
+        origin: { type: string, enum: [manual, provider, manual_override] }
+        providerKey: { anyOf: [{ type: string, minLength: 1, maxLength: 64 }, { type: 'null' }] }
+        externalReference: { anyOf: [{ type: string, minLength: 1, maxLength: 200 }, { type: 'null' }] }
+        providerValue: { anyOf: [{ type: string, maxLength: 500 }, { type: number }, { type: boolean }, { type: 'null' }] }
+        protected: { type: boolean }
+        lastApplicationId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        updatedAt: { type: string, format: date-time }
+    SportsFieldProvenanceResponse:
+      type: object
+      required: [fields]
+      additionalProperties: false
+      properties:
+        fields: { type: array, maxItems: 50, items: { $ref: '#/components/schemas/SportsFieldProvenance' } }
+    ImportApplicationHistoryResponse:
+      type: object
+      required: [applications]
+      additionalProperties: false
+      properties:
+        applications: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/ImportApplication' } }
     ManagedSeason:
       type: object
       required: [id, competitionId, label, createdAt]

@@ -6,6 +6,7 @@ import { CompetitionCalendarService } from './calendar/application/CompetitionCa
 import { SQLiteCompetitionCalendarRepository } from './calendar/infrastructure/SQLiteCompetitionCalendarRepository.js';
 import { emptyCounts, type ImportPlan, type Ref } from './import-transform.js';
 import type { ImportApplyCounts } from '@edr/contracts';
+import { CompetitionFieldProvenanceService, type ProvenanceValue } from './field-provenance.js';
 
 export interface PersistContext {
   readonly db: Db;
@@ -45,6 +46,7 @@ export function executePlan(
     return seasonId;
   };
   const counts = { ...emptyCounts(), teamsReused: plan.counts.teamsReused, unchanged: plan.counts.unchanged };
+  const provenance = new CompetitionFieldProvenanceService(db, context.now);
   counts.skipped = plan.counts.skipped;
   counts.conflictsNotApplied = plan.counts.conflictsNotApplied;
   const at = () => context.now().toISOString();
@@ -58,9 +60,18 @@ export function executePlan(
         counts.seasonsCreated += 1;
         break;
       }
+      case 'season.update': {
+        admin.updateSeason(competitionId, step.seasonId, step.label);
+        break;
+      }
       case 'team.create': {
         created.set(step.key, admin.createTeam(step.name, null).id);
         counts.teamsCreated += 1;
+        break;
+      }
+      case 'team.update': {
+        const current = admin.getTeam(step.teamId);
+        admin.updateTeam(step.teamId, step.name, current.region);
         break;
       }
       case 'competitionTeam.add': {
@@ -78,9 +89,17 @@ export function executePlan(
         counts.stagesCreated += 1;
         break;
       }
+      case 'stage.update': {
+        calendar.updateStage(competitionId, season(), step.stageId, step.name);
+        break;
+      }
       case 'round.create': {
         created.set(step.key, calendar.createRound(competitionId, season(), resolveOptional(step.stage), step.name).id);
         counts.roundsCreated += 1;
+        break;
+      }
+      case 'round.update': {
+        calendar.updateRound(competitionId, season(), step.roundId, { name: step.name });
         break;
       }
       case 'match.create': {
@@ -163,6 +182,43 @@ export function executePlan(
           ]);
           counts.mappingsCreated += 1;
         }
+        const entityType =
+          step.resource === 'season'
+            ? 'season'
+            : step.resource === 'teams'
+              ? 'team'
+              : step.resource === 'stages'
+                ? 'stage'
+                : step.resource === 'rounds'
+                  ? 'round'
+                  : 'match';
+        const matchValues: Record<string, ProvenanceValue> = {};
+        const resultValues: Record<string, ProvenanceValue> = {};
+        for (const [field, value] of Object.entries(step.baseline)) {
+          if (step.resource === 'matches' && (field === 'homeScore' || field === 'awayScore'))
+            resultValues[field] = value;
+          else matchValues[field] = value;
+        }
+        if (Object.keys(matchValues).length)
+          provenance.recordProvider({
+            competitionId,
+            entityType,
+            entityId: localId,
+            providerKey: context.providerKey,
+            externalReference: step.externalId,
+            applicationId: context.applicationId,
+            values: matchValues,
+          });
+        if (Object.keys(resultValues).length)
+          provenance.recordProvider({
+            competitionId,
+            entityType: 'result',
+            entityId: localId,
+            providerKey: context.providerKey,
+            externalReference: step.externalId,
+            applicationId: context.applicationId,
+            values: resultValues,
+          });
         break;
       }
     }

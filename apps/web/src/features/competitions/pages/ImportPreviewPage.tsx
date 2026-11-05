@@ -96,7 +96,7 @@ function DisclosureSummary({ children }: { children: ReactNode }) {
   return (
     <summary
       className={buttonClassName(
-        'secondaryFilled',
+        'secondary',
         'sm',
         'w-fit cursor-pointer list-none [&::-webkit-details-marker]:hidden',
       )}
@@ -301,7 +301,7 @@ function ProcessPanel({
       {completed ? (
         <div className="flex flex-wrap items-center justify-end gap-3 border-t border-border-subtle pt-4">
           {backTo ? (
-            <Link className={buttonClassName('secondaryFilled')} to={backTo}>
+            <Link className={buttonClassName('secondary')} to={backTo}>
               <Icon name="arrow-left" size={18} />
               Volver a competición
             </Link>
@@ -838,7 +838,7 @@ export function ImportPreviewPage() {
           {problem && !preview ? (
             <Alert role="alert" tone="danger" title="No se pudo consultar la información">
               <p className="m-0">{operation?.errorMessage ?? problem.message}</p>
-              <Button variant="secondaryFilled" onClick={() => void (processFailed ? createPreview() : load())}>
+              <Button variant="secondary" onClick={() => void (processFailed ? createPreview() : load())}>
                 Reintentar
               </Button>
             </Alert>
@@ -1291,7 +1291,7 @@ export function ImportPreviewPage() {
                         className="flex flex-wrap items-center justify-between gap-2"
                       >
                         <Button
-                          variant="secondaryFilled"
+                          variant="secondary"
                           disabled={page === 0}
                           onClick={() => setPage((current) => Math.max(0, current - 1))}
                         >
@@ -1301,7 +1301,7 @@ export function ImportPreviewPage() {
                           Página {page + 1} de {pageCount}
                         </span>
                         <Button
-                          variant="secondaryFilled"
+                          variant="secondary"
                           disabled={page + 1 >= pageCount}
                           onClick={() => setPage((current) => Math.min(pageCount - 1, current + 1))}
                         >
@@ -1315,7 +1315,7 @@ export function ImportPreviewPage() {
               <ImportApplyReview state={application} />
               <div className="flex flex-wrap items-center gap-2">
                 <Button
-                  variant="secondaryFilled"
+                  variant="secondary"
                   onClick={() => {
                     if (preview) {
                       setExternalSeasonId(preview.externalSeasonId);
@@ -1334,7 +1334,7 @@ export function ImportPreviewPage() {
                 </Button>
                 <span className="group relative inline-flex">
                   <Button
-                    variant="secondaryFilled"
+                    variant="secondary"
                     isLoading={verifying}
                     loadingLabel="Verificando…"
                     title="Comprueba si los datos locales cambiaron desde que se generó esta vista previa. No importa datos."

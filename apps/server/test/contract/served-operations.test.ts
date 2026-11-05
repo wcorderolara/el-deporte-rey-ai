@@ -153,6 +153,10 @@ beforeAll(async () => {
   const firstExternal = (externalList.body as { competitions: { externalCompetitionId: string }[] }).competitions[0];
   const bindingCompetition = await l.call('createCompetition', { json: { name: 'Competición vinculada' } });
   const bindingCompetitionId = String((bindingCompetition.body as { id: string }).id);
+  await l.call('listCompetitionImportApplications', { params: { competitionId: bindingCompetitionId } });
+  await l.call('getSportsFieldProvenance', {
+    params: { competitionId: bindingCompetitionId, entityType: 'season', entityId: bindingCompetitionId },
+  });
   await l.call('getCompetitionProviderBinding', { params: { competitionId: bindingCompetitionId } });
   if (!firstExternal) throw new Error('The live fixture must provide one external competition.');
   await l.call('setCompetitionProviderBinding', {

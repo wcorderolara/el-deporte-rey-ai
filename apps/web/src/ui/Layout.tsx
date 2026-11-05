@@ -33,7 +33,6 @@ export function Layout({
   title = appCopy.name,
   hideHeaderTitle = false,
   hideHeaderDescription = false,
-  breadcrumbs,
   primaryAction,
   projectContext,
   navigationKey,
@@ -47,7 +46,7 @@ export function Layout({
   return (
     <div className="flex min-h-screen flex-col bg-surface-canvas font-sans text-text-primary lg:grid lg:grid-cols-[var(--spacing-shell-sidebar)_minmax(0,1fr)]">
       <a
-        className="focus-studio absolute -top-32 left-4 z-50 rounded-control bg-brand-gold p-3 font-bold text-text-inverse focus:top-4"
+        className="focus-studio absolute -top-32 left-4 z-50 rounded-control bg-button-primary-bg p-3 font-bold text-button-primary-text focus:top-4"
         href={`#${MAIN_CONTENT_ID}`}
       >
         {appCopy.skipToContent}
@@ -105,7 +104,7 @@ export function Layout({
                 {title}
               </p>
             )}
-            {breadcrumbs ? <div className="ml-auto min-w-0">{breadcrumbs}</div> : null}
+            {/* {breadcrumbs ? <div className="ml-auto min-w-0">{breadcrumbs}</div> : null} */}
           </div>
           {hideHeaderDescription ? null : projectContext ? (
             <p className="m-0 mt-2 text-body-sm text-info">{projectContext}</p>

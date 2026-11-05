@@ -60,6 +60,9 @@ import {
   SeasonParticipantParamsSchema,
   SeasonParticipantsParamsSchema,
   SeasonParticipantSchema,
+  SportsFieldProvenanceParamsSchema,
+  SportsFieldProvenanceResponseSchema,
+  ImportApplicationHistoryResponseSchema,
   operations,
   type ManagedCompetition,
   type ManagedCompetitionCreate,
@@ -96,6 +99,8 @@ import {
   type CompetitionMatchScheduleUpdate,
   type CompetitionMatchResultUpdate,
   type MatchResultHistory,
+  type SportsFieldProvenance,
+  type ImportApplication,
 } from '@edr/contracts';
 import { apiClient, type ApiClient } from '../../api/client';
 
@@ -108,6 +113,13 @@ function path(id: OperationId, params: Record<string, string> = {}): string {
 }
 
 export interface CompetitionsApi {
+  getFieldProvenance?(
+    competitionId: string,
+    entityType: 'season' | 'team' | 'stage' | 'round' | 'match' | 'result',
+    entityId: string,
+    signal?: AbortSignal,
+  ): Promise<SportsFieldProvenance[]>;
+  listImportApplications?(competitionId: string, signal?: AbortSignal): Promise<ImportApplication[]>;
   listSportsProviders(signal?: AbortSignal): Promise<SportsProvider[]>;
   listExternalCompetitions(providerKey: string, signal?: AbortSignal): Promise<ExternalCompetition[]>;
   getProviderBinding(competitionId: string, signal?: AbortSignal): Promise<CompetitionProviderBinding | null>;
@@ -227,6 +239,21 @@ export interface CompetitionsApi {
 
 export function createCompetitionsApi(client: ApiClient): CompetitionsApi {
   return {
+    async getFieldProvenance(competitionId, entityType, entityId, signal) {
+      const params = SportsFieldProvenanceParamsSchema.parse({ competitionId, entityType, entityId });
+      const result = await client.get(path('getSportsFieldProvenance', params), {
+        schema: SportsFieldProvenanceResponseSchema,
+        ...(signal === undefined ? {} : { signal }),
+      });
+      return result.fields;
+    },
+    async listImportApplications(competitionId, signal) {
+      const result = await client.get(path('listCompetitionImportApplications', { competitionId }), {
+        schema: ImportApplicationHistoryResponseSchema,
+        ...(signal === undefined ? {} : { signal }),
+      });
+      return result.applications;
+    },
     async listSportsProviders(signal) {
       const result = await client.get(path('listSportsProviders'), {
         schema: SportsProviderListResponseSchema,

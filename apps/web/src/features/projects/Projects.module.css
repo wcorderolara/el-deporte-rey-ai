@@ -4,30 +4,50 @@
 .primaryButton,
 .secondaryButton {
   display: inline-block;
+  min-height: 44px;
   padding: 0.5rem 1rem;
-  border: 2px solid var(--edr-color-accent);
-  border-radius: 0.25rem;
+  border: 1px solid;
+  border-radius: var(--radius-control);
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
 }
 
 .primaryButton {
-  color: #ffffff;
-  background: var(--edr-color-accent);
+  border-color: var(--button-primary-bg);
+  color: var(--button-primary-text);
+  background: var(--button-primary-bg);
 }
 
 .secondaryButton {
-  color: var(--edr-color-accent);
-  background: var(--edr-color-background);
+  border-color: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+  background: var(--button-secondary-bg);
+}
+
+.primaryButton:hover {
+  border-color: var(--button-primary-hover);
+  background: var(--button-primary-hover);
+}
+
+.secondaryButton:hover {
+  border-color: var(--button-secondary-hover);
+  background: var(--button-secondary-hover);
+}
+
+.primaryButton:active {
+  background: var(--button-primary-active);
+}
+
+.secondaryButton:active {
+  background: var(--button-secondary-active);
 }
 
 .primaryButton:disabled,
 .secondaryButton:disabled {
-  border-style: dashed;
-  border-color: var(--edr-color-border);
-  color: var(--edr-color-muted);
-  background: var(--edr-color-surface);
+  border-color: var(--button-disabled-bg);
+  color: var(--button-disabled-text);
+  background: var(--button-disabled-bg);
   cursor: not-allowed;
 }
 
@@ -454,16 +474,27 @@ td > .secondary {
 }
 .continueButton {
   width: fit-content;
-  background: var(--color-brand-gold);
-  color: var(--color-text-inverse);
+  border-color: var(--button-primary-bg);
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
 }
 .backButton {
-  border-color: var(--color-border-default);
-  background: transparent;
-  color: var(--color-text-primary);
+  border-color: var(--button-secondary-bg);
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+}
+.continueButton:hover {
+  border-color: var(--button-primary-hover);
+  background: var(--button-primary-hover);
+}
+.backButton:hover {
+  border-color: var(--button-secondary-hover);
+  background: var(--button-secondary-hover);
 }
 .continueButton:disabled {
-  opacity: 0.5;
+  border-color: var(--button-disabled-bg);
+  background: var(--button-disabled-bg);
+  color: var(--button-disabled-text);
   cursor: not-allowed;
 }
 .continueButton:focus-visible,

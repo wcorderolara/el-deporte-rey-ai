@@ -9,6 +9,7 @@ import type {
   ManagedSeason,
   ManagedTeam,
   SeasonParticipant,
+  SportsFieldProvenance,
 } from '@edr/contracts';
 import {
   Alert,
@@ -29,6 +30,10 @@ import {
   ViewModeToggle,
 } from '../../../ui';
 import { useCompetitionsApi } from '../CompetitionsContext';
+import { RoundStatusIndicator } from '../components/RoundStatusIndicator';
+import { deriveRoundStatus, type RoundPresentationStatus } from '../round-status';
+
+type RoundStatusFilter = 'all' | RoundPresentationStatus;
 
 function RenameForm({
   label,
@@ -118,6 +123,39 @@ function teamLabel(team: ManagedTeam): string {
   return team.region ? team.name + ' · ' + team.region : team.name;
 }
 
+function RoundStatusFilterControl({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: RoundStatusFilter;
+  onChange: (value: RoundStatusFilter) => void;
+}) {
+  const filterLabels: Record<RoundPresentationStatus, string> = {
+    finished: 'Finalizadas',
+    in_progress: 'En curso',
+    scheduled: 'Por jugar',
+    empty: 'Sin partidos',
+  };
+  return (
+    <Select
+      id={id}
+      label="Filtrar jornadas"
+      value={value}
+      wrapperClassName="min-w-48"
+      onChange={(event) => onChange(event.target.value as RoundStatusFilter)}
+    >
+      <option value="all">Todas</option>
+      {(Object.entries(filterLabels) as Array<[RoundPresentationStatus, string]>).map(([value, label]) => (
+        <option key={value} value={value}>
+          {label}
+        </option>
+      ))}
+    </Select>
+  );
+}
+
 const MATCH_STATES = [
   ['scheduled', 'Programado'],
   ['in_progress', 'En curso'],
@@ -167,7 +205,29 @@ function MatchCard(props: {
   const [history, setHistory] = useState<Awaited<ReturnType<typeof api.listMatchHistory>>>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>();
+  const [provenance, setProvenance] = useState<SportsFieldProvenance[]>([]);
   const availableRounds = rounds.filter((round) => (round.stageId ?? '') === stageId);
+
+  const loadProvenance = useCallback(async () => {
+    if (!api.getFieldProvenance) return;
+    const [matchFields, resultFields] = await Promise.all([
+      api.getFieldProvenance(competitionId, 'match', match.id),
+      api.getFieldProvenance(competitionId, 'result', match.id),
+    ]);
+    setProvenance([...matchFields, ...resultFields]);
+  }, [api, competitionId, match.id]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    if (api.getFieldProvenance)
+      void Promise.all([
+        api.getFieldProvenance(competitionId, 'match', match.id, controller.signal),
+        api.getFieldProvenance(competitionId, 'result', match.id, controller.signal),
+      ])
+        .then(([matchFields, resultFields]) => setProvenance([...matchFields, ...resultFields]))
+        .catch(() => undefined);
+    return () => controller.abort();
+  }, [api, competitionId, match.id]);
 
   async function saveResult(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -187,6 +247,7 @@ function MatchCard(props: {
       setAwayScore(updated.awayScore?.toString() ?? '');
       setStatus(updated.status);
       if (history !== undefined) setHistory(await api.listMatchHistory(competitionId, seasonId, match.id));
+      await loadProvenance();
     } catch (cause) {
       setError(cause);
     } finally {
@@ -206,6 +267,7 @@ function MatchCard(props: {
       });
       props.onUpdated(updated);
       if (history !== undefined) setHistory(await api.listMatchHistory(competitionId, seasonId, match.id));
+      await loadProvenance();
     } catch (cause) {
       setError(cause);
     } finally {
@@ -217,6 +279,8 @@ function MatchCard(props: {
   const matchState = MATCH_STATES.find(([key]) => key === match.status);
   const stateLabel = matchState?.[1] ?? 'Programado';
   const stateClassName = matchState ? MATCH_STATE_STYLES[matchState[0]] : MATCH_STATE_STYLES.scheduled;
+  const protectedCount = provenance.filter((field) => field.protected).length;
+  const providerCount = provenance.filter((field) => field.origin === 'provider').length;
   return (
     <Card as="article" className="grid min-w-0 gap-4">
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
@@ -241,6 +305,33 @@ function MatchCard(props: {
         <p className="m-0 text-caption text-text-subtle">
           {[match.stage?.name, match.round?.name].filter(Boolean).join(' · ')}
         </p>
+      ) : null}
+      {provenance.length ? (
+        <div className="flex flex-wrap items-center gap-2" aria-label="Procedencia de los datos del partido">
+          {providerCount ? (
+            <span className="rounded-full border border-info bg-info-surface px-2 py-1 text-caption font-semibold text-info">
+              Dato del proveedor · {providerCount}
+            </span>
+          ) : null}
+          {protectedCount ? (
+            <span className="rounded-full border border-warning bg-warning-surface px-2 py-1 text-caption font-semibold text-warning">
+              Modificado manualmente · Protegido · {protectedCount}
+            </span>
+          ) : null}
+          <details className="text-body-sm text-text-secondary">
+            <summary className="cursor-pointer text-text-link underline underline-offset-2 focus-studio">
+              Ver procedencia
+            </summary>
+            <ul className="m-0 mt-2 grid list-none gap-1 p-0">
+              {provenance.map((field) => (
+                <li key={`${field.field}-${field.origin}`}>
+                  <strong>{field.field}</strong>:{' '}
+                  {field.protected ? 'valor local protegido' : field.origin === 'provider' ? 'proveedor' : 'manual'}
+                </li>
+              ))}
+            </ul>
+          </details>
+        </div>
       ) : null}
       {problem ? (
         <Alert role="alert" tone="danger" title="No se pudo guardar el cambio">
@@ -370,6 +461,7 @@ export function SeasonDetailPage() {
   const [calendarBusy, setCalendarBusy] = useState(false);
   const [calendarTab, setCalendarTab] = useState<'stages' | 'direct'>('stages');
   const [roundView, setRoundView] = useState<'table' | 'cards'>('table');
+  const [roundStatusFilter, setRoundStatusFilter] = useState<RoundStatusFilter>('all');
   const [stageModal, setStageModal] = useState(false);
   const [roundModal, setRoundModal] = useState(false);
   const [matchModal, setMatchModal] = useState(false);
@@ -617,6 +709,13 @@ export function SeasonDetailPage() {
   const availableTeams = teams.filter((team) => !participantIds.has(team.id));
   const selectedStage = stages.find((stage) => stage.id === routeStageId);
   const selectedRound = rounds.find((round) => round.id === routeRoundId);
+  const matchesForRound = (roundId: string) => matches.filter((match) => match.round?.id === roundId);
+  const matchesRoundFilter = (round: CompetitionRound) =>
+    roundStatusFilter === 'all' || deriveRoundStatus(matchesForRound(round.id)).status === roundStatusFilter;
+  const directRounds = rounds.filter((round) => round.stageId === null);
+  const filteredDirectRounds = directRounds.filter(matchesRoundFilter);
+  const selectedStageRounds = selectedStage ? rounds.filter((round) => round.stageId === selectedStage.id) : [];
+  const filteredSelectedStageRounds = selectedStageRounds.filter(matchesRoundFilter);
   const stageOnlyMatches = matches.filter((match) => match.stage?.id === routeStageId && match.round === null);
   const roundMatches = matches.filter((match) => match.round?.id === routeRoundId);
   const ungroupedMatches = matches.filter((match) => match.stage === null && match.round === null);
@@ -880,7 +979,7 @@ export function SeasonDetailPage() {
                 Administra los equipos inscritos en {season.label}.
               </p>
               <Link className={buttonClassName('primary', 'md')} to={`${basePath}/participants`}>
-                Administrar participantes
+                Administrar Equipos
               </Link>
             </Card>
             <Card className="grid min-w-0 content-start gap-3">
@@ -889,7 +988,7 @@ export function SeasonDetailPage() {
                 Consulta fases, jornadas y partidos de la temporada.
               </p>
               <Link className={buttonClassName('primary', 'md')} to={`${basePath}/calendar`}>
-                Abrir calendario
+                Ver calendario
               </Link>
             </Card>
           </div>
@@ -1182,24 +1281,31 @@ export function SeasonDetailPage() {
             hidden={calendarTab !== 'direct'}
             className={`${calendarTab === 'direct' ? 'grid' : 'hidden'} min-w-0 gap-4`}
           >
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-end justify-between gap-3">
               <h3 className="m-0 font-display text-heading-sm font-bold text-text-primary">Jornadas directas</h3>
-              <Button
-                onClick={() => {
-                  setRoundName('');
-                  setRoundStageId('');
-                  setError(undefined);
-                  setRoundModal(true);
-                }}
-              >
-                Crear jornada
-              </Button>
+              <div className="flex flex-wrap items-end justify-end gap-2">
+                <RoundStatusFilterControl
+                  id="direct-round-status-filter"
+                  value={roundStatusFilter}
+                  onChange={setRoundStatusFilter}
+                />
+                <Button
+                  onClick={() => {
+                    setRoundName('');
+                    setRoundStageId('');
+                    setError(undefined);
+                    setRoundModal(true);
+                  }}
+                >
+                  Crear jornada
+                </Button>
+              </div>
             </div>
-            {rounds.filter((round) => round.stageId === null).length ? (
+            {directRounds.length && filteredDirectRounds.length ? (
               <ul className="m-0 grid min-w-0 list-none gap-3 p-0 sm:grid-cols-2 xl:grid-cols-3">
-                {rounds
-                  .filter((round) => round.stageId === null)
-                  .map((round) => (
+                {filteredDirectRounds.map((round) => {
+                  const currentMatches = matchesForRound(round.id);
+                  return (
                     <li key={round.id} className="min-w-0">
                       <Card className="grid gap-2">
                         <Link
@@ -1208,13 +1314,18 @@ export function SeasonDetailPage() {
                         >
                           {round.name}
                         </Link>
-                        <p className="m-0 text-caption text-text-secondary">
-                          {matches.filter((match) => match.round?.id === round.id).length} partidos
-                        </p>
+                        <RoundStatusIndicator matches={currentMatches} />
                       </Card>
                     </li>
-                  ))}
+                  );
+                })}
               </ul>
+            ) : directRounds.length ? (
+              <EmptyState
+                title="No hay jornadas con este estado"
+                description="Selecciona otro filtro para consultar las jornadas directas."
+                icon="⌁"
+              />
             ) : (
               <EmptyState
                 title="Sin jornadas directas"
@@ -1258,9 +1369,14 @@ export function SeasonDetailPage() {
                   Editar
                 </Button>
               </Card>
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-end justify-between gap-3">
                 <h3 className="m-0 font-display text-heading-sm font-bold text-text-primary">Jornadas</h3>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-end gap-2">
+                  <RoundStatusFilterControl
+                    id="stage-round-status-filter"
+                    value={roundStatusFilter}
+                    onChange={setRoundStatusFilter}
+                  />
                   <ViewModeToggle value={roundView} onChange={setRoundView} />
                   <Button
                     onClick={() => {
@@ -1274,118 +1390,124 @@ export function SeasonDetailPage() {
                   </Button>
                 </div>
               </div>
-              {rounds.filter((round) => round.stageId === selectedStage.id).length ? (
+              {selectedStageRounds.length && filteredSelectedStageRounds.length ? (
                 roundView === 'table' ? (
                   <div className="overflow-hidden rounded-2xl border border-border-subtle bg-surface-raised">
                     <table className="w-full border-collapse text-left">
                       <thead>
                         <tr className="border-b border-border-subtle text-caption text-text-secondary">
                           <th className="px-4 py-3">Jornada</th>
-                          <th className="px-4 py-3">Partidos</th>
+                          <th className="px-4 py-3">Estado</th>
                           <th className="px-4 py-3 text-right">Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {rounds
-                          .filter((round) => round.stageId === selectedStage.id)
-                          .map((round) => {
-                            const count = matches.filter((match) => match.round?.id === round.id).length;
-                            const tooltip =
-                              count > 0 ? 'No puedes eliminar una jornada con partidos' : 'Eliminar jornada';
-                            const tooltipId = `delete-round-tip-${round.id}`;
-                            return (
-                              <tr key={round.id} className="border-b border-border-subtle last:border-0">
-                                <th scope="row" className="px-4 py-4 font-bold text-text-primary">
-                                  {round.name}
-                                </th>
-                                <td className="px-4 py-4 text-body-sm text-text-secondary">{count}</td>
-                                <td className="px-4 py-3">
-                                  <div className="flex flex-wrap items-center justify-end gap-2">
-                                    <Link
-                                      className={buttonClassName('secondary', 'sm')}
-                                      to={`${basePath}/calendar/stages/${selectedStage.id}/rounds/${round.id}`}
+                        {filteredSelectedStageRounds.map((round) => {
+                          const currentMatches = matchesForRound(round.id);
+                          const count = currentMatches.length;
+                          const tooltip =
+                            count > 0 ? 'No puedes eliminar una jornada con partidos' : 'Eliminar jornada';
+                          const tooltipId = `delete-round-tip-${round.id}`;
+                          return (
+                            <tr key={round.id} className="border-b border-border-subtle last:border-0">
+                              <th scope="row" className="px-4 py-4 font-bold text-text-primary">
+                                {round.name}
+                              </th>
+                              <td className="px-4 py-4">
+                                <RoundStatusIndicator matches={currentMatches} />
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex flex-wrap items-center justify-end gap-2">
+                                  <Link
+                                    className={buttonClassName('secondary', 'sm')}
+                                    to={`${basePath}/calendar/stages/${selectedStage.id}/rounds/${round.id}`}
+                                  >
+                                    Ver jornada
+                                  </Link>
+                                  <Button variant="quiet" size="sm" onClick={() => setEditingRound(round)}>
+                                    Editar jornada
+                                  </Button>
+                                  <span className="group relative inline-flex" title={tooltip}>
+                                    <IconButton
+                                      label={tooltip}
+                                      aria-describedby={tooltipId}
+                                      disabled={count > 0}
+                                      tone="danger"
+                                      onClick={() => setDeletingRound(round)}
                                     >
-                                      Ver jornada
-                                    </Link>
-                                    <Button variant="quiet" size="sm" onClick={() => setEditingRound(round)}>
-                                      Editar jornada
-                                    </Button>
-                                    <span className="group relative inline-flex" title={tooltip}>
-                                      <IconButton
-                                        label={tooltip}
-                                        aria-describedby={tooltipId}
-                                        disabled={count > 0}
-                                        tone="danger"
-                                        onClick={() => setDeletingRound(round)}
-                                      >
-                                        <Icon name="trash" />
-                                      </IconButton>
-                                      <span
-                                        id={tooltipId}
-                                        role="tooltip"
-                                        className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 hidden whitespace-nowrap rounded-md border border-border-subtle bg-surface-overlay px-2 py-1 text-caption font-semibold text-text-primary shadow-card group-hover:block group-focus-within:block"
-                                      >
-                                        {tooltip}
-                                      </span>
+                                      <Icon name="trash" />
+                                    </IconButton>
+                                    <span
+                                      id={tooltipId}
+                                      role="tooltip"
+                                      className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 hidden whitespace-nowrap rounded-md border border-border-subtle bg-surface-overlay px-2 py-1 text-caption font-semibold text-text-primary shadow-card group-hover:block group-focus-within:block"
+                                    >
+                                      {tooltip}
                                     </span>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
+                                  </span>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
                 ) : (
                   <ul className="m-0 grid min-w-0 list-none gap-3 p-0 sm:grid-cols-2">
-                    {rounds
-                      .filter((round) => round.stageId === selectedStage.id)
-                      .map((round) => {
-                        const count = matches.filter((match) => match.round?.id === round.id).length;
-                        const tooltip = count > 0 ? 'No puedes eliminar una jornada con partidos' : 'Eliminar jornada';
-                        const tooltipId = `delete-round-tip-${round.id}`;
-                        return (
-                          <li key={round.id}>
-                            <Card className="grid gap-3">
-                              <h4 className="m-0 font-display text-heading-sm font-bold text-text-primary">
-                                {round.name}
-                              </h4>
-                              <p className="m-0 text-caption text-text-secondary">{count} partidos</p>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <Link
-                                  className={buttonClassName('secondary', 'sm')}
-                                  to={`${basePath}/calendar/stages/${selectedStage.id}/rounds/${round.id}`}
+                    {filteredSelectedStageRounds.map((round) => {
+                      const currentMatches = matchesForRound(round.id);
+                      const count = currentMatches.length;
+                      const tooltip = count > 0 ? 'No puedes eliminar una jornada con partidos' : 'Eliminar jornada';
+                      const tooltipId = `delete-round-tip-${round.id}`;
+                      return (
+                        <li key={round.id}>
+                          <Card className="grid gap-3">
+                            <h4 className="m-0 font-display text-heading-sm font-bold text-text-primary">
+                              {round.name}
+                            </h4>
+                            <RoundStatusIndicator matches={currentMatches} />
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Link
+                                className={buttonClassName('secondary', 'sm')}
+                                to={`${basePath}/calendar/stages/${selectedStage.id}/rounds/${round.id}`}
+                              >
+                                Ver jornada
+                              </Link>
+                              <Button variant="quiet" size="sm" onClick={() => setEditingRound(round)}>
+                                Editar jornada
+                              </Button>
+                              <span className="group relative inline-flex" title={tooltip}>
+                                <IconButton
+                                  label={tooltip}
+                                  aria-describedby={tooltipId}
+                                  disabled={count > 0}
+                                  tone="danger"
+                                  onClick={() => setDeletingRound(round)}
                                 >
-                                  Ver jornada
-                                </Link>
-                                <Button variant="quiet" size="sm" onClick={() => setEditingRound(round)}>
-                                  Editar jornada
-                                </Button>
-                                <span className="group relative inline-flex" title={tooltip}>
-                                  <IconButton
-                                    label={tooltip}
-                                    aria-describedby={tooltipId}
-                                    disabled={count > 0}
-                                    tone="danger"
-                                    onClick={() => setDeletingRound(round)}
-                                  >
-                                    <Icon name="trash" />
-                                  </IconButton>
-                                  <span
-                                    id={tooltipId}
-                                    role="tooltip"
-                                    className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 hidden whitespace-nowrap rounded-md border border-border-subtle bg-surface-overlay px-2 py-1 text-caption font-semibold text-text-primary shadow-card group-hover:block group-focus-within:block"
-                                  >
-                                    {tooltip}
-                                  </span>
+                                  <Icon name="trash" />
+                                </IconButton>
+                                <span
+                                  id={tooltipId}
+                                  role="tooltip"
+                                  className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 hidden whitespace-nowrap rounded-md border border-border-subtle bg-surface-overlay px-2 py-1 text-caption font-semibold text-text-primary shadow-card group-hover:block group-focus-within:block"
+                                >
+                                  {tooltip}
                                 </span>
-                              </div>
-                            </Card>
-                          </li>
-                        );
-                      })}
+                              </span>
+                            </div>
+                          </Card>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )
+              ) : selectedStageRounds.length ? (
+                <EmptyState
+                  title="No hay jornadas con este estado"
+                  description="Selecciona otro filtro para consultar las jornadas de esta fase."
+                  icon="⌁"
+                />
               ) : (
                 <EmptyState
                   title="Esta fase no tiene jornadas"
@@ -1438,9 +1560,9 @@ export function SeasonDetailPage() {
                   <p className="m-0 text-caption font-bold text-brand-gold">
                     {selectedRoundStage?.name ?? 'Jornada directa'}
                   </p>
-                  <p id="round-detail-title" className="m-0 mt-1 text-body-sm text-text-secondary">
-                    {roundMatches.length} partidos
-                  </p>
+                  <div id="round-detail-title" className="mt-2">
+                    <RoundStatusIndicator matches={roundMatches} />
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button variant="secondary" onClick={() => setEditingRound(selectedRound)}>

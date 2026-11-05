@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Link, Outlet, useLocation, useNavigation } from 'react-router';
 
-import { appCopy, classNames, Layout } from '../ui';
+import { appCopy, buttonClassName, classNames, Layout } from '../ui';
 import { shellContext } from './shellContext';
 
 interface NavItem {
@@ -139,10 +139,7 @@ export function AppShell() {
           : 'legacy'
       }
       primaryAction={
-        <Link
-          to="/projects/new"
-          className="focus-studio flex min-h-touch items-center justify-center gap-2 rounded-control border-hairline border-brand-gold bg-brand-gold px-4 py-3 font-sans text-body-sm font-bold text-text-inverse no-underline shadow-gold-glow hover:brightness-110"
-        >
+        <Link to="/projects/new" className={buttonClassName('primary', 'sm', 'flex w-full')}>
           <span aria-hidden="true">＋</span>Crear contenido
         </Link>
       }

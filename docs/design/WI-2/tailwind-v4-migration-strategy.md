@@ -152,3 +152,15 @@ This migration must not assume Next.js conventions, file-system routing, server 
 A future Next.js assessment may reuse the token model and component design, but it must be a separate architecture proposal with measurable benefits and migration costs. Tailwind adoption is not a prerequisite or justification for a framework migration.
 
 The token model must also keep semantic application states distinct from brand configuration. That separation supports official El Deporte Rey asset replacement now and possible tenant-aware branding later without implementing tenant theming in WI-2. Shared styled primitives should remain independent of route objects so the styling migration does not increase framework coupling.
+
+## 8. Semantic action hierarchy
+
+The shared `Button` and router-link `buttonClassName` contract use semantic action tokens declared in `tokens.css` and mapped through Tailwind v4 `@theme static`:
+
+- Primary actions use `button-primary-*` tokens.
+- Secondary actions use `button-secondary-*` tokens.
+- Destructive actions use `button-danger-*` tokens.
+- Disabled actions use `button-disabled-*` tokens and native `disabled` semantics.
+- Every shared action resolves its focus indicator through `button-focus-ring`.
+
+Feature CSS Modules that have not yet been structurally migrated must consume these same runtime variables. Compatibility variants may remain while callers migrate, but they must not establish another palette or outlined action hierarchy. Tabs, segmented controls, view toggles, checkboxes, radios, dropdowns, contextual text links and compact icon controls remain visually distinct from action buttons.

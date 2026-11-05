@@ -19,6 +19,8 @@
 | ADR-01D-C-03 | Una aplicación es una transacción por temporada que incluye entidades, mappings, auditoría y el estado `completed` de la operación. | Implementado, pendiente de aceptación. Un fallo o reinicio no deja aplicación parcial. |
 | ADR-01D-C-04 | Las identidades externas tienen ámbito de competición, también para equipos globales; un mapping de otra competición solo se ofrece como candidato. | Implementado, pendiente de aceptación (cumple ADR-01D-04 y ADR-01D-07). |
 | ADR-01D-C-05 | La provenance inicial es el baseline por campo sincronizado en el mapping; los valores protegidos solo cambian con `accept_incoming` auditado. | Implementado, pendiente de aceptación. Campos sincronizados en 01D-C: fecha, estado y marcador del partido. |
+| ADR-01D-D-01 | El valor efectivo permanece en la tabla deportiva y `sports_field_provenance` conserva origen, último valor externo conocido y protección por campo; los eventos de decisión son append-only. | Implementado y aceptado (2026-11-05). Evita un modelo deportivo paralelo y hace auditable la convivencia manual/proveedor. |
+| ADR-01D-D-02 | Un override protegido conserva el valor local y no avanza el baseline. Solo `accept_incoming` aplica el proveedor y retira protección. | Implementado y aceptado (2026-11-05). La ausencia no significa borrar; retirar protección conservando una divergencia requiere una decisión posterior sobre baseline. |
 
 ## Cardinalidad
 

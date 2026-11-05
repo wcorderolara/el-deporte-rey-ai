@@ -23,6 +23,7 @@ export const ContractPatterns = {
   ColorHex: '^#[0-9a-f]{6}$',
   ExportFileName: '^([0-9]{2}\\.png|caption\\.txt|manifest\\.json)$',
   ExternalSeasonId: '^(?!\\.{1,2}$)[A-Za-z0-9._-]{1,120}$',
+  SportsEntityType: '^(season|team|stage|round|match|result)$',
   Base64: '^[A-Za-z0-9+/]*={0,2}$',
   /** Prefix of the status/events URLs returned when an asynchronous operation starts. */
   CompetitionOperationUrl: '^/api/v1/competitions/',

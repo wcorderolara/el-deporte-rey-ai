@@ -354,6 +354,11 @@ function ReviewItem({ item, state }: { item: ImportApplyPlanItem; state: ImportA
                 <strong className={change.applied ? 'text-info' : 'text-warning'}>
                   {change.applied ? 'se actualizará' : 'se conserva el valor local'}
                 </strong>
+                {!change.applied ? (
+                  <span className="ml-2 rounded-full border border-warning bg-warning-surface px-2 py-0.5 text-caption font-semibold text-warning">
+                    Protegido
+                  </span>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -487,7 +492,7 @@ export function ImportApplyReview({ state }: { state: ImportApplicationState }) 
             <h3 className="m-0 text-body-md font-bold text-text-primary">
               Registros con dependencias sin resolver ({groups.dependents.length})
             </h3>
-            <Button variant="secondaryFilled" size="sm" onClick={() => state.skipAll(groups.dependents)}>
+            <Button variant="secondary" size="sm" onClick={() => state.skipAll(groups.dependents)}>
               Omitir estos registros
             </Button>
           </div>
@@ -648,7 +653,7 @@ export function ImportApplyProgress({ state }: { state: ImportApplicationState }
       ) : null}
       <div className="flex flex-wrap items-center justify-end gap-3 border-t border-border-subtle pt-4">
         {failed || cancelled ? (
-          <Button variant="secondaryFilled" onClick={state.reset}>
+          <Button variant="secondary" onClick={state.reset}>
             Volver a la revisión
           </Button>
         ) : (
@@ -732,13 +737,13 @@ export function ImportApplyResult({
         aria-label="Ver datos importados"
         className="flex flex-wrap items-center justify-end gap-3 border-t border-border-subtle pt-4"
       >
-        <Button variant="quiet" onClick={onNewImport}>
+        <Button variant="secondary" onClick={onNewImport}>
           Preparar otra importación
         </Button>
-        <Link className={buttonClassName('secondaryFilled')} to={`/competitions/${competitionId}`}>
+        <Link className={buttonClassName('secondary')} to={`/competitions/${competitionId}`}>
           Volver a competición
         </Link>
-        <Link className={buttonClassName('secondaryFilled')} to={`/competitions/${competitionId}/teams`}>
+        <Link className={buttonClassName('secondary')} to={`/competitions/${competitionId}/teams`}>
           Ver equipos
         </Link>
         <Link

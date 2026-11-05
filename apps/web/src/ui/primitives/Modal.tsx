@@ -13,7 +13,7 @@ export function ModalFooter({
 }) {
   return (
     <div className="mt-2 flex flex-wrap items-center justify-end gap-3 border-t border-border-subtle pt-4">
-      <Button type="button" variant="quiet" disabled={cancelDisabled} onClick={onCancel}>
+      <Button type="button" variant="secondary" disabled={cancelDisabled} onClick={onCancel}>
         Cancelar
       </Button>
       {children}

@@ -73,6 +73,23 @@
   --color-demo: #ffb77c;
   --color-demo-surface: #352014;
 
+  /* Semantic action colors. Components consume these names instead of brand/surface colors directly. */
+  --color-button-primary-bg: var(--button-primary-bg);
+  --color-button-primary-hover: var(--button-primary-hover);
+  --color-button-primary-active: var(--button-primary-active);
+  --color-button-primary-text: var(--button-primary-text);
+  --color-button-secondary-bg: var(--button-secondary-bg);
+  --color-button-secondary-hover: var(--button-secondary-hover);
+  --color-button-secondary-active: var(--button-secondary-active);
+  --color-button-secondary-text: var(--button-secondary-text);
+  --color-button-danger-bg: var(--button-danger-bg);
+  --color-button-danger-hover: var(--button-danger-hover);
+  --color-button-danger-active: var(--button-danger-active);
+  --color-button-danger-text: var(--button-danger-text);
+  --color-button-disabled-bg: var(--button-disabled-bg);
+  --color-button-disabled-text: var(--button-disabled-text);
+  --color-button-focus-ring: var(--button-focus-ring);
+
   /* Legacy compatibility palette: do not use for new primitives. */
   --color-legacy-text: #1a1a1a;
   --color-legacy-text-muted: #4a4a4a;
@@ -160,6 +177,21 @@
 }
 
 :root {
+  --button-primary-bg: var(--color-brand-gold);
+  --button-primary-hover: color-mix(in srgb, var(--color-brand-gold) 88%, var(--color-brand-white));
+  --button-primary-active: color-mix(in srgb, var(--color-brand-gold) 82%, var(--color-surface-canvas));
+  --button-primary-text: var(--color-text-inverse);
+  --button-secondary-bg: var(--color-surface-overlay);
+  --button-secondary-hover: var(--color-brand-purple);
+  --button-secondary-active: var(--color-brand-purple-deep);
+  --button-secondary-text: var(--color-text-primary);
+  --button-danger-bg: var(--color-danger-surface);
+  --button-danger-hover: color-mix(in srgb, var(--color-danger-surface) 72%, var(--color-danger));
+  --button-danger-active: color-mix(in srgb, var(--color-danger-surface) 84%, var(--color-surface-canvas));
+  --button-danger-text: var(--color-text-primary);
+  --button-disabled-bg: var(--color-surface-card);
+  --button-disabled-text: var(--color-text-subtle);
+  --button-focus-ring: var(--color-focus);
   --focus-ring-width: 3px;
   --focus-ring-offset: 2px;
   --focus-ring-color: var(--color-legacy-focus);
@@ -189,5 +221,5 @@
 }
 
 @utility focus-studio {
-  --focus-ring-color: var(--color-focus);
+  --focus-ring-color: var(--button-focus-ring);
 }

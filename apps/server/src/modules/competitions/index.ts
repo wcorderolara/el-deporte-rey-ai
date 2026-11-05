@@ -40,11 +40,16 @@ import {
   ImportApplyOperationResponseSchema,
   ImportApplyOperationStartResponseSchema,
   ImportApplyEventSchema,
+  SportsFieldProvenanceParamsSchema,
+  SportsFieldProvenanceResponseSchema,
+  ImportApplicationHistoryResponseSchema,
+  ImportApplicationSchema,
 } from '@edr/contracts';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ZodType } from 'zod';
 import { HttpProblem } from '../../platform/http/problem.js';
 import { SourceError } from '../../providers/sports/ingestion/errors.js';
+import { CompetitionFieldProvenanceService } from './field-provenance.js';
 
 async function providerSafe<T>(action: () => Promise<T>): Promise<T> {
   try {
@@ -124,12 +129,17 @@ export function createCompetitionModule(): ServerModule {
     name: 'competitions',
     routes: async (app, container: AppContainer) => {
       const now = () => container.clock.now();
+      const transaction = <T>(action: () => T): T => container.db.transaction(action as never) as T;
+      const provenance = new CompetitionFieldProvenanceService(container.db, now);
       registerCompetitionRoutes(
         app,
         new CompetitionService(container),
         new CompetitionAdministrationService(new SQLiteCompetitionAdministrationRepository(container.db), {
           newId: randomUUID,
           now,
+          transaction,
+          onManualMutation: (mutation) =>
+            provenance.recordManual(mutation.competitionId, mutation.entityType, mutation.entityId, mutation.fields),
         }),
       );
       registerCompetitionCalendarRoutes(
@@ -137,12 +147,36 @@ export function createCompetitionModule(): ServerModule {
         new CompetitionCalendarService(new SQLiteCompetitionCalendarRepository(container.db), {
           newId: randomUUID,
           now,
+          transaction,
+          onManualMutation: (mutation) =>
+            provenance.recordManual(mutation.competitionId, mutation.entityType, mutation.entityId, mutation.fields),
         }),
       );
       const bindings = new CompetitionProviderBindingService(container);
       const importPreviews = new CompetitionImportPreviewService(container);
       const importOperations = new ImportPreviewOperationService(container, importPreviews);
       const importApply = new CompetitionImportApplyService(container, importPreviews);
+      app.get('/competitions/:competitionId/provenance/:entityType/:entityId', async (request) => {
+        const { competitionId, entityType, entityId } = SportsFieldProvenanceParamsSchema.parse(request.params);
+        if (!container.db.prepare('SELECT 1 FROM competitions WHERE id = ?').get([competitionId]))
+          throw new HttpProblem(404, 'NOT_FOUND', 'No encontramos esta competición.');
+        return contractResponse(SportsFieldProvenanceResponseSchema, {
+          fields: provenance.list(competitionId, entityType, entityId),
+        });
+      });
+      app.get('/competitions/:competitionId/import-applications', async (request) => {
+        const { competitionId } = CompetitionProviderBindingParamsSchema.parse(request.params);
+        if (!container.db.prepare('SELECT 1 FROM competitions WHERE id = ?').get([competitionId]))
+          throw new HttpProblem(404, 'NOT_FOUND', 'No encontramos esta competición.');
+        const rows = container.db
+          .prepare<{ result_json: string }>(
+            'SELECT result_json FROM competition_import_applications WHERE competition_id = ? ORDER BY applied_at DESC LIMIT 100',
+          )
+          .all([competitionId]);
+        return contractResponse(ImportApplicationHistoryResponseSchema, {
+          applications: rows.map((row) => ImportApplicationSchema.parse(JSON.parse(row.result_json))),
+        });
+      });
       app.get('/sports/providers', async () =>
         contractResponse(SportsProviderListResponseSchema, { providers: bindings.providers() }),
       );

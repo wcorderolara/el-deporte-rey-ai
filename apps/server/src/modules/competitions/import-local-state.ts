@@ -69,7 +69,29 @@ export class SQLiteImportLocalState implements ImportLocalState {
         'SELECT local_id, baseline_json FROM external_identity_mappings WHERE provider_key = ? AND resource = ? AND scope_key = ? AND external_id = ?',
       )
       .get([this.#providerKey, resource, scopeKey, externalId]);
-    return row ? { localId: row.local_id, baseline: baselineFrom(row.baseline_json) } : undefined;
+    if (!row) return undefined;
+    const entityTypes =
+      resource === 'matches'
+        ? ['match', 'result']
+        : [
+            resource === 'teams'
+              ? 'team'
+              : resource === 'stages'
+                ? 'stage'
+                : resource === 'rounds'
+                  ? 'round'
+                  : 'season',
+          ];
+    const protectedFields = new Set(
+      this.#db
+        .prepare<{ field_name: string; entity_type: string }>(
+          'SELECT field_name, entity_type FROM sports_field_provenance WHERE competition_id = ? AND entity_id = ? AND manual_override = 1',
+        )
+        .all([this.#competitionId, row.local_id])
+        .filter((item) => entityTypes.includes(item.entity_type))
+        .map((item) => item.field_name),
+    );
+    return { localId: row.local_id, baseline: baselineFrom(row.baseline_json), protectedFields };
   }
   isMapped(resource: MappedResource, localId: string): boolean {
     return Boolean(

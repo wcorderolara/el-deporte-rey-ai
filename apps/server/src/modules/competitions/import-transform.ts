@@ -28,6 +28,7 @@ export type Baseline = Readonly<Record<string, string | number | null>>;
 export interface Mapping {
   readonly localId: string;
   readonly baseline: Baseline | null;
+  readonly protectedFields?: ReadonlySet<string>;
 }
 export interface LocalLabel {
   readonly id: string;
@@ -79,11 +80,15 @@ export interface MatchChange {
 }
 export type PlanStep =
   | { kind: 'season.create'; key: string; label: string }
+  | { kind: 'season.update'; seasonId: string; label: string }
   | { kind: 'team.create'; key: string; name: string }
+  | { kind: 'team.update'; teamId: string; name: string }
   | { kind: 'competitionTeam.add'; team: Ref }
   | { kind: 'participant.add'; team: Ref }
   | { kind: 'stage.create'; key: string; name: string }
+  | { kind: 'stage.update'; stageId: string; name: string }
   | { kind: 'round.create'; key: string; stage: Ref | null; name: string }
+  | { kind: 'round.update'; roundId: string; name: string }
   | {
       kind: 'match.create';
       key: string;
@@ -228,6 +233,24 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
   const consumed = new Set<string>();
   /** Decisions whose action is offered but whose target is not (for example a non-candidate `localId`). */
   const rejected = new Set<string>();
+  const accepted = (item: ImportPreviewItem) =>
+    decisionByKey.get(decisionKey(item.resource, item.externalScope, item.externalId))?.action === 'accept_incoming';
+  const fieldDecision = (
+    mapping: Mapping,
+    field: string,
+    local: string | number | null,
+    value: string | number | null,
+    accept: boolean,
+  ) => ({
+    equal: local === value,
+    apply:
+      local !== value &&
+      (accept ||
+        (!mapping.protectedFields?.has(field) &&
+          mapping.baseline !== null &&
+          Object.hasOwn(mapping.baseline, field) &&
+          mapping.baseline[field] === local)),
+  });
 
   const scope = (resource: MappedResource, item: { externalScope: string | null }) =>
     mappingScope(competitionId, resource, item.externalScope);
@@ -367,9 +390,27 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
     if (mapped && local) {
       season = { id: local.id };
       seasonExists = true;
-      destinationLabel = local.label;
-      record(seasonItem, 'reuse', { local });
-      steps.push(seasonMapping(seasonItem, local.id, 'created'));
+      const difference = fieldDecision(mapped, 'label', local.label, label, accepted(seasonItem));
+      destinationLabel = difference.apply ? label : local.label;
+      const changes = difference.equal
+        ? []
+        : [{ field: 'label', localValue: local.label, incomingValue: label, applied: difference.apply }];
+      record(seasonItem, difference.apply ? 'update' : difference.equal ? 'reuse' : 'keep_local', {
+        local,
+        changes,
+        options: difference.equal ? [] : ['accept_incoming'],
+        reason: !difference.equal && !difference.apply ? 'El nombre local está protegido; se conserva.' : null,
+      });
+      if (difference.apply) steps.push({ kind: 'season.update', seasonId: local.id, label });
+      steps.push(
+        seasonMapping(
+          seasonItem,
+          local.id,
+          'created',
+          undefined,
+          difference.apply || difference.equal ? { label } : {},
+        ),
+      );
     } else if (mapped) {
       record(seasonItem, 'blocked', {
         reason: 'La temporada vinculada ya no existe localmente.',
@@ -442,7 +483,7 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
   for (const item of byResource('teams')) {
     const name = displayValue(String(incoming(item, 'name') ?? item.title));
     const mapped = mappingOf('teams', item.externalScope, item.externalId);
-    const mapping = (local: Ref, origin: 'created' | 'linked'): PlanStep => ({
+    const mapping = (local: Ref, origin: 'created' | 'linked', baseline: Baseline = { name }): PlanStep => ({
       kind: 'mapping.put',
       resource: 'teams',
       scopeKey: scope('teams', item),
@@ -450,7 +491,7 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
       externalLabel: name.slice(0, 200) || null,
       local,
       origin,
-      baseline: { name },
+      baseline,
     });
     if (unresolved(item)) {
       teams.set(item.externalId, { state: 'skipped', label: item.title });
@@ -468,17 +509,19 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
         continue;
       }
       teams.set(item.externalId, { state: 'ref', ref: { id: local.id }, label: local.label });
-      const changes =
-        identityKey(local.label) === identityKey(name)
-          ? []
-          : [{ field: 'name', localValue: local.label, incomingValue: name, applied: false }];
-      record(item, 'reuse', {
+      const difference = fieldDecision(mapped, 'name', local.label, name, accepted(item));
+      const changes = difference.equal
+        ? []
+        : [{ field: 'name', localValue: local.label, incomingValue: name, applied: difference.apply }];
+      record(item, difference.apply ? 'update' : difference.equal ? 'reuse' : 'keep_local', {
         local,
         changes,
-        reason: changes.length ? 'Se conserva el nombre del catálogo local.' : null,
+        options: difference.equal ? [] : ['accept_incoming'],
+        reason: !difference.equal && !difference.apply ? 'Se conserva el nombre protegido del catálogo local.' : null,
       });
+      if (difference.apply) steps.push({ kind: 'team.update', teamId: local.id, name });
       associate({ id: local.id });
-      steps.push(mapping({ id: local.id }, 'created'));
+      steps.push(mapping({ id: local.id }, 'created', difference.apply || difference.equal ? { name } : {}));
       continue;
     }
     const all = state.teamsByName(identityKey(name));
@@ -599,7 +642,7 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
     const name = displayValue(item.title);
     const externalLabel = String(incoming(item, 'name') ?? item.title).slice(0, 200);
     const mapped = mappingOf('stages', item.externalScope, item.externalId);
-    const mapping = (local: Ref, origin: 'created' | 'linked'): PlanStep => ({
+    const mapping = (local: Ref, origin: 'created' | 'linked', baseline: Baseline = { name }): PlanStep => ({
       kind: 'mapping.put',
       resource: 'stages',
       scopeKey: scope('stages', item),
@@ -607,7 +650,7 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
       externalLabel,
       local,
       origin,
-      baseline: { name },
+      baseline,
     });
     if (mapped) {
       const local = seasonId ? state.stage(seasonId, mapped.localId) : undefined;
@@ -620,8 +663,18 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
         continue;
       }
       stages.set(item.externalId, { state: 'ref', ref: { id: local.id }, label: local.label });
-      record(item, 'reuse', { local });
-      steps.push(mapping({ id: local.id }, 'created'));
+      const difference = fieldDecision(mapped, 'name', local.label, name, accepted(item));
+      const changes = difference.equal
+        ? []
+        : [{ field: 'name', localValue: local.label, incomingValue: name, applied: difference.apply }];
+      record(item, difference.apply ? 'update' : difference.equal ? 'reuse' : 'keep_local', {
+        local,
+        changes,
+        options: difference.equal ? [] : ['accept_incoming'],
+        reason: !difference.equal && !difference.apply ? 'El nombre local de la fase está protegido.' : null,
+      });
+      if (difference.apply) steps.push({ kind: 'stage.update', stageId: local.id, name });
+      steps.push(mapping({ id: local.id }, 'created', difference.apply || difference.equal ? { name } : {}));
       continue;
     }
     const all = seasonId ? state.stagesByName(seasonId, identityKey(name)) : [];
@@ -693,7 +746,7 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
     const stageRef = stage?.state === 'ref' ? stage.ref : null;
     const name = displayValue(item.title);
     const mapped = mappingOf('rounds', item.externalScope, item.externalId);
-    const mapping = (local: Ref, origin: 'created' | 'linked'): PlanStep => ({
+    const mapping = (local: Ref, origin: 'created' | 'linked', baseline: Baseline = { name }): PlanStep => ({
       kind: 'mapping.put',
       resource: 'rounds',
       scopeKey: scope('rounds', item),
@@ -701,7 +754,7 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
       externalLabel: String(incoming(item, 'name') ?? item.title).slice(0, 200),
       local,
       origin,
-      baseline: { name },
+      baseline,
     });
     if (mapped) {
       const local = seasonId ? state.round(seasonId, mapped.localId) : undefined;
@@ -714,8 +767,18 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
         continue;
       }
       rounds.set(item.externalId, { state: 'ref', ref: { id: local.id }, label: local.label, stage: stageRef });
-      record(item, 'reuse', { local });
-      steps.push(mapping({ id: local.id }, 'created'));
+      const difference = fieldDecision(mapped, 'name', local.label, name, accepted(item));
+      const changes = difference.equal
+        ? []
+        : [{ field: 'name', localValue: local.label, incomingValue: name, applied: difference.apply }];
+      record(item, difference.apply ? 'update' : difference.equal ? 'reuse' : 'keep_local', {
+        local,
+        changes,
+        options: difference.equal ? [] : ['accept_incoming'],
+        reason: !difference.equal && !difference.apply ? 'El nombre local de la jornada está protegido.' : null,
+      });
+      if (difference.apply) steps.push({ kind: 'round.update', roundId: local.id, name });
+      steps.push(mapping({ id: local.id }, 'created', difference.apply || difference.equal ? { name } : {}));
       continue;
     }
     const stageId = existingId(stageRef);
@@ -782,14 +845,13 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
     baseline: Record<string, string | number | null>;
     /** Baseline stored by an earlier application; `null` for a record linked now (no imported history). */
     priorBaseline: Baseline | null;
+    protectedFields: ReadonlySet<string>;
     mapping: Extract<PlanStep, { kind: 'mapping.put' }>;
     inSnapshot: boolean;
   }
   const matches = new Map<string, PlannedMatch | Resolution>();
   const plannedMatches: PlannedMatch[] = [];
   const plannedMatchKeys = new Set<string>();
-  const accepted = (item: ImportPreviewItem) =>
-    decisionByKey.get(decisionKey(item.resource, item.externalScope, item.externalId))?.action === 'accept_incoming';
   /** Three-way merge of one field. Returns whether the incoming value is written. */
   const merge = (
     field: string,
@@ -799,12 +861,14 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
     accept: boolean,
     changes: ImportApplyPlanItem['changes'],
     aligned: Record<string, string | number | null>,
+    protectedFields: ReadonlySet<string> = new Set(),
   ) => {
     if (local === value) {
       aligned[field] = value;
       return false;
     }
-    const safe = baseline !== null && Object.hasOwn(baseline, field) && baseline[field] === local;
+    const safe =
+      !protectedFields.has(field) && baseline !== null && Object.hasOwn(baseline, field) && baseline[field] === local;
     const apply = safe || accept;
     changes.push({ field, localValue: local, incomingValue: value, applied: apply });
     if (apply) aligned[field] = value;
@@ -880,12 +944,14 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
       baseline: Baseline | null,
       origin: 'created' | 'linked',
       accept: boolean,
+      protectedFields: ReadonlySet<string> = new Set(),
     ) => {
       const changes: ImportApplyPlanItem['changes'] = [];
       const aligned: Record<string, string | number | null> = {};
       const change: MatchChange = {};
-      if (merge('kickoffAt', local.kickoffAt, kickoff, baseline, accept, changes, aligned)) change.kickoffAt = kickoff;
-      if (merge('status', local.status, incomingStatus, baseline, accept, changes, aligned))
+      if (merge('kickoffAt', local.kickoffAt, kickoff, baseline, accept, changes, aligned, protectedFields))
+        change.kickoffAt = kickoff;
+      if (merge('status', local.status, incomingStatus, baseline, accept, changes, aligned, protectedFields))
         change.status = incomingStatus;
       const planned: PlannedMatch = {
         ref: { id: local.id },
@@ -894,6 +960,7 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
         change,
         baseline: aligned,
         priorBaseline: baseline,
+        protectedFields,
         mapping: mappingStep({ id: local.id }, origin),
         inSnapshot: true,
       };
@@ -910,7 +977,13 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
         matches.set(item.externalId, { state: 'blocked', label: item.title });
         continue;
       }
-      const { planned, changes } = existingFor(local, mapped.baseline, 'created', accepted(item));
+      const { planned, changes } = existingFor(
+        local,
+        mapped.baseline,
+        'created',
+        accepted(item),
+        mapped.protectedFields,
+      );
       const protectedValues = changes.some((value) => !value.applied);
       record(item, changes.some((value) => value.applied) ? 'update' : protectedValues ? 'keep_local' : 'unchanged', {
         local: { id: local.id, label: local.label },
@@ -997,6 +1070,7 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
       change: {},
       baseline: { kickoffAt: kickoff, status: incomingStatus, homeScore: null, awayScore: null },
       priorBaseline: null,
+      protectedFields: new Set(),
       mapping: mappingStep({ pending: key }, 'created'),
       inSnapshot: true,
     };
@@ -1017,6 +1091,7 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
       change: {},
       baseline: {},
       priorBaseline: mapped.baseline,
+      protectedFields: mapped.protectedFields ?? new Set(),
       mapping: {
         kind: 'mapping.put',
         resource: 'matches',
@@ -1067,12 +1142,14 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
       target.baseline.awayScore = score.away;
     } else {
       // An unknown local score is filled; a recorded one changes only while it still equals the imported baseline.
+      const scoreProtected = target.protectedFields.has('homeScore') || target.protectedFields.has('awayScore');
       const safe =
-        localText === null ||
-        (baseline !== null &&
-          Object.hasOwn(baseline, 'homeScore') &&
-          baseline.homeScore === local.homeScore &&
-          baseline.awayScore === local.awayScore);
+        !scoreProtected &&
+        (localText === null ||
+          (baseline !== null &&
+            Object.hasOwn(baseline, 'homeScore') &&
+            baseline.homeScore === local.homeScore &&
+            baseline.awayScore === local.awayScore));
       apply = safe || accept;
       changes.push({ field: 'marcador', localValue: localText, incomingValue: incomingText, applied: apply });
       if (apply) {

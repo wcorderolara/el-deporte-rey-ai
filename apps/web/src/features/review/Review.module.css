@@ -40,16 +40,26 @@
 }
 
 .primaryButton {
-  border-color: var(--color-brand-gold);
-  color: var(--color-text-inverse);
-  background: var(--color-brand-gold);
+  border-color: var(--button-primary-bg);
+  color: var(--button-primary-text);
+  background: var(--button-primary-bg);
   box-shadow: var(--shadow-gold-glow);
 }
 
 .secondaryButton {
-  border-color: var(--color-border-default);
-  color: var(--color-text-primary);
-  background: var(--color-surface-card);
+  border-color: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+  background: var(--button-secondary-bg);
+}
+
+.primaryButton:hover {
+  border-color: var(--button-primary-hover);
+  background: var(--button-primary-hover);
+}
+
+.secondaryButton:hover {
+  border-color: var(--button-secondary-hover);
+  background: var(--button-secondary-hover);
 }
 
 .primaryButton:focus-visible,
@@ -63,10 +73,9 @@
 
 .primaryButton:disabled,
 .secondaryButton:disabled {
-  border-style: dashed;
-  border-color: var(--edr-color-border);
-  color: var(--edr-color-muted);
-  background: var(--edr-color-surface);
+  border-color: var(--button-disabled-bg);
+  color: var(--button-disabled-text);
+  background: var(--button-disabled-bg);
   cursor: not-allowed;
 }
 
@@ -589,14 +598,25 @@
 }
 
 .dialogPrimary {
-  background: var(--color-brand-gold);
-  color: var(--color-text-inverse);
+  border-color: var(--button-primary-bg);
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
 }
 
 .dialogSecondary {
-  border-color: var(--color-border-strong);
-  background: var(--color-surface-card);
-  color: var(--color-text-primary);
+  border-color: var(--button-secondary-bg);
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+}
+
+.dialogPrimary:hover {
+  border-color: var(--button-primary-hover);
+  background: var(--button-primary-hover);
+}
+
+.dialogSecondary:hover {
+  border-color: var(--button-secondary-hover);
+  background: var(--button-secondary-hover);
 }
 
 .dialogPrimary:focus-visible,
@@ -608,7 +628,9 @@
 .dialogPrimary:disabled,
 .dialogSecondary:disabled {
   cursor: not-allowed;
-  opacity: 0.65;
+  border-color: var(--button-disabled-bg);
+  background: var(--button-disabled-bg);
+  color: var(--button-disabled-text);
 }
 
 .element {

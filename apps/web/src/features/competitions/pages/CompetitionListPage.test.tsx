@@ -249,6 +249,119 @@ describe('competition foundation page', () => {
     expect(api.listExternalCompetitions).toHaveBeenCalledTimes(1);
   });
 
+  it('persists Provider to Hybrid without replacing the existing provider binding', async () => {
+    const pending = deferred<CompetitionProviderBinding>();
+    const setProviderBinding = vi.fn().mockReturnValue(pending.promise);
+    const api = apiStub({
+      listSportsProviders: vi.fn().mockResolvedValue([providerA]),
+      getProviderBinding: vi.fn().mockResolvedValue(binding),
+      listExternalCompetitions: vi.fn().mockResolvedValue([externalLeague]),
+      setProviderBinding,
+    });
+    render(
+      <MemoryRouter>
+        <CompetitionsProvider api={api}>
+          <ProviderBindingPanel competitionId={first.id} />
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Configurar fuente' }));
+    const dialog = screen.getByRole('dialog');
+    await screen.findByRole('option', { name: externalLeague.name });
+    const save = within(dialog).getByRole('button', { name: 'Guardar configuración' });
+    expect((save as HTMLButtonElement).disabled).toBe(true);
+
+    await userEvent.selectOptions(within(dialog).getByRole('combobox', { name: 'Modo de administración' }), 'hybrid');
+    expect((save as HTMLButtonElement).disabled).toBe(false);
+    await userEvent.click(save);
+
+    expect(setProviderBinding).toHaveBeenCalledOnce();
+    expect(setProviderBinding).toHaveBeenCalledWith(first.id, {
+      providerKey: providerA.key,
+      externalCompetitionId: externalLeague.externalCompetitionId,
+      mode: 'hybrid',
+    });
+    const loading = within(dialog).getByRole('button', { name: 'Guardando configuración' });
+    expect((loading as HTMLButtonElement).disabled).toBe(true);
+    expect(loading.getAttribute('aria-busy')).toBe('true');
+    await userEvent.click(loading);
+    expect(setProviderBinding).toHaveBeenCalledOnce();
+
+    await act(async () => pending.resolve({ ...binding, mode: 'hybrid', updatedAt: '2026-11-05T12:00:00Z' }));
+    expect((await screen.findByRole('status')).textContent).toContain('Configuración de fuente guardada.');
+    expect(screen.getByText(/Hybrid · Proveedor A · Liga de prueba/)).toBeTruthy();
+  });
+
+  it('persists Hybrid to Provider and keeps the modal open when the server rejects the change', async () => {
+    const hybridBinding: CompetitionProviderBinding = { ...binding, mode: 'hybrid' };
+    const setProviderBinding = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('No fue posible guardar el modo.'))
+      .mockResolvedValueOnce(binding);
+    const api = apiStub({
+      listSportsProviders: vi.fn().mockResolvedValue([providerA]),
+      getProviderBinding: vi.fn().mockResolvedValue(hybridBinding),
+      listExternalCompetitions: vi.fn().mockResolvedValue([externalLeague]),
+      setProviderBinding,
+    });
+    render(
+      <MemoryRouter>
+        <CompetitionsProvider api={api}>
+          <ProviderBindingPanel competitionId={first.id} />
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Configurar fuente' }));
+    const dialog = screen.getByRole('dialog');
+    await screen.findByRole('option', { name: externalLeague.name });
+    await userEvent.selectOptions(within(dialog).getByRole('combobox', { name: 'Modo de administración' }), 'provider');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Guardar configuración' }));
+    expect((await within(dialog).findByRole('alert')).textContent).toContain('Ocurrió un error inesperado');
+    expect(setProviderBinding).toHaveBeenLastCalledWith(first.id, {
+      providerKey: providerA.key,
+      externalCompetitionId: externalLeague.externalCompetitionId,
+      mode: 'provider',
+    });
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Guardar configuración' }));
+    expect((await screen.findByRole('status')).textContent).toContain('Configuración de fuente guardada.');
+    expect(setProviderBinding).toHaveBeenCalledTimes(2);
+  });
+
+  it('requires explicit confirmation before changing a provider binding to Manual', async () => {
+    const removeProviderBinding = vi.fn().mockResolvedValue(undefined);
+    const api = apiStub({
+      listSportsProviders: vi.fn().mockResolvedValue([providerA]),
+      getProviderBinding: vi.fn().mockResolvedValue(binding),
+      listExternalCompetitions: vi.fn().mockResolvedValue([externalLeague]),
+      removeProviderBinding,
+    });
+    render(
+      <MemoryRouter>
+        <CompetitionsProvider api={api}>
+          <ProviderBindingPanel competitionId={first.id} />
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Configurar fuente' }));
+    const dialog = screen.getByRole('dialog');
+    await userEvent.selectOptions(within(dialog).getByRole('combobox', { name: 'Modo de administración' }), 'manual');
+    const save = within(dialog).getByRole('button', { name: 'Guardar configuración' });
+    expect((save as HTMLButtonElement).disabled).toBe(true);
+    expect(within(dialog).getByRole('status').textContent).toContain('Confirma el cambio a modo Manual');
+    expect(removeProviderBinding).not.toHaveBeenCalled();
+
+    await userEvent.click(
+      within(dialog).getByRole('checkbox', {
+        name: /Confirmo cambiar a Manual y desvincular el proveedor/,
+      }),
+    );
+    await userEvent.click(save);
+    expect(removeProviderBinding).toHaveBeenCalledWith(first.id);
+    expect(await screen.findByText('Manual · Los datos se administran localmente.')).toBeTruthy();
+    expect((await screen.findByRole('status')).textContent).toContain('La competición quedó en modo Manual');
+  });
+
   it('discards out-of-order catalogue responses after the selected provider changes', async () => {
     const firstResponse = deferred<ExternalCompetition[]>();
     const secondResponse = deferred<ExternalCompetition[]>();
@@ -397,6 +510,60 @@ describe('competition foundation page', () => {
     expect(await screen.findByRole('heading', { name: 'Liga Local' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Equipos' }).getAttribute('href')).toBe(`/competitions/${first.id}/teams`);
     expect(api.get).toHaveBeenCalledWith(first.id, expect.any(AbortSignal));
+  });
+
+  it('keeps import traceability secondary in the competition detail', async () => {
+    const operationId = '99999999-9999-4999-8999-999999999999';
+    const api = apiStub({
+      get: vi.fn().mockResolvedValue(first),
+      listSeasons: vi.fn().mockResolvedValue([season]),
+      listImportApplications: vi.fn().mockResolvedValue([
+        {
+          applicationId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+          operationId,
+          previewId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+          competitionId: first.id,
+          providerName: 'Proveedor de prueba',
+          externalSeasonLabel: '2026/27',
+          destinationSeasonId: season.id,
+          destinationSeasonLabel: season.label,
+          appliedAt: first.createdAt,
+          counts: {
+            seasonsCreated: 1,
+            teamsCreated: 20,
+            teamsReused: 0,
+            associationsCreated: 20,
+            participantsCreated: 20,
+            stagesCreated: 1,
+            roundsCreated: 38,
+            matchesCreated: 380,
+            matchesUpdated: 0,
+            resultsApplied: 90,
+            mappingsCreated: 530,
+            unchanged: 0,
+            skipped: 0,
+            conflictsNotApplied: 0,
+          },
+          notApplied: [],
+        },
+      ]),
+    });
+    render(
+      <MemoryRouter initialEntries={[`/competitions/${first.id}`]}>
+        <CompetitionsProvider api={api}>
+          <Routes>
+            <Route path="/competitions/:competitionId" element={<CompetitionDetailPage />} />
+          </Routes>
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+
+    const history = await screen.findByText('Historial de importaciones (1)');
+    expect(history.closest('details')?.open).toBe(false);
+    await userEvent.click(history);
+    expect(screen.getByText(/20 equipos · 380 partidos · 90 resultados/)).toBeTruthy();
+    await userEvent.click(screen.getByText('Ver trazabilidad'));
+    expect(screen.getByText(`Operación: ${operationId}`)).toBeTruthy();
   });
 
   it('creates a season from the competition workspace', async () => {
@@ -807,6 +974,59 @@ describe('competition foundation page', () => {
     expect(directPanel.hasAttribute('hidden')).toBe(false);
   });
 
+  it('shows and filters derived round states in table and card views', async () => {
+    const stageRounds = [
+      { ...round, id: '66666666-6666-4666-8666-666666666661', stageId: stage.id, name: 'Jornada finalizada' },
+      { ...round, id: '66666666-6666-4666-8666-666666666662', stageId: stage.id, name: 'Jornada activa' },
+      { ...round, id: '66666666-6666-4666-8666-666666666663', stageId: stage.id, name: 'Jornada por jugar' },
+      { ...round, id: '66666666-6666-4666-8666-666666666664', stageId: stage.id, name: 'Jornada vacía' },
+    ];
+    const roundMatch = (roundIndex: number, status: typeof match.status | 'finished' | 'in_progress') => ({
+      ...match,
+      id: `77777777-7777-4777-8777-77777777777${roundIndex}`,
+      stage: { id: stage.id, name: stage.name },
+      round: { id: stageRounds[roundIndex]!.id, name: stageRounds[roundIndex]!.name },
+      status,
+    });
+    const api = apiStub({
+      getSeason: vi.fn().mockResolvedValue(season),
+      listStages: vi.fn().mockResolvedValue([stage]),
+      listStageRounds: vi.fn().mockResolvedValue(stageRounds),
+      listMatches: vi
+        .fn()
+        .mockResolvedValue([roundMatch(0, 'finished'), roundMatch(1, 'in_progress'), roundMatch(2, 'scheduled')]),
+    });
+    render(
+      <MemoryRouter initialEntries={[`/competitions/${first.id}/seasons/${season.id}/calendar/stages/${stage.id}`]}>
+        <CompetitionsProvider api={api}>
+          <Routes>
+            <Route
+              path="/competitions/:competitionId/seasons/:seasonId/calendar/stages/:stageId"
+              element={<SeasonDetailPage />}
+            />
+          </Routes>
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole('heading', { name: stage.name });
+    expect(screen.getByText('Finalizada')).toBeTruthy();
+    expect(screen.getAllByText('En curso')).toHaveLength(2);
+    expect(screen.getAllByText('Por jugar')).toHaveLength(2);
+    expect(screen.getAllByText('Sin partidos')).toHaveLength(2);
+    expect(screen.getByText('1 de 1 partido finalizado')).toBeTruthy();
+    expect(screen.getAllByText('0 de 1 partido finalizado')).toHaveLength(2);
+    expect(screen.getByText('Sin partidos registrados')).toBeTruthy();
+
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Filtrar jornadas' }), 'finished');
+    expect(screen.getByRole('rowheader', { name: 'Jornada finalizada' })).toBeTruthy();
+    expect(screen.queryByRole('rowheader', { name: 'Jornada activa' })).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Vista de tarjetas' }));
+    expect(screen.getByRole('heading', { name: 'Jornada finalizada' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Jornada por jugar' })).toBeNull();
+  });
+
   it('loads a season detail when calendar collections are empty', async () => {
     const api = apiStub({ get: vi.fn().mockResolvedValue(first), getSeason: vi.fn().mockResolvedValue(season) });
     render(
@@ -868,6 +1088,62 @@ describe('competition foundation page', () => {
       homeScore: 0,
       awayScore: 0,
     });
+  });
+
+  it('shows provider provenance and protected manual overrides without exposing technical metadata by default', async () => {
+    const getFieldProvenance = vi.fn().mockImplementation(async (_competitionId: string, entityType: string) =>
+      entityType === 'match'
+        ? [
+            {
+              field: 'kickoffAt',
+              origin: 'provider' as const,
+              providerKey: 'provider-test',
+              externalReference: 'match:42',
+              providerValue: '2026-11-15T18:00:00Z',
+              protected: false,
+              lastApplicationId: null,
+              updatedAt: first.updatedAt,
+            },
+          ]
+        : [
+            {
+              field: 'homeScore',
+              origin: 'manual_override' as const,
+              providerKey: 'provider-test',
+              externalReference: 'match:42',
+              providerValue: 1,
+              protected: true,
+              lastApplicationId: null,
+              updatedAt: first.updatedAt,
+            },
+          ],
+    );
+    const api = apiStub({
+      getSeason: vi.fn().mockResolvedValue(season),
+      listTeams: vi.fn().mockResolvedValue([team, awayTeam]),
+      listParticipants: vi.fn().mockResolvedValue([
+        { team, joinedAt: first.createdAt },
+        { team: awayTeam, joinedAt: first.createdAt },
+      ]),
+      listMatches: vi.fn().mockResolvedValue([match]),
+      getFieldProvenance,
+    });
+    render(
+      <MemoryRouter initialEntries={[`/competitions/${first.id}/seasons/${season.id}/calendar/unassigned`]}>
+        <CompetitionsProvider api={api}>
+          <Routes>
+            <Route
+              path="/competitions/:competitionId/seasons/:seasonId/calendar/unassigned"
+              element={<SeasonDetailPage />}
+            />
+          </Routes>
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Dato del proveedor · 1')).toBeTruthy();
+    expect(screen.getByText('Modificado manualmente · Protegido · 1')).toBeTruthy();
+    expect(screen.getByText('Ver procedencia').closest('details')?.open).toBe(false);
   });
 
   it('allows editing a cancelled match to in progress with its score fields still editable', async () => {
@@ -947,6 +1223,43 @@ describe('competition foundation page', () => {
       stageId: null,
       roundId: round.id,
     });
+  });
+
+  it('refreshes the derived round state after a manual match update', async () => {
+    const scheduledRoundMatch = { ...match, round: { id: round.id, name: round.name } };
+    const api = apiStub({
+      getSeason: vi.fn().mockResolvedValue(season),
+      listSeasonRounds: vi.fn().mockResolvedValue([round]),
+      listMatches: vi.fn().mockResolvedValue([scheduledRoundMatch]),
+      updateMatchResult: vi.fn().mockResolvedValue({
+        ...scheduledRoundMatch,
+        status: 'finished',
+        homeScore: 0,
+        awayScore: 0,
+      }),
+    });
+    render(
+      <MemoryRouter initialEntries={[`/competitions/${first.id}/seasons/${season.id}/calendar/rounds/${round.id}`]}>
+        <CompetitionsProvider api={api}>
+          <Routes>
+            <Route
+              path="/competitions/:competitionId/seasons/:seasonId/calendar/rounds/:roundId"
+              element={<SeasonDetailPage />}
+            />
+          </Routes>
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+
+    await screen.findByText('Por jugar');
+    await userEvent.click(screen.getByText('Registrar o corregir resultado'));
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Estado del partido' }), 'finished');
+    await userEvent.type(screen.getByRole('spinbutton', { name: 'Marcador · Club Uno' }), '0');
+    await userEvent.type(screen.getByRole('spinbutton', { name: 'Marcador · Club Dos' }), '0');
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar estado y marcador' }));
+
+    expect(await screen.findByText('Finalizada')).toBeTruthy();
+    expect(screen.getByText('1 de 1 partido finalizado')).toBeTruthy();
   });
 
   it('keeps a round open in its new phase context after reassignment', async () => {

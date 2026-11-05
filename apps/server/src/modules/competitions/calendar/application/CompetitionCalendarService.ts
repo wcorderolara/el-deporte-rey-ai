@@ -6,6 +6,13 @@ import type { CompetitionCalendarPort, MatchSchedulePatch } from '../domain/port
 export interface CalendarOptions {
   readonly newId: () => string;
   readonly now: () => Date;
+  readonly transaction?: <T>(action: () => T) => T;
+  readonly onManualMutation?: (mutation: {
+    competitionId: string;
+    entityType: 'stage' | 'round' | 'match' | 'result';
+    entityId: string;
+    fields: Readonly<Record<string, string | number | null>>;
+  }) => void;
 }
 
 function nextOrder(values: readonly { displayOrder: number }[]): number {
@@ -20,11 +27,15 @@ export class CompetitionCalendarService {
   readonly #repository: CompetitionCalendarPort;
   readonly #newId: () => string;
   readonly #now: () => Date;
+  readonly #transaction: <T>(action: () => T) => T;
+  readonly #onManualMutation?: CalendarOptions['onManualMutation'];
 
   constructor(repository: CompetitionCalendarPort, options: CalendarOptions) {
     this.#repository = repository;
     this.#newId = options.newId;
     this.#now = options.now;
+    this.#transaction = options.transaction ?? ((action) => action());
+    this.#onManualMutation = options.onManualMutation;
   }
 
   listStages(competitionId: string, seasonId: string) {
@@ -51,7 +62,14 @@ export class CompetitionCalendarService {
   updateStage(competitionId: string, seasonId: string, stageId: string, rawName: string) {
     const name = displayValue(rawName);
     if (!name) throw new CalendarError('invalid_calendar_name');
-    return this.#repository.updateStage(competitionId, seasonId, stageId, { name, normalizedName: identityKey(name) });
+    return this.#transaction(() => {
+      const updated = this.#repository.updateStage(competitionId, seasonId, stageId, {
+        name,
+        normalizedName: identityKey(name),
+      });
+      this.#onManualMutation?.({ competitionId, entityType: 'stage', entityId: stageId, fields: { name } });
+      return updated;
+    });
   }
 
   listRounds(competitionId: string, seasonId: string, stageId: string | null) {
@@ -93,17 +111,29 @@ export class CompetitionCalendarService {
             .listMatches(competitionId, seasonId)
             .filter((match) => match.round?.id === roundId)
             .map((match) => ({ matchId: match.id, id: this.#newId() }));
-    return this.#repository.updateRound(
-      competitionId,
-      seasonId,
-      roundId,
-      {
-        ...(input.name === undefined ? {} : { name, normalizedName: identityKey(name) }),
-        ...(input.stageId === undefined ? {} : { stageId: targetStageId }),
-      },
-      history,
-      this.#now().toISOString(),
-    );
+    return this.#transaction(() => {
+      const updated = this.#repository.updateRound(
+        competitionId,
+        seasonId,
+        roundId,
+        {
+          ...(input.name === undefined ? {} : { name, normalizedName: identityKey(name) }),
+          ...(input.stageId === undefined ? {} : { stageId: targetStageId }),
+        },
+        history,
+        this.#now().toISOString(),
+      );
+      this.#onManualMutation?.({
+        competitionId,
+        entityType: 'round',
+        entityId: roundId,
+        fields: {
+          ...(input.name === undefined ? {} : { name }),
+          ...(input.stageId === undefined ? {} : { stageId: targetStageId }),
+        },
+      });
+      return updated;
+    });
   }
   deleteRound(competitionId: string, seasonId: string, roundId: string) {
     return this.#repository.deleteRound(competitionId, seasonId, roundId);
@@ -167,14 +197,27 @@ export class CompetitionCalendarService {
     next.roundId = targetRoundId;
     if (next.kickoffAt !== undefined && next.kickoffAt !== null)
       next.kickoffAt = new Date(next.kickoffAt).toISOString();
-    return this.#repository.updateSchedule(
-      competitionId,
-      seasonId,
-      matchId,
-      next,
-      this.#newId(),
-      this.#now().toISOString(),
-    );
+    return this.#transaction(() => {
+      const updated = this.#repository.updateSchedule(
+        competitionId,
+        seasonId,
+        matchId,
+        next,
+        this.#newId(),
+        this.#now().toISOString(),
+      );
+      this.#onManualMutation?.({
+        competitionId,
+        entityType: 'match',
+        entityId: matchId,
+        fields: {
+          ...(patch.kickoffAt === undefined ? {} : { kickoffAt: next.kickoffAt ?? null }),
+          ...(patch.stageId === undefined ? {} : { stageId: targetStageId }),
+          ...(patch.roundId === undefined ? {} : { roundId: targetRoundId }),
+        },
+      });
+      return updated;
+    });
   }
 
   updateResult(
@@ -194,17 +237,29 @@ export class CompetitionCalendarService {
     if (!statusChanged && !scoreChanged) return this.#repository.getMatch(competitionId, seasonId, matchId);
     const recordingFirstScore = current.homeScore === null && nextHomeScore !== null;
     const changeType = scoreChanged ? (recordingFirstScore ? 'result_recorded' : 'result_corrected') : 'status_updated';
-    return this.#repository.updateResult(
-      competitionId,
-      seasonId,
-      matchId,
-      status,
-      nextHomeScore,
-      nextAwayScore,
-      this.#newId(),
-      this.#now().toISOString(),
-      changeType,
-    );
+    return this.#transaction(() => {
+      const updated = this.#repository.updateResult(
+        competitionId,
+        seasonId,
+        matchId,
+        status,
+        nextHomeScore,
+        nextAwayScore,
+        this.#newId(),
+        this.#now().toISOString(),
+        changeType,
+      );
+      if (statusChanged)
+        this.#onManualMutation?.({ competitionId, entityType: 'match', entityId: matchId, fields: { status } });
+      if (scoreChanged)
+        this.#onManualMutation?.({
+          competitionId,
+          entityType: 'result',
+          entityId: matchId,
+          fields: { homeScore: nextHomeScore, awayScore: nextAwayScore },
+        });
+      return updated;
+    });
   }
 
   listResultHistory(competitionId: string, seasonId: string, matchId: string) {

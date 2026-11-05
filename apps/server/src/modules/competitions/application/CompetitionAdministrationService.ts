@@ -6,6 +6,13 @@ import type { CompetitionAdministrationPort } from '../domain/ports.js';
 export interface CompetitionAdministrationOptions {
   readonly newId: () => string;
   readonly now: () => Date;
+  readonly transaction?: <T>(action: () => T) => T;
+  readonly onManualMutation?: (mutation: {
+    competitionId: string | null;
+    entityType: 'season' | 'team';
+    entityId: string;
+    fields: Readonly<Record<string, string | null>>;
+  }) => void;
 }
 
 /** Use cases for local seasons, reusable teams and their season-scoped membership. */
@@ -13,11 +20,15 @@ export class CompetitionAdministrationService {
   readonly #repository: CompetitionAdministrationPort;
   readonly #newId: () => string;
   readonly #now: () => Date;
+  readonly #transaction: <T>(action: () => T) => T;
+  readonly #onManualMutation?: CompetitionAdministrationOptions['onManualMutation'];
 
   constructor(repository: CompetitionAdministrationPort, options: CompetitionAdministrationOptions) {
     this.#repository = repository;
     this.#newId = options.newId;
     this.#now = options.now;
+    this.#transaction = options.transaction ?? ((action) => action());
+    this.#onManualMutation = options.onManualMutation;
   }
 
   listSeasons(competitionId: string): LocalSeason[] {
@@ -42,7 +53,11 @@ export class CompetitionAdministrationService {
   updateSeason(competitionId: string, seasonId: string, rawLabel: string): LocalSeason {
     const label = displayValue(rawLabel);
     if (!label) throw new CompetitionAdministrationError('invalid_season_label');
-    return this.#repository.updateSeason(competitionId, seasonId, label, identityKey(label));
+    return this.#transaction(() => {
+      const updated = this.#repository.updateSeason(competitionId, seasonId, label, identityKey(label));
+      this.#onManualMutation?.({ competitionId, entityType: 'season', entityId: seasonId, fields: { label } });
+      return updated;
+    });
   }
 
   listTeams(): LocalTeam[] {
@@ -98,12 +113,16 @@ export class CompetitionAdministrationService {
     const region = rawRegion === null ? null : displayValue(rawRegion);
     if (!name) throw new CompetitionAdministrationError('invalid_team_name');
     if (region !== null && !region) throw new CompetitionAdministrationError('invalid_team_region');
-    return this.#repository.updateTeam(teamId, {
-      name,
-      normalizedName: identityKey(name),
-      region,
-      normalizedRegion: region === null ? '' : identityKey(region),
-      updatedAt: this.#now().toISOString(),
+    return this.#transaction(() => {
+      const updated = this.#repository.updateTeam(teamId, {
+        name,
+        normalizedName: identityKey(name),
+        region,
+        normalizedRegion: region === null ? '' : identityKey(region),
+        updatedAt: this.#now().toISOString(),
+      });
+      this.#onManualMutation?.({ competitionId: null, entityType: 'team', entityId: teamId, fields: { name, region } });
+      return updated;
     });
   }
 

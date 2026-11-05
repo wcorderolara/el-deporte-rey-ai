@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
-import type { ManagedCompetition, ManagedSeason } from '@edr/contracts';
+import type { ImportApplication, ManagedCompetition, ManagedSeason } from '@edr/contracts';
 import {
   Alert,
   Button,
@@ -22,6 +22,7 @@ export function CompetitionDetailPage() {
   const api = useCompetitionsApi();
   const [competition, setCompetition] = useState<ManagedCompetition>();
   const [seasons, setSeasons] = useState<ManagedSeason[]>([]);
+  const [imports, setImports] = useState<ImportApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>();
@@ -33,12 +34,14 @@ export function CompetitionDetailPage() {
       if (!competitionId) return;
       setLoading(true);
       try {
-        const [current, items] = await Promise.all([
+        const [current, items, history] = await Promise.all([
           api.get(competitionId, signal),
           api.listSeasons(competitionId, signal),
+          api.listImportApplications?.(competitionId, signal) ?? Promise.resolve([]),
         ]);
         setCompetition(current);
         setSeasons(items);
+        setImports(history);
         setError(undefined);
       } catch (cause) {
         if (!signal?.aborted) setError(cause);
@@ -222,6 +225,40 @@ export function CompetitionDetailPage() {
           ))}
         </ul>
       )}
+      {imports.length ? (
+        <details className="rounded-2xl border border-border-subtle bg-surface-raised p-4">
+          <summary className="min-h-touch cursor-pointer content-center font-display text-body-md font-bold text-text-link underline underline-offset-2 focus-studio">
+            Historial de importaciones ({imports.length})
+          </summary>
+          <ul className="m-0 mt-4 grid list-none gap-3 p-0">
+            {imports.map((item) => (
+              <li key={item.applicationId} className="rounded-xl border border-border-subtle bg-surface-card p-3">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="m-0 font-semibold text-text-primary">{item.externalSeasonLabel}</p>
+                    <p className="m-0 text-body-sm text-text-secondary">
+                      {item.providerName} · {new Date(item.appliedAt).toLocaleString('es-GT')}
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-success bg-success-surface px-2 py-1 text-caption font-semibold text-success">
+                    Completada
+                  </span>
+                </div>
+                <p className="m-0 mt-2 text-body-sm text-text-secondary">
+                  {item.counts.teamsCreated} equipos · {item.counts.matchesCreated} partidos ·{' '}
+                  {item.counts.resultsApplied} resultados · {item.counts.unchanged} sin cambios
+                </p>
+                <details className="mt-2 text-caption text-text-subtle">
+                  <summary className="cursor-pointer text-text-link underline underline-offset-2 focus-studio">
+                    Ver trazabilidad
+                  </summary>
+                  <p className="m-0 mt-2">Operación: {item.operationId}</p>
+                </details>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
       {modal ? (
         <Modal
           title={modal === 'create' ? 'Crear temporada' : 'Editar temporada'}

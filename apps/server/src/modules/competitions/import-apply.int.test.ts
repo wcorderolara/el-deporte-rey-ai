@@ -92,7 +92,7 @@ afterEach(async () => {
   h = undefined;
 });
 
-async function setup() {
+async function setup(mode: 'provider' | 'hybrid' = 'provider') {
   const stub = stubAdapter('test-live', 'LIVE_DATA');
   stub.documents.set('stub-a', document());
   h = await projectsTestApp({ includeCompetitions: true, sources: testSources({ stubBEnabled: false }), stub });
@@ -108,7 +108,7 @@ async function setup() {
     method: 'POST',
     url: `/api/v1/competitions/${competitionId}/provider-binding`,
     headers: WRITE_HEADERS,
-    payload: { providerKey: 'test-live', externalCompetitionId: 'copa-stub', mode: 'provider' },
+    payload: { providerKey: 'test-live', externalCompetitionId: 'copa-stub', mode },
   });
   expect(bound.statusCode, bound.body).toBe(201);
   return competitionId;
@@ -221,6 +221,41 @@ function itemFor(current: ImportApplyPlan, resource: string, externalId: string)
 }
 
 describe('confirmed import application', () => {
+  it('keeps manual competitions editable without a provider and records local provenance', async () => {
+    h = await projectsTestApp({ includeCompetitions: true, sources: testSources({ stubBEnabled: false }) });
+    const competition = await h.inject({
+      method: 'POST',
+      url: '/api/v1/competitions',
+      headers: WRITE_HEADERS,
+      payload: { name: 'Liga manual' },
+    });
+    const competitionId = (competition.json() as { id: string }).id;
+    const created = await h.inject({
+      method: 'POST',
+      url: `/api/v1/competitions/${competitionId}/seasons`,
+      headers: WRITE_HEADERS,
+      payload: { label: '2026' },
+    });
+    const seasonId = (created.json() as { id: string }).id;
+    const updated = await h.inject({
+      method: 'PATCH',
+      url: `/api/v1/competitions/${competitionId}/seasons/${seasonId}`,
+      headers: WRITE_HEADERS,
+      payload: { label: '2026/27' },
+    });
+    expect(updated.statusCode, updated.body).toBe(200);
+    expect(
+      h.db
+        .prepare<{ origin: string; manual_override: number }>(
+          "SELECT origin, manual_override FROM sports_field_provenance WHERE competition_id = ? AND entity_type = 'season' AND entity_id = ? AND field_name = 'label'",
+        )
+        .get([competitionId, seasonId]),
+    ).toEqual({ origin: 'manual', manual_override: 0 });
+    expect(
+      h.db.prepare('SELECT 1 FROM competition_provider_bindings WHERE competition_id = ?').get([competitionId]),
+    ).toBeUndefined();
+  });
+
   it('imports a complete season into the local model from the stored snapshot only', async () => {
     const competitionId = await setup();
     const snapshot = await preview(competitionId);
@@ -362,7 +397,7 @@ describe('confirmed import application', () => {
   });
 
   it('updates values that still match the imported baseline and protects manual edits', async () => {
-    const competitionId = await setup();
+    const competitionId = await setup('hybrid');
     const first = await apply(competitionId, (await preview(competitionId)).previewId);
     const seasonId = first.application!.destinationSeasonId;
     // A manual correction of a provider result becomes protected local data.
@@ -374,6 +409,28 @@ describe('confirmed import application', () => {
       payload: { status: 'finished', homeScore: 3, awayScore: 1 },
     });
     expect(corrected.statusCode, corrected.body).toBe(200);
+    expect(
+      h!.db
+        .prepare<{ field_name: string; origin: string; manual_override: number }>(
+          "SELECT field_name, origin, manual_override FROM sports_field_provenance WHERE competition_id = ? AND entity_type = 'result' AND entity_id = ? ORDER BY field_name",
+        )
+        .all([competitionId, manual.id]),
+    ).toEqual([
+      { field_name: 'awayScore', origin: 'manual_override', manual_override: 1 },
+      { field_name: 'homeScore', origin: 'manual_override', manual_override: 1 },
+    ]);
+    const provenanceResponse = await h!.inject({
+      method: 'GET',
+      url: `/api/v1/competitions/${competitionId}/provenance/result/${manual.id}`,
+      headers: READ_HEADERS,
+    });
+    expect(provenanceResponse.statusCode, provenanceResponse.body).toBe(200);
+    expect(provenanceResponse.json()).toMatchObject({
+      fields: [
+        { field: 'awayScore', origin: 'manual_override', protected: true },
+        { field: 'homeScore', origin: 'manual_override', protected: true },
+      ],
+    });
     // The provider now reports a played round 2.
     h!.stub.documents.set(
       'stub-a',
@@ -426,6 +483,24 @@ describe('confirmed import application', () => {
     const accepted = await apply(competitionId, next.previewId, [decision]);
     expect(accepted.status).toBe('completed');
     expect(matchRow('Club Alfa', 'Club Beta')).toMatchObject({ home_score: 2, away_score: 1 });
+    expect(
+      h!.db
+        .prepare<{ field_name: string; origin: string; manual_override: number }>(
+          "SELECT field_name, origin, manual_override FROM sports_field_provenance WHERE competition_id = ? AND entity_type = 'result' AND entity_id = ? ORDER BY field_name",
+        )
+        .all([competitionId, manual.id]),
+    ).toEqual([
+      { field_name: 'awayScore', origin: 'provider', manual_override: 0 },
+      { field_name: 'homeScore', origin: 'provider', manual_override: 0 },
+    ]);
+    expect(
+      h!.db
+        .prepare<{ action: string }>(
+          "SELECT action FROM sports_field_provenance_events WHERE competition_id = ? AND entity_id = ? AND field_name = 'homeScore' ORDER BY recorded_at",
+        )
+        .all([competitionId, manual.id])
+        .map((row) => row.action),
+    ).toEqual(expect.arrayContaining(['provider_applied', 'manual_edit', 'accept_provider']));
     expect(
       h!.db
         .prepare<{ action: string; external_id: string }>(

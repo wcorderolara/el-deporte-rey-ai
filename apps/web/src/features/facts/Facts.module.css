@@ -193,26 +193,46 @@
 
 .button {
   padding: 0.25rem 0.75rem;
-  border: 1px solid var(--edr-color-accent);
+  border: 1px solid var(--button-primary-bg);
   border-radius: 0.25rem;
-  color: var(--edr-color-background);
-  background: var(--edr-color-accent);
+  color: var(--button-primary-text);
+  background: var(--button-primary-bg);
   cursor: pointer;
 }
 
 .secondaryButton {
   padding: 0.25rem 0.75rem;
-  border: 1px solid var(--edr-color-accent);
+  border: 1px solid var(--button-secondary-bg);
   border-radius: 0.25rem;
-  color: var(--edr-color-accent);
-  background: var(--edr-color-background);
+  color: var(--button-secondary-text);
+  background: var(--button-secondary-bg);
   cursor: pointer;
+}
+
+.button:hover {
+  border-color: var(--button-primary-hover);
+  background: var(--button-primary-hover);
+}
+
+.button:active {
+  background: var(--button-primary-active);
+}
+
+.secondaryButton:hover {
+  border-color: var(--button-secondary-hover);
+  background: var(--button-secondary-hover);
+}
+
+.secondaryButton:active {
+  background: var(--button-secondary-active);
 }
 
 .button:disabled,
 .secondaryButton:disabled {
   cursor: not-allowed;
-  opacity: 0.7;
+  border-color: var(--button-disabled-bg);
+  color: var(--button-disabled-text);
+  background: var(--button-disabled-bg);
 }
 
 .pageNote {

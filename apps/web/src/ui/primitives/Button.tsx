@@ -2,6 +2,7 @@ import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
 import { classNames } from '../format';
 
+/** `secondaryFilled` and `quiet` remain compatibility aliases; action buttons render with a solid hierarchy. */
 export type ButtonVariant = 'primary' | 'secondary' | 'secondaryFilled' | 'quiet' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
@@ -17,18 +18,20 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const base =
   'focus-studio inline-flex min-h-touch items-center justify-center gap-2 rounded-control border-hairline font-sans font-bold ' +
   'transition-[background-color,border-color,color,box-shadow,transform] duration-fast ease-standard ' +
-  'disabled:cursor-not-allowed disabled:opacity-[var(--control-disabled-opacity)] active:translate-y-press';
+  'active:translate-y-press disabled:translate-y-0 disabled:cursor-not-allowed disabled:border-button-disabled-bg ' +
+  'disabled:bg-button-disabled-bg disabled:text-button-disabled-text disabled:shadow-none disabled:opacity-100';
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    'border-brand-gold bg-brand-gold text-text-inverse shadow-gold-glow hover:brightness-110 active:brightness-95',
+    'border-button-primary-bg bg-button-primary-bg text-button-primary-text shadow-gold-glow hover:border-button-primary-hover hover:bg-button-primary-hover active:border-button-primary-active active:bg-button-primary-active',
   secondary:
-    'border-brand-blue bg-surface-card text-text-primary shadow-control hover:bg-brand-blue hover:text-brand-white',
+    'border-button-secondary-bg bg-button-secondary-bg text-button-secondary-text shadow-control hover:border-button-secondary-hover hover:bg-button-secondary-hover active:border-button-secondary-active active:bg-button-secondary-active',
   secondaryFilled:
-    'border-brand-purple bg-surface-overlay text-text-primary shadow-control hover:border-brand-gold hover:bg-brand-purple hover:text-brand-white active:brightness-95',
+    'border-button-secondary-bg bg-button-secondary-bg text-button-secondary-text shadow-control hover:border-button-secondary-hover hover:bg-button-secondary-hover active:border-button-secondary-active active:bg-button-secondary-active',
   quiet:
-    'border-border-default bg-transparent text-text-secondary hover:border-border-strong hover:bg-surface-card hover:text-text-primary',
-  danger: 'border-danger bg-danger-surface text-danger hover:bg-danger hover:text-text-inverse active:brightness-95',
+    'border-button-secondary-bg bg-button-secondary-bg text-button-secondary-text shadow-control hover:border-button-secondary-hover hover:bg-button-secondary-hover active:border-button-secondary-active active:bg-button-secondary-active',
+  danger:
+    'border-button-danger-bg bg-button-danger-bg text-button-danger-text shadow-control hover:border-button-danger-hover hover:bg-button-danger-hover active:border-button-danger-active active:bg-button-danger-active',
 };
 
 const sizes: Record<ButtonSize, string> = {

@@ -193,6 +193,13 @@ describe('competition provider binding foundation', () => {
       id: firstBinding?.id,
       mode: 'hybrid',
     });
+    const reloaded = await h.inject({ method: 'GET', url: path, headers: READ_HEADERS });
+    expect(CompetitionProviderBindingResponseSchema.parse(reloaded.json()).binding).toMatchObject({
+      id: firstBinding?.id,
+      providerKey: 'test-live',
+      externalCompetitionId: 'liga-stub',
+      mode: 'hybrid',
+    });
     expect(
       h.db
         .prepare<{ n: number }>('SELECT COUNT(*) AS n FROM competition_provider_bindings WHERE competition_id = ?')

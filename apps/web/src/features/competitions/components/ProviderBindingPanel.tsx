@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import type { CompetitionProviderBinding, ExternalCompetition, SportsProvider } from '@edr/contracts';
 import { Alert, Button, Card, Modal, ModalFooter, describeError } from '../../../ui';
@@ -22,6 +22,7 @@ export function ProviderBindingPanel({ competitionId }: { competitionId: string 
   const [catalogueError, setCatalogueError] = useState<unknown>();
   const [catalogueRevision, setCatalogueRevision] = useState(0);
   const [error, setError] = useState<unknown>();
+  const [formError, setFormError] = useState('');
   const [success, setSuccess] = useState('');
   const catalogueRequest = useRef<AbortController | null>(null);
 
@@ -96,6 +97,7 @@ export function ProviderBindingPanel({ competitionId }: { competitionId: string 
     setError(undefined);
     setCatalogueError(undefined);
     setSuccess('');
+    setFormError('');
     setProviderKey(binding?.providerKey ?? providers[0]?.key ?? '');
     setExternalId(binding?.externalCompetitionId ?? '');
     setMode(binding?.mode ?? 'manual');
@@ -116,12 +118,32 @@ export function ProviderBindingPanel({ competitionId }: { competitionId: string 
     setCatalogueError(undefined);
   }
 
-  async function save() {
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     if (busy) return;
-    if (mode !== 'manual' && (!providerKey || !externalId || (binding && !replace))) return;
-    if (mode === 'manual' && binding && !confirmManual) return;
+    if (!configurationChanged) {
+      setFormError('No hay cambios pendientes por guardar.');
+      return;
+    }
+    if (mode !== 'manual' && (!providerKey || !externalId)) {
+      setFormError('Selecciona un proveedor disponible y una competición externa.');
+      return;
+    }
+    if (mode !== 'manual' && selectedProvider?.availability !== 'available') {
+      setFormError('El proveedor seleccionado no está disponible.');
+      return;
+    }
+    if (mode !== 'manual' && binding && !sameExternalBinding && !replace) {
+      setFormError('Confirma el reemplazo de la vinculación actual para continuar.');
+      return;
+    }
+    if (mode === 'manual' && binding && !confirmManual) {
+      setFormError('Confirma el cambio a modo Manual para continuar.');
+      return;
+    }
     setBusy(true);
     setError(undefined);
+    setFormError('');
     setSuccess('');
     try {
       if (mode === 'manual') {
@@ -135,9 +157,7 @@ export function ProviderBindingPanel({ competitionId }: { competitionId: string 
         providerKey,
         externalCompetitionId: externalId,
         mode,
-        ...(binding && (binding.providerKey !== providerKey || binding.externalCompetitionId !== externalId) && replace
-          ? { replaceExisting: true }
-          : {}),
+        ...(binding && !sameExternalBinding && replace ? { replaceExisting: true } : {}),
       });
       setBinding(next);
       setModal(null);
@@ -168,9 +188,33 @@ export function ProviderBindingPanel({ competitionId }: { competitionId: string 
   }
 
   const problem = error === undefined ? null : describeError(error);
-  const sameBinding = Boolean(
+  const sameExternalBinding = Boolean(
     binding && binding.providerKey === providerKey && binding.externalCompetitionId === externalId,
   );
+  const configurationChanged =
+    mode === 'manual' ? binding !== null : binding === null || binding.mode !== mode || !sameExternalBinding;
+  const saveDisabled =
+    busy ||
+    !configurationChanged ||
+    (mode === 'manual'
+      ? Boolean(binding && !confirmManual)
+      : !providerKey ||
+        !externalId ||
+        selectedProvider?.availability !== 'available' ||
+        Boolean(binding && !sameExternalBinding && !replace));
+  const configurationHint = !configurationChanged
+    ? 'No hay cambios pendientes.'
+    : mode !== 'manual' && !providerKey
+      ? 'Selecciona un proveedor para continuar.'
+      : mode !== 'manual' && !externalId
+        ? 'Selecciona una competición externa para continuar.'
+        : mode !== 'manual' && selectedProvider?.availability !== 'available'
+          ? 'El proveedor seleccionado no está disponible.'
+          : mode !== 'manual' && binding && !sameExternalBinding && !replace
+            ? 'Confirma el reemplazo de la vinculación actual.'
+            : mode === 'manual' && binding && !confirmManual
+              ? 'Confirma el cambio a modo Manual.'
+              : '';
   const unavailableReason = selectedProvider?.availabilityMessage;
 
   return (
@@ -203,7 +247,7 @@ export function ProviderBindingPanel({ competitionId }: { competitionId: string 
           </Button>
           {binding ? (
             <Button
-              variant="quiet"
+              variant="danger"
               onClick={() => {
                 setError(undefined);
                 setModal('unlink');
@@ -217,7 +261,7 @@ export function ProviderBindingPanel({ competitionId }: { competitionId: string 
       {problem ? (
         <Alert role="alert" tone="danger" title="No se pudo actualizar la fuente">
           <p className="m-0">{problem.message}</p>
-          <Button variant="quiet" onClick={() => void refresh()}>
+          <Button variant="secondary" onClick={() => void refresh()}>
             Reintentar
           </Button>
         </Alert>
@@ -229,7 +273,7 @@ export function ProviderBindingPanel({ competitionId }: { competitionId: string 
       ) : null}
       {modal === 'configure' ? (
         <Modal title="Configurar fuente de datos" closeDisabled={busy} onClose={() => !busy && setModal(null)}>
-          <div className="grid gap-4">
+          <form className="grid gap-4" onSubmit={(event) => void save(event)}>
             <p className="m-0 text-body-sm text-text-secondary">
               Elige cómo administrar los datos de esta competición. Las credenciales se mantienen en el servidor.
             </p>
@@ -239,7 +283,10 @@ export function ProviderBindingPanel({ competitionId }: { competitionId: string 
                 id="data-mode"
                 className="min-h-11 rounded-xl border border-border-subtle bg-surface-raised px-3 text-text-primary focus-studio"
                 value={mode}
-                onChange={(event) => setMode(event.target.value as DataMode)}
+                onChange={(event) => {
+                  setMode(event.target.value as DataMode);
+                  setFormError('');
+                }}
               >
                 <option value="manual">Manual</option>
                 <option value="provider">Provider</option>
@@ -261,7 +308,10 @@ export function ProviderBindingPanel({ competitionId }: { competitionId: string 
                     id="provider-key"
                     className="min-h-11 rounded-xl border border-border-subtle bg-surface-raised px-3 text-text-primary focus-studio"
                     value={providerKey}
-                    onChange={(event) => selectProvider(event.target.value)}
+                    onChange={(event) => {
+                      setFormError('');
+                      selectProvider(event.target.value);
+                    }}
                     disabled={busy}
                   >
                     <option value="">Selecciona un proveedor</option>
@@ -287,7 +337,10 @@ export function ProviderBindingPanel({ competitionId }: { competitionId: string 
                     id="external-competition"
                     className="min-h-11 rounded-xl border border-border-subtle bg-surface-raised px-3 text-text-primary focus-studio"
                     value={externalId}
-                    onChange={(event) => setExternalId(event.target.value)}
+                    onChange={(event) => {
+                      setExternalId(event.target.value);
+                      setFormError('');
+                    }}
                     disabled={
                       busy || externalLoading || !external.length || selectedProvider?.availability !== 'available'
                     }
@@ -319,7 +372,7 @@ export function ProviderBindingPanel({ competitionId }: { competitionId: string 
                 {catalogueError !== undefined ? (
                   <Alert role="alert" tone="danger" title="No se pudieron cargar las competiciones">
                     <p className="m-0">{describeError(catalogueError).message}</p>
-                    <Button variant="quiet" onClick={() => setCatalogueRevision((revision) => revision + 1)}>
+                    <Button variant="secondary" onClick={() => setCatalogueRevision((revision) => revision + 1)}>
                       Reintentar
                     </Button>
                   </Alert>
@@ -336,7 +389,7 @@ export function ProviderBindingPanel({ competitionId }: { competitionId: string 
                 Confirmo cambiar a Manual y desvincular el proveedor. No se borrarán datos deportivos ni historiales.
               </label>
             ) : null}
-            {mode !== 'manual' && binding && !sameBinding ? (
+            {mode !== 'manual' && binding && !sameExternalBinding ? (
               <label className="flex items-start gap-2 text-body-sm text-text-secondary">
                 <input type="checkbox" checked={replace} onChange={(event) => setReplace(event.target.checked)} />
                 Confirmo reemplazar la vinculación actual. Los datos locales se conservarán.
@@ -347,23 +400,21 @@ export function ProviderBindingPanel({ competitionId }: { competitionId: string 
                 {problem.message}
               </p>
             ) : null}
+            {formError ? (
+              <p className="m-0 text-body-sm text-status-danger" role="alert">
+                {formError}
+              </p>
+            ) : configurationHint ? (
+              <p className="m-0 text-body-sm text-text-secondary" role="status">
+                {configurationHint}
+              </p>
+            ) : null}
             <ModalFooter onCancel={() => setModal(null)} cancelDisabled={busy}>
-              <Button
-                disabled={
-                  busy ||
-                  (mode === 'manual'
-                    ? Boolean(binding && !confirmManual)
-                    : !providerKey ||
-                      !externalId ||
-                      selectedProvider?.availability !== 'available' ||
-                      Boolean(binding && !sameBinding && !replace))
-                }
-                onClick={() => void save()}
-              >
-                {busy ? 'Guardando…' : 'Guardar configuración'}
+              <Button type="submit" disabled={saveDisabled} isLoading={busy} loadingLabel="Guardando configuración">
+                Guardar configuración
               </Button>
             </ModalFooter>
-          </div>
+          </form>
         </Modal>
       ) : null}
       {modal === 'unlink' ? (

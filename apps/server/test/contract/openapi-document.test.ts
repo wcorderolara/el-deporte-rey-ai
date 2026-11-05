@@ -65,15 +65,15 @@ describe('contract document', () => {
   });
 
   it('has 93 operations on 70 paths, 42 of them mutating, with unique operation IDs', () => {
-    expect(Object.keys(child(document, 'paths'))).toHaveLength(70);
-    expect(operations).toHaveLength(93);
+    expect(Object.keys(child(document, 'paths'))).toHaveLength(72);
+    expect(operations).toHaveLength(95);
     expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(42);
     const ids = operations.map((operation) => operation.operation.operationId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('has 127 component schemas', () => {
-    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(127);
+  it('has 130 component schemas', () => {
+    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(130);
   });
 });
 
@@ -284,6 +284,8 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/paths/~1competitions~1{competitionId}~1import-applications~1{operationId}~1cancel: added',
       '/paths/~1competitions~1{competitionId}~1import-applications~1{operationId}~1events: added',
       '/paths/~1competitions~1{competitionId}: added',
+      '/paths/~1competitions~1{competitionId}~1provenance~1{entityType}~1{entityId}: added',
+      '/paths/~1competitions~1{competitionId}~1import-applications: added',
       '/paths/~1competitions~1{competitionId}~1seasons: added',
       '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}: added',
       '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1stages: added',
@@ -361,6 +363,9 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/ImportApplyOperation: added',
       '/components/schemas/ImportApplyOperationResponse: added',
       '/components/schemas/ImportApplyOperationStartResponse: added',
+      '/components/schemas/SportsFieldProvenance: added',
+      '/components/schemas/SportsFieldProvenanceResponse: added',
+      '/components/schemas/ImportApplicationHistoryResponse: added',
       '/components/schemas/ManagedSeason: added',
       '/components/schemas/ManagedTeam: added',
       '/components/schemas/CompetitionTeam: added',

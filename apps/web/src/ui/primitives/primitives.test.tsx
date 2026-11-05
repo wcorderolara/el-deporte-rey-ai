@@ -133,7 +133,7 @@ describe('design-system actions', () => {
     expect(loading.getAttribute('aria-busy')).toBe('true');
   });
 
-  it('offers a filled secondary action without changing the regular secondary variant', () => {
+  it('uses semantic solid variants and an explicit disabled treatment', () => {
     render(
       <>
         <Button variant="secondaryFilled">Revisar cambios</Button>
@@ -144,13 +144,38 @@ describe('design-system actions', () => {
       </>,
     );
     const filled = screen.getByRole('button', { name: 'Revisar cambios' });
-    expect(filled.className).toContain('bg-surface-overlay');
-    expect(filled.className).toContain('hover:bg-brand-purple');
+    expect(filled.className).toContain('bg-button-secondary-bg');
+    expect(filled.className).toContain('hover:bg-button-secondary-hover');
     expect(filled.className).toContain('focus-studio');
-    expect(screen.getByRole('button', { name: 'Ver detalle' }).className).toContain('bg-surface-card');
+    expect(screen.getByRole('button', { name: 'Ver detalle' }).className).toContain('bg-button-secondary-bg');
     const cancel = screen.getByRole('button', { name: 'Cancelar consulta' });
-    expect(cancel.className).toContain('bg-danger-surface');
+    expect(cancel.className).toContain('bg-button-danger-bg');
+    expect(cancel.className).toContain('disabled:bg-button-disabled-bg');
     expect((cancel as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('preserves native submit behavior while loading prevents duplicate submission', async () => {
+    const onSubmit = vi.fn((event: FormEvent) => event.preventDefault());
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <form onSubmit={onSubmit}>
+        <Button type="submit">Guardar cambios</Button>
+      </form>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+    expect(onSubmit).toHaveBeenCalledOnce();
+
+    rerender(
+      <form onSubmit={onSubmit}>
+        <Button type="submit" isLoading loadingLabel="Guardando cambios">
+          Guardar cambios
+        </Button>
+      </form>,
+    );
+    const loading = screen.getByRole('button', { name: 'Guardando cambios' });
+    expect((loading as HTMLButtonElement).disabled).toBe(true);
+    await user.click(loading);
+    expect(onSubmit).toHaveBeenCalledOnce();
   });
 
   it('requires IconButton callers to supply its accessible name', async () => {

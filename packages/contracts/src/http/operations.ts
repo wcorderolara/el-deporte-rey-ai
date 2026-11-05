@@ -32,6 +32,7 @@ import {
   ImportApplyOperationParamsSchema,
   ImportApplyOperationResponseSchema,
   ImportApplyOperationStartResponseSchema,
+  ImportApplicationHistoryResponseSchema,
   ImportOperationParamsSchema,
   ImportOperationResponseSchema,
   ImportOperationStartResponseSchema,
@@ -76,6 +77,8 @@ import {
   SeasonParticipantParamsSchema,
   SeasonParticipantsParamsSchema,
   SeasonParticipantSchema,
+  SportsFieldProvenanceParamsSchema,
+  SportsFieldProvenanceResponseSchema,
 } from './competitions.js';
 import { ExportDetailSchema, ExportSchema, SlideTraceSchema } from './exports.js';
 import { FactSchema, LeftOutMatchSchema, StandingsAvailabilitySchema } from './facts.js';
@@ -329,6 +332,16 @@ export const operations = {
     operationId: 'getCompetition', method: 'get', path: '/competitions/{competitionId}', tag: 'competitions',
     params: ManagedCompetitionParamsSchema, query: null, clientHeader: false, body: null,
     success: json(200, ManagedCompetitionSchema), problemStatuses: READ_BY_ID,
+  },
+  getSportsFieldProvenance: {
+    operationId: 'getSportsFieldProvenance', method: 'get', path: '/competitions/{competitionId}/provenance/{entityType}/{entityId}', tag: 'competitions',
+    params: SportsFieldProvenanceParamsSchema, query: null, clientHeader: false, body: null,
+    success: json(200, SportsFieldProvenanceResponseSchema), problemStatuses: READ_BY_ID,
+  },
+  listCompetitionImportApplications: {
+    operationId: 'listCompetitionImportApplications', method: 'get', path: '/competitions/{competitionId}/import-applications', tag: 'competitions',
+    params: ManagedCompetitionParamsSchema, query: null, clientHeader: false, body: null,
+    success: json(200, ImportApplicationHistoryResponseSchema), problemStatuses: READ_BY_ID,
   },
   listSportsProviders: {
     operationId: 'listSportsProviders', method: 'get', path: '/sports/providers', tag: 'competitions',

@@ -48,13 +48,3 @@
   text-align: left;
   vertical-align: top;
 }
-
-.retry {
-  margin-top: 0.5rem;
-  padding: 0.25rem 0.75rem;
-  border: 1px solid var(--edr-color-error-text);
-  border-radius: 0.25rem;
-  color: var(--edr-color-error-text);
-  background: var(--edr-color-background);
-  cursor: pointer;
-}
