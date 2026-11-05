@@ -2,8 +2,9 @@
 
 ## Estado
 
-Propuesta documentada, **no implementada**. Requiere aprobación del Product Owner antes de escribir código. Se apoya en
-PD-ARCH-01E-A (lotes, adaptador local, snapshots congelados y contexto deportivo del proyecto), que no cambia.
+Aprobada por el Product Owner, **implementada y aceptada** (2026-11-05) en `work/PD-ARCH-01E-B`; ver el
+[informe de implementación](./pd-arch-01e-b-implementation-report.md). Se apoya en PD-ARCH-01E-A (lotes, adaptador
+local, snapshots congelados y contexto deportivo del proyecto), que no cambia.
 
 ## Objetivo
 

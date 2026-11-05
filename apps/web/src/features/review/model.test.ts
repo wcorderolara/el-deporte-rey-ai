@@ -115,7 +115,7 @@ describe('bulkApprovalSummary', () => {
 });
 
 describe('finalApprovalReasons and finalApprovalObstacles (R-240)', () => {
-  it('names each element that prevents the final approval', () => {
+  it('names each slide that prevents the final approval; the caption is not required (PD-ARCH-01E-PD-02)', () => {
     const value = carousel([
       slide(1, 1, 'cover', { state: 'approved' }),
       slide(2, 2, 'match_result', { blocked: true }),
@@ -123,7 +123,6 @@ describe('finalApprovalReasons and finalApprovalObstacles (R-240)', () => {
     ]);
     expect(finalApprovalObstacles(value)).toEqual([
       { elementId: elementId(2), name: 'Diapositiva 2: Resultado', reasons: ['not_approved', 'blocked'] },
-      { elementId: elementId(3), name: 'Texto de publicación y hashtags', reasons: ['not_approved'] },
     ]);
   });
 

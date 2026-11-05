@@ -126,7 +126,10 @@ describe('blocked facts and explicit approval (R-206, R-216, R-240)', { timeout:
       await approveOne(t, element);
     }
     const refused = expectProblem(await finalApprove(t, carousel.id), 409, 'FINAL_APPROVAL_REFUSED');
-    expect(new Set(refused.items?.map((item) => item.elementId))).toEqual(new Set(blocked.map((e) => e.id)));
+    // Only the blocked slide: a caption still in review is not required (PD-ARCH-01E-PD-02).
+    expect(new Set(refused.items?.map((item) => item.elementId))).toEqual(
+      new Set(blocked.filter((e) => e.kind === 'slide').map((e) => e.id)),
+    );
     expect(refused.items?.map((item) => item.reason)).toContain('blocked');
     expectProblem(await exportCarousel(t, carousel.id), 409, 'FINAL_APPROVAL_REQUIRED');
 
@@ -144,29 +147,47 @@ describe('blocked facts and explicit approval (R-206, R-216, R-240)', { timeout:
     await exported(t, nextCarousel.id);
   });
 
-  it('final approval and export are refused until every slide and the caption are approved; withdrawal undoes it', async () => {
+  it('final approval and export need every slide; the caption is exported once approved; withdrawal undoes it', async () => {
     const t = await start(cleanup, { base: 'demo-only', scenario: 'default' });
     const { project } = await projectWithDraft(t, ligaDemo(2));
     const carousel = firstCarousel(await draftOf(t, project.id));
+    const caption = captionOf(carousel);
+    const slides = carousel.elements.filter((entry) => entry.id !== caption.id);
     expect(carousel.readyForFinalApproval).toBe(false);
     const none = expectProblem(await finalApprove(t, carousel.id), 409, 'FINAL_APPROVAL_REFUSED');
-    expect(new Set(none.items?.map((item) => item.elementId))).toEqual(new Set(carousel.elements.map((e) => e.id)));
+    // Every slide is named; the caption is not required (PD-ARCH-01E-PD-02).
+    expect(new Set(none.items?.map((item) => item.elementId))).toEqual(new Set(slides.map((e) => e.id)));
     expect(new Set(none.items?.map((item) => item.reason))).toEqual(new Set(['not_approved']));
     expectProblem(await exportCarousel(t, carousel.id), 409, 'FINAL_APPROVAL_REQUIRED');
 
-    // Every slide approved, the caption not: still refused, naming the caption only.
-    const caption = captionOf(carousel);
-    for (const element of carousel.elements.filter((entry) => entry.id !== caption.id)) {
+    // Every slide approved, the caption not: the carousel is approved and exported without caption.txt.
+    for (const element of slides) {
       await approveOne(t, element);
     }
-    const one = expectProblem(await finalApprove(t, carousel.id), 409, 'FINAL_APPROVAL_REFUSED');
-    expect(one.items).toEqual([{ elementId: caption.id, reason: 'not_approved' }]);
-    expectProblem(await exportCarousel(t, carousel.id), 409, 'FINAL_APPROVAL_REQUIRED');
-
-    await approveOne(t, caption);
     expect(firstCarousel(await draftOf(t, project.id)).readyForFinalApproval).toBe(true);
     expect((await finalApprove(t, carousel.id)).statusCode).toBe(200);
+    const withoutCaption = await exported(t, carousel.id);
+    expect(withoutCaption.files.map((file) => file.kind)).toEqual([...slides.map(() => 'slide_image'), 'manifest']);
+    expect(withoutCaption.files.at(-1)).toMatchObject({ fileName: 'manifest.json', position: slides.length + 1 });
+    const zip = await t.get(`/exports/${withoutCaption.id}/download`);
+    expect(zip.statusCode, zip.body).toBe(200);
+    expect(zip.rawPayload.toString('latin1')).not.toContain('caption.txt');
+
+    // Regenerating the caption still in review keeps the final approval.
+    const regenerated = await t.send('POST', `${elementPath(caption)}/regenerate`);
+    expect(regenerated.statusCode, regenerated.body).toBe(201);
     expect(firstCarousel(await draftOf(t, project.id)).finalApproval?.valid).toBe(true);
+
+    // Approving the caption later changes what the carousel holds: it is approved again and exported with it.
+    const current = captionOf(firstCarousel(await draftOf(t, project.id)));
+    await approveOne(t, current);
+    expect(firstCarousel(await draftOf(t, project.id)).finalApproval?.valid).toBe(false);
+    expectProblem(await exportCarousel(t, carousel.id), 409, 'FINAL_APPROVAL_REQUIRED');
+    expect((await finalApprove(t, carousel.id)).statusCode).toBe(200);
+    const withCaption = await exported(t, carousel.id);
+    expect(withCaption.files.filter((file) => file.kind === 'caption_text')).toEqual([
+      expect.objectContaining({ fileName: 'caption.txt', elementVersionId: current.currentVersion.id }),
+    ]);
 
     // Withdrawing one approval makes the final approval invalid: export is refused until both are given again.
     const match = slidesOfType(carousel, 'match_result')[0] as Element;

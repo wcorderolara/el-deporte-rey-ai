@@ -9,7 +9,10 @@ import type { SlideType, Template } from '@edr/contracts';
 import type { TemplateDefinition } from './common.js';
 import { closingTemplate } from './closing.js';
 import { coverTemplate } from './cover.js';
+import { fixtureTemplate } from './fixture.js';
+import { matchPreviewTemplate } from './match-preview.js';
 import { matchResultTemplate } from './match-result.js';
+import { roundOverviewTemplate } from './round-overview.js';
 import { standingsTemplate } from './standings.js';
 
 /** The built-in templates of this release. */
@@ -18,6 +21,10 @@ export const BUILT_IN_TEMPLATES: readonly TemplateDefinition[] = Object.freeze([
   matchResultTemplate,
   standingsTemplate,
   closingTemplate,
+  // PD-ARCH-01E-B: matches not played yet.
+  roundOverviewTemplate,
+  fixtureTemplate,
+  matchPreviewTemplate,
 ]);
 
 export class TemplateRegistry {

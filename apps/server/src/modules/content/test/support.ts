@@ -193,6 +193,7 @@ export function contentInput(facts: Facts, overrides: Partial<ContentInput> = {}
     language: 'es',
     competitionName: 'Liga Demo',
     seasonLabel: '2026/27',
+    contentKind: 'results',
     stageLabel: 'Temporada Regular',
     matchday: 1,
     brand: { ...BRAND },

@@ -4,7 +4,7 @@
  * states), server refusals, content flags, QA results and the acknowledgement of warnings, withdrawal and
  * regeneration of one element only.
  */
-import type { Element, FactRef } from '@edr/contracts';
+import type { Element, FactRef, QaResult } from '@edr/contracts';
 import { cleanup, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -43,10 +43,7 @@ const DRAFT_GET = `${API}/projects/${PROJECT_ID}/draft`;
 const SLIDE = 'Diapositiva 1: Resultado';
 
 async function card(name = SLIDE): Promise<HTMLElement> {
-  const element = await screen.findByRole('article', { name });
-  const details = within(element).queryByText('Detalles y verificaciones');
-  if (details !== null && details.closest('details')?.open !== true) await userEvent.click(details);
-  return element;
+  return screen.findByRole('article', { name });
 }
 
 function button(container: HTMLElement, name: string | RegExp): HTMLButtonElement {
@@ -125,7 +122,7 @@ describe('Element approval binds to the exact version (R-406)', () => {
     const alert = await within(slideCard).findByRole('alert');
     expect(alert.textContent).toContain('No se pudo aprobar: Diapositiva 1: Resultado');
     expect(alert.textContent).toContain('El contenido cambió mientras tanto');
-    expect(await within(slideCard).findByText(/^Versión 2/)).toBeTruthy();
+    expect(await within(slideCard).findByRole('img', { name: /versión 2$/ })).toBeTruthy();
     expect(within(slideCard).queryByText('Aprobada')).toBeNull();
   });
 });
@@ -296,10 +293,6 @@ describe('Manually approved facts (R-272, PD-17): both eligibility states, alway
     });
     renderApp(REVIEW, server);
     const slideCard = await card();
-    const text = within(slideCard).getByRole('region', { name: `Texto: ${SLIDE}` });
-    expect(text.textContent).toContain('Dato: aprobado manualmente');
-    expect(text.textContent).toContain('atestiguado por el operador');
-    expect(text.textContent).not.toContain('Dato: verificado');
     expect(within(slideCard).queryByText('Bloqueada')).toBeNull();
     await userEvent.click(button(slideCard, 'Aprobar esta versión'));
     expect(await within(slideCard).findByText('Versión 1 aprobada.')).toBeTruthy();
@@ -398,15 +391,17 @@ describe('QA warnings (OD-09, OD-26, OD-38): acknowledged one check per request'
     expect(slideCard.textContent).toContain('hay advertencias del control visual sin confirmar');
     expect(slideCard.textContent).toContain('Hay 2 advertencias del control visual.');
 
+    // Only the failed checks are listed, next to the actions (PD-ARCH-01E-B review).
+    expect(qaRegion.textContent).not.toContain('Ajuste del texto');
     await userEvent.click(button(qaRegion, 'Confirmar la advertencia: Palabras con mayúscula no reconocidas'));
     expect(await within(slideCard).findByText('Advertencia confirmada.')).toBeTruthy();
     const calls = server.callsTo('POST', elementPath(CAROUSEL_ID, elementId(1), 'qa-acknowledgements'));
     expect(calls.map((call) => call.body)).toEqual([{ versionId: versionId(1), checks: ['capitalized_tokens'] }]);
     expect(calls[0]?.headers['X-EDR-Client']).toBe('web');
-    expect(within(qaRegion).queryByRole('button', { name: /Palabras con mayúscula/ })).toBeNull();
-    expect(qaRegion.textContent).toContain('Confirmada');
-    // The style warning still needs its own acknowledgement.
-    expect(button(qaRegion, 'Confirmar la advertencia: Coherencia visual')).toBeTruthy();
+    // The acknowledged warning leaves the list; the style warning still needs its own acknowledgement.
+    const stillPending = within(slideCard).getByRole('region', { name: `Control visual: ${SLIDE}` });
+    expect(stillPending.textContent).not.toContain('Palabras con mayúscula');
+    expect(button(stillPending, 'Confirmar la advertencia: Coherencia visual')).toBeTruthy();
     expect(button(slideCard, 'Aprobar esta versión').disabled).toBe(true);
   });
 
@@ -421,6 +416,53 @@ describe('QA warnings (OD-09, OD-26, OD-38): acknowledged one check per request'
     await userEvent.click(button(slideCard, 'Confirmar la advertencia: Coherencia visual'));
     const alert = await within(slideCard).findByRole('alert');
     expect(alert.textContent).toContain('No se pudo confirmar la advertencia');
+  });
+});
+
+describe('Caption review (PD-ARCH-01E-B)', () => {
+  const CAPTION = 'Texto de publicación y hashtags';
+  const tokenWarning = PASSING_QA.filter((result) => result.check === 'capitalized_tokens').map((result) => ({
+    ...result,
+    outcome: 'fail' as const,
+    details: { tokens: ['Calendario'] },
+  }));
+
+  function captionDraft(qa: QaResult[] = tokenWarning) {
+    return modeDraft('MANUAL_DATA', {
+      carousels: [
+        carousel([slide(1, 1, 'match_result', { state: 'approved' }), caption(2, 2, { state: 'ready', qa })]),
+      ],
+    });
+  }
+
+  it('shows one heading and no technical details, and acknowledges a warning next to the actions', async () => {
+    const element = caption(2, 2, { state: 'ready', qa: tokenWarning });
+    const acknowledged = checkedElement({
+      ...element,
+      currentVersion: {
+        ...element.currentVersion,
+        qa: tokenWarning.map((result) => ({ ...result, acknowledgedAt: '2026-11-05T12:00:00Z' })),
+      },
+    });
+    const server = fakeServer({
+      [DRAFT_PATH]: [draftResponse(captionDraft()), draftResponse(captionDraft(acknowledged.currentVersion.qa))],
+      [`POST ${elementPath(CAROUSEL_ID, elementId(2), 'qa-acknowledgements')}`]: () => json(acknowledged),
+    });
+    renderApp(REVIEW, server);
+    const captionCard = await screen.findByRole('article', { name: CAPTION });
+    const section = captionCard.closest<HTMLElement>('section[aria-label]') ?? captionCard;
+    expect(within(section).getAllByRole('heading', { name: CAPTION })).toHaveLength(1);
+    expect(within(captionCard).queryByText('Detalles y verificaciones')).toBeNull();
+    expect(button(captionCard, 'Aprobar copy').disabled).toBe(true);
+
+    const pending = within(captionCard).getByRole('region', { name: `Control visual: ${CAPTION}` });
+    expect(pending.textContent).toContain('Palabras con mayúscula no reconocidas');
+    expect(within(pending).getByText('Calendario')).toBeTruthy();
+    await userEvent.click(button(pending, 'Confirmar la advertencia: Palabras con mayúscula no reconocidas'));
+    expect(await within(captionCard).findByText('Advertencia confirmada.')).toBeTruthy();
+    expect(server.callsTo('POST', elementPath(CAROUSEL_ID, elementId(2), 'qa-acknowledgements'))).toHaveLength(1);
+    expect(within(captionCard).queryByRole('region', { name: `Control visual: ${CAPTION}` })).toBeNull();
+    expect(button(captionCard, 'Aprobar copy').disabled).toBe(false);
   });
 });
 
@@ -453,7 +495,6 @@ describe('Regeneration of one element (R-217, R-040)', () => {
 
     expect(await within(slideCard).findByText(/Se creó la versión 2/)).toBeTruthy();
     expect(slideCard.textContent).toContain('necesita una aprobación nueva');
-    expect(slideCard.textContent).toContain('Titular regenerado');
     expect(within(slideCard).getAllByText('Pendiente del control visual').length).toBeGreaterThan(0);
     expect(button(slideCard, 'Aprobar esta versión').disabled).toBe(true);
     expect(document.activeElement).toBe(within(slideCard).getByRole('heading', { name: SLIDE }));

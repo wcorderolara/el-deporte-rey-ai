@@ -1,6 +1,6 @@
 /**
- * Content generation from a local competition (PD-ARCH-01E-A): context selection limited to valid options, content
- * types, single and multiple match selection, the server's plan with compatible templates and skip reasons, explicit
+ * Content generation from a local competition (PD-ARCH-01E-A, PD-ARCH-01E-B): context selection limited to valid
+ * options, content types of played and unplayed matches, single and multiple match selection, the server's plan with compatible templates and skip reasons, explicit
  * confirmation with one request key (double click and retry), loading and error states, the batch result with its
  * polling, and the sports context on the project page. All data is synthetic.
  */
@@ -304,6 +304,132 @@ describe('content generation wizard (PD-ARCH-01E-A)', () => {
   });
 });
 
+describe('content of matches not played yet (PD-ARCH-01E-B)', () => {
+  const UNPLAYED = [
+    ...MATCHES,
+    match(4, 'Club Eta', 'Club Theta', { status: 'postponed', homeScore: null, awayScore: null }),
+    match(5, 'Club Iota', 'Club Kappa', { status: 'in_progress', homeScore: 0, awayScore: 0 }),
+  ];
+
+  function unplayedServer(extra: Record<string, Handler> = {}) {
+    return localServer({ [`GET ${BASE}/matches`]: () => json({ matches: UNPLAYED }), ...extra });
+  }
+
+  function marksOf(name: RegExp): string[] {
+    const row = screen.getByRole('checkbox', { name }).closest('label');
+    return Array.from(row?.querySelectorAll('span.flex > *') ?? []).map((badge) => badge.textContent ?? '');
+  }
+
+  it('offers the five content types in two families and adapts the match marks to the chosen types', async () => {
+    const user = userEvent.setup();
+    const server = unplayedServer();
+    renderApp('/projects/generate', server);
+    await chooseContext(user);
+    await user.click(continueButton());
+
+    const played = screen.getByRole('group', { name: 'Partidos jugados' });
+    const unplayed = screen.getByRole('group', { name: 'Partidos por jugar' });
+    expect(within(played).getAllByRole('checkbox')).toHaveLength(2);
+    expect(within(unplayed).getAllByRole('checkbox')).toHaveLength(3);
+    expect(within(unplayed).getByRole('checkbox', { name: /Calendario de jornada/ })).toBeTruthy();
+    expect(within(unplayed).getByRole('checkbox', { name: /Próximos partidos/ })).toBeTruthy();
+    expect(within(unplayed).getByRole('checkbox', { name: /Previa individual/ })).toBeTruthy();
+
+    // Calendar and upcoming matches instead of the results.
+    await user.click(screen.getByRole('checkbox', { name: /Resultados de jornada/ }));
+    await user.click(screen.getByRole('checkbox', { name: /Calendario de jornada/ }));
+    await user.click(screen.getByRole('checkbox', { name: /Próximos partidos/ }));
+    await user.click(continueButton());
+
+    expect(screen.getByText(/se eligen por su estado local, nunca por la fecha/)).toBeTruthy();
+    expect(marksOf(/Club Alfa – Club Beta/)).toEqual(['Fuera del calendario', 'No está por jugar']);
+    expect(marksOf(/Club Gamma – Club Delta/)).toEqual(['Apto para calendario', 'Por jugar']);
+    expect(marksOf(/Club Eta – Club Theta/)).toEqual(['Apto para calendario', 'Por jugar']);
+    // A match in play belongs to the round calendar but is not an upcoming match.
+    expect(marksOf(/Club Iota – Club Kappa/)).toEqual(['Apto para calendario', 'No está por jugar']);
+    expect(screen.queryByText('Resultado final')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Seleccionar compatibles' }));
+    expect(screen.getByText('3 de 5 partidos seleccionados.')).toBeTruthy();
+    expect((screen.getByRole('checkbox', { name: /Club Alfa – Club Beta/ }) as HTMLInputElement).checked).toBe(false);
+    expect(server.calls.some((call) => call.method === 'POST')).toBe(false);
+  });
+
+  it('prepares one preview per chosen match and shows why a finished match is left out', async () => {
+    const user = userEvent.setup();
+    const previews: unknown[] = [];
+    const server = unplayedServer({
+      'POST /api/v1/content-batches/previews': (call) => {
+        previews.push(call.body);
+        return json({
+          ...preview([uuid(12)]),
+          templates: [
+            { id: 'cover', version: '1.0.0', slideType: 'cover', label: 'Portada', badgeSlots: 0, imageSlots: [] },
+            {
+              id: 'match-preview',
+              version: '1.0.0',
+              slideType: 'match_preview',
+              label: 'Previa',
+              badgeSlots: 2,
+              imageSlots: [],
+            },
+          ],
+          pieces: [
+            {
+              position: 1,
+              kind: 'match_preview',
+              title: 'Previa · Club Gamma - Club Delta',
+              matchIds: [uuid(12)],
+              status: 'ready',
+              skipReason: null,
+            },
+            {
+              position: 2,
+              kind: 'match_preview',
+              title: 'Previa · Club Alfa - Club Beta',
+              matchIds: [uuid(11)],
+              status: 'skipped',
+              skipReason: 'already_finished',
+            },
+          ],
+          totals: { requested: 2, ready: 1, skipped: 1 },
+        } satisfies ContentBatchPreview);
+      },
+    });
+    renderApp('/projects/generate', server);
+    await chooseContext(user);
+    await user.click(continueButton());
+    await user.click(screen.getByRole('checkbox', { name: /Resultados de jornada/ }));
+    await user.click(screen.getByRole('checkbox', { name: /Previa individual/ }));
+    await user.click(continueButton());
+
+    expect(screen.getByText(/Elige el partido o los partidos de la previa/)).toBeTruthy();
+    expect(marksOf(/Club Gamma – Club Delta/)).toEqual(['Por jugar']);
+    await user.click(screen.getByRole('checkbox', { name: /Club Gamma – Club Delta/ }));
+    await user.click(screen.getByRole('checkbox', { name: /Club Alfa – Club Beta/ }));
+    await user.click(continueButton());
+
+    expect(await screen.findByTestId('preview-totals')).toHaveProperty(
+      'textContent',
+      'Se prepararán 1 de 2 piezas solicitadas · 1 omitidas.',
+    );
+    expect(previews).toEqual([
+      {
+        competitionId: COMPETITION,
+        seasonId: SEASON,
+        stageId: null,
+        roundId: ROUND,
+        matchIds: [uuid(11), uuid(12)],
+        kinds: ['match_preview'],
+      },
+    ]);
+    expect(screen.getByText('Previa · v1.0.0')).toBeTruthy();
+    expect(screen.getAllByText(/Previa individual · 1 partido/)).toHaveLength(2);
+    expect(screen.getByText('El partido ya finalizó; no es un partido por jugar.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Confirmar y generar 1 pieza' })).toBeTruthy();
+  });
+});
+
 describe('wizard entry and address context (PD-ARCH-01F)', () => {
   const OTHER_COMPETITION = uuid(6);
   const OTHER_SEASON = uuid(7);
@@ -355,10 +481,11 @@ describe('wizard entry and address context (PD-ARCH-01F)', () => {
       }),
     );
     await waitFor(() => expect(value('Jornada')).toBe(STAGED_ROUND));
+    // The stage is resolved from the round once the context of the address is validated.
+    await waitFor(() => expect(value('Fase')).toBe(STAGE));
     expect(value('Competición')).toBe(COMPETITION);
     expect(value('Temporada')).toBe(SEASON);
-    expect(value('Fase')).toBe(STAGE);
-    expect(continueButton().disabled).toBe(false);
+    await waitFor(() => expect(continueButton().disabled).toBe(false));
   });
 
   it.each([

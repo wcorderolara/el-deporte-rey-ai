@@ -102,7 +102,7 @@ function ProjectCarouselPreview({
   }
 
   const title = fieldText(selectedSlide, 'title') ?? fieldText(selectedSlide, 'headline');
-  const detailFields = ['kickoff', 'team_home', 'score', 'team_away']
+  const detailFields = ['match_status', 'kickoff', 'team_home', 'score', 'team_away', 'fixtures']
     .map((field) => ({ field, value: fieldText(selectedSlide, field) }))
     .filter((item): item is { field: string; value: string } => item.value !== null);
 
@@ -154,7 +154,7 @@ function ProjectCarouselPreview({
                 <dt className="text-caption font-bold text-text-secondary">
                   {textFieldLabel[field as keyof typeof textFieldLabel]}
                 </dt>
-                <dd className="m-0 break-words text-body-md text-text-primary">{value}</dd>
+                <dd className="m-0 whitespace-pre-line break-words text-body-md text-text-primary">{value}</dd>
               </div>
             ))}
           </dl>

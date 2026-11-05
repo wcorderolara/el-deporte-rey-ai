@@ -1,11 +1,12 @@
 /**
- * Pure planning rules of content batches (PD-ARCH-01E-A): eligibility of local matches, piece planning per kind,
- * the selection label and the request hash. All values are synthetic.
+ * Pure planning rules of content batches (PD-ARCH-01E-A, PD-ARCH-01E-B): eligibility of local matches for results
+ * and for matches not played yet, piece planning per kind, the selection label and the request hash. All values are
+ * synthetic.
  */
 import type { ContentBatchMatch, ContentBatchSelection } from '@edr/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { localResultIneligibility } from '../../../providers/sports/index.js';
+import { localFixtureIneligibility, localResultIneligibility } from '../../../providers/sports/index.js';
 
 import { matchView, planPieces, selectionHash, selectionLabelOf } from './service.js';
 import type { LocalMatchRecord } from './repository.js';
@@ -93,6 +94,88 @@ describe('piece planning', () => {
   it('skips every piece when the context cannot be represented', () => {
     const pieces = planPieces(['round_results', 'match_result'], matches, { ...options, contextSupported: false });
     expect(new Set(pieces.map((piece) => piece.skipReason))).toEqual(new Set(['context_not_supported']));
+  });
+});
+
+describe('eligibility of matches not played yet (PD-ARCH-01E-B)', () => {
+  const pending = { homeScore: null, awayScore: null };
+
+  it('decides by the local status, never by a past kickoff', () => {
+    const past = '2020-01-01T00:00:00.000Z';
+    for (const status of ['scheduled', 'postponed'] as const) {
+      const match = record(1, { status, kickoffAt: past, ...pending });
+      expect(localFixtureIneligibility(match, 'upcoming')).toBeNull();
+      expect(localFixtureIneligibility(match, 'calendar')).toBeNull();
+    }
+    const finished = record(1, { status: 'finished', kickoffAt: '2099-01-01T00:00:00.000Z' });
+    expect(localFixtureIneligibility(finished, 'upcoming')).toBe('already_finished');
+    expect(localFixtureIneligibility(finished, 'calendar')).toBe('already_finished');
+  });
+
+  it('keeps matches in play or cancelled in the calendar but not among the upcoming matches', () => {
+    for (const status of ['in_progress', 'cancelled'] as const) {
+      const match = record(1, { status, ...pending });
+      expect(localFixtureIneligibility(match, 'calendar')).toBeNull();
+      expect(localFixtureIneligibility(match, 'upcoming')).toBe('not_upcoming');
+    }
+  });
+
+  it('requires a kickoff and contract-valid team names', () => {
+    const match = record(1, { status: 'scheduled', ...pending });
+    expect(localFixtureIneligibility({ ...match, kickoffAt: null }, 'upcoming')).toBe('kickoff_missing');
+    expect(localFixtureIneligibility({ ...match, awayTeamName: 'Club <b>' }, 'calendar')).toBe(
+      'team_name_not_supported',
+    );
+  });
+});
+
+describe('piece planning of matches not played yet (PD-ARCH-01E-B)', () => {
+  const matches: ContentBatchMatch[] = [
+    matchView(record(1)),
+    matchView(record(2, { status: 'scheduled', homeScore: null, awayScore: null })),
+    matchView(record(3, { status: 'in_progress', homeScore: 1, awayScore: 1 })),
+  ];
+  const options = { roundName: 'Jornada 12', language: 'es' as const, contextSupported: true };
+
+  it('orders results, calendar, upcoming matches, per-match results and previews, each with its eligible matches', () => {
+    const pieces = planPieces(
+      ['match_preview', 'upcoming_matches', 'round_calendar', 'match_result', 'round_results'],
+      matches,
+      options,
+    );
+    expect(pieces.map((piece) => [piece.position, piece.kind, piece.status, piece.skipReason])).toEqual([
+      [1, 'round_results', 'ready', null],
+      [2, 'round_calendar', 'ready', null],
+      [3, 'upcoming_matches', 'ready', null],
+      [4, 'match_result', 'ready', null],
+      [5, 'match_result', 'skipped', 'not_finished'],
+      [6, 'match_result', 'skipped', 'not_finished'],
+      [7, 'match_preview', 'skipped', 'already_finished'],
+      [8, 'match_preview', 'ready', null],
+      [9, 'match_preview', 'skipped', 'not_upcoming'],
+    ]);
+    expect(pieces[1]).toMatchObject({ title: 'Calendario · Jornada 12', matchIds: [uuid(2), uuid(3)] });
+    expect(pieces[2]).toMatchObject({ title: 'Próximos partidos · Jornada 12', matchIds: [uuid(2)] });
+    expect(pieces[7]).toMatchObject({ title: 'Previa · Local 2 - Visita 2', matchIds: [uuid(2)] });
+  });
+
+  it('skips a calendar or upcoming carousel without eligible matches', () => {
+    const finished = [matches[0] as ContentBatchMatch];
+    const pieces = planPieces(['round_calendar', 'upcoming_matches'], finished, { ...options, language: 'en' });
+    expect(pieces.map((piece) => [piece.kind, piece.status, piece.skipReason, piece.matchIds])).toEqual([
+      ['round_calendar', 'skipped', 'no_eligible_matches', [uuid(1)]],
+      ['upcoming_matches', 'skipped', 'no_eligible_matches', [uuid(1)]],
+    ]);
+  });
+
+  it('shows the eligibility of each content family in the match view', () => {
+    expect(
+      matches.map((match) => [match.ineligibility, match.calendarIneligibility, match.upcomingIneligibility]),
+    ).toEqual([
+      [null, 'already_finished', 'already_finished'],
+      ['not_finished', null, null],
+      ['not_finished', null, 'not_upcoming'],
+    ]);
   });
 });
 

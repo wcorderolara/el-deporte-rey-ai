@@ -37,12 +37,17 @@ import {
 /** Largest stub fixture file read (the AI response cap, T10-F07). */
 export const MAX_STUB_FIXTURE_BYTES = 256 * 1024;
 
+/** Slide types of matches not played yet: their content gets the fixtures caption (PD-ARCH-01E-B). */
+const UNPLAYED_SLIDE_TYPES: ReadonlySet<SlideType> = new Set(['round_overview', 'fixture', 'match_preview']);
+
 /** Text returned by `simulate: "invalid_json"`. */
 const INVALID_JSON_TEXT = '{"slides": [';
 
 interface BuiltInTexts {
   readonly slides: Readonly<Record<SlideType, { readonly headline: string; readonly description: string }>>;
   readonly caption: string;
+  /** Caption of content about matches not played yet (PD-ARCH-01E-B). */
+  readonly fixturesCaption: string;
   readonly hashtags: readonly string[];
 }
 
@@ -54,8 +59,12 @@ const BUILT_IN: Readonly<Record<DraftLanguage, BuiltInTexts>> = {
       match_result: { headline: 'Partido', description: 'Datos del partido' },
       standings: { headline: 'Clasificación', description: 'Tabla de posiciones' },
       closing: { headline: 'Gracias por seguirnos', description: 'Síguenos para más resultados' },
+      round_overview: { headline: 'Así se juega la jornada', description: 'Los partidos de la jornada' },
+      fixture: { headline: 'Partido por jugarse', description: 'Datos del encuentro' },
+      match_preview: { headline: 'Previa del encuentro', description: 'Lo que hay que saber antes del partido' },
     },
     caption: 'Resumen de resultados',
+    fixturesCaption: 'Calendario de partidos',
     hashtags: ['#futbol'],
   },
   en: {
@@ -64,8 +73,12 @@ const BUILT_IN: Readonly<Record<DraftLanguage, BuiltInTexts>> = {
       match_result: { headline: 'Match', description: 'Match details' },
       standings: { headline: 'Standings', description: 'League table' },
       closing: { headline: 'Thanks for following', description: 'Follow us for more results' },
+      round_overview: { headline: 'How the matchday unfolds', description: 'The matches of the matchday' },
+      fixture: { headline: 'Match to be played', description: 'Match details' },
+      match_preview: { headline: 'Match preview', description: 'What to know before kick-off' },
     },
     caption: 'Results roundup',
+    fixturesCaption: 'Fixtures',
     hashtags: ['#football'],
   },
 };
@@ -120,9 +133,14 @@ function buildDraft(request: DraftRequest, fixture: AiStubFixture | null): Draft
   const draft: DraftResponse = { slides };
   if (request.only === undefined) {
     const builtIn = BUILT_IN[request.language];
+    const unplayed = request.slides.some((slide) => UNPLAYED_SLIDE_TYPES.has(slide.slideType));
     draft.caption =
       fixture?.caption ??
-      fitWithPlaceholders(builtIn.caption, placeholders(request.captionFacts, false), request.limits.captionMaxChars);
+      fitWithPlaceholders(
+        unplayed ? builtIn.fixturesCaption : builtIn.caption,
+        placeholders(request.captionFacts, false),
+        request.limits.captionMaxChars,
+      );
     draft.hashtags = [...(fixture?.hashtags ?? builtIn.hashtags.slice(0, request.limits.maxHashtags))];
   }
   return draft;

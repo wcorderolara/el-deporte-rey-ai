@@ -62,6 +62,10 @@ export const TextSemanticSchema = z.enum([
   'team_name',
   'score',
   'kickoff',
+  /** The status label of a match not played yet (PD-ARCH-01E-B). */
+  'match_status',
+  /** One line of a round overview: two team names and a kickoff (PD-ARCH-01E-B). */
+  'fixture_line',
   'standings_heading',
   'standings_position',
   'standings_cell',

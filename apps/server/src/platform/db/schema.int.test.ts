@@ -103,6 +103,7 @@ const EXPECTED_COLUMNS: Readonly<Record<string, readonly string[]>> = {
     'created_at',
     'updated_at',
     'deleted_at',
+    'content_kind',
   ],
   workflow_runs: [
     'id',
@@ -727,6 +728,9 @@ describe('structure of the migrated schema', () => {
       { version: 18, name: 'content_generation_batches_reconcile' },
       { version: 19, name: 'operator_validated_approvals' },
       { version: 20, name: 'project_deletion' },
+      { version: 21, name: 'project_content_kind' },
+      { version: 22, name: 'unplayed_slide_types' },
+      { version: 23, name: 'content_kinds_reconcile' },
     ]);
   });
 

@@ -60,6 +60,7 @@ export function buildContentInput(
     seasonLabel: labels.seasonLabel,
     stageLabel: labels.stageLabel,
     matchday: labels.matchday,
+    contentKind: labels.contentKind,
     brand: { name: config.brand.name, handle: config.brand.handle },
     utcOffsetMinutes: config.display.utcOffsetMinutes,
     maxSlidesPerCarousel: request.maxSlidesPerCarousel,

@@ -13,6 +13,9 @@
  * - Regeneration of one element: new AI text for that element (content module), its render (rendering module) and
  *   its visual QA (visual QA module); the supersession, the new version and the invalidation of the carousel's final
  *   approvals are one transaction of the content module. Other elements keep their versions and approvals.
+ * - A final approval covers every slide and the caption only when the caption is approved (PD-ARCH-01E-PD-02): the
+ *   caption can be written, approved and exported later. Approving or withdrawing the caption changes the covered set,
+ *   so a final approval without it no longer holds once the caption is approved, and the carousel is approved again.
  * - Final approvals are invalidated by any change: regeneration and new drafts (content module), a revoked manual
  *   approval (verification module), a withdrawal (here), and at startup for content that a stricter policy, an
  *   unmarked competition link or an unconfirmed publication permission of the current configuration blocks again.
@@ -90,6 +93,17 @@ interface InspectedVersion {
 interface InspectedElement {
   readonly element: StoredElement;
   readonly current: InspectedVersion | null;
+}
+
+/**
+ * The elements a final approval covers (PD-ARCH-01E-PD-02): every slide, and the caption only when its current version
+ * is approved. A caption still in review neither prevents the final approval nor is exported.
+ */
+function coveredElements(elements: readonly InspectedElement[]): InspectedElement[] {
+  return elements.filter(
+    ({ element, current }) =>
+      element.kind === 'slide' || (current !== null && versionState(current.snapshot) === 'approved'),
+  );
 }
 
 const PROBLEMS = {
@@ -250,8 +264,8 @@ export class ReviewService {
   }
 
   /**
-   * Final approval of a carousel (approveCarousel; R-240): refused with every element that is not approved or is
-   * blocked; records the version set and its SHA-256. A valid final approval of the same version set is returned
+   * Final approval of a carousel (approveCarousel; R-240, PD-ARCH-01E-PD-02): refused with every slide that is not
+   * approved or is blocked; records the version set (the slides, and the caption when approved) and its SHA-256. A valid final approval of the same version set is returned
    * unchanged; a valid one of another set (stale) is invalidated.
    */
   approveCarousel(carouselId: string): FinalApproval {
@@ -265,18 +279,24 @@ export class ReviewService {
         throw PROBLEMS.draftSuperseded();
       }
       const elements = this.#inspectCarousel(carousel);
-      const items: ProblemItem[] = elements.flatMap(({ element, current }) =>
+      const slides = elements.filter(({ element }) => element.kind === 'slide');
+      const items: ProblemItem[] = slides.flatMap(({ element, current }) =>
         finalApprovalReasons(current?.snapshot ?? null).map((reason) => ({ elementId: element.id, reason })),
       );
-      if (elements.length === 0 || items.length > 0) {
-        throw new HttpProblem(
-          409,
-          'FINAL_APPROVAL_REFUSED',
-          'Every slide and the caption must be approved and none may be blocked.',
-          { items },
-        );
+      if (slides.length === 0 || items.length > 0) {
+        throw new HttpProblem(409, 'FINAL_APPROVAL_REFUSED', 'Every slide must be approved and none may be blocked.', {
+          items,
+        });
       }
-      const set = versionSetOf(elements.flatMap(({ current }) => (current === null ? [] : [current.version.id])));
+      const covered = coveredElements(elements);
+      if (covered.some(({ current }) => current !== null && finalApprovalReasons(current.snapshot).length > 0)) {
+        throw new HttpProblem(409, 'FINAL_APPROVAL_REFUSED', 'An approved caption must not be blocked.', {
+          items: covered.flatMap(({ element, current }) =>
+            finalApprovalReasons(current?.snapshot ?? null).map((reason) => ({ elementId: element.id, reason })),
+          ),
+        });
+      }
+      const set = versionSetOf(covered.flatMap(({ current }) => (current === null ? [] : [current.version.id])));
       const at = this.#now();
       let kept: StoredFinalApproval | null = null;
       for (const existing of this.#repository.validFinalApprovals(carousel.id)) {
@@ -418,10 +438,10 @@ export class ReviewService {
     if (carousel === null || carousel.draftSuperseded) {
       return false;
     }
-    const elements = this.#inspectCarousel(carousel);
-    const current = elements.flatMap(({ current: inspected }) => (inspected === null ? [] : [inspected.version.id]));
+    const covered = coveredElements(this.#inspectCarousel(carousel));
+    const current = covered.flatMap(({ current: inspected }) => (inspected === null ? [] : [inspected.version.id]));
     return (
-      elements.every(({ current: inspected }) => inspected !== null && !inspected.snapshot.blocked) &&
+      covered.every(({ current: inspected }) => inspected !== null && !inspected.snapshot.blocked) &&
       sameVersionSet(finalApproval.versionSet, current)
     );
   }
@@ -507,19 +527,23 @@ export class ReviewService {
 
   #carouselView(carousel: StoredCarousel): Carousel {
     const inspected = this.#inspectCarousel(carousel);
+    const covered = new Set(coveredElements(inspected).map(({ element }) => element.id));
     const elements: Element[] = [];
     const currentIds: string[] = [];
     let anyBlocked = false;
-    let ready = inspected.length > 0;
+    let ready = inspected.some(({ element }) => element.kind === 'slide');
     for (const { element, current } of inspected) {
-      if (finalApprovalReasons(current?.snapshot ?? null).length > 0) {
+      // The caption is not required (PD-ARCH-01E-PD-02); when approved it must still be publishable.
+      if (covered.has(element.id) && finalApprovalReasons(current?.snapshot ?? null).length > 0) {
         ready = false;
       }
       if (current === null) {
         continue;
       }
-      anyBlocked ||= current.snapshot.blocked;
-      currentIds.push(current.version.id);
+      if (covered.has(element.id)) {
+        anyBlocked ||= current.snapshot.blocked;
+        currentIds.push(current.version.id);
+      }
       elements.push({
         id: element.id,
         carouselId: element.carouselId,

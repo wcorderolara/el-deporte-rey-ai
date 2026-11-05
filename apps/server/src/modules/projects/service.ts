@@ -89,7 +89,7 @@ export class ProjectsService {
   #title(project: ProjectRecord): string {
     const title = projectTitle(project);
     const piece = projectSportsContext(this.#batches, project.id);
-    if (piece === null || piece.context.kind !== 'match_result') {
+    if (piece === null || (piece.context.kind !== 'match_result' && piece.context.kind !== 'match_preview')) {
       return title;
     }
     const full = `${title} · ${piece.title}`;

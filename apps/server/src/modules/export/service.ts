@@ -5,11 +5,14 @@
  * Export of a carousel (exportCarousel):
  * 1. A valid final approval is required (`FINAL_APPROVAL_REQUIRED` otherwise). Validity is the review module's (T37):
  *    the row is not invalidated (`invalidated_at IS NULL`), the carousel's draft is not superseded, the recorded
- *    version set equals the carousel's current versions, and no version of it is blocked (the content module's
+ *    version set equals the carousel's covered current versions (every slide, and the caption only when approved;
+ *    PD-ARCH-01E-PD-02), and no version of it is blocked (the content module's
  *    overlay over the verification module's single publishability function). The version set is read from the
  *    final-approval row (its stored text, checked against its SHA-256), never from the current versions.
  * 2. Exactly the versions of that set are written into a fresh directory `exports/<projectId>/<exportId>/`:
- *    `01.png` to `NN.png` (the stored renders, hash-checked), `caption.txt` and `manifest.json` (`manifest.ts`).
+ *    `01.png` to `NN.png` (the stored renders, hash-checked), `caption.txt` when the set holds the caption, and
+ *    `manifest.json` (`manifest.ts`). A carousel exported without its caption gets it in a later export, after the
+ *    caption and the carousel are approved again.
  * 3. One synchronous `BEGIN IMMEDIATE` transaction re-checks the final approval (`invalidated_at IS NULL` and the
  *    same validity) and records the export with its files. A refused or failed commit leaves an orphan directory that
  *    no export record references.
@@ -213,12 +216,17 @@ export class ExportService {
       return null;
     }
     const elements = this.#review.carouselElements(carouselId);
-    const current = elements.flatMap((element) =>
-      element.currentVersionId === null ? [] : [element.currentVersionId],
-    );
-    if (elements.length === 0 || current.length !== elements.length) {
+    const slides = elements.filter((element) => element.kind === 'slide');
+    if (slides.length === 0 || slides.some((slide) => slide.currentVersionId === null)) {
       return null;
     }
+    // The covered versions: every slide, and the caption only when its current version is approved.
+    const current = elements.flatMap((element) =>
+      element.currentVersionId === null ||
+      (element.kind === 'caption' && !this.#review.isApproved(element.currentVersionId))
+        ? []
+        : [element.currentVersionId],
+    );
     for (const row of this.#repository.validFinalApprovals(carouselId)) {
       const versionIds = readJsonColumn(VersionSetSchema, row.versionSetText, 'version_set');
       const recorded = versionSetOf(versionIds);
@@ -259,8 +267,8 @@ export class ExportService {
     const slides = versions.filter((version) => version.kind === 'slide').sort((a, b) => a.position - b.position);
     const captions = versions.filter((version) => version.kind === 'caption');
     const caption = captions[0];
-    if (caption === undefined || captions.length !== 1 || slides.length === 0) {
-      throw new Error('a final approval must hold the slides and exactly one caption');
+    if (captions.length > 1 || slides.length === 0) {
+      throw new Error('a final approval must hold the slides and at most one caption');
     }
     const refs = new Map(versions.map((version) => [version.id, this.#repository.factRefs(version.id)]));
     const factIds = [...new Set([...refs.values()].flat())].sort();
@@ -276,13 +284,16 @@ export class ExportService {
         versionSetSha256: valid.row.versionSetSha256,
       },
       slides: slides.map((slide) => ({ version: slide, factIds: refs.get(slide.id) ?? [] })),
-      caption: {
-        elementId: caption.elementId,
-        elementVersionId: caption.id,
-        versionNumber: caption.versionNumber,
-        text: readJsonColumn(ElementTextSchema, caption.text, 'text'),
-        factIds: refs.get(caption.id) ?? [],
-      },
+      caption:
+        caption === undefined
+          ? null
+          : {
+              elementId: caption.elementId,
+              elementVersionId: caption.id,
+              versionNumber: caption.versionNumber,
+              text: readJsonColumn(ElementTextSchema, caption.text, 'text'),
+              factIds: refs.get(caption.id) ?? [],
+            },
       facts,
       sources,
     };
@@ -432,7 +443,7 @@ export class ExportService {
     const manifest = records.filter((file) => file.kind === 'manifest');
     if (
       slides.length === 0 ||
-      caption.length !== 1 ||
+      caption.length > 1 ||
       manifest.length !== 1 ||
       slides.some((f, i) => f.position !== i + 1 || f.fileName !== `${String(i + 1).padStart(2, '0')}.png`)
     ) {

@@ -26,6 +26,7 @@ import {
   relationPhrase,
   selectionStageDisplay,
   slideBindings,
+  statusDisplay,
 } from './request.js';
 import {
   ELEMENT_TEXT_VERSION,
@@ -193,6 +194,62 @@ function templateFields(
     }
     case 'closing':
       return [{ field: 'title', segments: [templateSegment(`${text.closingFollow} ${context.brand.handle}`)] }];
+    case 'round_overview': {
+      // One line per fixture: home, versus, away, kickoff; lines separated by template line feeds (like standings).
+      const segments: Segment[] = [];
+      slide.fixtures.forEach((fixture, index) => {
+        for (const factId of [fixture.teamsFactId, fixture.kickoffFactId, fixture.home.factId, fixture.away.factId]) {
+          refs.add(factId, 'template');
+        }
+        if (index > 0) {
+          segments.push(templateSegment('\n'));
+        }
+        segments.push(factSegment(fixture.home.name, fixture.home.factId));
+        segments.push(templateSegment(` ${text.versus} `));
+        segments.push(factSegment(fixture.away.name, fixture.away.factId));
+        segments.push(templateSegment(' · '));
+        segments.push(factSegment(kickoffDisplay(fixture.kickoff, context), fixture.kickoffFactId));
+      });
+      return [
+        {
+          field: 'title',
+          segments: [templateSegment(`${text.calendarTitle} · ${selectionStageDisplay(context)}`)],
+        },
+        { field: 'fixtures', segments },
+      ];
+    }
+    case 'fixture':
+    case 'match_preview': {
+      const { fixture } = slide;
+      for (const factId of [
+        fixture.teamsFactId,
+        fixture.statusFactId,
+        fixture.kickoffFactId,
+        fixture.home.factId,
+        fixture.away.factId,
+      ]) {
+        refs.add(factId, 'template');
+      }
+      const title =
+        slide.type === 'fixture' ? text.fixtureTitle : `${text.previewTitle} · ${selectionStageDisplay(context)}`;
+      const fields: ElementTextField[] = [
+        { field: 'title', segments: [templateSegment(title)] },
+        {
+          field: 'match_status',
+          segments: [factSegment(statusDisplay(fixture.status, context.language), fixture.statusFactId)],
+        },
+        { field: 'team_home', segments: [factSegment(fixture.home.name, fixture.home.factId)] },
+        { field: 'team_away', segments: [factSegment(fixture.away.name, fixture.away.factId)] },
+        { field: 'kickoff', segments: [factSegment(kickoffDisplay(fixture.kickoff, context), fixture.kickoffFactId)] },
+      ];
+      if (slide.type === 'match_preview') {
+        fields.push({
+          field: 'footer',
+          segments: [templateSegment(`${context.competitionName} · ${context.seasonLabel}`)],
+        });
+      }
+      return fields;
+    }
   }
 }
 

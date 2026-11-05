@@ -27,6 +27,9 @@ export const slideTypeLabel: Record<SlideType, string> = {
   match_result: 'Resultado de partido',
   standings: 'Clasificación',
   closing: 'Cierre',
+  round_overview: 'Resumen de jornada',
+  fixture: 'Partido programado',
+  match_preview: 'Previa de partido',
 };
 
 /** Language of a template preview (PD-06). */

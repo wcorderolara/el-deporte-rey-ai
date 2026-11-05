@@ -1,11 +1,13 @@
 /**
  * Deterministic carousel structure (architecture.md section 8.1; OD-03, OD-05; R-209, R-254, R-255, R-285): included
  * and left-out matches for every match status, candidate values, exclusions, kickoff order, standings only when
- * available (any number of rows, split per slide, nothing derived), and the split into numbered carousels.
+ * available (any number of rows, split per slide, nothing derived), and the split into numbered carousels. Matches not
+ * played yet (PD-ARCH-01E-B): round calendars, upcoming matches and previews chosen by the local status, never by the
+ * date, without score or result.
  */
 import { describe, expect, it } from 'vitest';
 
-import { FactIndex, type SlidePlan, planDraft } from './structure.js';
+import { FactIndex, OVERVIEW_ROWS_PER_SLIDE, type SlidePlan, fixturePlanFor, planDraft } from './structure.js';
 import { Facts, leagueFacts } from './test/support.js';
 
 const OPTIONS = {
@@ -189,5 +191,144 @@ describe('numbered carousels (OD-03)', () => {
     const plan = planDraft(new FactIndex(facts.facts), OPTIONS);
     expect(plan.carousels.map((carousel) => types(carousel.slides))).toEqual([['cover', 'closing']]);
     expect(plan.leftOutMatches).toHaveLength(1);
+  });
+});
+
+describe('matches not played yet (PD-ARCH-01E-B)', () => {
+  /** One match per status, kicked off on consecutive days in reverse order of the list. */
+  function round(): Facts {
+    const facts = teams(12);
+    const statuses = ['finished', 'scheduled', 'postponed', 'in_play', 'cancelled', 'scheduled'];
+    statuses.forEach((status, index) => {
+      facts.match(`partido-${String(index)}`, {
+        home: `equipo-${String(index * 2 + 1)}`,
+        away: `equipo-${String(index * 2 + 2)}`,
+        status,
+        score: status === 'finished' || status === 'in_play' ? [1, 0] : null,
+        // The scheduled matches kick off in the past: the status decides, never the date.
+        kickoff: index === 5 ? null : `2020-01-${String(20 - index).padStart(2, '0')}T18:00:00Z`,
+      });
+    });
+    return facts;
+  }
+
+  function fixtureKeys(slides: readonly SlidePlan[]): string[] {
+    return slides.flatMap((slide) =>
+      slide.type === 'fixture' || slide.type === 'match_preview' ? [slide.fixture.matchKey] : [],
+    );
+  }
+
+  it('plans a round calendar: cover, overview, every match not finished in kickoff order, closing', () => {
+    const plan = planDraft(new FactIndex(round().facts), { ...OPTIONS, contentKind: 'calendar' });
+    const slides = plan.carousels[0]?.slides ?? [];
+    expect(types(slides)).toEqual(['cover', 'round_overview', 'fixture', 'fixture', 'fixture', 'fixture', 'closing']);
+    expect(fixtureKeys(slides)).toEqual(['partido-4', 'partido-3', 'partido-2', 'partido-1']);
+    const overview = slides[1];
+    expect(overview?.type === 'round_overview' ? overview.fixtures.map((item) => item.status) : []).toEqual([
+      'cancelled',
+      'in_play',
+      'postponed',
+      'scheduled',
+    ]);
+    expect(plan.leftOutMatches.map((match) => [match.matchKey, match.reason])).toEqual([
+      ['partido-0', 'already_finished'],
+      ['partido-5', 'not_verified'],
+    ]);
+    expect(plan.standingsIncluded).toBe(false);
+  });
+
+  it('keeps no score or result in the fixture plan', () => {
+    const plan = planDraft(new FactIndex(round().facts), { ...OPTIONS, contentKind: 'calendar' });
+    for (const slide of plan.carousels[0]?.slides ?? []) {
+      if (slide.type === 'fixture') {
+        expect(Object.keys(slide.fixture).sort()).toEqual(
+          [
+            'away',
+            'home',
+            'index',
+            'kickoff',
+            'kickoffFactId',
+            'matchKey',
+            'status',
+            'statusFactId',
+            'teamsFactId',
+          ].sort(),
+        );
+      }
+    }
+  });
+
+  it('splits the round overview into pages and plans a calendar without matches as cover and closing', () => {
+    const facts = teams(2 * (OVERVIEW_ROWS_PER_SLIDE + 1));
+    for (let index = 0; index <= OVERVIEW_ROWS_PER_SLIDE; index += 1) {
+      facts.match(`p-${String(index)}`, {
+        home: `equipo-${String(index * 2 + 1)}`,
+        away: `equipo-${String(index * 2 + 2)}`,
+        status: 'scheduled',
+        score: null,
+      });
+    }
+    const plan = planDraft(new FactIndex(facts.facts), {
+      ...OPTIONS,
+      contentKind: 'calendar',
+      maxSlidesPerCarousel: 40,
+    });
+    const overviews = (plan.carousels[0]?.slides ?? []).filter((slide) => slide.type === 'round_overview');
+    expect(overviews.map((slide) => (slide.type === 'round_overview' ? slide.fixtures.length : 0))).toEqual([
+      OVERVIEW_ROWS_PER_SLIDE,
+      1,
+    ]);
+
+    const finished = teams(2).match('final', { home: 'equipo-1', away: 'equipo-2' });
+    const empty = planDraft(new FactIndex(finished.facts), { ...OPTIONS, contentKind: 'calendar' });
+    expect(types(empty.carousels[0]?.slides ?? [])).toEqual(['cover', 'closing']);
+    expect(empty.leftOutMatches.map((match) => match.reason)).toEqual(['already_finished']);
+  });
+
+  it('plans upcoming matches from scheduled and postponed matches only', () => {
+    const plan = planDraft(new FactIndex(round().facts), { ...OPTIONS, contentKind: 'upcoming' });
+    const slides = plan.carousels[0]?.slides ?? [];
+    expect(types(slides)).toEqual(['cover', 'fixture', 'fixture', 'closing']);
+    expect(fixtureKeys(slides)).toEqual(['partido-2', 'partido-1']);
+    expect(plan.leftOutMatches.map((match) => [match.matchKey, match.reason])).toEqual([
+      ['partido-4', 'not_upcoming'],
+      ['partido-3', 'not_upcoming'],
+      ['partido-0', 'already_finished'],
+      ['partido-5', 'not_verified'],
+    ]);
+  });
+
+  it('honours the exclusions of the operator', () => {
+    const plan = planDraft(new FactIndex(round().facts), {
+      ...OPTIONS,
+      contentKind: 'upcoming',
+      excludedMatchKeys: ['partido-2'],
+    });
+    expect(fixtureKeys(plan.carousels[0]?.slides ?? [])).toEqual(['partido-1']);
+    expect(plan.leftOutMatches.find((match) => match.matchKey === 'partido-2')?.reason).toBe('excluded_by_operator');
+  });
+
+  it('plans a preview of one scheduled match: cover, match information, closing', () => {
+    const facts = teams(2).match('previa', { home: 'equipo-1', away: 'equipo-2', status: 'scheduled', score: null });
+    const plan = planDraft(new FactIndex(facts.facts), { ...OPTIONS, contentKind: 'preview' });
+    const slides = plan.carousels[0]?.slides ?? [];
+    expect(types(slides)).toEqual(['cover', 'match_preview', 'closing']);
+    expect(slides[1]?.key).toBe('preview-1');
+    expect(fixturePlanFor(new FactIndex(facts.facts), 'previa', 1, 'preview')?.status).toBe('scheduled');
+  });
+
+  it('plans no preview for a finished, in-play or incomplete match', () => {
+    for (const [status, kickoff, reason] of [
+      ['finished', undefined, 'already_finished'],
+      ['in_play', undefined, 'not_upcoming'],
+      ['scheduled', null, 'not_verified'],
+    ] as const) {
+      const facts = teams(2).match('previa', { home: 'equipo-1', away: 'equipo-2', status, kickoff, score: null });
+      const plan = planDraft(new FactIndex(facts.facts), { ...OPTIONS, contentKind: 'preview' });
+      expect(types(plan.carousels[0]?.slides ?? []), status).toEqual(['cover', 'closing']);
+      expect(plan.leftOutMatches.map((match) => match.reason)).toEqual([reason]);
+    }
+    const unnamed = new Facts().match('previa', { home: 'sin-nombre', away: 'otro', status: 'scheduled', score: null });
+    expect(fixturePlanFor(new FactIndex(unnamed.facts), 'previa', 1, 'preview')).toBeNull();
   });
 });

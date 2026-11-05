@@ -29,7 +29,17 @@ import { composeCaption, composeSlide } from './compose.js';
 import { ContentRepository, type StoredCarouselElement } from './repository.js';
 import { buildDraftRequest } from './request.js';
 import { ContentFactSchema, ContentInputSchema, type ElementVersionContent } from './schemas.js';
-import { type CarouselPlan, FactIndex, type SlidePlan, matchPlanFor, standingsRowsFor } from './structure.js';
+import {
+  type CarouselPlan,
+  type ContentKind,
+  FactIndex,
+  type SlidePlan,
+  fixturePlanFor,
+  matchPlanFor,
+  overviewSlides,
+  selectFixtures,
+  standingsRowsFor,
+} from './structure.js';
 import { buildContentInput } from './stage.js';
 
 export type RegenerationRefusal = 'element_not_found' | 'draft_superseded' | 'version_conflict' | 'not_regenerable';
@@ -55,8 +65,9 @@ export interface PreparedRegeneration {
   readonly aiAdapter: string;
 }
 
-function slideOf(element: StoredCarouselElement, index: FactIndex): SlidePlan {
+function slideOf(element: StoredCarouselElement, index: FactIndex, kind: ContentKind): SlidePlan {
   const { subject } = element;
+  const fixtureKind = kind === 'results' ? null : kind;
   switch (element.slideType) {
     case 'cover':
       return { type: 'cover', key: 'cover' };
@@ -78,6 +89,28 @@ function slideOf(element: StoredCarouselElement, index: FactIndex): SlidePlan {
         throw new ElementRegenerationRefused('not_regenerable');
       }
       return { type: 'standings', key: element.slideKey, page: subject.standingsPage, rows };
+    }
+    case 'fixture':
+    case 'match_preview': {
+      const fixture =
+        fixtureKind === null || subject.matchKey === null || subject.matchIndex === null
+          ? null
+          : fixturePlanFor(index, subject.matchKey, subject.matchIndex, fixtureKind);
+      if (fixture === null) {
+        throw new ElementRegenerationRefused('not_regenerable');
+      }
+      return { type: element.slideType, key: element.slideKey, fixture };
+    }
+    case 'round_overview': {
+      // The page is rebuilt from the facts exactly as the calendar planned it.
+      const page =
+        fixtureKind === null || subject.standingsPage === null
+          ? undefined
+          : overviewSlides(selectFixtures(index, [], fixtureKind).included)[subject.standingsPage - 1];
+      if (page?.type !== 'round_overview') {
+        throw new ElementRegenerationRefused('not_regenerable');
+      }
+      return { ...page, key: element.slideKey };
     }
     default:
       throw new ElementRegenerationRefused('not_regenerable');
@@ -114,11 +147,11 @@ export async function prepareElementRegeneration(
   );
   const index = new FactIndex(z.array(ContentFactSchema).parse(input.facts));
   const context = draftContextOf(input);
-  const checks = checkContextOf(index, input.teamAliases, input.brand.handle);
+  const checks = checkContextOf(index, input.teamAliases, input.brand.handle, input.contentKind);
   const slides = repository
     .carouselElements(element.carouselId)
     .filter((sibling) => sibling.kind === 'slide')
-    .map((sibling) => slideOf(sibling, index));
+    .map((sibling) => slideOf(sibling, index, input.contentKind));
   const carousel: CarouselPlan = { sequence: element.sequence, total: element.total, slides };
   const ai = container.aiProvider;
 
@@ -182,7 +215,7 @@ export function applyElementRegeneration(
       aiAdapter: prepared.aiAdapter,
       createdAt: options.at,
     });
-    repository.invalidateFinalApprovals(prepared.carouselId, options.at);
+    repository.invalidateFinalApprovalsCovering(prepared.carouselId, prepared.baseVersionId, options.at);
     return { versionId: options.versionId, versionNumber };
   });
 }

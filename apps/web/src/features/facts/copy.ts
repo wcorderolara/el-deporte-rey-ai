@@ -201,6 +201,8 @@ export const leftOutReasonLabel: Record<LeftOutMatch['reason'], string> = {
   not_finished: 'El partido no ha finalizado.',
   not_verified: 'Los datos del partido no tienen valor verificado ni candidato, o están en disputa.',
   excluded_by_operator: 'Excluido por el operador.',
+  already_finished: 'El partido ya finalizó; no es un partido por jugar.',
+  not_upcoming: 'El estado del partido no es programado ni aplazado.',
 };
 
 /** Value formatting (`format.ts`). */

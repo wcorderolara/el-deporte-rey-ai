@@ -84,8 +84,9 @@ describe('Final approval control (R-240)', () => {
     expect(items).toEqual([
       'Diapositiva 2: Resultado: no aprobado, bloqueado por datos no publicables',
       'Diapositiva 3: Cierre: no aprobado, con advertencias del control visual sin confirmar',
-      'Texto de publicación y hashtags: no aprobado',
     ]);
+    // The caption is not required for the final approval (PD-ARCH-01E-PD-02); the panel says what that means.
+    expect(panel.textContent).toContain('Copy sin aprobar: puedes descargar las diapositivas ahora');
     expect(panel.textContent).toContain('La exportación necesita una aprobación final válida.');
   });
 
@@ -101,8 +102,8 @@ describe('Final approval control (R-240)', () => {
     renderApp(REVIEW, server);
     const panel = await finalPanel();
     expect(panel.textContent).toContain('2 de 2 diapositivas aprobadas');
-    expect(panel.textContent).toContain('Copy aprobado');
-    expect(panel.textContent).toContain('Todos los elementos están aprobados y ninguno está bloqueado.');
+    expect(panel.textContent).toContain('Copy aprobado: la descarga incluye el texto de publicación.');
+    expect(panel.textContent).toContain('Todas las diapositivas están aprobadas y ninguna está bloqueada.');
     const control = finalButton(panel);
     expect(control.disabled).toBe(false);
 

@@ -156,6 +156,59 @@ export function matchText(match: MatchSample, extra: Partial<Record<'headline' |
   ]);
 }
 
+/**
+ * A match not played yet (PD-ARCH-01E-B) as the content stage stores it: the fixture or preview title, the local
+ * status, the teams and the kickoff; never a score.
+ */
+export function fixtureText(
+  match: MatchSample,
+  slideType: 'fixture' | 'match_preview' = 'fixture',
+  status: keyof ReturnType<typeof templateText>['matchStatus'] = 'scheduled',
+): StoredElementText {
+  const words = templateText(match.language);
+  const fields: StoredTextField[] = [
+    {
+      field: 'title',
+      segments: [template(slideType === 'fixture' ? words.fixtureTitle : `${words.previewTitle} · Jornada 20`)],
+    },
+    { field: 'match_status', segments: [fact(words.matchStatus[status], uuid(match.factBase + 5))] },
+    { field: 'team_home', segments: [fact(match.home, uuid(match.factBase + 1))] },
+    { field: 'team_away', segments: [fact(match.away, uuid(match.factBase + 2))] },
+    {
+      field: 'kickoff',
+      segments: [fact(formatDate(match.kickoff, match.language, UTC_OFFSET), uuid(match.factBase + 4))],
+    },
+  ];
+  if (slideType === 'match_preview') {
+    fields.push({ field: 'footer', segments: [template('Liga Sintética · 2026/27')] });
+  }
+  fields.push(...ai('Partido de la jornada', 'Encuentro sintético programado.'));
+  return text(fields);
+}
+
+/** The round overview of a calendar: one line per match, home versus away and kickoff. */
+export function overviewText(matches: readonly MatchSample[]): StoredElementText {
+  const words = templateText('es');
+  const segments: StoredSegment[] = [];
+  matches.forEach((match, index) => {
+    if (index > 0) {
+      segments.push(template('\n'));
+    }
+    segments.push(
+      fact(match.home, uuid(match.factBase + 1)),
+      template(` ${words.versus} `),
+      fact(match.away, uuid(match.factBase + 2)),
+      template(' · '),
+      fact(formatDate(match.kickoff, match.language, UTC_OFFSET), uuid(match.factBase + 4)),
+    );
+  });
+  return text([
+    { field: 'title', segments: [template(`${words.calendarTitle} · Jornada 20`)] },
+    { field: 'fixtures', segments },
+    ...ai('Así se juega la jornada', 'Calendario sintético de prueba.'),
+  ]);
+}
+
 /** A synthetic standings row: cells in the content stage's order, then the team name. */
 export interface RowSample {
   readonly team: string;

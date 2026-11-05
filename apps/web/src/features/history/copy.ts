@@ -153,4 +153,6 @@ export const textFieldLabel: Record<TextFieldName, string> = {
   standings: 'Clasificación',
   footer: 'Pie',
   demo_label: 'Etiqueta de demostración',
+  match_status: 'Estado del partido',
+  fixtures: 'Partidos',
 };

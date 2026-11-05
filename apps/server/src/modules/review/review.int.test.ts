@@ -236,7 +236,7 @@ const SCHEMAS = [
 
 describe('approval, withdrawal and final approval (R-216, R-240)', () => {
   it.each(SCHEMAS)(
-    'refuses the final approval until every element is explicitly approved, then records it: %s',
+    'refuses the final approval until every slide is explicitly approved, then records it: %s',
     async (_name, allChecks) => {
       const h = await harness({ allChecks });
       const before = await h.draft();
@@ -245,8 +245,11 @@ describe('approval, withdrawal and final approval (R-216, R-240)', () => {
       expect(refused.statusCode).toBe(409);
       const body = problem(refused);
       expect(body.code).toBe('FINAL_APPROVAL_REFUSED');
+      // Every slide is named; the caption is not required (PD-ARCH-01E-PD-02).
       expect(new Set(body.items?.map((item) => item.elementId))).toEqual(
-        new Set(before.carousels[0]?.elements.map((element) => element.id)),
+        new Set(
+          before.carousels[0]?.elements.filter((element) => element.kind === 'slide').map((element) => element.id),
+        ),
       );
       expect(body.items?.some((item) => item.reason === 'not_approved')).toBe(true);
 

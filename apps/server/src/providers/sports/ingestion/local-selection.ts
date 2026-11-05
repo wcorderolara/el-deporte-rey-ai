@@ -46,6 +46,35 @@ export function localResultIneligibility(match: LocalMatchValues): LocalMatchIne
   return null;
 }
 
+/** Why a local match cannot be part of a piece about matches not played yet (PD-ARCH-01E-B). */
+export type LocalFixtureIneligibility =
+  'already_finished' | 'not_upcoming' | 'kickoff_missing' | 'team_name_not_supported';
+
+/**
+ * Eligibility of a local match for a piece about matches not played yet (PD-ARCH-01E-B), from its local status only:
+ * - `calendar`: any status but `finished`;
+ * - `upcoming` (upcoming matches and previews): `scheduled` or `postponed`; a past kickoff never makes it played;
+ * - both need a kickoff instant and contract-valid team names. A score of a pending match is never shown.
+ */
+export function localFixtureIneligibility(
+  match: LocalMatchValues,
+  kind: 'calendar' | 'upcoming',
+): LocalFixtureIneligibility | null {
+  if (match.status === 'finished') {
+    return 'already_finished';
+  }
+  if (kind === 'upcoming' && match.status !== 'scheduled' && match.status !== 'postponed') {
+    return 'not_upcoming';
+  }
+  if (match.kickoffAt === null) {
+    return 'kickoff_missing';
+  }
+  if (!TeamNameSchema.safeParse(match.homeTeamName).success || !TeamNameSchema.safeParse(match.awayTeamName).success) {
+    return 'team_name_not_supported';
+  }
+  return null;
+}
+
 /**
  * The selection reference of one content generation item: the batch service stores it on the item's project and the
  * local adapter reads it back. Core code still treats it as opaque (AD-21).

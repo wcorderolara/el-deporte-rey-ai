@@ -3,14 +3,15 @@
  * R-320, R-421). Pure functions over an export plan read from the database: no I/O, no clock, no network.
  *
  * - `01.png` to `NN.png`: the stored renders of the exported slide versions, byte for byte, in carousel order.
- * - `caption.txt`: UTF-8 caption, a blank line, the hashtags separated by spaces, and a final line feed.
+ * - `caption.txt`: UTF-8 caption, a blank line, the hashtags separated by spaces, and a final line feed. Present only
+ *   when the final approval covers the caption (an approved caption; PD-ARCH-01E-PD-02).
  * - `manifest.json`: project, carousel, final approval, data mode, `demonstration` flag, the project's source and
  *   every source of the used facts' evidence (IDs and names), and per file its position, element version ID, SHA-256
  *   and fact IDs; each used fact with its effective status. `operatorAttested: true` is present only when a used
  *   fact is MANUALLY_APPROVED; such a fact keeps the status `manually_approved` and is never stated as verified.
  *
  * File positions (`export_files.position`): slides 1 to N in carousel order (the position of the slide trace), the
- * caption N + 1 and the manifest N + 2, so position order is the listing order of AD-17.
+ * caption N + 1 and the manifest N + 2 (N + 1 without a caption), so position order is the listing order of AD-17.
  */
 import { createHash } from 'node:crypto';
 
@@ -170,7 +171,8 @@ export interface ExportPlan {
   readonly sources: readonly ManifestSource[];
   /** In carousel order. */
   readonly slides: readonly PlannedSlide[];
-  readonly caption: PlannedCaption;
+  /** Null when the final approval does not cover the caption (not approved yet). */
+  readonly caption: PlannedCaption | null;
   /** Every fact a version of the set references, by fact ID. */
   readonly facts: readonly ManifestFact[];
 }
@@ -185,12 +187,12 @@ export interface ExportFileContent {
   readonly sha256: string;
 }
 
-/** The manifest of a plan whose slide and caption files are given. */
+/** The manifest of a plan whose slide files and, when the plan has a caption, caption file are given. */
 export function buildManifest(plan: ExportPlan, files: readonly ExportFileContent[]): Manifest {
   const slides = files.filter((file) => file.kind === 'slide_image');
   const caption = files.find((file) => file.kind === 'caption_text');
-  if (slides.length !== plan.slides.length || caption === undefined) {
-    throw new Error('the manifest needs every slide file and the caption file');
+  if (slides.length !== plan.slides.length || (caption === undefined) !== (plan.caption === null)) {
+    throw new Error('the manifest needs every slide file and the caption file of a planned caption');
   }
   const operatorAttested = plan.facts.some((fact) => fact.status === 'manually_approved');
   return ManifestSchema.parse({
@@ -222,26 +224,31 @@ export function buildManifest(plan: ExportPlan, files: readonly ExportFileConten
           factIds: [...slide.factIds],
         };
       }),
-      {
-        position: caption.position,
-        fileName: caption.fileName,
-        kind: 'caption_text',
-        elementId: plan.caption.elementId,
-        elementVersionId: plan.caption.elementVersionId,
-        versionNumber: plan.caption.versionNumber,
-        slideType: null,
-        width: null,
-        height: null,
-        sha256: caption.sha256,
-        factIds: [...plan.caption.factIds],
-      },
+      ...(caption === undefined || plan.caption === null
+        ? []
+        : [
+            {
+              position: caption.position,
+              fileName: caption.fileName,
+              kind: 'caption_text',
+              elementId: plan.caption.elementId,
+              elementVersionId: plan.caption.elementVersionId,
+              versionNumber: plan.caption.versionNumber,
+              slideType: null,
+              width: null,
+              height: null,
+              sha256: caption.sha256,
+              factIds: [...plan.caption.factIds],
+            },
+          ]),
     ],
     facts: plan.facts,
   });
 }
 
 /**
- * The files of an export in writing order: the slides `01.png` to `NN.png` in carousel order, `caption.txt`, then
+ * The files of an export in writing order: the slides `01.png` to `NN.png` in carousel order, `caption.txt` (when
+ * the plan has a caption), then
  * `manifest.json` (which lists the hashes of the others).
  */
 export function exportFiles(plan: ExportPlan): ExportFileContent[] {
@@ -256,18 +263,20 @@ export function exportFiles(plan: ExportPlan): ExportFileContent[] {
     bytes: slide.png,
     sha256: sha256Of(slide.png),
   }));
-  const captionBytes = Buffer.from(captionText(plan.caption.text), 'utf8');
-  files.push({
-    position: plan.slides.length + 1,
-    fileName: CAPTION_FILE_NAME,
-    kind: 'caption_text',
-    elementVersionId: plan.caption.elementVersionId,
-    bytes: captionBytes,
-    sha256: sha256Of(captionBytes),
-  });
+  if (plan.caption !== null) {
+    const captionBytes = Buffer.from(captionText(plan.caption.text), 'utf8');
+    files.push({
+      position: plan.slides.length + 1,
+      fileName: CAPTION_FILE_NAME,
+      kind: 'caption_text',
+      elementVersionId: plan.caption.elementVersionId,
+      bytes: captionBytes,
+      sha256: sha256Of(captionBytes),
+    });
+  }
   const manifestBytes = Buffer.from(`${JSON.stringify(buildManifest(plan, files), null, 2)}\n`, 'utf8');
   files.push({
-    position: plan.slides.length + 2,
+    position: files.length + 1,
     fileName: MANIFEST_FILE_NAME,
     kind: 'manifest',
     elementVersionId: null,

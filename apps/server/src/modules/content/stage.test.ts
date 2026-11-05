@@ -526,9 +526,15 @@ describe('regeneration of one element (R-217)', () => {
     const target = elementOf(db, 'match_result');
     db.db
       .prepare(
-        "INSERT INTO final_approvals (id, carousel_id, version_set, version_set_sha256, approved_at, invalidated_at) VALUES (?, ?, '[]', ?, ?, NULL)",
+        'INSERT INTO final_approvals (id, carousel_id, version_set, version_set_sha256, approved_at, invalidated_at) VALUES (?, ?, ?, ?, ?, NULL)',
       )
-      .run([nextId(), target.carousel_id, 'c'.repeat(64), '2026-10-28T11:00:00.000Z']);
+      .run([
+        nextId(),
+        target.carousel_id,
+        JSON.stringify([target.current_version_id]),
+        'c'.repeat(64),
+        '2026-10-28T11:00:00.000Z',
+      ]);
     const ai = aiProvider('translated-team-name');
     const result = await regenerateElement(
       { ...db.container(ai), aiProvider: ai },
@@ -561,13 +567,27 @@ describe('regeneration of one element (R-217)', () => {
     ).toBeGreaterThan(0);
   });
 
-  it('regenerates the caption and its hashtags', async () => {
+  it('regenerates the caption and its hashtags without invalidating a final approval that leaves it out', async () => {
     const db = await drafted();
     const caption = elementOf(db, 'caption');
+    const cover = elementOf(db, 'cover');
+    // A final approval that does not cover the caption (not approved, PD-ARCH-01E-PD-02) keeps holding.
+    db.db
+      .prepare(
+        'INSERT INTO final_approvals (id, carousel_id, version_set, version_set_sha256, approved_at, invalidated_at) VALUES (?, ?, ?, ?, ?, NULL)',
+      )
+      .run([
+        nextId(),
+        caption.carousel_id,
+        JSON.stringify([cover.current_version_id]),
+        'd'.repeat(64),
+        '2026-10-28T11:00:00.000Z',
+      ]);
     const ai = aiProvider('built-in');
     const result = await regenerateElement(db.container(ai), caption.id, new AbortController().signal, {
       newId: nextId,
     });
+    expect(count(db, 'SELECT COUNT(*) AS n FROM final_approvals WHERE invalidated_at IS NULL')).toBe(1);
     expect(ai.lastRequest?.only).toBeUndefined();
     const text = db.db
       .prepare<{ text: string }>('SELECT text FROM element_versions WHERE id = ?')

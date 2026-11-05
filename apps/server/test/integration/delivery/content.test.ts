@@ -362,7 +362,7 @@ const OFFICIAL_NAMES = (
 ).slice();
 
 describe('content checks at approval (R-207, R-237)', { timeout: WORKFLOW_TEST_TIMEOUT }, () => {
-  it('a caption with an invented score is flagged and cannot be approved; the other elements can (R-207)', async () => {
+  it('a caption with an invented score is flagged and cannot be approved, nor exported; the slides can (R-207)', async () => {
     const t = await demoApp('default', 'invented-score');
     const { project } = await projectWithDraft(t, ligaDemo(1));
     const draft = await draftOf(t, project.id);
@@ -377,11 +377,12 @@ describe('content checks at approval (R-207, R-237)', { timeout: WORKFLOW_TEST_T
       expect(element.currentVersion.contentFlags, String(element.slideType)).toEqual([]);
       await approveOne(t, element);
     }
-    const refused = expectProblem(await finalApprove(t, carousel.id), 409, 'FINAL_APPROVAL_REFUSED');
-    // Only the caption prevents the final approval: it is not approved because it is flagged.
-    expect(new Set(refused.items?.map((item) => item.elementId))).toEqual(new Set([caption.id]));
-    expect(refused.items?.map((item) => item.reason)).toContain('flagged');
-    expectProblem(await exportCarousel(t, carousel.id), 409, 'FINAL_APPROVAL_REQUIRED');
+    // The flagged caption stays unapproved; the carousel is approved and exported without it (PD-ARCH-01E-PD-02), so
+    // the invented score never reaches an export.
+    expect((await finalApprove(t, carousel.id)).statusCode).toBe(200);
+    const written = await exported(t, carousel.id);
+    expect(written.files.some((file) => file.kind === 'caption_text')).toBe(false);
+    expect(written.files.some((file) => file.elementVersionId === caption.currentVersion.id)).toBe(false);
   });
 
   it.each([

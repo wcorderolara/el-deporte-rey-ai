@@ -2,15 +2,14 @@ import type { Element, QaWarningCheck } from '@edr/contracts';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
 import { ApiError } from '../../api/client';
-import { Button, ErrorBanner, formatDateTime, StatusBadge } from '../../ui';
+import { Button, ErrorBanner, StatusBadge } from '../../ui';
 import { BlockingFacts } from './BlockingFacts';
 import { approvalObstacleLabel, contentFlagLabel, elementCopy, textFieldLabel, versionStateLabel } from './copy';
-import { approvalObstacles, elementName, problemFacts } from './model';
+import { approvalObstacles, elementName, isBlockingFailure, needsAcknowledgement, problemFacts } from './model';
 import { QaResults } from './QaResults';
 import { ReviewWorkspace } from './ReviewWorkspace';
 import styles from './Review.module.css';
 import { useReviewDependencies } from './ReviewContext';
-import { TextFields } from './TextFields';
 
 type Action =
   | { kind: 'approve'; advance: boolean }
@@ -40,7 +39,8 @@ export interface ElementReviewProps {
  * One slide or the caption of a carousel (R-215, R-217, R-206, R-208, OD-09): image of the current version, text
  * with provenance labels, review state, blocked facts with their block reasons, content flags, QA results with the
  * acknowledgement of warnings, and the approve, withdraw and regenerate actions. Approval sends the exact version
- * shown (R-406). The server's answer is always shown; a refusal is announced with the facts it names.
+ * shown (R-406). What prevents the approval (blocking facts, content flags, warnings to acknowledge) is shown next to
+ * the actions; there is no technical details section (PD-ARCH-01E-B review). The server's answer is always shown; a refusal is announced with the facts it names.
  */
 export function ElementReview({
   element,
@@ -59,7 +59,6 @@ export function ElementReview({
   const titleId = `${baseId}-title`;
   const obstaclesId = `${baseId}-obstacles`;
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const technicalDetailsRef = useRef<HTMLDetailsElement>(null);
   const focusAfterRegeneration = useRef(false);
   const previousVersionId = useRef(element.currentVersion.id);
 
@@ -67,6 +66,8 @@ export function ElementReview({
   const name = elementName(element);
   const obstacles = approvalObstacles(version);
   const warningCount = version.qa.filter((result) => result.severity === 'warning' && result.outcome === 'fail').length;
+  // Only the QA checks that need the operator: warnings to acknowledge and blocking failures to regenerate.
+  const qaToReview = version.qa.filter((result) => needsAcknowledgement(result) || isBlockingFailure(result));
   const approved = version.state === 'approved';
   const busy = action !== null;
 
@@ -82,7 +83,6 @@ export function ElementReview({
 
   useEffect(() => {
     focusAfterRegeneration.current = false;
-    if (technicalDetailsRef.current !== null) technicalDetailsRef.current.open = false;
     setAction(null);
     setFailure(null);
     setMessage('');
@@ -225,10 +225,35 @@ export function ElementReview({
           ) : null}
         </div>
         {version.blockingFacts.length === 0 ? null : (
-          <div className={styles.blockedPanel}>
+          <section className={styles.blockedPanel} aria-label={`${elementCopy.blockedTitle}: ${name}`}>
             <p className={styles.panelTitle}>{elementCopy.blockedTitle}</p>
             <p>{elementCopy.blockedIntro}</p>
-          </div>
+            <BlockingFacts facts={version.blockingFacts} label={elementCopy.blockedTitle} />
+          </section>
+        )}
+        {approved || version.contentFlags.length === 0 ? null : (
+          <section className={styles.flagPanel} aria-label={`${elementCopy.flagsTitle}: ${name}`}>
+            <p className={styles.panelTitle}>{elementCopy.flagsTitle}</p>
+            <ul className={styles.detailList}>
+              {version.contentFlags.map((flag, index) => (
+                <li key={`${flag.code}-${index}`}>
+                  <strong>{contentFlagLabel[flag.code]}</strong>. {elementCopy.flagField}: {flag.field}.{' '}
+                  {elementCopy.flagExcerpt}: «{flag.excerpt}»
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        {approved || qaToReview.length === 0 ? null : (
+          <section aria-label={`${elementCopy.qaTitle}: ${name}`}>
+            <p className={styles.panelTitle}>{elementCopy.qaTitle}</p>
+            <p className={styles.hint}>{elementCopy.qaIntro}</p>
+            <QaResults
+              results={qaToReview}
+              onAcknowledge={busy ? null : (check) => void run({ kind: 'acknowledge', check })}
+              acknowledging={action?.kind === 'acknowledge' ? action.check : null}
+            />
+          </section>
         )}
         <div className={styles.actions} role="group" aria-label={`${elementCopy.actionsTitle}: ${name}`}>
           {approved ? (
@@ -296,45 +321,6 @@ export function ElementReview({
         <p role="status" aria-live="polite" className={styles.status}>
           {action?.kind === 'regenerate' ? elementCopy.regenerating : message}
         </p>
-        <details ref={technicalDetailsRef} className={styles.technicalDetails}>
-          <summary>{elementCopy.technicalDetails}</summary>
-          <p className={styles.elementMeta}>
-            {elementCopy.version(version.versionNumber)}, {elementCopy.createdAt}{' '}
-            <time dateTime={version.createdAt}>{formatDateTime(version.createdAt)}</time>
-          </p>
-          <section className={styles.technicalFields} aria-label={`${elementCopy.textTitle}: ${name}`}>
-            <TextFields version={version} />
-          </section>
-          {version.blockingFacts.length === 0 ? null : (
-            <section aria-label={`${elementCopy.blockedTitle}: ${name}`}>
-              <BlockingFacts facts={version.blockingFacts} label={elementCopy.blockedTitle} />
-            </section>
-          )}
-          {version.contentFlags.length === 0 ? null : (
-            <section className={styles.flagPanel} aria-label={`${elementCopy.flagsTitle}: ${name}`}>
-              <p className={styles.panelTitle}>{elementCopy.flagsTitle}</p>
-              <ul className={styles.detailList}>
-                {version.contentFlags.map((flag, index) => (
-                  <li key={`${flag.code}-${index}`}>
-                    <strong>{contentFlagLabel[flag.code]}</strong>. {elementCopy.flagField}: {flag.field}.{' '}
-                    {elementCopy.flagExcerpt}: «{flag.excerpt}»
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-          {element.kind === 'slide' || version.qa.length > 0 ? (
-            <section aria-label={`${elementCopy.qaTitle}: ${name}`}>
-              <p className={styles.panelTitle}>{elementCopy.qaTitle}</p>
-              <QaResults
-                results={version.qa}
-                onAcknowledge={busy ? null : (check) => void run({ kind: 'acknowledge', check })}
-                acknowledging={action?.kind === 'acknowledge' ? action.check : null}
-              />
-            </section>
-          ) : null}
-          <p className={styles.hint}>{elementCopy.regenerateHint}</p>
-        </details>
       </section>
     </ReviewWorkspace>
   );

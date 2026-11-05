@@ -26,7 +26,9 @@ import {
   closingText,
   content,
   coverText,
+  fixtureText,
   matchText,
+  overviewText,
   standingsRows,
   standingsText,
   testFonts,
@@ -62,17 +64,28 @@ const ALL_SLIDES: readonly SlideContent[] = [
   content('match_result', matchText(MATCH_A)),
   content('standings', standingsText(standingsRows(12))),
   content('closing', closingText()),
+  // PD-ARCH-01E-B: matches not played yet.
+  content(
+    'round_overview',
+    overviewText([MATCH_A, { ...MATCH_A, home: 'Real Brisamar', away: 'Peñas Sur', factBase: 20 }]),
+  ),
+  content('fixture', fixtureText(MATCH_A, 'fixture', 'postponed')),
+  content('match_preview', fixtureText(MATCH_A, 'match_preview')),
 ];
 
 describe('template registry (OD-13, R-031, R-050)', () => {
-  it('lists the four built-in templates with versions, badge slots and image slots', () => {
+  it('lists the built-in templates with versions, badge slots and image slots (PD-ARCH-01E-B adds three)', () => {
     const list = new TemplateRegistry().list().map(toContractTemplate);
     expect(list.map((template) => [template.id, template.slideType, template.version])).toEqual([
       ['cover', 'cover', '1.0.0'],
       ['match-result', 'match_result', '1.0.0'],
       ['standings', 'standings', '1.0.0'],
       ['closing', 'closing', '1.0.0'],
+      ['round-overview', 'round_overview', '1.0.0'],
+      ['fixture', 'fixture', '1.0.0'],
+      ['match-preview', 'match_preview', '1.0.0'],
     ]);
+    expect(list.find((template) => template.id === 'fixture')?.badgeSlots).toBe(2);
     expect(list.find((template) => template.id === 'match-result')?.badgeSlots).toBe(2);
     expect(list.find((template) => template.id === 'cover')?.imageSlots).toEqual(['brand_logo', 'mascot']);
   });
@@ -348,5 +361,42 @@ describe('R-269: demonstration band', () => {
     const demo = await renderContent({ ...(ALL_SLIDES[3] as SlideContent), demonstration: true }, deps(), '/t');
     const plain = await renderContent({ ...(ALL_SLIDES[3] as SlideContent), demonstration: false }, deps(), '/t');
     expect(demo.sha256).not.toBe(plain.sha256);
+  });
+});
+
+describe('matches not played yet (PD-ARCH-01E-B)', () => {
+  const [overview, fixture, preview] = ALL_SLIDES.slice(4) as [SlideContent, SlideContent, SlideContent];
+
+  it('draws the status, both teams and the kickoff of a fixture and a preview, and never a score', async () => {
+    for (const slide of [fixture, preview]) {
+      const model = (await renderContent(slide, deps(), '/test')).renderModel;
+      expect(texts(model).some((element) => element.field === 'score' || element.semantic === 'score')).toBe(false);
+      expect(textOf(model, 'team-home').text).toBe(MATCH_A.home);
+      expect(textOf(model, 'team-away').text).toBe(MATCH_A.away);
+      expect(texts(model).find((element) => element.field === 'match_status')?.factIds).toEqual([uuid(15)]);
+      const badges = model.elements.filter((element) => element.kind === 'badge_slot');
+      expect(badges.every((badge) => badge.kind === 'badge_slot' && badge.empty)).toBe(true);
+    }
+    const postponed = (await renderContent(fixture, deps(), '/test')).renderModel;
+    expect(texts(postponed).find((element) => element.field === 'match_status')?.text).toBe('Aplazado');
+    const footer = texts((await renderContent(preview, deps(), '/test')).renderModel).find(
+      (element) => element.field === 'footer',
+    );
+    expect(footer?.text).toBe('Liga Sintética · 2026/27');
+  });
+
+  it('draws one round overview line per match, in order, with exact names', async () => {
+    const model = (await renderContent(overview, deps(), '/test')).renderModel;
+    const lines = texts(model).filter((element) => element.semantic === 'fixture_line');
+    expect(lines).toHaveLength(2);
+    expect(lines[0]?.text).toContain(MATCH_A.home);
+    expect(lines[1]?.text).toContain('Real Brisamar');
+    expect(texts(model).some((element) => element.semantic === 'score')).toBe(false);
+  });
+
+  it('renders the same fixture twice to the same PNG', async () => {
+    const first = await renderContent(fixture, deps(), '/test');
+    const second = await renderContent(fixture, deps(), '/test');
+    expect(second.sha256).toBe(first.sha256);
   });
 });

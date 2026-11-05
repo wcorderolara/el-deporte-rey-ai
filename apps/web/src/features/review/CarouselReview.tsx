@@ -611,18 +611,8 @@ export function CarouselReview({
         )}
       </div>
       {caption ? (
-        <section aria-labelledby={`${titleId}-caption`} className={styles.captionSection}>
-          <div className={styles.captionHeading}>
-            <div>
-              <p className={styles.eyebrow}>{carouselCopy.captionEyebrow}</p>
-              <h3 id={`${titleId}-caption`}>{elementCopy.caption}</h3>
-            </div>
-            <StatusBadge
-              label={caption.currentVersion.state === 'approved' ? finalCopy.captionApproved : finalCopy.captionPending}
-              tone={caption.currentVersion.state === 'approved' ? 'positive' : 'neutral'}
-              symbol={caption.currentVersion.state === 'approved' ? '✓' : '•'}
-            />
-          </div>
+        // The caption review carries its own heading and state: no second heading around it.
+        <section aria-label={elementCopy.caption} className={styles.captionSection}>
           <ElementReview key={caption.id} element={caption} onChanged={handleChanged} onRefused={onRefresh} />
         </section>
       ) : null}

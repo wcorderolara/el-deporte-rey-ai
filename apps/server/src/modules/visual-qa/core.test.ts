@@ -28,6 +28,8 @@ import {
   closingText,
   coverText,
   failedChecks,
+  fixtureFacts,
+  fixtureText,
   matchFacts,
   matchText,
   matchTextWith,
@@ -625,5 +627,40 @@ describe('qa_status and limits', () => {
       mismatches: { actual: string }[];
     };
     expect(details.mismatches[0]?.actual).toHaveLength(200);
+  });
+});
+
+describe('matches not played yet (PD-ARCH-01E-B)', () => {
+  it('passes every check on a fixture, a postponed fixture and a preview', () => {
+    for (const [type, status] of [
+      ['fixture', 'scheduled'],
+      ['fixture', 'postponed'],
+      ['match_preview', 'scheduled'],
+    ] as const) {
+      const version = slideVersion(2, type, fixtureText(MATCH_A, type, status));
+      const result = check(version, qaInput([version], fixtureFacts(MATCH_A, status)));
+      expect(failedChecks(result), `${type} ${status}`).toEqual([]);
+    }
+  });
+
+  it('fails a status that differs from the local status of the match', () => {
+    const version = slideVersion(2, 'fixture', fixtureText(MATCH_A, 'fixture', 'scheduled'));
+    const result = check(version, qaInput([version], fixtureFacts(MATCH_A, 'postponed')));
+    expect(failedChecks(result)).toEqual(['data_match']);
+    expect(resultOf(result, 'data_match').details).toEqual({
+      mismatches: [{ elementId: 'match-status', factId: uuid(15), expected: 'Aplazado', actual: 'Programado' }],
+    });
+  });
+
+  it('fails any score drawn on a slide of a match not played yet', () => {
+    const version = withModel(slideVersion(2, 'fixture', fixtureText(MATCH_A)), (model) => {
+      const status = textElement(model, 'match-status');
+      model.elements.push({ ...status, id: 'score', field: 'score', semantic: 'score', text: '1-0', lines: ['1-0'] });
+    });
+    const result = check(version, qaInput([version], fixtureFacts(MATCH_A)));
+    expect(failedChecks(result)).toContain('data_match');
+    expect(resultOf(result, 'data_match').details).toMatchObject({
+      mismatches: expect.arrayContaining([{ elementId: 'score', factId: uuid(15), expected: '', actual: '1-0' }]),
+    });
   });
 });

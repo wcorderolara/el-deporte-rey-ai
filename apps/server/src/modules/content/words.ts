@@ -315,3 +315,93 @@ export const NUMBER_WORD_TABLE_SIZES = Object.freeze({
   englishOrdinals: ENGLISH_ORDINALS.length,
   multipliers: MULTIPLIER_WORDS.length,
 });
+
+/**
+ * Words and phrases that state or predict the result of a match (PD-ARCH-01E-B), in folded form. In content about
+ * matches not played yet they would present a future match as played or forecast an outcome the data does not hold.
+ */
+const RESULT_CLAIM_WORDS: ReadonlySet<string> = new Set([
+  // Spanish: results.
+  'gano',
+  'ganaron',
+  'gana',
+  'ganan',
+  'vencio',
+  'vencieron',
+  'vence',
+  'derroto',
+  'derrotaron',
+  'derrota',
+  'goleo',
+  'golearon',
+  'goleada',
+  'empato',
+  'empataron',
+  'empate',
+  'victoria',
+  'triunfo',
+  'remontada',
+  'remonto',
+  'marcador',
+  'resultado',
+  'perdio',
+  'perdieron',
+  'cayo',
+  'cayeron',
+  // Spanish: predictions.
+  'ganara',
+  'ganaran',
+  'vencera',
+  'perdera',
+  'empataran',
+  'favorito',
+  'favoritos',
+  'pronostico',
+  'pronosticos',
+  'apuesta',
+  'apuestas',
+  'cuota',
+  'cuotas',
+  'probabilidad',
+  'probabilidades',
+  // English: results.
+  'won',
+  'win',
+  'wins',
+  'beat',
+  'beats',
+  'defeated',
+  'defeat',
+  'victory',
+  'drew',
+  'draw',
+  'thrashed',
+  'comeback',
+  'scoreline',
+  'result',
+  'lost',
+  'loses',
+  // English: predictions.
+  'favourite',
+  'favourites',
+  'favorite',
+  'favorites',
+  'prediction',
+  'predictions',
+  'odds',
+  'bet',
+  'bets',
+  'probability',
+  'likely',
+]);
+
+/** The result or prediction words of a text, as written (in order, each once). */
+export function findResultClaims(text: string): string[] {
+  const found: string[] = [];
+  for (const match of text.matchAll(/[\p{L}\p{M}]+/gu)) {
+    if (RESULT_CLAIM_WORDS.has(foldWord(match[0])) && !found.includes(match[0])) {
+      found.push(match[0]);
+    }
+  }
+  return found;
+}

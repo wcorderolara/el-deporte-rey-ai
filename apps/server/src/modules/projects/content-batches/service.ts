@@ -45,7 +45,11 @@ import {
 import type { AppContainer } from '../../../container.js';
 import type { SourceConfig } from '../../../platform/config/index.js';
 import { HttpProblem } from '../../../platform/http/index.js';
-import { localResultIneligibility, localSelectionRef } from '../../../providers/sports/index.js';
+import {
+  localFixtureIneligibility,
+  localResultIneligibility,
+  localSelectionRef,
+} from '../../../providers/sports/index.js';
 import type { WorkflowRunner } from '../../../workflow/index.js';
 import { ImportService, LOCAL_COMPETITIONS_ADAPTER } from '../../imports/index.js';
 import { TemplateRegistry, toContractTemplate } from '../../rendering/index.js';
@@ -59,18 +63,66 @@ import {
   type LocalMatchRecord,
 } from './repository.js';
 
-/** Slide types of the results carousel without standings (the local source provides none). */
-const RESULTS_SLIDE_TYPES = new Set(['cover', 'match_result', 'closing']);
+/** Slide types of each content kind's carousels (the local source provides no standings). */
+const SLIDE_TYPES_OF: Readonly<Record<ContentKind, ReadonlySet<string>>> = {
+  results: new Set(['cover', 'match_result', 'closing']),
+  calendar: new Set(['cover', 'round_overview', 'fixture', 'closing']),
+  upcoming: new Set(['cover', 'fixture', 'closing']),
+  preview: new Set(['cover', 'match_preview', 'closing']),
+};
+
+/** The content kind (carousel structure) of the project of each piece kind. */
+export const CONTENT_KIND_OF: Readonly<Record<ContentPieceKind, ContentKind>> = {
+  round_results: 'results',
+  match_result: 'results',
+  round_calendar: 'calendar',
+  upcoming_matches: 'upcoming',
+  match_preview: 'preview',
+};
+
+/** Content type of a carousel: the content kind of a ready piece. */
+export type ContentKind = 'results' | 'calendar' | 'upcoming' | 'preview';
 
 /** Declared source of the form import that freezes a batch's local values (shown in the import history). */
 const FROZEN_SELECTION_SOURCE = 'Selección local confirmada';
 
-const PIECE_ORDER: readonly ContentPieceKind[] = ['round_results', 'match_result'];
+/** Round pieces first (results, calendar, upcoming), then the per-match pieces (result, preview). */
+const PIECE_ORDER: readonly ContentPieceKind[] = [
+  'round_results',
+  'round_calendar',
+  'upcoming_matches',
+  'match_result',
+  'match_preview',
+];
 
-const TITLES: Readonly<Record<Language, { readonly roundResults: string }>> = {
-  es: { roundResults: 'Resultados' },
-  en: { roundResults: 'Results' },
+const TITLES: Readonly<Record<Language, Readonly<Record<ContentPieceKind, string>>>> = {
+  es: {
+    round_results: 'Resultados',
+    round_calendar: 'Calendario',
+    upcoming_matches: 'Próximos partidos',
+    match_result: 'Resultado',
+    match_preview: 'Previa',
+  },
+  en: {
+    round_results: 'Results',
+    round_calendar: 'Fixtures',
+    upcoming_matches: 'Upcoming matches',
+    match_result: 'Result',
+    match_preview: 'Preview',
+  },
 };
+
+/** The reason a match is not eligible for a piece kind, or null when it is (same rules as the frozen selection). */
+function ineligibilityFor(kind: ContentPieceKind, match: ContentBatchMatch): ContentPieceSkipReason | null {
+  switch (CONTENT_KIND_OF[kind]) {
+    case 'results':
+      return match.ineligibility;
+    case 'calendar':
+      return match.calendarIneligibility;
+    default:
+      return match.upcomingIneligibility;
+  }
+}
 
 function notFound(): HttpProblem {
   return new HttpProblem(404, 'NOT_FOUND', 'The competition, season, stage, round or match is not in the selection.');
@@ -101,6 +153,8 @@ export function matchView(match: LocalMatchRecord): ContentBatchMatch {
     homeScore: match.homeScore,
     awayScore: match.awayScore,
     ineligibility: localResultIneligibility(match),
+    calendarIneligibility: localFixtureIneligibility(match, 'calendar'),
+    upcomingIneligibility: localFixtureIneligibility(match, 'upcoming'),
   };
 }
 
@@ -117,11 +171,12 @@ export function planPieces(
   const skipped = (reason: ContentPieceSkipReason | null): Pick<ContentPiecePlan, 'status' | 'skipReason'> =>
     reason === null ? { status: 'ready', skipReason: null } : { status: 'skipped', skipReason: reason };
   for (const kind of PIECE_ORDER.filter((candidate) => kinds.includes(candidate))) {
-    if (kind === 'round_results') {
-      const eligible = matches.filter((match) => match.ineligibility === null);
+    const label = TITLES[options.language][kind];
+    if (kind === 'round_results' || kind === 'round_calendar' || kind === 'upcoming_matches') {
+      const eligible = matches.filter((match) => ineligibilityFor(kind, match) === null);
       pieces.push({
         kind,
-        title: truncate(`${TITLES[options.language].roundResults} · ${options.roundName}`, 200),
+        title: truncate(`${label} · ${options.roundName}`, 200),
         matchIds: (eligible.length > 0 ? eligible : matches).map((match) => match.matchId),
         ...skipped(
           !options.contextSupported ? 'context_not_supported' : eligible.length === 0 ? 'no_eligible_matches' : null,
@@ -129,11 +184,13 @@ export function planPieces(
       });
     } else {
       for (const match of matches) {
+        const teams = `${match.homeTeamName} - ${match.awayTeamName}`;
         pieces.push({
           kind,
-          title: truncate(`${match.homeTeamName} - ${match.awayTeamName}`, 200),
+          // A per-match result keeps its 01E-A title; a preview names its kind.
+          title: truncate(kind === 'match_preview' ? `${label} · ${teams}` : teams, 200),
           matchIds: [match.matchId],
-          ...skipped(!options.contextSupported ? 'context_not_supported' : match.ineligibility),
+          ...skipped(!options.contextSupported ? 'context_not_supported' : ineligibilityFor(kind, match)),
         });
       }
     }
@@ -266,17 +323,27 @@ export class ContentBatchService {
       competition: { id: `lb-${batchId}`, name: resolved.context.competitionName, areaName: null },
       season: { id: resolved.context.seasonId, label: resolved.context.seasonLabel },
       selections: ready.map((piece) => {
+        const results = CONTENT_KIND_OF[piece.kind] === 'results';
         const matches = piece.matchIds.map((matchId) => {
           const record = resolved.records.get(matchId);
-          if (
-            record === undefined ||
-            record.homeScore === null ||
-            record.awayScore === null ||
-            record.kickoffAt === null
-          ) {
-            throw new Error('a ready piece has a match that is not a result');
+          if (record === undefined || record.kickoffAt === null) {
+            throw new Error('a ready piece has a match without a kickoff');
           }
-          return { ...record, homeScore: record.homeScore, awayScore: record.awayScore, kickoffAt: record.kickoffAt };
+          if (results && (record.status !== 'finished' || record.homeScore === null || record.awayScore === null)) {
+            throw new Error('a ready results piece has a match that is not a result');
+          }
+          if (!results && record.status === 'finished') {
+            throw new Error('a ready piece of matches not played yet has a finished match');
+          }
+          return {
+            ...record,
+            kickoffAt: record.kickoffAt,
+            // Only a finished match has a score; a recorded score of a pending match is never shown.
+            score:
+              results && record.homeScore !== null && record.awayScore !== null
+                ? { home: record.homeScore, away: record.awayScore }
+                : null,
+          };
         });
         const teams = new Map<string, string>();
         for (const match of matches) {
@@ -291,8 +358,8 @@ export class ContentBatchService {
             home: match.homeTeamId,
             away: match.awayTeamId,
             kickoff: match.kickoffAt,
-            status: 'finished',
-            score: { home: match.homeScore, away: match.awayScore },
+            status: match.status === 'in_progress' ? 'in_play' : match.status,
+            score: match.score,
           })),
           standings: null,
         };
@@ -325,10 +392,12 @@ export class ContentBatchService {
     };
   }
 
-  #compatibleTemplates() {
+  /** The current templates of every slide type the selected kinds use. */
+  #compatibleTemplates(kinds: readonly ContentPieceKind[]) {
+    const slideTypes = new Set(kinds.flatMap((kind) => [...SLIDE_TYPES_OF[CONTENT_KIND_OF[kind]]]));
     return this.#templates
       .list()
-      .filter((template) => RESULTS_SLIDE_TYPES.has(template.slideType))
+      .filter((template) => slideTypes.has(template.slideType))
       .map(toContractTemplate);
   }
 
@@ -340,7 +409,7 @@ export class ContentBatchService {
       selectionLabel: resolved.selectionLabel,
       language: resolved.language,
       matches: resolved.matches,
-      templates: this.#compatibleTemplates(),
+      templates: this.#compatibleTemplates(selection.kinds),
       pieces: resolved.pieces,
       totals: { requested: resolved.pieces.length, ready, skipped: resolved.pieces.length - ready },
     };
@@ -426,6 +495,7 @@ export class ContentBatchService {
           standingsExpected: 'not_expected',
           language,
           createdAt: at,
+          contentKind: CONTENT_KIND_OF[piece.kind],
         });
         const run = this.#runner.start(projectId, 'full');
         this.#batches.insertItem(id, {

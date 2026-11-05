@@ -64,6 +64,9 @@ describe('listTemplates', () => {
       ['match-result', '1.0.0', 2],
       ['standings', '1.0.0', 0],
       ['closing', '1.0.0', 0],
+      ['round-overview', '1.0.0', 0],
+      ['fixture', '1.0.0', 2],
+      ['match-preview', '1.0.0', 2],
     ]);
   });
 });

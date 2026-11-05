@@ -219,7 +219,7 @@ export const LeftOutMatchSchema = z.strictObject({
   matchKey: MatchKeySchema,
   label: z.string().max(200),
   status: MatchStatusSchema.nullable(),
-  reason: z.enum(['not_finished', 'not_verified', 'excluded_by_operator']),
+  reason: z.enum(['not_finished', 'not_verified', 'excluded_by_operator', 'already_finished', 'not_upcoming']),
 });
 
 export type FactStatus = z.infer<typeof FactStatusSchema>;

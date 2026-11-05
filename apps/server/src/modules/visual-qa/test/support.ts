@@ -43,7 +43,9 @@ export {
   SELECTION_A,
   closingText,
   coverText,
+  fixtureText,
   matchText,
+  overviewText,
   standingsRows,
   standingsText,
   uuid,
@@ -127,6 +129,17 @@ export function matchFacts(
       { kickoff: match.kickoff },
       modes.kickoff ?? 'verified',
     ),
+  ];
+}
+
+/** The facts a fixture or preview slide of `fixtureText(match)` shows: teams, kickoff and status, no score (PD-ARCH-01E-B). */
+export function fixtureFacts(match: MatchSample, status = 'scheduled'): ContentFact[] {
+  const matchKey = `md-${String(match.factBase)}`;
+  return [
+    teamFact(uuid(match.factBase + 1), match.home),
+    teamFact(uuid(match.factBase + 2), match.away),
+    viewFact(uuid(match.factBase + 4), 'match_kickoff', { matchKey }, { kickoff: match.kickoff }, 'verified'),
+    viewFact(uuid(match.factBase + 5), 'match_status', { matchKey }, { matchStatus: status }, 'verified'),
   ];
 }
 

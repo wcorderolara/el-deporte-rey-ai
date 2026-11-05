@@ -86,9 +86,13 @@ export const DETAIL_LIMITS = Object.freeze({
 const VALUE_SEMANTICS: ReadonlySet<TextElement['semantic']> = new Set([
   'score',
   'kickoff',
+  'match_status',
   'standings_position',
   'standings_cell',
 ]);
+
+/** Slide types of matches not played yet: they never draw a score (PD-ARCH-01E-B). */
+const UNPLAYED_SLIDE_TYPES: ReadonlySet<string> = new Set(['round_overview', 'fixture', 'match_preview']);
 
 /** The AI-written fields of a slide (content module `aiField`). */
 const SLIDE_AI_FIELDS = ['headline', 'description'] as const;
@@ -258,10 +262,18 @@ function sortedUnique(values: Iterable<string>): string[] {
 // ---------------------------------------------------------------------------------------------------------------
 
 /** Display form of a value element's fact for the element's semantic; null when the fact cannot give it. */
-function valueDisplay(semantic: 'score' | 'kickoff', fact: ContentFact | undefined, ctx: QaContext): string | null {
+function valueDisplay(
+  semantic: 'score' | 'kickoff' | 'match_status',
+  fact: ContentFact | undefined,
+  ctx: QaContext,
+): string | null {
   if (semantic === 'score') {
     const score = usableValue(fact, 'match_score');
     return score === null ? null : formatScore(score);
+  }
+  if (semantic === 'match_status') {
+    const status = usableValue(fact, 'match_status');
+    return status === null ? null : templateText(ctx.language).matchStatus[status.matchStatus];
   }
   const kickoff = usableValue(fact, 'match_kickoff');
   return kickoff === null ? null : formatDate(kickoff.kickoff, ctx.language, ctx.settings.utcOffsetMinutes);
@@ -271,8 +283,13 @@ function valueDisplay(semantic: 'score' | 'kickoff', fact: ContentFact | undefin
 function segmentDisplays(fact: ContentFact | undefined, ctx: QaContext): string[] {
   switch (fact?.kind) {
     case 'match_score':
-    case 'match_kickoff': {
-      const display = valueDisplay(fact.kind === 'match_score' ? 'score' : 'kickoff', fact, ctx);
+    case 'match_kickoff':
+    case 'match_status': {
+      const display = valueDisplay(
+        fact.kind === 'match_score' ? 'score' : fact.kind === 'match_kickoff' ? 'kickoff' : 'match_status',
+        fact,
+        ctx,
+      );
       return display === null ? [] : [display];
     }
     case 'standing_row': {
@@ -345,7 +362,11 @@ export function dataMatch(version: VersionToCheck, model: RenderModel, ctx: QaCo
       rows.set(factId, [...(rows.get(factId) ?? []), element]);
       continue;
     }
-    const expected = valueDisplay(element.semantic === 'score' ? 'score' : 'kickoff', ctx.facts.get(factId), ctx);
+    const expected = valueDisplay(
+      element.semantic === 'score' ? 'score' : element.semantic === 'match_status' ? 'match_status' : 'kickoff',
+      ctx.facts.get(factId),
+      ctx,
+    );
     if (expected === null || element.text !== expected) {
       mismatches.add(element.id, factId, expected ?? '', element.text);
     }
@@ -353,6 +374,12 @@ export function dataMatch(version: VersionToCheck, model: RenderModel, ctx: QaCo
   checkStandingsRows(rows, ctx, mismatches);
   if (model.slideType === 'match_result') {
     checkResultTitle(texts, ctx, mismatches);
+  }
+  if (UNPLAYED_SLIDE_TYPES.has(model.slideType)) {
+    // A match not played yet never shows a score, whatever its stored text says.
+    for (const element of texts.filter((candidate) => candidate.semantic === 'score')) {
+      mismatches.add(element.id, element.factIds[0] ?? null, '', element.text);
+    }
   }
 
   // Every fact segment of a template field is drawn by some text element.

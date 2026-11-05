@@ -102,6 +102,9 @@ const COMMITTED = [
   { version: 18, name: 'content_generation_batches_reconcile' },
   { version: 19, name: 'operator_validated_approvals' },
   { version: 20, name: 'project_deletion' },
+  { version: 21, name: 'project_content_kind' },
+  { version: 22, name: 'unplayed_slide_types' },
+  { version: 23, name: 'content_kinds_reconcile' },
 ];
 
 describe('committed migrations', () => {
@@ -143,6 +146,9 @@ describe('committed migrations', () => {
       },
       { version: 19, name: 'operator_validated_approvals', fileName: '0019_operator_validated_approvals.sql' },
       { version: 20, name: 'project_deletion', fileName: '0020_project_deletion.sql' },
+      { version: 21, name: 'project_content_kind', fileName: '0021_project_content_kind.sql' },
+      { version: 22, name: 'unplayed_slide_types', fileName: '0022_unplayed_slide_types.sql' },
+      { version: 23, name: 'content_kinds_reconcile', fileName: '0023_content_kinds_reconcile.sql' },
     ]);
   });
 
@@ -203,8 +209,11 @@ describe('committed migrations', () => {
           { version: 18, name: 'content_generation_batches_reconcile' },
           { version: 19, name: 'operator_validated_approvals' },
           { version: 20, name: 'project_deletion' },
+          { version: 21, name: 'project_content_kind' },
+          { version: 22, name: 'unplayed_slide_types' },
+          { version: 23, name: 'content_kinds_reconcile' },
         ],
-        currentVersion: 20,
+        currentVersion: 23,
       });
       expect(
         db
@@ -257,8 +266,11 @@ describe('committed migrations', () => {
           { version: 18, name: 'content_generation_batches_reconcile' },
           { version: 19, name: 'operator_validated_approvals' },
           { version: 20, name: 'project_deletion' },
+          { version: 21, name: 'project_content_kind' },
+          { version: 22, name: 'unplayed_slide_types' },
+          { version: 23, name: 'content_kinds_reconcile' },
         ],
-        currentVersion: 20,
+        currentVersion: 23,
       });
       expect(JSON.stringify(snapshot())).toBe(before);
       for (const table of [
@@ -308,8 +320,11 @@ CREATE INDEX idx_content_generation_item_matches_match ON content_generation_ite
           { version: 18, name: 'content_generation_batches_reconcile' },
           { version: 19, name: 'operator_validated_approvals' },
           { version: 20, name: 'project_deletion' },
+          { version: 21, name: 'project_content_kind' },
+          { version: 22, name: 'unplayed_slide_types' },
+          { version: 23, name: 'content_kinds_reconcile' },
         ],
-        currentVersion: 20,
+        currentVersion: 23,
       });
       expect(columns(empty.db)).toContain('import_id');
       expect(empty.db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
@@ -331,24 +346,102 @@ CREATE INDEX idx_content_generation_item_matches_match ON content_generation_ite
     }
   });
 
+  it('reconciles a database that applied the draft 0021 and keeps every content generation row (PD-ARCH-01E-B)', () => {
+    const committed = defaultMigrationsDirectory();
+    const draft21 = `ALTER TABLE projects ADD COLUMN content_kind TEXT NOT NULL DEFAULT 'results'
+  CHECK (content_kind IN ('results', 'calendar', 'upcoming', 'preview'));`;
+    const withDraft = migrationDir({
+      ...Object.fromEntries(
+        readMigrations(committed)
+          .filter(({ version }) => version <= 22 && version !== 21)
+          .map(({ fileName }) => [fileName, readFileSync(path.join(committed, fileName), 'utf8')]),
+      ),
+      '0021_project_content_kind.sql': draft21,
+    });
+    const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
+    const draft = openMigratedDatabase({ location, directory: withDraft });
+    const at = FIXED_NOW.toISOString();
+    const item = (id: string, position: number, kind: string, reason: string): void => {
+      draft.db
+        .prepare(
+          'INSERT INTO content_generation_items (id, batch_id, position, kind, title, skip_reason) VALUES (?, ?, ?, ?, ?, ?)',
+        )
+        .run([id, 'b1', position, kind, 'Pieza sintética', reason]);
+    };
+    let before: string;
+    try {
+      expect(draft.report.currentVersion).toBe(22);
+      draft.db.execScript(`
+INSERT INTO sources (id, name, mode, role, official_publication, accepted, independence_group, publication_permission,
+  adapter, first_seen_at, last_seen_at)
+VALUES ('local-a', 'Synthetic local source', 'MANUAL_DATA', 'primary', 0, 0, 'group-a', 'not_applicable', 'manual',
+  '${at}', '${at}');
+INSERT INTO competitions (id, name, created_at, updated_at) VALUES ('c1', 'Liga', '${at}', '${at}');
+INSERT INTO competition_seasons (id, competition_id, label, normalized_label, created_at)
+VALUES ('s1', 'c1', '2026/27', '2026/27', '${at}');
+INSERT INTO imports (id, source_id, channel, file_name, declared_source, competition_id, season_id, original_path,
+  original_sha256, original_bytes, received_at)
+VALUES ('i1', 'local-a', 'form', NULL, NULL, 'c1', 's1', 'imports/i1.json', '${'a'.repeat(64)}', 10, '${at}');
+INSERT INTO content_generation_batches (id, import_id, request_key, request_hash, competition_id, competition_name,
+  season_id, season_label, stage_id, stage_name, round_id, round_name, selection_label, language, created_at)
+VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga', 's1', '2026/27', NULL, NULL, 'r1', 'Jornada 1',
+  'Jornada 1', 'es', '${at}');`);
+      item('it1', 1, 'round_results', 'no_eligible_matches');
+      // The draft 0021 left the item tables refusing the piece kinds of matches not played yet.
+      expect(refusal(() => item('it2', 2, 'round_calendar', 'already_finished'))).toBe('check');
+      before = JSON.stringify(draft.db.prepare('SELECT rowid, * FROM content_generation_items ORDER BY rowid').all());
+    } finally {
+      draft.db.close();
+    }
+
+    const reconciled = openMigratedDatabase({ location, now: () => FIXED_NOW });
+    try {
+      expect(reconciled.report).toEqual({
+        applied: [{ version: 23, name: 'content_kinds_reconcile' }],
+        currentVersion: 23,
+      });
+      expect(
+        JSON.stringify(reconciled.db.prepare('SELECT rowid, * FROM content_generation_items ORDER BY rowid, id').all()),
+      ).toBe(before);
+      for (const [position, kind, reason] of [
+        [2, 'round_calendar', 'already_finished'],
+        [3, 'upcoming_matches', 'not_upcoming'],
+        [4, 'match_preview', 'kickoff_missing'],
+      ] as const) {
+        reconciled.db
+          .prepare(
+            'INSERT INTO content_generation_items (id, batch_id, position, kind, title, skip_reason) VALUES (?, ?, ?, ?, ?, ?)',
+          )
+          .run([`it${String(position)}`, 'b1', position, kind, 'Pieza sintética', reason]);
+      }
+      expect(
+        reconciled.db.prepare("SELECT name FROM sqlite_master WHERE name LIKE 'content_generation_%_new'").all(),
+      ).toEqual([]);
+      expect(reconciled.db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
+      expect(reconciled.db.prepare('PRAGMA integrity_check').all()).toEqual([{ integrity_check: 'ok' }]);
+    } finally {
+      reconciled.db.close();
+    }
+  });
+
   it('apply to a new file database in WAL mode with foreign keys, once', () => {
     const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
     const first = openMigratedDatabase({ location, now: () => FIXED_NOW });
     try {
-      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 20 });
+      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 23 });
       expect(first.db.prepare('PRAGMA journal_mode').get()).toEqual({ journal_mode: 'wal' });
       expect(first.db.prepare('PRAGMA foreign_keys').get()).toEqual({ foreign_keys: 1 });
       expect(appliedMigrations(first.db)).toEqual(
         COMMITTED.map((record) => ({ ...record, appliedAt: '2026-10-27T16:32:21.123Z' })),
       );
-      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 20 });
+      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 23 });
     } finally {
       first.db.close();
     }
 
     const second = openMigratedDatabase({ location });
     try {
-      expect(second.report).toEqual({ applied: [], currentVersion: 20 });
+      expect(second.report).toEqual({ applied: [], currentVersion: 23 });
       expect(tableExists(second.db, 'competition_teams')).toBe(true);
       expect(tableExists(second.db, 'facts')).toBe(true);
       expect(tableExists(second.db, 'competitions')).toBe(true);
@@ -434,8 +527,11 @@ CREATE INDEX idx_content_generation_item_matches_match ON content_generation_ite
           { version: 18, name: 'content_generation_batches_reconcile' },
           { version: 19, name: 'operator_validated_approvals' },
           { version: 20, name: 'project_deletion' },
+          { version: 21, name: 'project_content_kind' },
+          { version: 22, name: 'unplayed_slide_types' },
+          { version: 23, name: 'content_kinds_reconcile' },
         ],
-        currentVersion: 20,
+        currentVersion: 23,
       });
       expect(db.prepare('SELECT competition_id, team_id FROM competition_teams ORDER BY team_id').all()).toEqual([
         { competition_id: 'c1', team_id: 't1' },
@@ -748,6 +844,76 @@ function refusal(action: () => void): string | null {
   return 'accepted';
 }
 
+describe('migrations 0021 and 0022 upgrade a database at version 20 (PD-ARCH-01E-B)', () => {
+  it('adds the content kind and the unplayed slide types and keeps every existing row, rowid and reference', () => {
+    const committed = defaultMigrationsDirectory();
+    const throughTwenty = migrationDir(
+      Object.fromEntries(
+        readMigrations(committed)
+          .filter(({ version }) => version <= 20)
+          .map(({ fileName }) => [fileName, readFileSync(path.join(committed, fileName), 'utf8')]),
+      ),
+    );
+    const onlyFirst = migrationDir({
+      '0001_initial.sql': readFileSync(path.join(committed, '0001_initial.sql'), 'utf8'),
+    });
+    const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
+    const first = openMigratedDatabase({ location, directory: onlyFirst });
+    first.db.transaction(() => first.db.execScript(SEED_VERSION_1));
+    first.db.close();
+    const { db, report } = openMigratedDatabase({ location, directory: throughTwenty });
+    try {
+      expect(report.currentVersion).toBe(20);
+      const snapshot = (): unknown[] => [
+        db.prepare('SELECT rowid, * FROM elements ORDER BY rowid').all(),
+        db.prepare('SELECT rowid, * FROM element_versions ORDER BY rowid').all(),
+        db.prepare('SELECT * FROM qa_results ORDER BY id').all(),
+        db.prepare('SELECT * FROM carousels ORDER BY id').all(),
+      ];
+      const before = JSON.stringify(snapshot());
+      const projectBefore = db.prepare<Record<string, unknown>>('SELECT * FROM projects').all();
+      // Version 20 refuses the slide types of matches not played yet.
+      expect(
+        refusal(() => db.prepare("UPDATE elements SET slide_type = 'fixture' WHERE slide_type = 'cover'").run([])),
+      ).toBe('check');
+
+      expect(runMigrations(db, { now: () => FIXED_NOW })).toEqual({
+        applied: [
+          { version: 21, name: 'project_content_kind' },
+          { version: 22, name: 'unplayed_slide_types' },
+          { version: 23, name: 'content_kinds_reconcile' },
+        ],
+        currentVersion: 23,
+      });
+
+      expect(JSON.stringify(snapshot())).toBe(before);
+      // Existing projects are results projects; every other value is unchanged.
+      // A new statement text: a statement prepared before the migration keeps its former column list.
+      expect(db.prepare<Record<string, unknown>>('SELECT * FROM projects ORDER BY id').all()).toEqual(
+        projectBefore.map((row) => ({ ...row, content_kind: 'results' })),
+      );
+      for (const slideType of ['round_overview', 'fixture', 'match_preview', 'cover']) {
+        db.prepare("UPDATE elements SET slide_type = ? WHERE kind = 'slide'").run([slideType]);
+      }
+      expect(
+        refusal(() => db.prepare("UPDATE elements SET slide_type = 'prediction' WHERE kind = 'slide'").run([])),
+      ).toBe('check');
+      for (const kind of ['calendar', 'upcoming', 'preview', 'results']) {
+        db.prepare('UPDATE projects SET content_kind = ?').run([kind]);
+      }
+      expect(refusal(() => db.prepare("UPDATE projects SET content_kind = 'betting'").run([]))).toBe('check');
+      expect(
+        db.prepare("SELECT name FROM sqlite_master WHERE name LIKE '%_rebuild' OR name LIKE '%_new'").all(),
+      ).toEqual([]);
+      expect(db.prepare("SELECT name FROM sqlite_master WHERE name = 'idx_elements_carousel'").all()).toHaveLength(1);
+      expect(db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
+      expect(db.prepare('PRAGMA integrity_check').all()).toEqual([{ integrity_check: 'ok' }]);
+    } finally {
+      db.close();
+    }
+  });
+});
+
 describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at version 1 (OD-56)', () => {
   const VERSION = '00000000-0000-4000-8000-000000000007';
   const CAPTION_VERSION = '00000000-0000-4000-8000-000000000008';
@@ -792,8 +958,11 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
           { version: 18, name: 'content_generation_batches_reconcile' },
           { version: 19, name: 'operator_validated_approvals' },
           { version: 20, name: 'project_deletion' },
+          { version: 21, name: 'project_content_kind' },
+          { version: 22, name: 'unplayed_slide_types' },
+          { version: 23, name: 'content_kinds_reconcile' },
         ],
-        currentVersion: 20,
+        currentVersion: 23,
       });
 
       expect(db.prepare(QA_RESULT_BYTES).all()).toEqual(bytesBefore);
@@ -828,7 +997,7 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
     // Reopening applies nothing more.
     const reopened = openMigratedDatabase({ location });
     try {
-      expect(reopened.report).toEqual({ applied: [], currentVersion: 20 });
+      expect(reopened.report).toEqual({ applied: [], currentVersion: 23 });
     } finally {
       reopened.db.close();
     }

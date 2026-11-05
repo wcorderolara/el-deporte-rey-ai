@@ -158,7 +158,9 @@ export interface ElementRefusal {
 
 /** Elements of the carousel that prevent its final approval, in carousel order. */
 export function finalApprovalObstacles(carousel: Carousel): ElementRefusal[] {
+  // Only slides: the caption is not required for the final approval (PD-ARCH-01E-PD-02).
   return orderedElements(carousel)
+    .filter((element) => element.kind === 'slide')
     .map((element) => ({ elementId: element.id, name: elementName(element), reasons: finalApprovalReasons(element) }))
     .filter((item) => item.reasons.length > 0);
 }

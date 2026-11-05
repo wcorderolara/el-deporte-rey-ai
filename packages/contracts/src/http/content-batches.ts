@@ -23,15 +23,31 @@ import { FailureSchema } from './system.js';
 export const CONTENT_BATCH_MAX_MATCHES = 32;
 
 /**
- * Piece kinds supported by the existing results carousel: `round_results` is one carousel with every selected
- * finished match of the round; `match_result` is one piece per selected finished match.
+ * Piece kinds. Results (01E-A): `round_results` is one carousel with every selected finished match of the round;
+ * `match_result` is one piece per selected finished match. Matches not played yet (01E-B): `round_calendar` is one
+ * calendar carousel of the round; `upcoming_matches` is one carousel of the selected pending matches;
+ * `match_preview` is one preview piece per selected pending match.
  */
-export const ContentPieceKindSchema = z.enum(['round_results', 'match_result']);
+export const ContentPieceKindSchema = z.enum([
+  'round_results',
+  'match_result',
+  'round_calendar',
+  'upcoming_matches',
+  'match_preview',
+]);
 
 /** Why a selected match cannot be shown as a result (`null/null` is unknown, never 0-0). */
 export const ContentMatchIneligibilitySchema = z.enum([
   'not_finished',
   'score_missing',
+  'kickoff_missing',
+  'team_name_not_supported',
+]);
+
+/** Why a selected match cannot be part of a piece about matches not played yet (PD-ARCH-01E-B). */
+export const ContentFixtureIneligibilitySchema = z.enum([
+  'already_finished',
+  'not_upcoming',
   'kickoff_missing',
   'team_name_not_supported',
 ]);
@@ -44,6 +60,8 @@ export const ContentPieceSkipReasonSchema = z.enum([
   'team_name_not_supported',
   'no_eligible_matches',
   'context_not_supported',
+  'not_upcoming',
+  'already_finished',
 ]);
 
 /** The explicit sports selection of a batch; the stage, when given, must be the round's stage. */
@@ -53,7 +71,7 @@ export const ContentBatchSelectionSchema = z.strictObject({
   stageId: UuidSchema.nullable(),
   roundId: UuidSchema,
   matchIds: uniquePrimitives(z.array(UuidSchema).min(1).max(CONTENT_BATCH_MAX_MATCHES)),
-  kinds: uniquePrimitives(z.array(ContentPieceKindSchema).min(1).max(2)),
+  kinds: uniquePrimitives(z.array(ContentPieceKindSchema).min(1).max(5)),
   language: LanguageSchema.optional(),
 });
 
@@ -83,7 +101,12 @@ export const ContentBatchMatchSchema = z.strictObject({
   status: CompetitionMatchStatusSchema,
   homeScore: z.int().min(0).nullable(),
   awayScore: z.int().min(0).nullable(),
+  /** Eligibility for results pieces (round results, individual result). */
   ineligibility: ContentMatchIneligibilitySchema.nullable(),
+  /** Eligibility for the round calendar (PD-ARCH-01E-B). */
+  calendarIneligibility: ContentFixtureIneligibilitySchema.nullable(),
+  /** Eligibility for upcoming matches and match previews (PD-ARCH-01E-B). */
+  upcomingIneligibility: ContentFixtureIneligibilitySchema.nullable(),
 });
 
 export const ContentPiecePlanSchema = z.strictObject({

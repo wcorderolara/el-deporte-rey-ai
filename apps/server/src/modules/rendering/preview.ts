@@ -137,6 +137,56 @@ export function sampleFields(template_: TemplateDefinition, language: Language, 
     }
     case 'closing':
       return [{ field: 'title', segments: [template(`${text.closingFollow} ${config.brand.handle}`)] }, ...ai];
+    case 'round_overview': {
+      const segments: StoredSegment[] = [];
+      for (let index = 0; index + 1 < SAMPLE_TEAMS.length && index < 8; index += 2) {
+        if (index > 0) {
+          segments.push(template('\n'));
+        }
+        segments.push(fact(SAMPLE_TEAMS[index] ?? '', 200 + index));
+        segments.push(template(` ${text.versus} `));
+        segments.push(fact(SAMPLE_TEAMS[index + 1] ?? '', 201 + index));
+        segments.push(template(' · '));
+        segments.push(fact(formatDate(SAMPLE_KICKOFF, language, config.display.utcOffsetMinutes), 4));
+      }
+      return [
+        {
+          field: 'title',
+          segments: [
+            template(
+              `${text.calendarTitle} · ${stageDisplay(language === 'es' ? 'Fase regular' : 'Regular season', 5, language)}`,
+            ),
+          ],
+        },
+        { field: 'fixtures', segments },
+        ...ai,
+      ];
+    }
+    case 'fixture':
+    case 'match_preview':
+      return [
+        {
+          field: 'title',
+          segments: [
+            template(
+              template_.slideType === 'fixture'
+                ? text.fixtureTitle
+                : `${text.previewTitle} · ${stageDisplay(language === 'es' ? 'Fase regular' : 'Regular season', 5, language)}`,
+            ),
+          ],
+        },
+        { field: 'match_status', segments: [fact(text.matchStatus.scheduled, 5)] },
+        { field: 'team_home', segments: [fact(SAMPLE_TEAMS[0] ?? '', 1)] },
+        { field: 'team_away', segments: [fact(SAMPLE_TEAMS[1] ?? '', 2)] },
+        {
+          field: 'kickoff',
+          segments: [fact(formatDate(SAMPLE_KICKOFF, language, config.display.utcOffsetMinutes), 4)],
+        },
+        ...(template_.slideType === 'match_preview'
+          ? [{ field: 'footer' as const, segments: [template('Liga de Ejemplo · 2026/27')] }]
+          : []),
+        ...ai,
+      ];
   }
 }
 

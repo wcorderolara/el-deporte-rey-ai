@@ -1,7 +1,8 @@
 /**
- * Content generation from a locally managed competition (PD-ARCH-01E-A). A four-step wizard: sports context, content
- * type, matches, and a review of the plan the server computes from the local data, with the compatible templates and
- * the reason of every skipped piece. Nothing is generated until the operator confirms; the confirmation carries one
+ * Content generation from a locally managed competition (PD-ARCH-01E-A, PD-ARCH-01E-B). A four-step wizard: sports
+ * context, content type (results of played matches, or the calendar, upcoming matches and previews of matches not
+ * played yet), matches, and a review of the plan the server computes from the local data, with the compatible
+ * templates and the reason of every skipped piece. The match step adapts its compatibility marks to the chosen types. Nothing is generated until the operator confirms; the confirmation carries one
  * request key, so a double click or a retry returns the same batch. Going back keeps every choice.
  */
 import type { CompetitionMatch, CompetitionRound, ContentBatchSelection, ContentPieceKind } from '@edr/contracts';
@@ -10,7 +11,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import { Alert, Badge, Button, Card, ErrorBanner, LoadingState, Select, formatDateTime } from '../../ui';
-import { generationSteps, matchStatusCopy, pieceKindCopy, scoreText, skipReasonCopy } from './generationCopy';
+import {
+  generationSteps,
+  kindGroups,
+  matchStatusCopy,
+  pieceKindCopy,
+  scoreText,
+  skipReasonCopy,
+} from './generationCopy';
 import { contentBatchPath } from './paths';
 import { useProjectsDependencies } from './ProjectsContext';
 import { useApiRequest } from './useApiRequest';
@@ -53,13 +61,65 @@ export function presetOf(params: URLSearchParams): Preset {
 
 const ALL_STAGES = '';
 const NO_STAGE = 'none';
-const KINDS: readonly ContentPieceKind[] = ['round_results', 'match_result'];
+const KINDS: readonly ContentPieceKind[] = kindGroups.flatMap((group) => group.kinds);
 
 /** Whether the local values can show the match as a result (the server's preview is authoritative). */
 function looksLikeResult(match: CompetitionMatch): boolean {
   return (
     match.status === 'finished' && match.homeScore !== null && match.awayScore !== null && match.kickoffAt !== null
   );
+}
+
+/**
+ * Whether the local values can show the match as not played yet: never a finished match, and for upcoming matches and
+ * previews only a scheduled or postponed one. The status decides, never the date (the server's preview is
+ * authoritative).
+ */
+function looksUnplayed(match: CompetitionMatch, use: 'calendar' | 'upcoming'): boolean {
+  return (
+    match.status !== 'finished' &&
+    (use === 'calendar' || match.status === 'scheduled' || match.status === 'postponed') &&
+    match.kickoffAt !== null
+  );
+}
+
+/** One compatibility mark of a match for each family of chosen content types. */
+interface Compatibility {
+  readonly key: string;
+  readonly compatible: boolean;
+  readonly label: string;
+}
+
+function compatibilityOf(match: CompetitionMatch, kinds: ReadonlySet<ContentPieceKind>): Compatibility[] {
+  const marks: Compatibility[] = [];
+  if (kinds.has('round_results') || kinds.has('match_result')) {
+    const compatible = looksLikeResult(match);
+    marks.push({ key: 'result', compatible, label: compatible ? 'Resultado final' : 'Sin resultado final' });
+  }
+  if (kinds.has('round_calendar')) {
+    const compatible = looksUnplayed(match, 'calendar');
+    marks.push({ key: 'calendar', compatible, label: compatible ? 'Apto para calendario' : 'Fuera del calendario' });
+  }
+  if (kinds.has('upcoming_matches') || kinds.has('match_preview')) {
+    const compatible = looksUnplayed(match, 'upcoming');
+    marks.push({ key: 'upcoming', compatible, label: compatible ? 'Por jugar' : 'No está por jugar' });
+  }
+  return marks;
+}
+
+/** The hint of the match step for the chosen content types. */
+function matchStepHint(kinds: ReadonlySet<ContentPieceKind>): string {
+  if (kinds.size === 1 && kinds.has('match_preview')) {
+    return 'Elige el partido o los partidos de la previa: se prepara una previa por partido.';
+  }
+  const played = kinds.has('round_results') || kinds.has('match_result');
+  const unplayed = kinds.has('round_calendar') || kinds.has('upcoming_matches') || kinds.has('match_preview');
+  if (played && unplayed) {
+    return 'Cada tipo usa solo los partidos compatibles: los resultados, los finalizados; el calendario, los próximos partidos y las previas, los que no han finalizado.';
+  }
+  return unplayed
+    ? 'Los partidos por jugar se eligen por su estado local, nunca por la fecha: un partido finalizado no aparece como próximo.'
+    : 'Solo los partidos finalizados con marcador se publican como resultado.';
 }
 
 function StepIndicator({ step }: { step: number }) {
@@ -415,24 +475,26 @@ export function GenerateContentPage() {
           <h2 id="step-kind-title" className="m-0 text-heading-sm font-bold">
             2. Tipo de contenido
           </h2>
-          <fieldset className="grid gap-2 border-0 p-0">
-            <legend className="mb-2 text-body-sm font-bold text-text-primary">Piezas a preparar</legend>
-            {KINDS.map((kind) => (
-              <label
-                key={kind}
-                className="flex min-h-touch items-start gap-3 rounded-xl border border-border-subtle px-3 py-2 text-text-primary"
-              >
-                <input type="checkbox" checked={kinds.has(kind)} onChange={() => setKinds(toggle(kinds, kind))} />
-                <span>
-                  <strong>{pieceKindCopy[kind].label}</strong>
-                  <small className="block text-text-secondary">{pieceKindCopy[kind].description}</small>
-                </span>
-              </label>
-            ))}
-          </fieldset>
+          {kindGroups.map((group) => (
+            <fieldset key={group.label} className="grid gap-2 border-0 p-0">
+              <legend className="mb-2 text-body-sm font-bold text-text-primary">{group.label}</legend>
+              {group.kinds.map((kind) => (
+                <label
+                  key={kind}
+                  className="flex min-h-touch items-start gap-3 rounded-xl border border-border-subtle px-3 py-2 text-text-primary"
+                >
+                  <input type="checkbox" checked={kinds.has(kind)} onChange={() => setKinds(toggle(kinds, kind))} />
+                  <span>
+                    <strong>{pieceKindCopy[kind].label}</strong>
+                    <small className="block text-text-secondary">{pieceKindCopy[kind].description}</small>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+          ))}
           <p className="m-0 text-body-sm text-text-secondary">
-            Ambos tipos usan el carrusel de resultados existente. El calendario de jornada, los próximos partidos y la
-            previa individual requieren una ampliación del motor de plantillas (PD-ARCH-01E-B).
+            Los partidos por jugar nunca se presentan como jugados: sin marcador, ganador, pronóstico ni alineaciones.
+            Puedes elegir varios tipos a la vez; cada uno se prepara como una pieza propia.
           </p>
         </Card>
       ) : null}
@@ -447,6 +509,21 @@ export function GenerateContentPage() {
               <Button
                 size="sm"
                 variant="secondary"
+                onClick={() =>
+                  setSelected(
+                    new Set(
+                      roundMatches
+                        .filter((match) => compatibilityOf(match, kinds).some((mark) => mark.compatible))
+                        .map((match) => match.id),
+                    ),
+                  )
+                }
+              >
+                Seleccionar compatibles
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
                 onClick={() => setSelected(new Set(roundMatches.map((match) => match.id)))}
               >
                 Seleccionar todos
@@ -456,6 +533,7 @@ export function GenerateContentPage() {
               </Button>
             </div>
           </div>
+          <p className="m-0 text-body-sm text-text-secondary">{matchStepHint(kinds)}</p>
           <fieldset className="grid gap-2 border-0 p-0">
             <legend className="sr-only">Partidos de la jornada</legend>
             {roundMatches.map((match) => (
@@ -477,11 +555,13 @@ export function GenerateContentPage() {
                     {matchStatusCopy[match.status]} · {scoreText(match.homeScore, match.awayScore)}
                   </small>
                 </span>
-                {looksLikeResult(match) ? (
-                  <Badge tone="success">Resultado final</Badge>
-                ) : (
-                  <Badge tone="warning">Sin resultado final</Badge>
-                )}
+                <span className="flex flex-wrap gap-2">
+                  {compatibilityOf(match, kinds).map((mark) => (
+                    <Badge key={mark.key} tone={mark.compatible ? 'success' : 'warning'}>
+                      {mark.label}
+                    </Badge>
+                  ))}
+                </span>
               </label>
             ))}
           </fieldset>

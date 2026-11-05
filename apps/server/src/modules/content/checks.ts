@@ -22,6 +22,8 @@
  *    known alias (source name forms, identity-map aliases, translations, abbreviations) that is not the official
  *    name. Short single-word aliases (four letters or fewer) match only in their own letter case, so that a
  *    three-letter abbreviation does not match an ordinary lower-case word.
+ * 6. `UNPLAYED_RESULT_CLAIM` (content about matches not played yet only, PD-ARCH-01E-B): a word that states or
+ *    predicts a result (won, beat, draw, favourite, odds, ... in Spanish or English; `words.ts`).
  * 5. `FORBIDDEN_CONTENT`: URLs and domain names, e-mail addresses, `@` mentions other than the configured brand
  *    handle, HTML or Markdown control sequences, and text over the field limit (`checkLength`, on the substituted
  *    text).
@@ -35,7 +37,7 @@ import type { ContentFlag } from '@edr/contracts';
 
 import { hashtagFor } from '../../platform/format/index.js';
 
-import { findNumberWords, foldWord } from './words.js';
+import { findNumberWords, findResultClaims, foldWord } from './words.js';
 
 export type FlagCode = ContentFlag['code'];
 
@@ -70,6 +72,11 @@ export interface CheckContext {
   /** The configured brand handle, the only `@` mention allowed. */
   readonly brandHandle: string;
   readonly teams: readonly TeamNameRule[];
+  /**
+   * The content describes matches not played yet (calendar, upcoming matches, preview; PD-ARCH-01E-B): any result or
+   * prediction word is flagged `UNPLAYED_RESULT_CLAIM`. Absent for results carousels.
+   */
+  readonly unplayed?: boolean;
 }
 
 const INVISIBLE = /[\p{Cc}\p{Cf}\p{Cs}\p{Co}]/u;
@@ -375,6 +382,11 @@ export function checkText(
   checkNumbers(field, stripped, flags);
   checkTeamNames(field, stripped, context.teams, flags);
   checkForbidden(field, stripped, context.brandHandle, flags);
+  if (context.unplayed === true) {
+    for (const word of findResultClaims(stripped)) {
+      flags.add('UNPLAYED_RESULT_CLAIM', field, word);
+    }
+  }
   return flags.toArray();
 }
 

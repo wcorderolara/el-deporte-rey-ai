@@ -3401,7 +3401,7 @@ components:
       properties:
         batchId: { $ref: '#/components/schemas/Uuid' }
         itemId: { $ref: '#/components/schemas/Uuid' }
-        kind: { type: string, enum: [round_results, match_result] }
+        kind: { type: string, enum: [round_results, match_result, round_calendar, upcoming_matches, match_preview] }
         competitionId: { $ref: '#/components/schemas/Uuid' }
         competitionName: { $ref: '#/components/schemas/DisplayName' }
         seasonId: { $ref: '#/components/schemas/Uuid' }
@@ -3422,7 +3422,7 @@ components:
         stageId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
         roundId: { $ref: '#/components/schemas/Uuid' }
         matchIds: { type: array, minItems: 1, maxItems: 32, uniqueItems: true, items: { $ref: '#/components/schemas/Uuid' } }
-        kinds: { type: array, minItems: 1, maxItems: 2, uniqueItems: true, items: { type: string, enum: [round_results, match_result] } }
+        kinds: { type: array, minItems: 1, maxItems: 5, uniqueItems: true, items: { type: string, enum: [round_results, match_result, round_calendar, upcoming_matches, match_preview] } }
         language: { $ref: '#/components/schemas/Language' }
     ContentBatchCreate:
       type: object
@@ -3447,7 +3447,7 @@ components:
     ContentBatchMatch:
       description: Selected match with its current effective local values; null/null scores are unknown, never 0-0.
       type: object
-      required: [matchId, homeTeamName, awayTeamName, kickoffAt, status, homeScore, awayScore, ineligibility]
+      required: [matchId, homeTeamName, awayTeamName, kickoffAt, status, homeScore, awayScore, ineligibility, calendarIneligibility, upcomingIneligibility]
       additionalProperties: false
       properties:
         matchId: { $ref: '#/components/schemas/Uuid' }
@@ -3458,17 +3458,19 @@ components:
         homeScore: { anyOf: [{ type: integer, minimum: 0 }, { type: 'null' }] }
         awayScore: { anyOf: [{ type: integer, minimum: 0 }, { type: 'null' }] }
         ineligibility: { anyOf: [{ type: string, enum: [not_finished, score_missing, kickoff_missing, team_name_not_supported] }, { type: 'null' }] }
+        calendarIneligibility: { anyOf: [{ type: string, enum: [already_finished, not_upcoming, kickoff_missing, team_name_not_supported] }, { type: 'null' }] }
+        upcomingIneligibility: { anyOf: [{ type: string, enum: [already_finished, not_upcoming, kickoff_missing, team_name_not_supported] }, { type: 'null' }] }
     ContentPiecePlan:
       type: object
       required: [position, kind, title, matchIds, status, skipReason]
       additionalProperties: false
       properties:
         position: { type: integer, minimum: 1 }
-        kind: { type: string, enum: [round_results, match_result] }
+        kind: { type: string, enum: [round_results, match_result, round_calendar, upcoming_matches, match_preview] }
         title: { type: string, minLength: 1, maxLength: 200 }
         matchIds: { type: array, maxItems: 32, items: { $ref: '#/components/schemas/Uuid' } }
         status: { type: string, enum: [ready, skipped] }
-        skipReason: { anyOf: [{ type: string, enum: [not_finished, score_missing, kickoff_missing, team_name_not_supported, no_eligible_matches, context_not_supported] }, { type: 'null' }] }
+        skipReason: { anyOf: [{ type: string, enum: [not_finished, score_missing, kickoff_missing, team_name_not_supported, no_eligible_matches, context_not_supported, not_upcoming, already_finished] }, { type: 'null' }] }
     ContentBatchPreview:
       type: object
       required: [context, selectionLabel, language, matches, templates, pieces, totals]
@@ -3495,11 +3497,11 @@ components:
       properties:
         id: { $ref: '#/components/schemas/Uuid' }
         position: { type: integer, minimum: 1 }
-        kind: { type: string, enum: [round_results, match_result] }
+        kind: { type: string, enum: [round_results, match_result, round_calendar, upcoming_matches, match_preview] }
         title: { type: string, minLength: 1, maxLength: 200 }
         matchIds: { type: array, maxItems: 32, items: { $ref: '#/components/schemas/Uuid' } }
         status: { type: string, enum: [skipped, pending, running, completed, failed, deleted] }
-        skipReason: { anyOf: [{ type: string, enum: [not_finished, score_missing, kickoff_missing, team_name_not_supported, no_eligible_matches, context_not_supported] }, { type: 'null' }] }
+        skipReason: { anyOf: [{ type: string, enum: [not_finished, score_missing, kickoff_missing, team_name_not_supported, no_eligible_matches, context_not_supported, not_upcoming, already_finished] }, { type: 'null' }] }
         failure: { anyOf: [{ $ref: '#/components/schemas/Failure' }, { type: 'null' }] }
         projectId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
         runId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
@@ -3806,7 +3808,7 @@ components:
           oneOf:
             - $ref: '#/components/schemas/MatchStatus'
             - type: 'null'
-        reason: { type: string, enum: [not_finished, not_verified, excluded_by_operator] }
+        reason: { type: string, enum: [not_finished, not_verified, excluded_by_operator, already_finished, not_upcoming] }
     Draft:
       type: object
       required: [id, projectId, runId, factsRunId, language, dataMode, demonstration, standingsIncluded, createdAt, excludedMatchKeys, leftOutMatches, carousels]
@@ -3855,7 +3857,7 @@ components:
         carouselId: { $ref: '#/components/schemas/Uuid' }
         kind: { type: string, enum: [slide, caption] }
         position: { type: integer }
-        slideType: { type: [string, 'null'], enum: [cover, match_result, standings, closing, null] }
+        slideType: { type: [string, 'null'], enum: [cover, match_result, standings, closing, round_overview, fixture, match_preview, null] }
         currentVersion: { $ref: '#/components/schemas/ElementVersion' }
     ElementVersion:
       type: object
@@ -3887,7 +3889,7 @@ components:
       required: [field, segments]
       additionalProperties: false
       properties:
-        field: { type: string, enum: [headline, description, caption, hashtags, title, score, team_home, team_away, kickoff, standings, footer, demo_label] }
+        field: { type: string, enum: [headline, description, caption, hashtags, title, score, team_home, team_away, kickoff, standings, footer, demo_label, match_status, fixtures] }
         segments:
           type: array
           items:
@@ -3910,7 +3912,7 @@ components:
       required: [code, field, excerpt]
       additionalProperties: false
       properties:
-        code: { type: string, enum: [UNKNOWN_FACT_REFERENCE, UNVERIFIED_NUMBER, NON_OFFICIAL_TEAM_NAME, FORBIDDEN_CONTENT] }
+        code: { type: string, enum: [UNKNOWN_FACT_REFERENCE, UNVERIFIED_NUMBER, NON_OFFICIAL_TEAM_NAME, FORBIDDEN_CONTENT, UNPLAYED_RESULT_CLAIM] }
         field: { type: string, maxLength: 40 }
         excerpt: { type: string, maxLength: 120 }
     QaResult:
@@ -4362,7 +4364,7 @@ components:
       properties:
         id: { $ref: '#/components/schemas/Slug' }
         version: { type: string, maxLength: 32 }
-        slideType: { type: string, enum: [cover, match_result, standings, closing] }
+        slideType: { type: string, enum: [cover, match_result, standings, closing, round_overview, fixture, match_preview] }
         label: { type: string }
         badgeSlots: { type: integer, description: 'Reserved badge slots; empty while no authorized badge exists (R-050)' }
         imageSlots:

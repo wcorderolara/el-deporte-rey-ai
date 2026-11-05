@@ -292,3 +292,40 @@ describe('flag excerpts', () => {
     }
   });
 });
+
+describe('matches not played yet (UNPLAYED_RESULT_CLAIM, PD-ARCH-01E-B)', () => {
+  const UNPLAYED: CheckContext = { ...CONTEXT, unplayed: true };
+
+  function unplayedCodes(text: string): string[] {
+    return checkText('description', text, NONE, UNPLAYED).map((flag) => flag.code);
+  }
+
+  it('flags result and prediction words in Spanish and English, accented or not', () => {
+    for (const text of [
+      'Real Brisamar ganó el partido',
+      'Real Brisamar gano el partido',
+      'Un empate en casa',
+      'El favorito de la jornada',
+      'Pronóstico reservado',
+      'Real Brisamar won at home',
+      'The odds favour the visitors',
+      'A likely comeback',
+    ]) {
+      expect(unplayedCodes(text), text).toContain('UNPLAYED_RESULT_CLAIM');
+    }
+  });
+
+  it('reports each word once with its excerpt and accepts neutral commentary', () => {
+    const flags = checkText('description', 'Victoria y otra victoria', NONE, UNPLAYED).filter(
+      (flag) => flag.code === 'UNPLAYED_RESULT_CLAIM',
+    );
+    expect(flags.map((flag) => flag.excerpt)).toEqual(['Victoria', 'victoria']);
+    expect(unplayedCodes('Partido programado de la jornada. Real Brisamar recibe a Atlético Río Ébano')).toEqual([]);
+    expect(unplayedCodes('Match day ahead for Real Brisamar')).toEqual([]);
+  });
+
+  it('does not apply to results carousels', () => {
+    expect(codes('Real Brisamar ganó el partido')).toEqual([]);
+    expect(checkText('description', 'Real Brisamar won', NONE, { ...CONTEXT, unplayed: false })).toEqual([]);
+  });
+});

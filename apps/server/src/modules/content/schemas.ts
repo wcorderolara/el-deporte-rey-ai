@@ -177,6 +177,9 @@ export type ElementVersionContent = z.infer<typeof ElementVersionContentSchema>;
 /** Brand handle pattern of the configuration and of the AI port. */
 const BrandHandleSchema = z.string().regex(/^@[A-Za-z0-9._]{1,30}$/);
 
+/** Content kinds (`structure.ts`): the results carousel and the kinds of matches not played yet. */
+export const ContentKindSchema = z.enum(['results', 'calendar', 'upcoming', 'preview']);
+
 export const ContentInputSchema = z.strictObject({
   projectId: UuidSchema,
   runId: UuidSchema,
@@ -188,6 +191,8 @@ export const ContentInputSchema = z.strictObject({
   seasonLabel: DisplayNameSchema,
   stageLabel: StageNameSchema,
   matchday: z.int().min(1).nullable(),
+  /** The structure of the project's carousels (PD-ARCH-01E-B). */
+  contentKind: ContentKindSchema,
   brand: z.strictObject({ name: z.string().min(1).max(80), handle: BrandHandleSchema }),
   utcOffsetMinutes: z.int(),
   maxSlidesPerCarousel: z.int().min(3).max(100),

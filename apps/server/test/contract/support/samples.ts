@@ -118,6 +118,8 @@ const contentBatchMatch = {
   homeScore: 2,
   awayScore: 1,
   ineligibility: null,
+  calendarIneligibility: 'already_finished',
+  upcomingIneligibility: 'already_finished',
 };
 const contentPiecePlan = {
   position: 1,

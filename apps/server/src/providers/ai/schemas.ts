@@ -20,7 +20,16 @@ import { AiProviderError } from './errors.js';
 export const DRAFT_LANGUAGES = ['es', 'en'] as const;
 export type DraftLanguage = (typeof DRAFT_LANGUAGES)[number];
 
-export const SLIDE_TYPES = ['cover', 'match_result', 'standings', 'closing'] as const;
+/** `round_overview`, `fixture` and `match_preview` describe matches not played yet (PD-ARCH-01E-B). */
+export const SLIDE_TYPES = [
+  'cover',
+  'match_result',
+  'standings',
+  'closing',
+  'round_overview',
+  'fixture',
+  'match_preview',
+] as const;
 export type SlideType = (typeof SLIDE_TYPES)[number];
 
 export interface DraftFact {

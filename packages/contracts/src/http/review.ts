@@ -97,7 +97,14 @@ export const QaResultSchema = z.discriminatedUnion('check', [
 ]);
 
 export const ContentFlagSchema = z.strictObject({
-  code: z.enum(['UNKNOWN_FACT_REFERENCE', 'UNVERIFIED_NUMBER', 'NON_OFFICIAL_TEAM_NAME', 'FORBIDDEN_CONTENT']),
+  /** `UNPLAYED_RESULT_CLAIM`: text that states or predicts a result of a match not played yet (PD-ARCH-01E-B). */
+  code: z.enum([
+    'UNKNOWN_FACT_REFERENCE',
+    'UNVERIFIED_NUMBER',
+    'NON_OFFICIAL_TEAM_NAME',
+    'FORBIDDEN_CONTENT',
+    'UNPLAYED_RESULT_CLAIM',
+  ]),
   field: z.string().max(40),
   excerpt: z.string().max(120),
 });
@@ -115,6 +122,8 @@ export const TextFieldNameSchema = z.enum([
   'standings',
   'footer',
   'demo_label',
+  'match_status',
+  'fixtures',
 ]);
 
 export const SegmentProvenanceSchema = z.enum(['fact', 'commentary', 'template_text']);
@@ -153,7 +162,16 @@ export const ElementVersionSchema = z.strictObject({
 
 export const ElementKindSchema = z.enum(['slide', 'caption']);
 
-export const SlideTypeSchema = z.enum(['cover', 'match_result', 'standings', 'closing']);
+/** `round_overview`, `fixture` and `match_preview` describe matches not played yet (PD-ARCH-01E-B). */
+export const SlideTypeSchema = z.enum([
+  'cover',
+  'match_result',
+  'standings',
+  'closing',
+  'round_overview',
+  'fixture',
+  'match_preview',
+]);
 
 export const ElementSchema = z.strictObject({
   id: UuidSchema,

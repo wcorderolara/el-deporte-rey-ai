@@ -44,6 +44,8 @@ export interface NewProject {
   readonly standingsExpected: ProjectRecord['standingsExpected'];
   readonly language: ProjectRecord['language'];
   readonly createdAt: string;
+  /** The structure of the project's carousels (PD-ARCH-01E-B); `results` when absent. */
+  readonly contentKind?: 'results' | 'calendar' | 'upcoming' | 'preview';
 }
 
 /** Draft-related state of a project (`activeDraftId`, `approvalState`, `lastExportAt`). */
@@ -85,8 +87,8 @@ const SQL = {
     'adapter = excluded.adapter, last_seen_at = excluded.last_seen_at',
   insertProject:
     'INSERT INTO projects (id, competition_id, competition_name, source_id, data_mode, season_id, season_label, ' +
-    'stage_id, stage_label, matchday, selection_ref, standings_expected, language, created_at, updated_at) ' +
-    'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'stage_id, stage_label, matchday, selection_ref, standings_expected, language, created_at, updated_at, ' +
+    'content_kind) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
   project: `${PROJECT_SELECT} WHERE p.id = ? AND p.deleted_at IS NULL`,
   projects: `${PROJECT_SELECT} WHERE p.deleted_at IS NULL ORDER BY p.created_at DESC, p.rowid DESC`,
   exists: 'SELECT 1 AS found FROM projects WHERE id = ? AND deleted_at IS NULL',
@@ -186,6 +188,7 @@ export class ProjectRepository {
         project.language,
         project.createdAt,
         project.createdAt,
+        project.contentKind ?? 'results',
       ]);
   }
 

@@ -86,6 +86,8 @@ export const leftOutReasonLabel: Record<LeftOutMatch['reason'], string> = {
   not_finished: 'El partido no ha finalizado.',
   not_verified: 'Los datos del partido no tienen un valor utilizable.',
   excluded_by_operator: 'Excluido por el operador.',
+  already_finished: 'El partido ya finalizó; no es un partido por jugar.',
+  not_upcoming: 'El estado del partido no es programado ni aplazado.',
 };
 
 export const exclusionsCopy = {
@@ -149,7 +151,6 @@ export const carouselCopy = {
   noNextPending: 'No quedan diapositivas pendientes. Revise el copy o continúe con la aprobación final.',
   bulkDialogLabel: 'Confirmar aprobación de diapositivas',
   finalAction: 'Aprobar carrusel completo',
-  captionEyebrow: 'TEXTO DE PUBLICACIÓN',
 } as const;
 
 export const slideTypeLabel: Record<SlideType, string> = {
@@ -157,6 +158,9 @@ export const slideTypeLabel: Record<SlideType, string> = {
   match_result: 'Resultado',
   standings: 'Clasificación',
   closing: 'Cierre',
+  round_overview: 'Resumen de jornada',
+  fixture: 'Partido programado',
+  match_preview: 'Información del encuentro',
 };
 
 export const elementCopy = {
@@ -166,7 +170,6 @@ export const elementCopy = {
   slideEyebrow: 'DIAPOSITIVA DEL CARRUSEL',
   captionEyebrow: 'COPY PARA PUBLICACIÓN',
   captionReadable: 'Texto de publicación y hashtags',
-  technicalDetails: 'Detalles y verificaciones',
   approveSlide: 'Aprobar diapositiva',
   approveAndNext: 'Aprobar y siguiente',
   approveCaption: 'Aprobar copy',
@@ -177,12 +180,9 @@ export const elementCopy = {
     count === 1 ? 'Hay una advertencia del control visual.' : `Hay ${count} advertencias del control visual.`,
   regenerateLabel: (kind: 'slide' | 'caption'): string =>
     kind === 'slide' ? 'Regenerar diapositiva' : 'Regenerar copy',
-  version: (number: number): string => `Versión ${number}`,
-  createdAt: 'creada',
   imageAlt: (name: string, version: number): string => `Imagen de ${name}, versión ${version}`,
   noImage: 'Imagen todavía no disponible.',
   dimensions: (width: number, height: number): string => `${width} × ${height} px`,
-  textTitle: 'Texto',
   noText: 'Sin texto.',
   blocked: 'Bloqueada',
   blockedTitle: 'Datos que bloquean la aprobación',
@@ -191,6 +191,8 @@ export const elementCopy = {
   flagField: 'Campo',
   flagExcerpt: 'Fragmento',
   qaTitle: 'Control visual',
+  qaIntro:
+    'El control visual revisa la imagen y el texto generados. Confirma cada advertencia para poder aprobar; un fallo bloqueante se resuelve regenerando.',
   qaNone: 'Sin resultados del control visual para esta versión.',
   actionsTitle: 'Acciones',
   reviewPanel: 'Estado y acciones',
@@ -205,8 +207,6 @@ export const elementCopy = {
   regenerated: (version: number): string =>
     `Se creó la versión ${version}. Pasa de nuevo por el control visual y necesita una aprobación nueva.`,
   acknowledged: 'Advertencia confirmada.',
-  regenerateHint:
-    'Regenerar crea una versión nueva solo de este elemento; los demás conservan su versión y aprobación.',
   cannotApprove: 'Todavía no se puede aprobar:',
   approveError: 'No se pudo aprobar',
   withdrawError: 'No se pudo retirar la aprobación',
@@ -248,6 +248,8 @@ export const textFieldLabel: Record<TextFieldName, string> = {
   standings: 'Clasificación',
   footer: 'Pie',
   demo_label: 'Etiqueta de demostración',
+  match_status: 'Estado del partido',
+  fixtures: 'Partidos',
 };
 
 export const contentFlagLabel: Record<ContentFlag['code'], string> = {
@@ -255,6 +257,7 @@ export const contentFlagLabel: Record<ContentFlag['code'], string> = {
   UNVERIFIED_NUMBER: 'Número o cantidad que no viene de un dato',
   NON_OFFICIAL_TEAM_NAME: 'Nombre de equipo no oficial',
   FORBIDDEN_CONTENT: 'Contenido no permitido',
+  UNPLAYED_RESULT_CLAIM: 'Presenta como jugado un partido que aún no se ha jugado',
 };
 
 export const factKindLabel: Record<FactKind, string> = {
@@ -316,8 +319,9 @@ export const qaCopy = {
 export const finalCopy = {
   title: 'Aprobación final',
   slideProgress: (approved: number, total: number): string => `${approved} de ${total} diapositivas aprobadas`,
-  captionApproved: 'Copy aprobado',
-  captionPending: 'Copy pendiente de aprobación',
+  captionApproved: 'Copy aprobado: la descarga incluye el texto de publicación.',
+  captionPending:
+    'Copy sin aprobar: puedes descargar las diapositivas ahora; el texto de publicación se incluye cuando apruebes el copy y vuelvas a aprobar el carrusel.',
   pendingDetails: 'Ver elementos pendientes y motivos',
   approve: carouselCopy.finalAction,
   approving: 'Registrando la aprobación final…',
@@ -326,7 +330,7 @@ export const finalCopy = {
   goToExports: 'Historial de exportaciones',
   invalid:
     'La aprobación final anterior ya no es válida porque el contenido cambió. Revise los elementos y vuelva a dar la aprobación final.',
-  ready: 'Todos los elementos están aprobados y ninguno está bloqueado.',
+  ready: 'Todas las diapositivas están aprobadas y ninguna está bloqueada.',
   notReady: 'La aprobación final no está disponible todavía:',
   notReadyUnknown: 'El carrusel todavía no está listo para la aprobación final. Actualice la vista.',
   exportNeedsApproval: 'La exportación necesita una aprobación final válida.',

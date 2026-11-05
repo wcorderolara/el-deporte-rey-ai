@@ -123,7 +123,7 @@ describe('Review page: demonstration label and data mode (R-269, OD-21)', () => 
 });
 
 describe('Review workspace navigation and hierarchy', () => {
-  it('keeps one primary title, functional breadcrumbs, and technical details collapsed by default', async () => {
+  it('keeps one primary title, functional breadcrumbs, and no technical details section', async () => {
     const server = fakeServer({ [DRAFT_PATH]: draftResponse() });
     renderApp(REVIEW, server);
     await screen.findByRole('heading', { level: 1, name: 'Revisión del contenido' });
@@ -131,7 +131,7 @@ describe('Review workspace navigation and hierarchy', () => {
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toBeTruthy();
     const slideCard = screen.getByRole('article', { name: 'Diapositiva 1: Portada' });
-    expect(within(slideCard).getByText('Detalles y verificaciones').closest('details')?.open).toBe(false);
+    expect(within(slideCard).queryByText('Detalles y verificaciones')).toBeNull();
   });
 
   it('shows a useful empty state when the draft has no carousels', async () => {
@@ -297,8 +297,7 @@ describe('Review page: preview in carousel order (R-215)', () => {
     const selectedSlide = screen.getByRole('article', { name: 'Diapositiva 1: Portada' });
     const image = within(selectedSlide).getByRole('img', { name: 'Imagen de Diapositiva 1: Portada, versión 1' });
     expect(image.getAttribute('src')).toBe(`${API}/element-versions/${versionId(1)}/image`);
-    await userEvent.click(within(selectedSlide).getByText('Detalles y verificaciones'));
-    expect(within(selectedSlide).getByText('Detalles y verificaciones').closest('details')?.open).toBe(true);
+    expect(within(selectedSlide).queryByText('Detalles y verificaciones')).toBeNull();
 
     const captionCard = screen.getByRole('article', { name: 'Texto de publicación y hashtags' });
     expect(captionCard.textContent).toContain('Texto de publicación de prueba con');
@@ -310,8 +309,7 @@ describe('Review page: preview in carousel order (R-215)', () => {
     expect(screen.getByRole('heading', { level: 3, name: 'Diapositiva 2: Resultado' })).toBeTruthy();
     expect(secondSlide.getAttribute('aria-current')).toBe('true');
     expect(document.activeElement).toBe(secondSlide);
-    const nextSlide = screen.getByRole('article', { name: 'Diapositiva 2: Resultado' });
-    expect(within(nextSlide).getByText('Detalles y verificaciones').closest('details')?.open).toBe(false);
+    expect(screen.getByRole('article', { name: 'Diapositiva 2: Resultado' })).toBeTruthy();
   });
 
   it('shows numbered carousels in sequence order (OD-03)', async () => {
@@ -350,8 +348,8 @@ describe('Review page: preview in carousel order (R-215)', () => {
   });
 });
 
-describe('Review page: provenance of every text segment (R-208, OD-01, R-071, OD-28)', () => {
-  it('labels verified facts, unverified facts with their reason, operator-attested facts, commentary and template text', async () => {
+describe('Review page: operator-attested facts (R-071, OD-28)', () => {
+  it('says in the draft summary that manually approved facts are operator-attested, never verified', async () => {
     const element = slide(2, 1, 'match_result', {
       blocked: true,
       blockingFacts: [
@@ -378,26 +376,11 @@ describe('Review page: provenance of every text segment (R-208, OD-01, R-071, OD
     renderApp(REVIEW, server);
     await waitForDraft();
 
+    // The per-segment provenance is no longer listed in the review (PD-ARCH-01E-B review); the exported manifest and
+    // the trace keep it. The slide never calls an unverified or manually approved value verified.
     const slideCard = screen.getByRole('article', { name: 'Diapositiva 1: Resultado' });
-    await userEvent.click(within(slideCard).getByText('Detalles y verificaciones'));
-    const text = screen.getByRole('region', { name: 'Texto: Diapositiva 1: Resultado' });
-    const items = within(text).getAllByRole('listitem');
-    const labelOf = (fragment: string): string => {
-      const item = items.find((candidate) => candidate.textContent?.startsWith(fragment));
-      if (item === undefined) {
-        throw new Error(`missing segment ${fragment}`);
-      }
-      return item.textContent ?? '';
-    };
-    expect(labelOf('2-1')).toContain('Dato: verificado');
-    expect(labelOf('25 oct 2026')).toContain('Dato: sin verificar');
-    expect(labelOf('25 oct 2026')).toContain('pendiente de verificación independiente');
-    expect(labelOf('25 oct 2026')).not.toContain('Dato: verificado');
-    expect(labelOf('Atlético Demo')).toContain('Dato: aprobado manualmente');
-    expect(labelOf('Atlético Demo')).toContain('atestiguado por el operador');
-    expect(labelOf('Atlético Demo')).not.toContain('Dato: verificado');
-    expect(labelOf('Partido intenso')).toContain('Comentario');
-    expect(labelOf('Jornada')).toContain('Texto de plantilla');
+    expect(within(slideCard).queryByText('Detalles y verificaciones')).toBeNull();
+    expect(slideCard.textContent).not.toContain('Dato: verificado');
 
     // The draft uses a MANUALLY_APPROVED fact: the summary says so, never calling it verified (OD-28).
     const summary = screen.getByRole('region', { name: 'Borrador' });
