@@ -4,7 +4,7 @@
  */
 import { cleanup, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   fakeServer,
@@ -82,12 +82,61 @@ describe('Project detail: selection and links (R-200, R-269)', () => {
     expect(screen.getByRole('link', { name: 'Revisar contenido' }).getAttribute('href')).toBe(
       `/projects/${PROJECT_ID}/review`,
     );
-    expect(screen.getByRole('link', { name: 'Ver exportaciones' }).getAttribute('href')).toBe(
-      `/projects/${PROJECT_ID}/exports`,
-    );
+    // PD-ARCH-01F: no separate exports page; the history is a collapsed section requested only when opened.
+    expect(screen.queryByRole('link', { name: 'Ver exportaciones' })).toBeNull();
+    expect(screen.getByText('Historial de exportaciones')).toBeTruthy();
+    expect(server.unexpected).toEqual([]);
   });
 
-  it('offers direct download of the newest saved export when no active draft remains', async () => {
+  it('offers the download of the selected approved carousel, reusing its current export', async () => {
+    const base = activeDraft();
+    const [first] = base.carousels;
+    if (first === undefined) throw new Error('the fixture has no carousel');
+    const approval = {
+      id: '99999999-9999-4999-8999-999999999991',
+      carouselId: first.id,
+      approvedAt: '2026-10-27T14:00:00Z',
+      versionSetSha256: 'a'.repeat(64),
+      valid: true,
+    };
+    const current = { ...exportRecord(), carouselId: first.id, finalApprovalId: approval.id };
+    const server = fakeServer({
+      [PROJECT]: () => json(project({ activeDraftId: base.id, approvalState: 'final_approved' })),
+      [ACTIVE_DRAFT]: () => json({ ...base, carousels: [{ ...first, finalApproval: approval }] }),
+      [`GET /api/v1/projects/${PROJECT_ID}/exports`]: () => json({ exports: [current] }),
+      [`GET /api/v1/exports/${current.id}/download`]: () =>
+        new Response(new Uint8Array([80, 75]), { status: 200, headers: { 'Content-Type': 'application/zip' } }),
+    });
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:detail-download');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    renderApp(`/projects/${PROJECT_ID}`, server);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Descargar carrusel' }));
+
+    expect(await screen.findByText('La descarga está lista.')).toBeTruthy();
+    expect(server.callsTo('GET', `/api/v1/exports/${current.id}/download`)).toHaveLength(1);
+    expect(server.calls.some((call) => call.method === 'POST')).toBe(false);
+    expect(screen.getByRole('link', { name: 'Revisar contenido' }).getAttribute('href')).toBe(
+      `/projects/${PROJECT_ID}/review`,
+    );
+    vi.restoreAllMocks();
+  });
+
+  it('redirects the former exports address to the project detail with its history open', async () => {
+    const savedExport = exportRecord();
+    const server = fakeServer({
+      [PROJECT]: () => json(project({ lastExportAt: savedExport.exportedAt })),
+      [`GET /api/v1/projects/${PROJECT_ID}/exports`]: () => json({ exports: [savedExport] }),
+    });
+    const router = renderApp(`/projects/${PROJECT_ID}/exports`, server);
+
+    expect(await screen.findByRole('list', { name: 'Historial de exportaciones del proyecto' })).toBeTruthy();
+    expect(router.state.location.pathname).toBe(`/projects/${PROJECT_ID}`);
+    expect(router.state.location.hash).toBe('#project-exports');
+  });
+
+  it('keeps the history of earlier exports downloadable when no active draft remains', async () => {
     const savedExport = exportRecord();
     const server = fakeServer({
       [PROJECT]: () => json(project({ lastExportAt: savedExport.exportedAt })),
@@ -95,7 +144,14 @@ describe('Project detail: selection and links (R-200, R-269)', () => {
     });
     renderApp(`/projects/${PROJECT_ID}`, server);
 
-    expect(await screen.findByRole('button', { name: 'Descargar carrusel' })).toBeTruthy();
+    await userEvent.click(await screen.findByText('Historial de exportaciones'));
+    const history = await screen.findByRole('list', { name: 'Historial de exportaciones del proyecto' });
+    expect(within(history).getByText('Carrusel de un borrador anterior')).toBeTruthy();
+    expect(within(history).getByText('Sustituida')).toBeTruthy();
+    expect(within(history).getByRole('button', { name: 'Descargar' })).toBeTruthy();
+    expect(within(history).getByRole('link', { name: 'Ver detalle' }).getAttribute('href')).toBe(
+      `/projects/${PROJECT_ID}/exports/${savedExport.id}`,
+    );
   });
 
   it('links a MANUAL_DATA project to the import page, without a demonstration banner', async () => {

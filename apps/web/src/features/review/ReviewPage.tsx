@@ -1,10 +1,11 @@
-import { contractRegExp, type Draft } from '@edr/contracts';
+import { contractRegExp, type Draft, type Project } from '@edr/contracts';
 import { Link, useParams } from 'react-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ApiError } from '../../api/client';
 import { featurePaths } from '../../app/routes';
-import { DataModeBadge, ErrorBanner, formatDateTime } from '../../ui';
+import { Badge, buttonClassName, DataModeBadge, ErrorBanner, formatDateTime } from '../../ui';
+import { contentTypeLabel, projectStatus, sportsContextSummary } from '../projects/dashboardModel';
 import { CarouselReview } from './CarouselReview';
 import { languageLabel, leftOutCopy, leftOutReasonLabel, matchStatusLabel, reviewCopy } from './copy';
 import { ExclusionsEditor } from './ExclusionsEditor';
@@ -89,11 +90,50 @@ function LeftOutMatches({ draft }: { draft: Draft }) {
   );
 }
 
+/** The project the review belongs to (PD-ARCH-01F); omitted, without blocking the review, if it cannot be read. */
+function useReviewProject(projectId: string, refreshKey: string): Project | null {
+  const { api } = useReviewDependencies();
+  const [project, setProject] = useState<Project | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    api.getProject(projectId, controller.signal).then(
+      (loaded) => {
+        if (!controller.signal.aborted) setProject(loaded);
+      },
+      () => undefined,
+    );
+    return () => controller.abort();
+  }, [api, projectId, refreshKey]);
+  return project;
+}
+
+function ReviewProjectContext({ project }: { project: Project }) {
+  const status = projectStatus(project);
+  return (
+    <div className="grid gap-1" data-testid="review-project-context">
+      <p className="m-0 font-display text-heading-sm font-extrabold text-text-primary">{project.title}</p>
+      <p className="m-0 flex flex-wrap items-center gap-2 text-body-sm text-text-secondary">
+        <span>{contentTypeLabel(project)}</span>
+        <span aria-hidden="true">·</span>
+        <span>{sportsContextSummary(project)}</span>
+        <Badge tone={status.tone}>{status.label}</Badge>
+      </p>
+    </div>
+  );
+}
+
 function ProjectReview({ projectId }: { projectId: string }) {
   const { api } = useReviewDependencies();
   const request = useDraft(api, projectId);
   const [selectedCarouselId, setSelectedCarouselId] = useState<string | null>(null);
   const state = request.state;
+  // The header status follows the final approvals shown in the review.
+  const project = useReviewProject(
+    projectId,
+    state.status === 'success'
+      ? state.draft.carousels.map((item) => `${item.id}:${item.finalApproval?.id ?? ''}`).join(',')
+      : '',
+  );
 
   if (state.status !== 'success') {
     return (
@@ -125,6 +165,7 @@ function ProjectReview({ projectId }: { projectId: string }) {
         <div>
           <p className={styles.eyebrow}>{reviewCopy.eyebrow}</p>
           <h1 id="review-title">{reviewCopy.title}</h1>
+          {project === null ? null : <ReviewProjectContext project={project} />}
           <p className={styles.reviewIntro}>{reviewCopy.intro}</p>
         </div>
         {carousel ? (
@@ -143,6 +184,9 @@ function ProjectReview({ projectId }: { projectId: string }) {
         </p>
       ) : null}
       <div className={styles.toolbar}>
+        <Link className={buttonClassName('secondary', 'sm')} to={projectPath(projectId)}>
+          {reviewCopy.backToProject}
+        </Link>
         <button
           type="button"
           className={styles.secondaryButton}

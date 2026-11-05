@@ -47,9 +47,7 @@ describe('ImportDetailPage', () => {
     expect(download.getAttribute('href')).toBe(`/api/v1/imports/${IMPORT_ID_2}/original`);
     expect(download.hasAttribute('download')).toBe(true);
     expect(screen.getByText(/Abra los originales descargados como texto/)).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Crear un proyecto con «Liga Sintética»' }).getAttribute('href')).toBe(
-      '/projects/new',
-    );
+    expect(screen.getByRole('link', { name: 'Crear contenido' }).getAttribute('href')).toBe('/projects/generate');
   });
 
   it('makes no request for an address that is not an import identifier', () => {

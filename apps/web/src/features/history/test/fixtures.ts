@@ -84,13 +84,14 @@ export function project(overrides: Partial<Project> = {}): Project {
     createdAt: '2026-10-25T17:00:00Z',
     approvalState: 'exported',
     lastExportAt: EXPORTED_AT,
+    latestRunStatus: null,
+    sportsContext: null,
     competitionId: 'demo-a-liga',
     sourceId: 'demo-a',
     seasonId: 'demo-a-2026',
     stageId: 'demo-a-regular',
     latestRun: null,
     activeDraftId: DRAFT_ID,
-    sportsContext: null,
     ...overrides,
   };
 }

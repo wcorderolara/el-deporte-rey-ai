@@ -89,7 +89,7 @@ describe('Final approval control (R-240)', () => {
     expect(panel.textContent).toContain('La exportación necesita una aprobación final válida.');
   });
 
-  it('records the final approval when the carousel is ready, then links to the exports', async () => {
+  it('records the final approval when the carousel is ready, then offers the download and the history', async () => {
     const ready = draft({ carousels: [carousel(allApproved(), { readyForFinalApproval: true })] });
     const after = draft({
       carousels: [carousel(allApproved(), { readyForFinalApproval: true, finalApproval: APPROVAL })],
@@ -110,8 +110,10 @@ describe('Final approval control (R-240)', () => {
 
     expect(await within(panel).findByText('Aprobación final registrada.')).toBeTruthy();
     expect(panel.textContent).toContain('La aprobación final es válida. El carrusel se puede exportar.');
-    expect(within(panel).getByRole('link', { name: 'Ir a exportaciones' }).getAttribute('href')).toBe(
-      `/projects/${PROJECT_ID}/exports`,
+    // PD-ARCH-01F: the carousel is downloaded from the review; the history is a secondary link to the project.
+    expect(await within(panel).findByRole('button', { name: 'Descargar carrusel' })).toBeTruthy();
+    expect(within(panel).getByRole('link', { name: 'Historial de exportaciones' }).getAttribute('href')).toBe(
+      `/projects/${PROJECT_ID}#project-exports`,
     );
     expect(within(panel).queryByRole('button', { name: 'Dar la aprobación final' })).toBeNull();
     const [call] = server.callsTo('PUT', FINAL);
@@ -156,7 +158,8 @@ describe('Final approval control (R-240)', () => {
     renderApp(REVIEW, server);
     const panel = await finalPanel();
     expect(panel.textContent).toContain('ya no es válida porque el contenido cambió');
-    expect(within(panel).queryByRole('link', { name: 'Ir a exportaciones' })).toBeNull();
+    expect(within(panel).queryByRole('link', { name: 'Historial de exportaciones' })).toBeNull();
+    expect(within(panel).queryByRole('button', { name: 'Descargar carrusel' })).toBeNull();
     expect(finalButton(panel).disabled).toBe(false);
   });
 

@@ -16,7 +16,7 @@ import { type Db, readJsonColumn } from '../../platform/db/index.js';
 import { type StoredElementText, StoredElementTextSchema } from './slide-content.js';
 
 const SQL = {
-  project: 'SELECT id, data_mode FROM projects WHERE id = ?',
+  project: 'SELECT id, data_mode FROM projects WHERE id = ? AND deleted_at IS NULL',
   draftOfRun:
     'SELECT id, facts_run_id, language FROM content_drafts ' +
     'WHERE project_id = ? AND run_id = ? AND superseded_at IS NULL ORDER BY created_at DESC LIMIT 1',
@@ -34,7 +34,7 @@ const SQL = {
     'd.id AS draft_id, d.project_id AS project_id, d.facts_run_id AS facts_run_id, d.language AS language, ' +
     'p.data_mode AS data_mode ' +
     'FROM element_versions v JOIN elements e ON e.id = v.element_id JOIN carousels c ON c.id = e.carousel_id ' +
-    'JOIN content_drafts d ON d.id = c.draft_id JOIN projects p ON p.id = d.project_id WHERE v.id = ?',
+    'JOIN content_drafts d ON d.id = c.draft_id JOIN projects p ON p.id = d.project_id AND p.deleted_at IS NULL WHERE v.id = ?',
   saveRender:
     'UPDATE element_versions SET template_id = ?, template_version = ?, render_model = ?, image_path = ?, ' +
     'image_sha256 = ?, width = ?, height = ? WHERE id = ? AND render_model IS NULL AND superseded_at IS NULL',

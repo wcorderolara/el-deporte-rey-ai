@@ -315,7 +315,7 @@ describe('content batch generation through the existing workflow (PD-ARCH-01E-A)
         }),
       );
       expect(full.state, JSON.stringify(full.items)).toBe('completed');
-      expect(full.totals).toEqual({ requested: 5, generated: 3, failed: 0, skipped: 2, pending: 0 });
+      expect(full.totals).toEqual({ requested: 5, generated: 3, failed: 0, skipped: 2, pending: 0, deleted: 0 });
       const [roundPiece, ...matchPieces] = full.items;
       expect(roundPiece).toMatchObject({ kind: 'round_results', status: 'completed', matchIds: [ab, cd] });
       expect(matchLines(await draftOf(t, roundPiece?.projectId ?? ''))).toEqual([
@@ -545,7 +545,7 @@ describe('content batch generation through the existing workflow (PD-ARCH-01E-A)
       });
       const settled = await settledBatch(t, batch);
       expect(settled.state).toBe('partial');
-      expect(settled.totals).toEqual({ requested: 2, generated: 1, failed: 1, skipped: 0, pending: 0 });
+      expect(settled.totals).toEqual({ requested: 2, generated: 1, failed: 1, skipped: 0, pending: 0, deleted: 0 });
       expect(settled.items[0]).toMatchObject({
         status: 'failed',
         failure: expect.objectContaining({ code: 'internal' }),
@@ -634,6 +634,36 @@ describe('publication of local content under the existing policy (AD-28, AD-38)'
         const written = await exported(t, carousel.id);
         expect(written).toMatchObject({ dataMode: 'MANUAL_DATA', demonstration: false });
       }
+    },
+    WORKFLOW_TEST_TIMEOUT,
+  );
+});
+
+describe('deleting a generated piece (PD-ARCH-01F)', () => {
+  it(
+    'marks the piece deleted in its batch and keeps the competition, its matches and the other pieces',
+    async () => {
+      const t = await localApp();
+      const s = await seed(t);
+      const batch = await settledBatch(
+        t,
+        await createBatch(t, {
+          requestKey: requestKey(),
+          selection: selection(s, [s.matches.ab, s.matches.cd], ['match_result']),
+        }),
+      );
+      const [first, second] = batch.items;
+      expect((await t.send('DELETE', `/projects/${first?.projectId ?? ''}`)).statusCode).toBe(204);
+
+      const after = ContentBatchSchema.parse((await t.get(`/content-batches/${batch.id}`)).json());
+      expect(after.items.map((item) => item.status)).toEqual(['deleted', 'completed']);
+      expect(after.totals).toMatchObject({ requested: 2, generated: 1, deleted: 1, pending: 0 });
+      expect((await getProject(t, second?.projectId ?? '')).sportsContext?.matchIds).toEqual([s.matches.cd]);
+      const matches = (
+        (await t.get(`/competitions/${s.competitionId}/seasons/${s.seasonId}/matches`)).json() as { matches: unknown[] }
+      ).matches;
+      expect(matches).toHaveLength(5);
+      expect((await t.get(`/competitions/${s.competitionId}`)).statusCode).toBe(200);
     },
     WORKFLOW_TEST_TIMEOUT,
   );

@@ -108,7 +108,8 @@ export const ContentBatchPreviewSchema = z.strictObject({
   totals: z.strictObject({ requested: z.int().min(0), ready: z.int().min(0), skipped: z.int().min(0) }),
 });
 
-export const ContentBatchItemStatusSchema = z.enum(['skipped', 'pending', 'running', 'completed', 'failed']);
+/** `deleted`: the piece's project was deleted afterwards (PD-ARCH-01F); its identifiers stay for traceability. */
+export const ContentBatchItemStatusSchema = z.enum(['skipped', 'pending', 'running', 'completed', 'failed', 'deleted']);
 
 export const ContentBatchItemSchema = z.strictObject({
   id: UuidSchema,
@@ -140,6 +141,7 @@ export const ContentBatchSchema = z.strictObject({
     failed: z.int().min(0),
     skipped: z.int().min(0),
     pending: z.int().min(0),
+    deleted: z.int().min(0),
   }),
   items: z.array(ContentBatchItemSchema),
 });

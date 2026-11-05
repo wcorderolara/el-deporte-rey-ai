@@ -49,6 +49,7 @@ export const itemStatusCopy: Readonly<Record<ContentBatchItemStatus, { label: st
   running: { label: 'Generando', tone: 'info' },
   completed: { label: 'Generada', tone: 'success' },
   failed: { label: 'Fallida', tone: 'danger' },
+  deleted: { label: 'Proyecto eliminado', tone: 'neutral' },
 };
 
 export const batchStateCopy: Readonly<Record<ContentBatch['state'], { label: string; tone: BadgeVariant }>> = {

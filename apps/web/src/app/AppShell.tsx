@@ -11,6 +11,9 @@ interface NavItem {
   symbol: string;
 }
 
+/** The creation page: the sports wizard. */
+const CREATE_PATHS = new Set(['/projects/generate', '/projects/generate/']);
+
 const NAV_ITEMS: readonly NavItem[] = [
   {
     to: '/',
@@ -19,16 +22,17 @@ const NAV_ITEMS: readonly NavItem[] = [
     isCurrent: (pathname) => pathname === '/',
   },
   {
-    to: '/projects/new',
+    // PD-ARCH-01F: content is created with the sports wizard; the retired /projects/new redirects to it.
+    to: '/projects/generate',
     label: 'Crear contenido',
     symbol: '＋',
-    isCurrent: (pathname) => pathname === '/projects/new',
+    isCurrent: (pathname) => CREATE_PATHS.has(pathname),
   },
   {
     to: '/projects',
     label: 'Mis proyectos',
     symbol: '▤',
-    isCurrent: (pathname) => pathname.startsWith('/projects') && pathname !== '/projects/new',
+    isCurrent: (pathname) => pathname.startsWith('/projects') && !CREATE_PATHS.has(pathname),
   },
   {
     to: '/competitions',
@@ -129,9 +133,7 @@ export function AppShell() {
       hideHeaderDescription={context.hideHeaderTitle || context.projectPath !== undefined}
       navigationKey={`${location.pathname}${location.hash}`}
       contentVariant={
-        ['/', '/projects', '/projects/', '/projects/new', '/projects/new/', '/exports', '/exports/'].includes(
-          location.pathname,
-        ) ||
+        ['/', '/projects', '/projects/', '/exports', '/exports/'].includes(location.pathname) ||
         /^\/projects\/[^/]+\/review(?:\/.*)?$/.test(location.pathname) ||
         /^\/competitions(?:\/.*)?$/.test(location.pathname) ||
         /^\/projects\/[^/]+(?:\/exports(?:\/.*)?)?\/?$/.test(location.pathname)
@@ -139,7 +141,7 @@ export function AppShell() {
           : 'legacy'
       }
       primaryAction={
-        <Link to="/projects/new" className={buttonClassName('primary', 'sm', 'flex w-full')}>
+        <Link to="/projects/generate" className={buttonClassName('primary', 'sm', 'flex w-full')}>
           <span aria-hidden="true">＋</span>Crear contenido
         </Link>
       }

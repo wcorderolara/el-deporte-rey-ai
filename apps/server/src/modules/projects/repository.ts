@@ -1,6 +1,7 @@
 /**
  * Projects repository (data-model.md section 3.1): `projects`, the `sources` rows upserted from the configuration,
- * and the read-only views of drafts, final approvals and exports that the project summary needs. Every statement is
+ * and the read-only views of drafts, final approvals and exports that the project summary needs. A deleted project
+ * keeps its row with a tombstone (`deleted_at`, PD-ARCH-01F, OD-08) and is excluded from every read. Every statement is
  * a constant with bound parameters (T10-F14).
  */
 import { type ApprovalState, DataModeSchema, LanguageSchema, StandingsExpectationSchema } from '@edr/contracts';
@@ -86,9 +87,11 @@ const SQL = {
     'INSERT INTO projects (id, competition_id, competition_name, source_id, data_mode, season_id, season_label, ' +
     'stage_id, stage_label, matchday, selection_ref, standings_expected, language, created_at, updated_at) ' +
     'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-  project: `${PROJECT_SELECT} WHERE p.id = ?`,
-  projects: `${PROJECT_SELECT} ORDER BY p.created_at DESC, p.rowid DESC`,
-  exists: 'SELECT 1 AS found FROM projects WHERE id = ?',
+  project: `${PROJECT_SELECT} WHERE p.id = ? AND p.deleted_at IS NULL`,
+  projects: `${PROJECT_SELECT} WHERE p.deleted_at IS NULL ORDER BY p.created_at DESC, p.rowid DESC`,
+  exists: 'SELECT 1 AS found FROM projects WHERE id = ? AND deleted_at IS NULL',
+  deletedAt: 'SELECT deleted_at FROM projects WHERE id = ?',
+  markDeleted: 'UPDATE projects SET deleted_at = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
   updateLanguage: 'UPDATE projects SET language = ?, updated_at = ? WHERE id = ?',
   supersedeDrafts: 'UPDATE content_drafts SET superseded_at = ? WHERE project_id = ? AND superseded_at IS NULL',
   activeDraft:
@@ -148,6 +151,20 @@ export class ProjectRepository {
         at,
         at,
       ]);
+  }
+
+  /**
+   * The tombstone of a project (PD-ARCH-01F): `undefined` when no project has this ID, `null` when it is not deleted,
+   * else the deletion time.
+   */
+  deletedAt(projectId: string): string | null | undefined {
+    const row = this.#db.prepare<{ deleted_at: string | null }>(SQL.deletedAt).get([projectId]);
+    return row === undefined ? undefined : row.deleted_at;
+  }
+
+  /** Records the tombstone of a visible project; returns false when it was already deleted. Call in a transaction. */
+  markDeleted(projectId: string, at: string): boolean {
+    return Number(this.#db.prepare(SQL.markDeleted).run([at, at, projectId]).changes) === 1;
   }
 
   insert(project: NewProject): void {

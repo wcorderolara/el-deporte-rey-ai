@@ -64,10 +64,10 @@ describe('contract document', () => {
     );
   });
 
-  it('has 98 operations on 75 paths, 44 of them mutating, with unique operation IDs', () => {
+  it('has 99 operations on 75 paths, 45 of them mutating, with unique operation IDs', () => {
     expect(Object.keys(child(document, 'paths'))).toHaveLength(75);
-    expect(operations).toHaveLength(98);
-    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(44);
+    expect(operations).toHaveLength(99);
+    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(45);
     const ids = operations.map((operation) => operation.operation.operationId);
     expect(new Set(ids).size).toBe(ids.length);
   });
@@ -265,6 +265,7 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/tags/10/name: changed',
       '/tags/11: added',
       '/tags/12: added',
+      '/paths/~1projects~1{projectId}/delete: added',
       `${ack}/requestBody/content/application~1json/schema/properties/checks/items/enum/1: added`,
       '/paths/~1competitions: added',
       '/paths/~1sports~1providers: added',
@@ -334,8 +335,10 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/Problem/properties/code/enum/37: added',
       '/components/schemas/Problem/properties/code/enum/38: added',
       '/components/schemas/Problem/properties/code/enum/39: added',
-      '/components/schemas/Project/allOf/1/required/6: added',
-      '/components/schemas/Project/allOf/1/properties/sportsContext: added',
+      '/components/schemas/ProjectSummaryFields/required/13: added',
+      '/components/schemas/ProjectSummaryFields/required/14: added',
+      '/components/schemas/ProjectSummaryFields/properties/latestRunStatus: added',
+      '/components/schemas/ProjectSummaryFields/properties/sportsContext: added',
       '/components/schemas/QaResult/oneOf/5: added',
       '/components/schemas/Competition: added',
       '/components/schemas/SportsProvider: added',

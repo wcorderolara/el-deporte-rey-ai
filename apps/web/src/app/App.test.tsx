@@ -97,13 +97,26 @@ describe('App shell (R-235)', () => {
     expect(screen.getByRole('link', { name: 'Exportaciones' }).getAttribute('aria-current')).toBe('page');
   });
 
-  it('opens the existing creation route through the primary action', async () => {
+  it('opens the sports content wizard from the shell action, the navigation and the hero (PD-ARCH-01F)', async () => {
     const user = userEvent.setup();
     const router = renderAt('/');
     await screen.findByRole('heading', { name: 'Tu próximo contenido empieza aquí' });
-    await user.click(screen.getAllByRole('link', { name: 'Crear contenido' })[0]!);
-    expect(await screen.findByRole('heading', { name: 'Crear contenido' })).toBeTruthy();
-    expect(router.state.location.pathname).toBe('/projects/new');
+    const links = screen.getAllByRole('link', { name: /Crear contenido/ });
+    // Shell primary action, main navigation entry and hero call to action.
+    expect(links.length).toBeGreaterThanOrEqual(3);
+    for (const link of links) {
+      expect(link.getAttribute('href')).toBe('/projects/generate');
+    }
+    await user.click(links[0]!);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Crear contenido' })).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/projects/generate');
+    expect(router.state.location.search).toBe('');
+  });
+
+  it('redirects the retired catalogue creation address /projects/new to the wizard', async () => {
+    const router = renderAt('/projects/new');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Crear contenido' })).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/projects/generate');
   });
 
   it('shows project breadcrumbs without exposing internal IDs as labels', async () => {
@@ -142,7 +155,8 @@ describe('Route table: lazy feature stubs', () => {
       'Datos y verificación',
     ],
     [featurePaths.review('00000000-0000-4000-8000-000000000001'), 'Revisión del contenido'],
-    [featurePaths.history('00000000-0000-4000-8000-000000000001'), 'Exportaciones'],
+    // The former exports page redirects to the project detail (PD-ARCH-01F).
+    [featurePaths.history('00000000-0000-4000-8000-000000000001'), 'Proyectos'],
     [featurePaths.brand, 'Marca y plantillas'],
     [`${featurePaths.imports}/00000000-0000-4000-8000-000000000003`, 'Importaciones manuales'],
   ])('renders %s with the %s feature', async (path, heading) => {

@@ -335,6 +335,12 @@ beforeAll(async () => {
     json: { requestKey: '00000000-0000-4000-8000-0000000001e0', selection: batchSelection },
   });
   await d.call('getContentBatch', { params: { batchId: String((batch.body as { id: string }).id) } });
+  // PD-ARCH-01F: a project of its own is deleted, then deleted again (idempotent) and no longer found.
+  const doomed = await d.call('createProject', { json: LIGA_DEMO_MD1 });
+  const doomedId = String((doomed.body as { id: string }).id);
+  await d.call('deleteProject', { params: { projectId: doomedId } });
+  await d.call('deleteProject', { params: { projectId: doomedId } });
+  await d.call('getProject', { params: { projectId: doomedId } });
   const unusedTeam = await d.call('createManagedTeam', { json: { name: 'Equipo sin partidos' } });
   const unusedTeamId = String((unusedTeam.body as { id: string }).id);
   await d.call('addSeasonParticipant', { params: participantParams, json: { teamId: unusedTeamId } });

@@ -6,7 +6,8 @@ import { ErrorBanner, formatDateTime } from '../../ui';
 import { resultCopy, selectionName, versionsCopy } from './copy';
 import type { ImportsApi } from './importsApi';
 import styles from './Imports.module.css';
-import { newProjectPath, versionPath } from './paths';
+import { featurePaths } from '../../app/routes';
+import { versionPath } from './paths';
 import { useApiResource } from './useApiResource';
 
 /** A competition season that has applied imports. */
@@ -89,7 +90,7 @@ export function SelectionVersions({ api, pairs, selectedKey, onSelect, refreshTo
             </select>
           </div>
           <p>
-            <Link to={newProjectPath}>{resultCopy.createProject(selected.competitionName)}</Link>
+            <Link to={`${featurePaths.projects}/generate`}>{resultCopy.createContent}</Link>
           </p>
           {history.state.status === 'idle' || history.state.status === 'loading' ? (
             <p role="status" aria-live="polite">

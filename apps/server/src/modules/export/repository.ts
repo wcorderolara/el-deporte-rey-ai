@@ -28,8 +28,9 @@ const SQL = {
     'SELECT p.id AS id, p.competition_id AS competition_id, p.competition_name AS competition_name, ' +
     'p.source_id AS source_id, p.data_mode AS data_mode, p.season_id AS season_id, p.season_label AS season_label, ' +
     'p.stage_id AS stage_id, p.stage_label AS stage_label, p.matchday AS matchday, p.language AS language, ' +
-    's.name AS source_name, s.mode AS source_mode FROM projects p JOIN sources s ON s.id = p.source_id WHERE p.id = ?',
-  projectExists: 'SELECT id FROM projects WHERE id = ?',
+    's.name AS source_name, s.mode AS source_mode FROM projects p JOIN sources s ON s.id = p.source_id ' +
+    'WHERE p.id = ? AND p.deleted_at IS NULL',
+  projectExists: 'SELECT id FROM projects WHERE id = ? AND deleted_at IS NULL',
   validFinalApprovals:
     'SELECT id, carousel_id, version_set, version_set_sha256, approved_at FROM final_approvals ' +
     'WHERE carousel_id = ? AND invalidated_at IS NULL ORDER BY approved_at DESC, rowid DESC',
@@ -57,12 +58,14 @@ const SQL = {
     'x.exported_at AS exported_at, x.directory AS directory, x.manifest_sha256 AS manifest_sha256, ' +
     'x.data_mode AS data_mode, d.project_id AS project_id FROM exports x ' +
     'JOIN carousels c ON c.id = x.carousel_id JOIN content_drafts d ON d.id = c.draft_id ' +
+    'JOIN projects p ON p.id = d.project_id AND p.deleted_at IS NULL ' +
     'WHERE d.project_id = ? ORDER BY x.exported_at DESC, x.rowid DESC',
   export:
     'SELECT x.id AS id, x.carousel_id AS carousel_id, x.final_approval_id AS final_approval_id, ' +
     'x.exported_at AS exported_at, x.directory AS directory, x.manifest_sha256 AS manifest_sha256, ' +
     'x.data_mode AS data_mode, d.project_id AS project_id FROM exports x ' +
-    'JOIN carousels c ON c.id = x.carousel_id JOIN content_drafts d ON d.id = c.draft_id WHERE x.id = ?',
+    'JOIN carousels c ON c.id = x.carousel_id JOIN content_drafts d ON d.id = c.draft_id ' +
+    'JOIN projects p ON p.id = d.project_id AND p.deleted_at IS NULL WHERE x.id = ?',
   exportFiles:
     'SELECT position, kind, element_version_id, file_name, sha256 FROM export_files WHERE export_id = ? ' +
     'ORDER BY position, file_name',

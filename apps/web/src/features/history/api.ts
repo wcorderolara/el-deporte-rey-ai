@@ -13,14 +13,12 @@ import {
   ExportListResponseSchema,
   ExportSchema,
   operations,
-  ProjectSchema,
   ProjectListResponseSchema,
   SlideTraceSchema,
   type Draft,
   type Export,
   type ExportDetail,
   type OperationId,
-  type Project,
   type ProjectSummary,
   type SlideTrace,
 } from '@edr/contracts';
@@ -47,11 +45,6 @@ export function operationPath(id: OperationId, params: Record<string, string> = 
 
 function withSignal(signal: AbortSignal | undefined): { signal?: AbortSignal } {
   return signal === undefined ? {} : { signal };
-}
-
-export interface ExportsPageData {
-  project: Project;
-  exports: Export[];
 }
 
 export interface GlobalExportHistoryItem {
@@ -84,20 +77,6 @@ export async function loadGlobalExportHistory(
     result.push(...histories.flat());
   }
   return result.sort((a, b) => Date.parse(b.export.exportedAt) - Date.parse(a.export.exportedAt));
-}
-
-/** getProject and listProjectExports (exports newest first, R-220). */
-export async function loadExportsPage(
-  client: ApiClient,
-  projectId: string,
-  signal?: AbortSignal,
-): Promise<ExportsPageData> {
-  const options = withSignal(signal);
-  const [project, list] = await Promise.all([
-    client.get(operationPath('getProject', { projectId }), { ...options, schema: ProjectSchema }),
-    client.get(operationPath('listProjectExports', { projectId }), { ...options, schema: ExportListResponseSchema }),
-  ]);
-  return { project, exports: list.exports };
 }
 
 /** Existing project-scoped history operation, used to surface the newest saved ZIP from a project workspace. */

@@ -3,7 +3,7 @@ export { Badge, type BadgeProps, type BadgeVariant } from './Badge';
 export { Button, buttonClassName, type ButtonProps, type ButtonSize, type ButtonVariant } from './Button';
 export { Card, type CardProps } from './Card';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
-export { IconButton, type IconButtonProps } from './IconButton';
+export { IconButton, iconButtonClassName, type IconButtonProps } from './IconButton';
 export { Input, type InputProps } from './Input';
 export { LoadingState, type LoadingStateProps } from './LoadingState';
 export { Modal, ModalFooter, ViewModeToggle } from './Modal';

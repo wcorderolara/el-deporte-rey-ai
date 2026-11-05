@@ -14,6 +14,7 @@ import {
   slideTypeLabel,
   versionStateLabel,
 } from './copy';
+import { CarouselDownload } from '../history/CarouselDownload';
 import { ElementReview } from './ElementReview';
 import {
   approvalObstacles,
@@ -94,11 +95,15 @@ function FinalApprovalSection({ projectId, carousel, onApproved, onRefused }: Fi
             </time>
           </p>
           <p>{finalCopy.valid}</p>
-          <p>
-            <Link className={buttonClassName('primary')} to={featurePaths.history(projectId)}>
+          <div className="flex flex-wrap items-start gap-3">
+            <CarouselDownload projectId={projectId} carousel={carousel} onStale={onRefused} />
+            <Link
+              className={buttonClassName('secondary')}
+              to={`${featurePaths.projects}/${encodeURIComponent(projectId)}#project-exports`}
+            >
               {finalCopy.goToExports}
             </Link>
-          </p>
+          </div>
         </div>
       ) : (
         <p className={styles.note}>

@@ -707,6 +707,18 @@ export const operations = {
     success: json(200, ContentBatchSchema),
     problemStatuses: READ_BY_ID,
   },
+  deleteProject: {
+    operationId: 'deleteProject',
+    method: 'delete',
+    path: '/projects/{projectId}',
+    tag: 'projects',
+    params: ProjectParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: null,
+    success: { status: 204, mediaTypes: [], schema: null },
+    problemStatuses: [400, 403, 404, 409, 415, 421],
+  },
   listFacts: {
     operationId: 'listFacts',
     method: 'get',

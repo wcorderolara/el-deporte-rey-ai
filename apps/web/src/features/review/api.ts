@@ -1,6 +1,6 @@
 /**
  * Operations of the HTTP contract used by the review feature (`contracts/http-api.openapi.yaml` 1.0.0, tags drafts,
- * review and facts): getActiveDraft, setExcludedMatches, getSlideImage (as an image address), regenerateElement,
+ * review and facts): getProject (review header), getActiveDraft, setExcludedMatches, getSlideImage (as an image address), regenerateElement,
  * approveElement, withdrawElementApproval, acknowledgeQaWarnings, approveCarousel and listFacts (match labels for the
  * exclusions editor). Paths come from the contract's operation registry in `@edr/contracts`, and every successful
  * JSON response is validated with the contract schema by the API client; nothing here adds an operation or a field.
@@ -14,12 +14,14 @@ import {
   FactListResponseSchema,
   FinalApprovalSchema,
   operations,
+  ProjectSchema,
   RunSchema,
   type Draft,
   type Element,
   type FactListResponse,
   type FinalApproval,
   type OperationId,
+  type Project,
   type QaWarningCheck,
   type Run,
 } from '@edr/contracts';
@@ -27,6 +29,8 @@ import {
 import { API_BASE_PATH, apiClient, type ApiClient } from '../../api/client';
 
 export interface ReviewApi {
+  /** getProject: the project the review belongs to (header context, PD-ARCH-01F). */
+  getProject(projectId: string, signal?: AbortSignal): Promise<Project>;
   /** getActiveDraft: carousels, elements, current versions, review states, QA results and provenance. */
   getActiveDraft(projectId: string, signal?: AbortSignal): Promise<Draft>;
   /** listFacts: facts of the draft's facts run (used for the match labels of the exclusions editor). */
@@ -70,6 +74,9 @@ function withSignal(signal: AbortSignal | undefined): { signal?: AbortSignal } {
 /** Review API on top of the shared client (which adds `X-EDR-Client` to the mutating requests). */
 export function createReviewApi(client: ApiClient, basePath: string = API_BASE_PATH): ReviewApi {
   return {
+    getProject(projectId, signal) {
+      return client.get(operationPath('getProject', { projectId }), { schema: ProjectSchema, ...withSignal(signal) });
+    },
     getActiveDraft(projectId, signal) {
       return client.get(operationPath('getActiveDraft', { projectId }), {
         schema: DraftSchema,

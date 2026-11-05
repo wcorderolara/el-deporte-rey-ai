@@ -47,7 +47,7 @@ export const SourceValuesSchema = z
 const SQL = {
   project:
     'SELECT id, competition_id, season_id, stage_id, matchday, source_id, data_mode, selection_ref, language ' +
-    'FROM projects WHERE id = ?',
+    'FROM projects WHERE id = ? AND deleted_at IS NULL',
   runOfProject:
     'SELECT id, project_id, run_number, kind, status, config_snapshot FROM workflow_runs WHERE id = ? AND project_id = ?',
   run: 'SELECT id, project_id, run_number, kind, status, config_snapshot FROM workflow_runs WHERE id = ?',

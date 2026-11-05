@@ -112,6 +112,8 @@ export class ProjectsService {
       createdAt: project.createdAt,
       approvalState: state.approvalState,
       lastExportAt: state.lastExportAt,
+      latestRunStatus: this.#runner.runs.latestView(project.id)?.status ?? null,
+      sportsContext: projectSportsContext(this.#batches, project.id)?.context ?? null,
     };
   }
 
@@ -124,7 +126,6 @@ export class ProjectsService {
       stageId: project.stageId,
       latestRun: this.#runner.runs.latestView(project.id),
       activeDraftId: this.#projects.draftState(project.id).activeDraftId,
-      sportsContext: projectSportsContext(this.#batches, project.id)?.context ?? null,
     };
   }
 
@@ -203,6 +204,35 @@ export class ProjectsService {
       });
     });
     return this.get(id);
+  }
+
+  /**
+   * Deletes a project logically (PD-ARCH-01F; OD-08 keeps every row): its runs executing in this process are cancelled
+   * and must confirm their stop before the tombstone is written, so no stage writes on a deleted project; then every
+   * read of the application excludes it. A deleted project answers as deleted again (idempotent); an unknown ID is
+   * `NOT_FOUND`; a run that does not confirm its cancellation in time is `RUN_IN_PROGRESS` and nothing changes.
+   * Shared resources (competitions, seasons, teams, matches, results, templates, brand assets, other projects) and
+   * the project's own history and files are not touched.
+   */
+  async delete(projectId: string): Promise<void> {
+    const deletedAt = this.#projects.deletedAt(projectId);
+    if (deletedAt === undefined) {
+      throw projectNotFound();
+    }
+    if (deletedAt !== null) {
+      return;
+    }
+    if (!(await this.#runner.cancelProject(projectId))) {
+      throw new HttpProblem(409, 'RUN_IN_PROGRESS', 'The run of the project has not confirmed its cancellation yet.');
+    }
+    const at = this.#now();
+    this.#container.db.transaction(() => {
+      if (this.#runner.runs.activeRunId(projectId) !== null) {
+        throw runInProgress();
+      }
+      this.#projects.markDeleted(projectId, at);
+    });
+    this.#container.logger.info({ projectId }, 'project deleted');
   }
 
   /** Changes the content language; the active draft is superseded (a redraft is needed). Refused during a run. */

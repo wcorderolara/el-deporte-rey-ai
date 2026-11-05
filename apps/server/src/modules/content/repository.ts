@@ -32,7 +32,9 @@ import {
 const ExcludedKeysSchema = uniquePrimitives(z.array(MatchKeySchema).max(64));
 
 const SQL = {
-  project: 'SELECT id, competition_name, season_label, stage_label, matchday, language FROM projects WHERE id = ?',
+  project:
+    'SELECT id, competition_name, season_label, stage_label, matchday, language FROM projects ' +
+    'WHERE id = ? AND deleted_at IS NULL',
   facts:
     'SELECT f.id AS id, f.fact_key AS fact_key, f.kind AS kind, f.subject AS subject, f.status AS status, ' +
     'f.unverified_reason AS unverified_reason, f.value AS value, f.candidate_value AS candidate_value, ' +

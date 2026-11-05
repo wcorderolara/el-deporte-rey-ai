@@ -51,7 +51,7 @@ export type PublishabilityFunction = (
 ) => ReadonlyMap<string, PublishabilityVerdict>;
 
 const SQL = {
-  project: 'SELECT competition_id, source_id FROM projects WHERE id = ?',
+  project: 'SELECT competition_id, source_id FROM projects WHERE id = ? AND deleted_at IS NULL',
   fact: 'SELECT id, status, unverified_reason, manual_eligible FROM facts WHERE id = ?',
   latestManualApproval: 'SELECT action FROM manual_approvals WHERE fact_id = ? ORDER BY at DESC, rowid DESC LIMIT 1',
   supportingSources:

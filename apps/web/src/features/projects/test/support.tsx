@@ -285,6 +285,8 @@ export const summaries: ProjectSummary[] = [
     createdAt: '2026-10-27T10:00:00Z',
     approvalState: 'in_review',
     lastExportAt: null,
+    latestRunStatus: 'completed',
+    sportsContext: null,
   },
   {
     id: MANUAL_PROJECT_ID,
@@ -300,6 +302,8 @@ export const summaries: ProjectSummary[] = [
     createdAt: '2026-10-26T10:00:00Z',
     approvalState: 'exported',
     lastExportAt: '2026-10-26T18:30:00Z',
+    latestRunStatus: 'completed',
+    sportsContext: null,
   },
 ];
 

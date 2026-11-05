@@ -5,6 +5,7 @@ import { Link, useLocation, useParams } from 'react-router';
 import { featurePaths } from '../../app/routes';
 import { Badge, buttonClassName, Card, dataModeLabel, ErrorBanner, featureCopy, formatDateTime } from '../../ui';
 import { createCopy, detailCopy, languageLabel, runCopy } from './copy';
+import { contentTypeLabel } from './dashboardModel';
 import { pieceKindCopy } from './generationCopy';
 import { contentBatchPath, isProjectId } from './paths';
 import styles from './Projects.module.css';
@@ -38,7 +39,7 @@ function SelectionSummary({ project }: { project: Project }) {
     >
       <div className="grid min-w-0 gap-1">
         <p className="m-0 text-caption font-bold tracking-label text-brand-gold uppercase">
-          Carrusel de Instagram · 4:5
+          {contentTypeLabel(project)} · Carrusel de Instagram 4:5
         </p>
         <p data-testid="project-summary" className="m-0 text-body-sm text-text-secondary">
           {project.competitionName} · {period}
@@ -52,6 +53,15 @@ function SelectionSummary({ project }: { project: Project }) {
       </h1>
       <div className="flex min-w-0 flex-wrap items-center gap-3">
         <ProjectStatus project={project} />
+        <span className="text-body-sm text-text-secondary">
+          Creado <time dateTime={project.createdAt}>{formatDateTime(project.createdAt)}</time>
+          {project.lastExportAt === null ? null : (
+            <>
+              {' · '}Última exportación{' '}
+              <time dateTime={project.lastExportAt}>{formatDateTime(project.lastExportAt)}</time>
+            </>
+          )}
+        </span>
       </div>
       {project.sportsContext === null ? null : <SportsContext context={project.sportsContext} />}
       {project.demonstration || project.dataMode === 'DEMO_DATA' ? (
@@ -379,7 +389,7 @@ function ProjectDetail({ projectId }: { projectId: string }) {
       <ProjectGeneratedContent project={project} />
       <ProjectSections project={project} />
       <details
-        open={project.activeDraftId === null ? true : undefined}
+        open={project.activeDraftId === null || project.latestRun?.status === 'failed' ? true : undefined}
         className="rounded-card border-hairline border-border-subtle bg-surface-raised p-4"
       >
         <summary className="focus-studio min-h-touch cursor-pointer content-center font-bold text-text-link underline decoration-border-strong underline-offset-4">

@@ -13,6 +13,17 @@ const tones = {
   danger: 'border-danger bg-danger-surface text-danger hover:bg-danger hover:text-text-inverse',
 } as const;
 
+/** Classes of an icon-only control, shared by `IconButton` and icon links (for example a router link). */
+export function iconButtonClassName(tone: 'default' | 'danger' = 'default', className?: string): string {
+  return classNames(
+    'focus-studio inline-flex size-touch shrink-0 items-center justify-center rounded-control border-hairline font-sans shadow-control',
+    'transition-[background-color,border-color,color,transform] duration-fast ease-standard',
+    'disabled:cursor-not-allowed disabled:opacity-[var(--control-disabled-opacity)] active:translate-y-press',
+    tones[tone],
+    className,
+  );
+}
+
 /** Icon-only action with a mandatory accessible name and a 44px minimum target. */
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
   { children, className, disabled, label, tone = 'default', type = 'button', ...props },
@@ -24,13 +35,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       ref={ref}
       type={type}
       aria-label={label}
-      className={classNames(
-        'focus-studio inline-flex size-touch shrink-0 items-center justify-center rounded-control border-hairline font-sans shadow-control',
-        'transition-[background-color,border-color,color,transform] duration-fast ease-standard',
-        'disabled:cursor-not-allowed disabled:opacity-[var(--control-disabled-opacity)] active:translate-y-press',
-        tones[tone],
-        className,
-      )}
+      className={iconButtonClassName(tone, className)}
       disabled={disabled}
     >
       <span aria-hidden="true" className="inline-flex items-center justify-center">

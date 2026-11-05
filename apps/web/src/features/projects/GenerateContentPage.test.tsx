@@ -5,7 +5,7 @@
  * polling, and the sports context on the project page. All data is synthetic.
  */
 import type { CompetitionMatch, ContentBatch, ContentBatchPreview } from '@edr/contracts';
-import { cleanup, screen, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -115,6 +115,7 @@ function batch(state: ContentBatch['state'], status: ContentBatch['items'][numbe
       failed: 0,
       skipped: 1,
       pending: status === 'completed' ? 0 : 1,
+      deleted: 0,
     },
     items: [
       {
@@ -184,7 +185,7 @@ describe('content generation wizard (PD-ARCH-01E-A)', () => {
     const server = localServer();
     renderApp('/projects/generate', server);
 
-    expect(await screen.findByRole('heading', { name: /Generar contenido desde una competición/ })).toBeTruthy();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Crear contenido' })).toBeTruthy();
     const steps = screen.getByRole('list', { name: 'Pasos de la generación' });
     expect(
       within(steps)
@@ -210,7 +211,8 @@ describe('content generation wizard (PD-ARCH-01E-A)', () => {
     renderApp(`/projects/generate?competitionId=${COMPETITION}&seasonId=${SEASON}&roundId=${ROUND}`, localServer());
     const round = (await screen.findByRole('combobox', { name: 'Jornada' })) as HTMLSelectElement;
     expect(round.value).toBe(ROUND);
-    expect(continueButton().disabled).toBe(false);
+    // Continuing waits until the context of the address has been validated.
+    await waitFor(() => expect(continueButton().disabled).toBe(false));
   });
 
   it('selects one, several or all matches, keeps choices when going back and shows the server plan', async () => {
@@ -299,6 +301,112 @@ describe('content generation wizard (PD-ARCH-01E-A)', () => {
     expect(creations).toHaveLength(2);
     expect(creations[0]?.requestKey).toMatch(/^[0-9a-f-]{36}$/);
     expect(creations[1]?.requestKey).toBe(creations[0]?.requestKey);
+  });
+});
+
+describe('wizard entry and address context (PD-ARCH-01F)', () => {
+  const OTHER_COMPETITION = uuid(6);
+  const OTHER_SEASON = uuid(7);
+  const STAGED_ROUND = uuid(8);
+
+  function contextServer(extra: Record<string, Handler> = {}) {
+    return localServer({
+      'GET /api/v1/competitions': () =>
+        json({
+          competitions: [
+            { id: COMPETITION, name: 'Liga Local', createdAt: T, updatedAt: T },
+            { id: OTHER_COMPETITION, name: 'Copa Local', createdAt: T, updatedAt: T },
+          ],
+        }),
+      [`GET /api/v1/competitions/${OTHER_COMPETITION}/seasons`]: () =>
+        json({ seasons: [{ id: OTHER_SEASON, competitionId: OTHER_COMPETITION, label: '2027', createdAt: T }] }),
+      [`GET ${BASE}/stages/${STAGE}/rounds`]: () =>
+        json({
+          rounds: [
+            { id: STAGED_ROUND, seasonId: SEASON, stageId: STAGE, name: 'Final', displayOrder: 1, createdAt: T },
+          ],
+        }),
+      ...extra,
+    });
+  }
+
+  function value(name: string): string {
+    return (screen.getByRole('combobox', { name }) as HTMLSelectElement).value;
+  }
+
+  it('starts without any sports choice when opened without context', async () => {
+    const server = contextServer();
+    renderApp('/projects/generate', server);
+    await screen.findByRole('combobox', { name: 'Competición' });
+    expect(value('Competición')).toBe('');
+    expect(screen.queryByRole('combobox', { name: 'Temporada' })).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(server.calls.some((call) => call.path.includes('/seasons'))).toBe(false);
+    // The retired catalogue flow is not offered.
+    expect(screen.queryByRole('link', { name: /catálogo/ })).toBeNull();
+  });
+
+  it('preloads the competition, season, round and its stage from a round link', async () => {
+    renderApp(
+      `/projects/generate?competitionId=${COMPETITION}&seasonId=${SEASON}&roundId=${STAGED_ROUND}`,
+      contextServer({
+        [`GET ${BASE}/matches`]: () =>
+          json({ matches: [match(1, 'Club Alfa', 'Club Beta', { round: { id: STAGED_ROUND, name: 'Final' } })] }),
+      }),
+    );
+    await waitFor(() => expect(value('Jornada')).toBe(STAGED_ROUND));
+    expect(value('Competición')).toBe(COMPETITION);
+    expect(value('Temporada')).toBe(SEASON);
+    expect(value('Fase')).toBe(STAGE);
+    expect(continueButton().disabled).toBe(false);
+  });
+
+  it.each([
+    ['malformed identifiers', '?competitionId=not-a-uuid&seasonId=x&roundId=y', /no contiene una competición/],
+    ['a round without its season', `?competitionId=${COMPETITION}&roundId=${ROUND}`, /no contiene una competición/],
+    [
+      'an unknown competition',
+      `?competitionId=${uuid(99)}&seasonId=${SEASON}&roundId=${ROUND}`,
+      /competición del enlace no existe/,
+    ],
+    [
+      'a season of another competition',
+      `?competitionId=${OTHER_COMPETITION}&seasonId=${SEASON}&roundId=${ROUND}`,
+      /temporada del enlace no pertenece/,
+    ],
+    [
+      'a round of another season',
+      `?competitionId=${COMPETITION}&seasonId=${SEASON}&roundId=${uuid(98)}`,
+      /jornada del enlace no pertenece/,
+    ],
+  ])('explains %s and keeps only the valid part of the context', async (_case, query, message) => {
+    const server = contextServer();
+    renderApp(`/projects/generate${query}`, server);
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toMatch(message);
+    expect(continueButton().disabled).toBe(true);
+    // An identifier is never used with a competition or season it does not belong to.
+    expect(
+      server.calls.some((call) => call.path === `/api/v1/competitions/${OTHER_COMPETITION}/seasons/${SEASON}/matches`),
+    ).toBe(false);
+    expect(server.calls.some((call) => call.path.includes(uuid(99)))).toBe(false);
+  });
+
+  it('lets the operator change the competition and the season after a preload', async () => {
+    const user = userEvent.setup();
+    renderApp(`/projects/generate?competitionId=${COMPETITION}&seasonId=${SEASON}&roundId=${ROUND}`, contextServer());
+    await waitFor(() => expect(value('Jornada')).toBe(ROUND));
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Competición' }), OTHER_COMPETITION);
+    expect(screen.queryByRole('combobox', { name: 'Jornada' })).toBeNull();
+    await user.selectOptions(await screen.findByRole('combobox', { name: 'Temporada' }), OTHER_SEASON);
+    expect(value('Temporada')).toBe(OTHER_SEASON);
+    expect(continueButton().disabled).toBe(true);
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Competición' }), COMPETITION);
+    await user.selectOptions(await screen.findByRole('combobox', { name: 'Temporada' }), SEASON);
+    await user.selectOptions(await screen.findByRole('combobox', { name: 'Jornada' }), ROUND);
+    expect(continueButton().disabled).toBe(false);
   });
 });
 

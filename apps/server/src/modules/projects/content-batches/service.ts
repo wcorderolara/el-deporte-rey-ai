@@ -458,6 +458,7 @@ export class ContentBatchService {
       failed: count('failed'),
       skipped: count('skipped'),
       pending: count('pending') + count('running'),
+      deleted: count('deleted'),
     };
     return {
       id: batch.id,
@@ -479,14 +480,15 @@ export class ContentBatchService {
   }
 
   #itemView(item: BatchItemRecord): ContentBatchItem {
-    const run = item.projectId === null ? null : this.#runner.runs.latestView(item.projectId);
+    const deleted = item.projectId !== null && this.#projects.deletedAt(item.projectId) !== null;
+    const run = item.projectId === null || deleted ? null : this.#runner.runs.latestView(item.projectId);
     return {
       id: item.id,
       position: item.position,
       kind: item.kind,
       title: item.title,
       matchIds: [...item.matchIds],
-      status: item.projectId === null ? 'skipped' : (run?.status ?? 'pending'),
+      status: item.projectId === null ? 'skipped' : deleted ? 'deleted' : (run?.status ?? 'pending'),
       skipReason: item.skipReason,
       failure: run?.failure ?? null,
       projectId: item.projectId,

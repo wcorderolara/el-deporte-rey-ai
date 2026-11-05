@@ -22,4 +22,6 @@ export const dashboardProjects: ProjectSummary[] = (
   createdAt: `2026-10-${28 - index}T10:00:00Z`,
   approvalState,
   lastExportAt: index === 3 ? '2026-10-25T18:30:00Z' : null,
+  latestRunStatus: 'completed',
+  sportsContext: null,
 }));

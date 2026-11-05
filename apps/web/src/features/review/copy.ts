@@ -323,7 +323,7 @@ export const finalCopy = {
   approving: 'Registrando la aprobación final…',
   approvedAt: 'Aprobación final registrada',
   valid: 'La aprobación final es válida. El carrusel se puede exportar.',
-  goToExports: 'Ir a exportaciones',
+  goToExports: 'Historial de exportaciones',
   invalid:
     'La aprobación final anterior ya no es válida porque el contenido cambió. Revise los elementos y vuelva a dar la aprobación final.',
   ready: 'Todos los elementos están aprobados y ninguno está bloqueado.',

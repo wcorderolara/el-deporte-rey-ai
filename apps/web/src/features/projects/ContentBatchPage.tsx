@@ -106,7 +106,7 @@ export function ContentBatchPage() {
                   </span>
                   <span className="flex flex-wrap items-center gap-2">
                     <Badge tone={itemStatusCopy[item.status].tone}>{itemStatusCopy[item.status].label}</Badge>
-                    {item.projectId === null ? null : (
+                    {item.projectId === null || item.status === 'deleted' ? null : (
                       <Link className={buttonClassName('secondary', 'sm')} to={projectPath(item.projectId)}>
                         Abrir proyecto
                       </Link>

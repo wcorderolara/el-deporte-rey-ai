@@ -80,6 +80,8 @@ const projectSummary = {
   createdAt: T1,
   approvalState: 'in_review',
   lastExportAt: null,
+  latestRunStatus: 'failed',
+  sportsContext: null,
 };
 const sportsContextBase = {
   competitionId: uuid(120),
@@ -144,7 +146,7 @@ const contentBatch = {
   context: sportsContextBase,
   language: 'es',
   state: 'failed',
-  totals: { requested: 1, generated: 0, failed: 1, skipped: 0, pending: 0 },
+  totals: { requested: 1, generated: 0, failed: 1, skipped: 0, pending: 0, deleted: 0 },
   items: [contentBatchItem],
 };
 const project = {

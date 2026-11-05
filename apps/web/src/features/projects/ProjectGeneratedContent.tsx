@@ -1,11 +1,12 @@
 import type { Carousel, Element, Project } from '@edr/contracts';
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 
 import { featurePaths } from '../../app/routes';
 import { ApiError } from '../../api/client';
 import { Badge, buttonClassName, ErrorBanner, LoadingState } from '../../ui';
-import { LatestExportDownload } from '../history/LatestExportDownload';
+import { CarouselDownload } from '../history/CarouselDownload';
+import { ProjectExportHistory } from '../history/ProjectExportHistory';
 import { useReviewDependencies } from '../review/ReviewContext';
 import { useDraft } from '../review/useDraft';
 import { ReviewThumbnailRail, type ReviewThumbnail } from '../review/ReviewThumbnailRail';
@@ -27,38 +28,62 @@ function carouselSlides(carousel: Carousel): Element[] {
   return carousel.elements.filter((element) => element.kind === 'slide').sort((a, b) => a.position - b.position);
 }
 
-function ProjectPreviewActions({ project }: { project: Project }) {
+/**
+ * Actions of the selected carousel (PD-ARCH-01F): review it (or continue the review once something is approved)
+ * and, once its final approval is valid, download it here without visiting another page.
+ */
+function ProjectPreviewActions({
+  project,
+  carousel,
+  onExported,
+  onStale,
+}: {
+  project: Project;
+  carousel: Carousel;
+  onExported: () => void;
+  onStale: () => void;
+}) {
+  const approved = carousel.finalApproval?.valid === true;
+  const started = carousel.elements.some((element) => element.currentVersion.state === 'approved');
   return (
     <div className="grid gap-2">
-      <Link className={buttonClassName('primary', 'md')} to={featurePaths.review(project.id)}>
-        Revisar contenido
+      {approved ? (
+        <CarouselDownload projectId={project.id} carousel={carousel} onExported={onExported} onStale={onStale} />
+      ) : null}
+      <Link className={buttonClassName(approved ? 'secondary' : 'primary', 'md')} to={featurePaths.review(project.id)}>
+        {started && !approved ? 'Continuar revisión' : 'Revisar contenido'}
       </Link>
-      <Link className={buttonClassName('secondary', 'md')} to={featurePaths.history(project.id)}>
-        Ver exportaciones
-      </Link>
-      {project.lastExportAt === null ? null : <LatestExportDownload projectId={project.id} />}
     </div>
   );
 }
 
 function ProjectEmptyContent({ project }: { project: Project }) {
+  const failed = project.latestRun?.status === 'failed';
   return (
     <div className="grid min-w-0 gap-3 rounded-card border-hairline border-border-subtle bg-surface-raised p-4 sm:flex sm:flex-wrap sm:items-center">
       <p className="m-0 flex-1 text-body-sm text-text-secondary">
-        Todavía no hay contenido generado para este proyecto.
+        {failed
+          ? 'La última generación falló y no hay contenido para revisar.'
+          : 'Todavía no hay contenido generado para este proyecto.'}
       </p>
       <Link className={buttonClassName('primary', 'md')} to="#project-generation">
-        Continuar creación
+        {failed ? 'Regenerar contenido' : 'Continuar creación'}
       </Link>
-      <Link className={buttonClassName('secondary', 'md')} to={featurePaths.history(project.id)}>
-        Ver exportaciones
-      </Link>
-      {project.lastExportAt === null ? null : <LatestExportDownload projectId={project.id} />}
     </div>
   );
 }
 
-function ProjectCarouselPreview({ project, carousel }: { project: Project; carousel: Carousel }) {
+function ProjectCarouselPreview({
+  project,
+  carousel,
+  onExported,
+  onStale,
+}: {
+  project: Project;
+  carousel: Carousel;
+  onExported: () => void;
+  onStale: () => void;
+}) {
   const { api } = useReviewDependencies();
   const slides = carouselSlides(carousel);
   const [selectedId, setSelectedId] = useState<string | undefined>(slides[0]?.id);
@@ -136,15 +161,50 @@ function ProjectCarouselPreview({ project, carousel }: { project: Project; carou
         ) : (
           <p className="m-0 text-body-sm text-text-secondary">Vista previa del contenido generado.</p>
         )}
-        <ProjectPreviewActions project={project} />
+        <ProjectPreviewActions project={project} carousel={carousel} onExported={onExported} onStale={onStale} />
       </section>
     </ReviewWorkspace>
+  );
+}
+
+/**
+ * Secondary, collapsible export history of the project (PD-ARCH-01F); the former exports page points here. The
+ * history is requested only once the section is opened, or when the address names it.
+ */
+function ExportHistorySection({
+  project,
+  carousels,
+  refreshKey,
+}: {
+  project: Project;
+  carousels: readonly Carousel[];
+  refreshKey: string;
+}) {
+  const location = useLocation();
+  const [open, setOpen] = useState(location.hash === '#project-exports');
+  return (
+    <details
+      id="project-exports"
+      open={open}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+      className="rounded-card border-hairline border-border-subtle bg-surface-raised p-4"
+    >
+      <summary className="focus-studio min-h-touch cursor-pointer content-center font-bold text-text-link underline decoration-border-strong underline-offset-4">
+        Historial de exportaciones
+      </summary>
+      {open ? (
+        <div className="mt-3">
+          <ProjectExportHistory projectId={project.id} carousels={carousels} refreshKey={refreshKey} />
+        </div>
+      ) : null}
+    </details>
   );
 }
 
 function ActiveProjectContent({ project }: { project: Project }) {
   const { api } = useReviewDependencies();
   const draft = useDraft(api, project.id);
+  const [exportsWritten, setExportsWritten] = useState(0);
   if (draft.state.status === 'loading') return <LoadingState layout="panel" label="Cargando contenido del proyecto…" />;
   if (draft.state.status === 'error') {
     const missingDraft =
@@ -152,15 +212,40 @@ function ActiveProjectContent({ project }: { project: Project }) {
       draft.state.error.kind === 'problem' &&
       draft.state.error.problem?.code === 'NOT_FOUND';
     if (missingDraft) {
-      return <ProjectEmptyContent project={project} />;
+      return (
+        <>
+          <ProjectEmptyContent project={project} />
+          <ExportHistorySection project={project} carousels={[]} refreshKey="" />
+        </>
+      );
     }
     return <ErrorBanner title="No se pudo cargar el contenido" error={draft.state.error} onRetry={draft.reload} />;
   }
   const carousels = [...draft.state.draft.carousels].sort((a, b) => a.sequence - b.sequence);
-  return <DraftCarousels project={project} carousels={carousels} />;
+  return (
+    <>
+      <DraftCarousels
+        project={project}
+        carousels={carousels}
+        onExported={() => setExportsWritten((count) => count + 1)}
+        onStale={() => void draft.refresh()}
+      />
+      <ExportHistorySection project={project} carousels={carousels} refreshKey={String(exportsWritten)} />
+    </>
+  );
 }
 
-function DraftCarousels({ project, carousels }: { project: Project; carousels: Carousel[] }) {
+function DraftCarousels({
+  project,
+  carousels,
+  onExported,
+  onStale,
+}: {
+  project: Project;
+  carousels: Carousel[];
+  onExported: () => void;
+  onStale: () => void;
+}) {
   const [selectedCarouselId, setSelectedCarouselId] = useState(carousels[0]?.id);
   const carousel = carousels.find((item) => item.id === selectedCarouselId) ?? carousels[0];
   if (!carousel)
@@ -182,7 +267,13 @@ function DraftCarousels({ project, carousels }: { project: Project; carousels: C
           ))}
         </nav>
       ) : null}
-      <ProjectCarouselPreview key={carousel.id} project={project} carousel={carousel} />
+      <ProjectCarouselPreview
+        key={carousel.id}
+        project={project}
+        carousel={carousel}
+        onExported={onExported}
+        onStale={onStale}
+      />
     </div>
   );
 }
@@ -200,7 +291,10 @@ export function ProjectGeneratedContent({ project }: { project: Project }) {
         <p className="m-0 text-body-sm text-text-secondary">Carrusel de Instagram · 4:5</p>
       </header>
       {project.activeDraftId === null ? (
-        <ProjectEmptyContent project={project} />
+        <>
+          <ProjectEmptyContent project={project} />
+          <ExportHistorySection project={project} carousels={[]} refreshKey="" />
+        </>
       ) : (
         <ActiveProjectContent project={project} />
       )}

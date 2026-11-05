@@ -2,14 +2,17 @@ import { contractRegExp, PositionParamSchema } from '@edr/contracts';
 
 import { featurePaths } from '../../app/routes';
 
-/** Address of the project's exports and history page. */
+/**
+ * Address of the project's export history: the history section of the project detail (PD-ARCH-01F). The former
+ * exports page address redirects there.
+ */
 export function exportsPath(projectId: string): string {
-  return featurePaths.history(projectId);
+  return `${projectPath(projectId)}#project-exports`;
 }
 
-/** Address of one export of the project. */
+/** Address of one export of the project (a secondary view with the exact exported versions). */
 export function exportPath(projectId: string, exportId: string): string {
-  return `${exportsPath(projectId)}/${encodeURIComponent(exportId)}`;
+  return `${featurePaths.history(projectId)}/${encodeURIComponent(exportId)}`;
 }
 
 /** Address of the trace of one exported slide. */

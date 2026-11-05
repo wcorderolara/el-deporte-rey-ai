@@ -26,7 +26,7 @@ import {
   urls,
   VERSION_IDS,
 } from './test/fixtures';
-import { DETAIL_PATH, EXPORTS_PATH, renderHistory, tracePathFor } from './test/render';
+import { DETAIL_PATH, PROJECT_HISTORY_PATH, renderHistory, tracePathFor } from './test/render';
 
 afterEach(cleanup);
 
@@ -386,7 +386,7 @@ describe('errors and addresses', () => {
     expect(alert.textContent).toContain('No se pudo cargar la trazabilidad de la diapositiva');
     expect(alert.textContent).toContain('El elemento solicitado no existe.');
     expect(screen.getByRole('link', { name: 'Volver a las exportaciones del proyecto' }).getAttribute('href')).toBe(
-      EXPORTS_PATH,
+      PROJECT_HISTORY_PATH,
     );
   });
 

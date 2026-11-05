@@ -101,6 +101,7 @@ const COMMITTED = [
   { version: 17, name: 'content_generation_batches' },
   { version: 18, name: 'content_generation_batches_reconcile' },
   { version: 19, name: 'operator_validated_approvals' },
+  { version: 20, name: 'project_deletion' },
 ];
 
 describe('committed migrations', () => {
@@ -141,6 +142,7 @@ describe('committed migrations', () => {
         fileName: '0018_content_generation_batches_reconcile.sql',
       },
       { version: 19, name: 'operator_validated_approvals', fileName: '0019_operator_validated_approvals.sql' },
+      { version: 20, name: 'project_deletion', fileName: '0020_project_deletion.sql' },
     ]);
   });
 
@@ -200,8 +202,9 @@ describe('committed migrations', () => {
           { version: 17, name: 'content_generation_batches' },
           { version: 18, name: 'content_generation_batches_reconcile' },
           { version: 19, name: 'operator_validated_approvals' },
+          { version: 20, name: 'project_deletion' },
         ],
-        currentVersion: 19,
+        currentVersion: 20,
       });
       expect(
         db
@@ -253,8 +256,9 @@ describe('committed migrations', () => {
           { version: 17, name: 'content_generation_batches' },
           { version: 18, name: 'content_generation_batches_reconcile' },
           { version: 19, name: 'operator_validated_approvals' },
+          { version: 20, name: 'project_deletion' },
         ],
-        currentVersion: 19,
+        currentVersion: 20,
       });
       expect(JSON.stringify(snapshot())).toBe(before);
       for (const table of [
@@ -303,8 +307,9 @@ CREATE INDEX idx_content_generation_item_matches_match ON content_generation_ite
         applied: [
           { version: 18, name: 'content_generation_batches_reconcile' },
           { version: 19, name: 'operator_validated_approvals' },
+          { version: 20, name: 'project_deletion' },
         ],
-        currentVersion: 19,
+        currentVersion: 20,
       });
       expect(columns(empty.db)).toContain('import_id');
       expect(empty.db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
@@ -330,20 +335,20 @@ CREATE INDEX idx_content_generation_item_matches_match ON content_generation_ite
     const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
     const first = openMigratedDatabase({ location, now: () => FIXED_NOW });
     try {
-      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 19 });
+      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 20 });
       expect(first.db.prepare('PRAGMA journal_mode').get()).toEqual({ journal_mode: 'wal' });
       expect(first.db.prepare('PRAGMA foreign_keys').get()).toEqual({ foreign_keys: 1 });
       expect(appliedMigrations(first.db)).toEqual(
         COMMITTED.map((record) => ({ ...record, appliedAt: '2026-10-27T16:32:21.123Z' })),
       );
-      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 19 });
+      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 20 });
     } finally {
       first.db.close();
     }
 
     const second = openMigratedDatabase({ location });
     try {
-      expect(second.report).toEqual({ applied: [], currentVersion: 19 });
+      expect(second.report).toEqual({ applied: [], currentVersion: 20 });
       expect(tableExists(second.db, 'competition_teams')).toBe(true);
       expect(tableExists(second.db, 'facts')).toBe(true);
       expect(tableExists(second.db, 'competitions')).toBe(true);
@@ -428,8 +433,9 @@ CREATE INDEX idx_content_generation_item_matches_match ON content_generation_ite
           { version: 17, name: 'content_generation_batches' },
           { version: 18, name: 'content_generation_batches_reconcile' },
           { version: 19, name: 'operator_validated_approvals' },
+          { version: 20, name: 'project_deletion' },
         ],
-        currentVersion: 19,
+        currentVersion: 20,
       });
       expect(db.prepare('SELECT competition_id, team_id FROM competition_teams ORDER BY team_id').all()).toEqual([
         { competition_id: 'c1', team_id: 't1' },
@@ -785,8 +791,9 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
           { version: 17, name: 'content_generation_batches' },
           { version: 18, name: 'content_generation_batches_reconcile' },
           { version: 19, name: 'operator_validated_approvals' },
+          { version: 20, name: 'project_deletion' },
         ],
-        currentVersion: 19,
+        currentVersion: 20,
       });
 
       expect(db.prepare(QA_RESULT_BYTES).all()).toEqual(bytesBefore);
@@ -821,7 +828,7 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
     // Reopening applies nothing more.
     const reopened = openMigratedDatabase({ location });
     try {
-      expect(reopened.report).toEqual({ applied: [], currentVersion: 19 });
+      expect(reopened.report).toEqual({ applied: [], currentVersion: 20 });
     } finally {
       reopened.db.close();
     }

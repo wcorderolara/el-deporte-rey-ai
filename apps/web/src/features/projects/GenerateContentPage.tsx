@@ -5,7 +5,8 @@
  * request key, so a double click or a retry returns the same batch. Going back keeps every choice.
  */
 import type { CompetitionMatch, CompetitionRound, ContentBatchSelection, ContentPieceKind } from '@edr/contracts';
-import { useCallback, useMemo, useState } from 'react';
+import { contractRegExp } from '@edr/contracts';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import { Alert, Badge, Button, Card, ErrorBanner, LoadingState, Select, formatDateTime } from '../../ui';
@@ -13,6 +14,42 @@ import { generationSteps, matchStatusCopy, pieceKindCopy, scoreText, skipReasonC
 import { contentBatchPath } from './paths';
 import { useProjectsDependencies } from './ProjectsContext';
 import { useApiRequest } from './useApiRequest';
+
+const UUID = contractRegExp('Uuid');
+
+/** Where the validation of a context received in the address stands (PD-ARCH-01F). */
+type PresetStage = 'competition' | 'season' | 'round' | 'done';
+
+interface Preset {
+  readonly competitionId: string;
+  readonly seasonId: string;
+  readonly roundId: string;
+  /** Null when the address names a well-formed context (or none); otherwise why it is ignored. */
+  readonly error: string | null;
+}
+
+/**
+ * The sports context named by the address (`?competitionId=&seasonId=&roundId=`, as linked from a round). Every
+ * identifier must be a server UUID and each level needs the previous one; otherwise nothing is preselected.
+ */
+export function presetOf(params: URLSearchParams): Preset {
+  const competitionId = params.get('competitionId') ?? '';
+  const seasonId = params.get('seasonId') ?? '';
+  const roundId = params.get('roundId') ?? '';
+  const named = [competitionId, seasonId, roundId].filter((value) => value !== '');
+  const wellFormed =
+    named.every((value) => UUID.test(value)) &&
+    (seasonId === '' || competitionId !== '') &&
+    (roundId === '' || seasonId !== '');
+  return wellFormed
+    ? { competitionId, seasonId, roundId, error: null }
+    : {
+        competitionId: '',
+        seasonId: '',
+        roundId: '',
+        error: 'El enlace no contiene una competición, temporada y jornada válidas.',
+      };
+}
 
 const ALL_STAGES = '';
 const NO_STAGE = 'none';
@@ -60,11 +97,14 @@ export function GenerateContentPage() {
   const { api } = useProjectsDependencies();
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const [preset] = useState(() => presetOf(params));
+  const [presetStage, setPresetStage] = useState<PresetStage>(preset.competitionId === '' ? 'done' : 'competition');
+  const [presetError, setPresetError] = useState<string | null>(preset.error);
   const [step, setStep] = useState(1);
-  const [competitionId, setCompetitionId] = useState(params.get('competitionId') ?? '');
-  const [seasonId, setSeasonId] = useState(params.get('seasonId') ?? '');
+  const [competitionId, setCompetitionId] = useState(preset.competitionId);
+  const [seasonId, setSeasonId] = useState(preset.seasonId);
   const [stageFilter, setStageFilter] = useState(ALL_STAGES);
-  const [roundId, setRoundId] = useState(params.get('roundId') ?? '');
+  const [roundId, setRoundId] = useState(preset.roundId);
   const [kinds, setKinds] = useState<ReadonlySet<ContentPieceKind>>(new Set(['round_results']));
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
@@ -75,12 +115,16 @@ export function GenerateContentPage() {
     'local-competitions',
     useCallback((signal: AbortSignal) => api.listLocalCompetitions(signal), [api]),
   );
+  // A preselected level is requested only after the previous one was found, so no identifier of another
+  // competition or season is ever used.
   const seasons = useApiRequest(
-    competitionId === '' ? null : `seasons:${competitionId}`,
+    competitionId === '' || presetStage === 'competition' ? null : `seasons:${competitionId}`,
     useCallback((signal: AbortSignal) => api.listLocalSeasons(competitionId, signal), [api, competitionId]),
   );
   const calendar = useApiRequest(
-    competitionId === '' || seasonId === '' ? null : `calendar:${competitionId}:${seasonId}`,
+    competitionId === '' || seasonId === '' || presetStage === 'competition' || presetStage === 'season'
+      ? null
+      : `calendar:${competitionId}:${seasonId}`,
     useCallback(
       async (signal: AbortSignal) => {
         const [stages, rounds, matches] = await Promise.all([
@@ -93,6 +137,44 @@ export function GenerateContentPage() {
       [api, competitionId, seasonId],
     ),
   );
+
+  // Validates the context of the address level by level against the local data.
+  useEffect(() => {
+    const reject = (message: string, keep: 'none' | 'competition' | 'season') => {
+      setPresetError(message);
+      if (keep === 'none') setCompetitionId('');
+      if (keep !== 'season') setSeasonId('');
+      setRoundId('');
+      setPresetStage('done');
+    };
+    if (presetStage === 'competition' && competitions.state.status === 'success') {
+      if (!competitions.state.data.some((item) => item.id === preset.competitionId)) {
+        reject('La competición del enlace no existe.', 'none');
+      } else {
+        setPresetStage(preset.seasonId === '' ? 'done' : 'season');
+      }
+    } else if (presetStage === 'season' && seasons.state.status === 'success') {
+      if (!seasons.state.data.some((item) => item.id === preset.seasonId)) {
+        reject('La temporada del enlace no pertenece a esa competición.', 'competition');
+      } else {
+        setPresetStage(preset.roundId === '' ? 'done' : 'round');
+      }
+    } else if (presetStage === 'round' && calendar.state.status === 'success') {
+      const found = calendar.state.data.rounds.find((item) => item.id === preset.roundId);
+      if (found === undefined) {
+        reject('La jornada del enlace no pertenece a esa temporada.', 'season');
+      } else {
+        // The related stage is resolved from the round itself.
+        if (calendar.state.data.stages.length > 0) setStageFilter(found.stageId ?? NO_STAGE);
+        setPresetStage('done');
+      }
+    } else if (
+      presetStage !== 'done' &&
+      [competitions.state, seasons.state, calendar.state].some((state) => state.status === 'error')
+    ) {
+      reject('No se pudo comprobar el contexto del enlace.', 'none');
+    }
+  }, [presetStage, preset, competitions.state, seasons.state, calendar.state]);
 
   const stageNames = useMemo(
     () =>
@@ -148,6 +230,8 @@ export function GenerateContentPage() {
   );
 
   function chooseCompetition(value: string) {
+    setPresetStage('done');
+    setPresetError(null);
     setCompetitionId(value);
     setSeasonId('');
     setStageFilter(ALL_STAGES);
@@ -156,6 +240,8 @@ export function GenerateContentPage() {
   }
 
   function chooseSeason(value: string) {
+    setPresetStage('done');
+    setPresetError(null);
     setSeasonId(value);
     setStageFilter(ALL_STAGES);
     setRoundId('');
@@ -163,6 +249,8 @@ export function GenerateContentPage() {
   }
 
   function chooseRound(value: string) {
+    setPresetStage('done');
+    setPresetError(null);
     setRoundId(value);
     setSelected(new Set());
   }
@@ -196,7 +284,7 @@ export function GenerateContentPage() {
   }
 
   const canContinue =
-    (step === 1 && round !== null && roundMatches.length > 0) ||
+    (step === 1 && presetStage === 'done' && round !== null && roundMatches.length > 0) ||
     (step === 2 && kinds.size > 0) ||
     (step === 3 && selected.size > 0);
   const ready = preview.state.status === 'success' ? preview.state.data.totals.ready : 0;
@@ -204,9 +292,9 @@ export function GenerateContentPage() {
   return (
     <section aria-labelledby="generate-title" className="grid min-w-0 gap-6">
       <div className="grid gap-3">
-        <p className="m-0 text-caption font-bold tracking-label text-brand-gold uppercase">Competiciones locales</p>
+        <p className="m-0 text-caption font-bold tracking-label text-brand-gold uppercase">Desde una competición</p>
         <h1 id="generate-title" className="m-0 font-display text-heading-md font-extrabold tracking-display">
-          Generar contenido desde una competición
+          Crear contenido
         </h1>
         <p className="m-0 max-w-reading text-body-md text-text-secondary">
           Usa los datos guardados en el estudio, incluidas tus correcciones manuales. No se consulta ningún proveedor
@@ -220,6 +308,12 @@ export function GenerateContentPage() {
           <h2 id="step-context-title" className="m-0 text-heading-sm font-bold">
             1. Contexto deportivo
           </h2>
+          {presetError === null ? null : (
+            <Alert tone="warning" role="alert" title="No pudimos abrir el contexto del enlace">
+              {presetError} Elige la competición, la temporada y la jornada.
+            </Alert>
+          )}
+          {presetStage === 'done' ? null : <LoadingState label="Comprobando el contexto del enlace…" />}
           {competitions.state.status === 'loading' ? <LoadingState label="Cargando competiciones…" /> : null}
           {competitions.state.status === 'error' ? (
             <ErrorBanner error={competitions.state.error} onRetry={competitions.reload} />

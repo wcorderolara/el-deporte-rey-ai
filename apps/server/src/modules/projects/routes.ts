@@ -1,5 +1,5 @@
 /**
- * Project, run and exclusion routes (contract operations listProjects, createProject, getProject, updateProject,
+ * Project, run and exclusion routes (contract operations listProjects, createProject, getProject, deleteProject, updateProject,
  * listRuns, startRun, getRun, setExcludedMatches). Parameters and bodies are validated with the contract schemas
  * (400 `VALIDATION_FAILED` with closed pointers); responses are checked against their contract schemas. The platform
  * guards (Host, Sec-Fetch-Site, client header and Origin, media type, body limit) apply unchanged: no route raises
@@ -34,6 +34,12 @@ export function registerProjectRoutes(app: FastifyInstance, service: ProjectsSer
   app.get('/projects/:projectId', async (request) => {
     const { projectId } = ProjectParamsSchema.parse(request.params);
     return contractResponse(ProjectSchema, service.get(projectId));
+  });
+
+  app.delete('/projects/:projectId', async (request, reply) => {
+    const { projectId } = ProjectParamsSchema.parse(request.params);
+    await service.delete(projectId);
+    return reply.code(204).send();
   });
 
   app.patch('/projects/:projectId', async (request) => {

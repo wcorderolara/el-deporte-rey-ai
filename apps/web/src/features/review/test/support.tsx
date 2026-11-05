@@ -23,6 +23,7 @@ import { vi } from 'vitest';
 
 import { createApiClient, type FetchFunction } from '../../../api/client';
 import { appRoutes } from '../../../app/routes';
+import { HistoryApiContext } from '../../history/api';
 import { createReviewApi } from '../api';
 import { ReviewProvider } from '../ReviewContext';
 
@@ -48,7 +49,44 @@ export function problem(body: Record<string, unknown>): Response {
 }
 
 /** Answers each request from `routes` (`"GET /api/v1/..."`); an unknown request fails as a network error. */
-export function fakeServer(routes: Record<string, Handler | Handler[]>) {
+/** The project of the review header (PD-ARCH-01F), answered unless a test overrides it. */
+export function reviewProject(): Record<string, unknown> {
+  return {
+    id: '11111111-1111-4111-8111-111111111111',
+    title: 'Liga de Prueba 2026 · Jornada 3',
+    competitionName: 'Liga de Prueba',
+    seasonLabel: '2026',
+    stageLabel: 'Fase regular',
+    matchday: 3,
+    sourceName: 'Fuente sintética',
+    dataMode: 'DEMO_DATA',
+    demonstration: true,
+    language: 'es',
+    createdAt: '2026-10-27T10:00:00Z',
+    approvalState: 'in_review',
+    lastExportAt: null,
+    latestRunStatus: 'completed',
+    sportsContext: null,
+    competitionId: 'liga-prueba',
+    sourceId: 'demo-a',
+    seasonId: '2026',
+    stageId: 'fase-regular',
+    latestRun: null,
+    activeDraftId: '22222222-2222-4222-8222-222222222222',
+  };
+}
+
+/**
+ * Requests every review page makes besides the draft (PD-ARCH-01F): the project of the header and the project's
+ * exports of the carousel download. A test route with the same key replaces them.
+ */
+const DEFAULT_ROUTES: Record<string, Handler> = {
+  'GET /api/v1/projects/11111111-1111-4111-8111-111111111111': () => json(reviewProject()),
+  'GET /api/v1/projects/11111111-1111-4111-8111-111111111111/exports': () => json({ exports: [] }),
+};
+
+export function fakeServer(overrides: Record<string, Handler | Handler[]>) {
+  const routes: Record<string, Handler | Handler[]> = { ...DEFAULT_ROUTES, ...overrides };
   const calls: RecordedCall[] = [];
   const unexpected: string[] = [];
   const counters = new Map<string, number>();
@@ -86,13 +124,16 @@ export function fakeServer(routes: Record<string, Handler | Handler[]>) {
 
 export type FakeServer = ReturnType<typeof fakeServer>;
 
-/** Mounts the application routes at `path` with the review API over the fake server. */
+/** Mounts the application routes at `path` with the review and export APIs over the fake server. */
 export function renderApp(path: string, server: FakeServer) {
-  const api = createReviewApi(createApiClient({ fetch: server.fetch }));
+  const client = createApiClient({ fetch: server.fetch });
+  const api = createReviewApi(client);
   const router = createMemoryRouter(appRoutes, { initialEntries: [path] });
   render(
     <ReviewProvider value={{ api }}>
-      <RouterProvider router={router} />
+      <HistoryApiContext.Provider value={client}>
+        <RouterProvider router={router} />
+      </HistoryApiContext.Provider>
     </ReviewProvider>,
   );
   return router;

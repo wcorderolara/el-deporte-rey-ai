@@ -193,9 +193,9 @@ export const resultCopy = {
       ? 'versión 1 (primera versión)'
       : `versión ${versionNumber} (nueva versión; las anteriores se conservan)`,
   selections: 'Selecciones importadas',
-  createProject: (competition: string): string => `Crear un proyecto con «${competition}»`,
+  createContent: 'Crear contenido',
   createProjectHint:
-    'La competición aparece en el catálogo con datos manuales; elíjala en el formulario de creación del proyecto.',
+    'El contenido se crea desde las competiciones locales: administra sus datos en Competiciones y luego usa Crear contenido. Esta importación se conserva como historial.',
   dataNotVerified:
     'Los datos manuales no cuentan como verificación independiente: quedan sin verificar hasta que el operador los apruebe manualmente.',
 } as const;

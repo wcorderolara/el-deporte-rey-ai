@@ -49,6 +49,8 @@ export interface ProjectsApi {
   createProject(body: ProjectCreate): Promise<Project>;
   /** getProject. */
   getProject(projectId: string, signal?: AbortSignal): Promise<Project>;
+  /** deleteProject: logical deletion of a project in any state (PD-ARCH-01F). */
+  deleteProject(projectId: string): Promise<void>;
   /** updateProject: change the content language. */
   updateProject(projectId: string, body: ProjectUpdate): Promise<Project>;
   /** startRun: start a full run or a redraft. */
@@ -113,6 +115,9 @@ export function createProjectsApi(client: ApiClient): ProjectsApi {
     },
     createProject(body) {
       return client.post(operationPath('createProject'), body, { schema: ProjectSchema });
+    },
+    async deleteProject(projectId) {
+      await client.delete(operationPath('deleteProject', { projectId }));
     },
     getProject(projectId, signal) {
       return client.get(operationPath('getProject', { projectId }), { schema: ProjectSchema, ...withSignal(signal) });

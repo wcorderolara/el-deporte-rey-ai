@@ -10,8 +10,11 @@ export interface ShellContext {
 export function shellContext(pathname: string): ShellContext {
   if (pathname === '/') return { title: 'Inicio' };
   if (pathname === '/projects' || pathname === '/projects/') return { title: 'Mis proyectos' };
-  if (pathname === '/projects/new' || pathname === '/projects/new/') {
+  if (pathname === '/projects/generate' || pathname === '/projects/generate/') {
     return { title: 'Crear contenido', parent: { label: 'Mis proyectos', to: '/projects' } };
+  }
+  if (/^\/projects\/batches\/[^/]+\/?$/.test(pathname)) {
+    return { title: 'Resultado de la generación', parent: { label: 'Mis proyectos', to: '/projects' } };
   }
   if (pathname === '/exports' || pathname === '/exports/') {
     return { title: 'Exportaciones', parent: { label: 'Mis proyectos', to: '/' } };
