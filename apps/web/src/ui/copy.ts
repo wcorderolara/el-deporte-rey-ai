@@ -181,6 +181,9 @@ export const problemCodeMessage: Record<ProblemCode, string> = {
   REQUEST_KEY_REUSED: 'Esta confirmación ya se usó para otra selección. Revisa la propuesta y confirma de nuevo.',
   ASSET_IN_USE:
     'El recurso aparece en diapositivas ya generadas, así que no se puede eliminar. Puedes desactivarlo para que no se use en contenido nuevo.',
+  IMAGE_PROVIDER_UNAVAILABLE: 'La generación de imágenes no está disponible en el servidor.',
+  DESIGN_REFERENCE_REFUSED: 'Un recurso de marca seleccionado no se puede usar de esa forma.',
+  GENERATION_LIMIT_REACHED: 'Se alcanzó un límite de generación de imágenes.',
   PROVIDER_RATE_LIMITED: 'Se alcanzó el límite de solicitudes de la fuente de datos.',
   SELECTION_UNAVAILABLE: 'La selección no está disponible en la fuente elegida.',
   IMPORT_REJECTED: 'La importación fue rechazada. No se guardó ningún dato.',

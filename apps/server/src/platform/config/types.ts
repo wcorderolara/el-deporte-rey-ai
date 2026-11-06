@@ -131,6 +131,8 @@ export interface AppConfig {
   readonly providers: Readonly<{
     sports: Readonly<{ sources: readonly SourceConfig[] }>;
     ai: AiProviderConfig;
+    /** Image generation provider of the design proposals (PD-ARCH-01G-B); adapter `disabled` by default. */
+    images: AiProviderConfig;
   }>;
   readonly verificationPolicy: VerificationPolicy;
   readonly catalogue: CatalogueConfig;

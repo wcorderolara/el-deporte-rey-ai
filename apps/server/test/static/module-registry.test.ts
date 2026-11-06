@@ -16,6 +16,7 @@ describe('module registry', () => {
       'verification',
       'content',
       'brand',
+      'design',
       'rendering',
       'visual-qa',
       'review',

@@ -52,6 +52,7 @@ tags:
   - name: imports
   - name: brand
   - name: templates
+  - name: design
   - name: system
 paths:
   /health:
@@ -2524,6 +2525,290 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
+  /design/capabilities:
+    get:
+      tags: [design]
+      operationId: getDesignCapabilities
+      description: |
+        What the configured image provider offers for AI design proposals (PD-ARCH-01G-B): its status (the API key is
+        checked for presence on the server, never returned), the configured models with their qualities, size rules and
+        published prices, the content types and formats, the roles each usage policy allows, and the usage limits with
+        the images used today and the computed spend of the month. No request is sent to the provider.
+      responses:
+        '200':
+          description: The capabilities.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DesignCapabilities' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /design/capabilities/check:
+    post:
+      tags: [design]
+      operationId: checkDesignModelAccess
+      description: |
+        Ask the provider whether the account can use a configured model, with its free model metadata request. No image
+        is generated and nothing is charged.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [model]
+              additionalProperties: false
+              properties:
+                model: { type: string, minLength: 1, maxLength: 100, pattern: '^[a-z0-9][a-z0-9._-]{0,99}$' }
+      responses:
+        '200':
+          description: The access of the account to the model.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [model, access, errorCode]
+                additionalProperties: false
+                properties:
+                  model: { type: string, minLength: 1, maxLength: 100, pattern: '^[a-z0-9][a-z0-9._-]{0,99}$' }
+                  access: { type: string, enum: [available, unavailable, not_authorized, missing_api_key, disabled, error] }
+                  errorCode: { oneOf: [{ $ref: '#/components/schemas/DesignGenerationErrorCode' }, { type: 'null' }] }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /design/estimates:
+    post:
+      tags: [design]
+      operationId: estimateDesignGeneration
+      description: |
+        Check a generation request and show its scope before it is confirmed: the model, quality and count, the request
+        and output sizes and the local adaptation, each brand asset with its role and whether its image would be sent,
+        the effective prompt, the cost estimate (only from a published per-image cost; never a final cost) and the
+        usage limits. A selected asset that is inactive, deleted or not allowed in its role by its usage policy is
+        refused. Nothing is stored and nothing is sent to the provider.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DesignGenerationInput' }
+      responses:
+        '200':
+          description: The scope and estimate.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DesignEstimate' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /design/generations:
+    post:
+      tags: [design]
+      operationId: createDesignGeneration
+      description: |
+        Start a confirmed generation (`confirmCost: true`). It may be charged by the provider. A repeated request key
+        returns the same generation; the same key with another request is `REQUEST_KEY_REUSED`. The count, the daily
+        images, the computed monthly spend and the concurrent generations are limited (`GENERATION_LIMIT_REACHED`).
+        The generation runs asynchronously, one provider request per image, never retried automatically.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DesignGenerationCreate' }
+      responses:
+        '202':
+          description: The generation was accepted (or the stored generation of a repeated request key).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [generation, statusUrl, eventsUrl]
+                additionalProperties: false
+                properties:
+                  generation: { $ref: '#/components/schemas/DesignGeneration' }
+                  statusUrl: { type: string, maxLength: 200, pattern: '^/api/v1/design/generations/' }
+                  eventsUrl: { type: string, maxLength: 200, pattern: '^/api/v1/design/generations/' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /design/generations/{generationId}:
+    parameters:
+      - $ref: '#/components/parameters/GenerationId'
+    get:
+      tags: [design]
+      operationId: getDesignGeneration
+      description: The status the server recorded for a generation, with its saved proposals.
+      responses:
+        '200':
+          description: The generation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DesignGeneration' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /design/generations/{generationId}/events:
+    parameters:
+      - $ref: '#/components/parameters/GenerationId'
+    get:
+      tags: [design]
+      operationId: streamDesignGenerationEvents
+      description: SSE notifications of the recorded generation statuses with resumable sequence IDs. SQLite remains authoritative.
+      responses:
+        '200': { description: Server-sent progress events., content: { text/event-stream: { schema: { type: string } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /design/proposals:
+    get:
+      tags: [design]
+      operationId: listDesignProposals
+      description: Every generated proposal, newest first. Proposals are reviewed bitmaps, never templates.
+      responses:
+        '200':
+          description: The proposals.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [proposals]
+                additionalProperties: false
+                properties:
+                  proposals:
+                    type: array
+                    items: { $ref: '#/components/schemas/DesignProposal' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /design/proposals/{proposalId}:
+    parameters:
+      - $ref: '#/components/parameters/ProposalId'
+    get:
+      tags: [design]
+      operationId: getDesignProposal
+      description: A proposal with its generation (prompt, instructions, references, estimate), usage, cost, decisions and variants.
+      responses:
+        '200':
+          description: The proposal detail.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DesignProposalDetail' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [design]
+      operationId: deleteDesignProposal
+      description: |
+        Discard a proposal: it leaves the library and can no longer be reviewed or used for a variant. Logical deletion:
+        the row, its decisions and its files are kept. Refused (409 RUN_IN_PROGRESS) while a variant of it is being
+        generated.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '204': { description: Deleted. }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /design/proposals/{proposalId}/file:
+    parameters:
+      - $ref: '#/components/parameters/ProposalId'
+    get:
+      tags: [design]
+      operationId: getDesignProposalFile
+      description: |
+        The proposal image (the generated background with the original brand layers drawn over it), after a hash check,
+        with a sandboxed CSP and no caching.
+      responses:
+        '200':
+          description: The image.
+          content:
+            image/png:
+              schema: { type: string, contentMediaType: image/png }
+            image/jpeg:
+              schema: { type: string, contentMediaType: image/jpeg }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /design/proposals/{proposalId}/background:
+    parameters:
+      - $ref: '#/components/parameters/ProposalId'
+    get:
+      tags: [design]
+      operationId: getDesignProposalBackground
+      description: |
+        The bitmap generated by the provider, without the original brand layers (the proposal image itself when no
+        layer was drawn), after a hash check, with a sandboxed CSP and no caching.
+      responses:
+        '200':
+          description: The image.
+          content:
+            image/png:
+              schema: { type: string, contentMediaType: image/png }
+            image/jpeg:
+              schema: { type: string, contentMediaType: image/jpeg }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /design/proposals/{proposalId}/decisions:
+    parameters:
+      - $ref: '#/components/parameters/ProposalId'
+    post:
+      tags: [design]
+      operationId: decideDesignProposal
+      description: |
+        Record a review decision (approve, reject or request changes with a note). Decisions are append-only; the last
+        one is the proposal's status. No template, brand asset or project changes.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              additionalProperties: false
+              properties:
+                decision: { type: string, enum: [approved, rejected, changes_requested] }
+                note: { type: string, minLength: 1, maxLength: 1200, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }
+      responses:
+        '200':
+          description: The reviewed proposal.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DesignProposal' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
 components:
   parameters:
     ClientHeader:
@@ -2607,6 +2892,16 @@ components:
       in: path
       required: true
       schema: { type: integer, minimum: 1, maximum: 99 }
+    GenerationId:
+      name: generationId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    ProposalId:
+      name: proposalId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
   responses:
     Problem:
       description: Error.
@@ -3225,6 +3520,9 @@ components:
             - CONTENT_BATCH_NOT_GENERATABLE
             - REQUEST_KEY_REUSED
             - ASSET_IN_USE
+            - IMAGE_PROVIDER_UNAVAILABLE
+            - DESIGN_REFERENCE_REFUSED
+            - GENERATION_LIMIT_REACHED
         detail: { type: string, maxLength: 500, description: 'Fixed text plus sanitized parameters only (T10-F10)' }
         errors:
           type: array
@@ -4592,3 +4890,365 @@ components:
         imageSlots:
           type: array
           items: { $ref: '#/components/schemas/BrandAssetKind' }
+    DesignMode:
+      description: |
+        How the prompt is made: `guided` (the server's versioned prompt, a background design with empty data zones and
+        no text or people, reusable by a structured template) or `own_prompt` (the operator's prompt as written, with
+        only the input-image numbering and the zones of original layers added; an inspiration image, never a template
+        base).
+      type: string
+      enum: [guided, own_prompt]
+    DesignContentType:
+      description: Content a design proposal is made for (PD-ARCH-01G-B).
+      type: string
+      enum: [match_preview, round_overview, fixture, match_result]
+    DesignFormat:
+      type: string
+      enum: ['1:1', '4:5', '9:16']
+    DesignReferenceRole:
+      description: |
+        How a brand asset takes part in a generation: `style_reference` (its image is sent as a visual reference),
+        `transform_base` (its image is the base of a variant; `transformable` assets only) or `reserved_placement` (never
+        sent; the design leaves a clean zone where the original is placed later).
+      type: string
+      enum: [style_reference, transform_base, reserved_placement]
+    DesignGenerationStatus:
+      description: The statuses the server records while it works; no progress percentage is invented.
+      type: string
+      enum: [queued, preparing_references, sending_request, generating, saving, completed, failed]
+    DesignProposalStatus:
+      type: string
+      enum: [pending_review, approved, rejected, changes_requested]
+    DesignGenerationErrorCode:
+      type: string
+      enum:
+        - NOT_CONFIGURED
+        - API_KEY_MISSING
+        - MODEL_UNAVAILABLE
+        - ACCOUNT_NOT_AUTHORIZED
+        - RATE_LIMITED
+        - QUOTA_EXCEEDED
+        - PROVIDER_REJECTED
+        - INVALID_REQUEST
+        - TIMEOUT
+        - RESPONSE_INVALID
+        - PROVIDER_UNAVAILABLE
+        - PROVIDER_BUSY
+        - STORAGE_FAILED
+        - REFERENCE_UNAVAILABLE
+        - INTERRUPTED
+        - INTERNAL
+    DesignPricing:
+      description: Prices per million tokens as configured from the provider's published price list, with its source and date.
+      type: object
+      required:
+        [currency, textInputPerMillionTokens, imageInputPerMillionTokens, imageOutputPerMillionTokens, textOutputPerMillionTokens, source, checkedOn]
+      additionalProperties: false
+      properties:
+        currency: { type: string, const: USD }
+        textInputPerMillionTokens: { type: number, minimum: 0, maximum: 100000 }
+        imageInputPerMillionTokens: { type: number, minimum: 0, maximum: 100000 }
+        imageOutputPerMillionTokens: { type: number, minimum: 0, maximum: 100000 }
+        textOutputPerMillionTokens: { type: [number, 'null'], minimum: 0, maximum: 100000 }
+        source: { type: string, minLength: 1, maxLength: 300 }
+        checkedOn: { type: string, format: date }
+    DesignModel:
+      type: object
+      required: [id, label, flexibleSizes, qualities, pricing, estimable]
+      additionalProperties: false
+      properties:
+        id: { type: string, minLength: 1, maxLength: 100, pattern: '^[a-z0-9][a-z0-9._-]{0,99}$' }
+        label: { $ref: '#/components/schemas/Label' }
+        flexibleSizes: { type: boolean }
+        qualities:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items: { type: string, minLength: 2, maxLength: 16, pattern: '^[a-z]{2,16}$' }
+        pricing: { oneOf: [{ $ref: '#/components/schemas/DesignPricing' }, { type: 'null' }] }
+        estimable: { type: boolean }
+    DesignCapabilities:
+      type: object
+      required: [adapter, status, defaultModel, models, contentTypes, formats, policyRoles, limits, promptVersion]
+      additionalProperties: false
+      properties:
+        adapter: { type: string, enum: [disabled, openai] }
+        status: { type: string, enum: [disabled, missing_api_key, ready] }
+        defaultModel: { oneOf: [{ type: string, minLength: 1, maxLength: 100, pattern: '^[a-z0-9][a-z0-9._-]{0,99}$' }, { type: 'null' }] }
+        models:
+          type: array
+          maxItems: 12
+          items: { $ref: '#/components/schemas/DesignModel' }
+        contentTypes:
+          type: array
+          maxItems: 4
+          items: { $ref: '#/components/schemas/DesignContentType' }
+        formats:
+          type: array
+          maxItems: 3
+          items: { $ref: '#/components/schemas/DesignFormat' }
+        policyRoles:
+          type: array
+          maxItems: 4
+          items:
+            type: object
+            required: [policy, roles]
+            additionalProperties: false
+            properties:
+              policy: { $ref: '#/components/schemas/BrandAssetUsagePolicy' }
+              roles:
+                type: array
+                maxItems: 3
+                items: { $ref: '#/components/schemas/DesignReferenceRole' }
+        limits:
+          type: object
+          required:
+            [maxImagesPerRequest, maxReferences, maxImagesPerDay, imagesUsedToday, monthlySpendLimit, spentThisMonth, maxConcurrentRequests]
+          additionalProperties: false
+          properties:
+            maxImagesPerRequest: { type: integer, minimum: 1, maximum: 8 }
+            maxReferences: { type: integer, minimum: 0, maximum: 8 }
+            maxImagesPerDay: { type: integer, minimum: 1, maximum: 500 }
+            imagesUsedToday: { type: integer, minimum: 0 }
+            monthlySpendLimit: { type: [number, 'null'], minimum: 0, maximum: 100000 }
+            spentThisMonth: { type: [number, 'null'], minimum: 0, maximum: 100000 }
+            maxConcurrentRequests: { type: integer, minimum: 1, maximum: 4 }
+        promptVersion: { type: string, minLength: 1, maxLength: 64 }
+    DesignGenerationInput:
+      description: What to generate; a generation adds the request key and the cost confirmation.
+      type: object
+      required: [contentType, format, quality, count, references]
+      additionalProperties: false
+      properties:
+        mode: { $ref: '#/components/schemas/DesignMode' }
+        contentType: { $ref: '#/components/schemas/DesignContentType' }
+        format: { $ref: '#/components/schemas/DesignFormat' }
+        model: { type: string, minLength: 1, maxLength: 100, pattern: '^[a-z0-9][a-z0-9._-]{0,99}$' }
+        quality: { type: string, minLength: 2, maxLength: 16, pattern: '^[a-z]{2,16}$' }
+        count: { type: integer, minimum: 1, maximum: 8 }
+        style: { type: string, minLength: 1, maxLength: 300, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }
+        instructions: { type: string, minLength: 1, maxLength: 12000, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }
+        references:
+          type: array
+          maxItems: 8
+          items:
+            type: object
+            required: [assetId, role]
+            additionalProperties: false
+            properties:
+              assetId: { $ref: '#/components/schemas/Uuid' }
+              role: { $ref: '#/components/schemas/DesignReferenceRole' }
+        parentProposalId: { $ref: '#/components/schemas/Uuid' }
+    DesignGenerationCreate:
+      type: object
+      required: [contentType, format, quality, count, references, requestKey, confirmCost]
+      additionalProperties: false
+      properties:
+        mode: { $ref: '#/components/schemas/DesignMode' }
+        contentType: { $ref: '#/components/schemas/DesignContentType' }
+        format: { $ref: '#/components/schemas/DesignFormat' }
+        model: { type: string, minLength: 1, maxLength: 100, pattern: '^[a-z0-9][a-z0-9._-]{0,99}$' }
+        quality: { type: string, minLength: 2, maxLength: 16, pattern: '^[a-z]{2,16}$' }
+        count: { type: integer, minimum: 1, maximum: 8 }
+        style: { type: string, minLength: 1, maxLength: 300, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }
+        instructions: { type: string, minLength: 1, maxLength: 12000, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }
+        references:
+          type: array
+          maxItems: 8
+          items:
+            type: object
+            required: [assetId, role]
+            additionalProperties: false
+            properties:
+              assetId: { $ref: '#/components/schemas/Uuid' }
+              role: { $ref: '#/components/schemas/DesignReferenceRole' }
+        parentProposalId: { $ref: '#/components/schemas/Uuid' }
+        requestKey: { $ref: '#/components/schemas/Uuid' }
+        confirmCost: { type: boolean, const: true }
+    DesignReference:
+      type: object
+      required: [assetId, label, kind, usagePolicy, role, sent]
+      additionalProperties: false
+      properties:
+        assetId: { $ref: '#/components/schemas/Uuid' }
+        label: { $ref: '#/components/schemas/Label' }
+        kind: { $ref: '#/components/schemas/BrandAssetKind' }
+        usagePolicy: { $ref: '#/components/schemas/BrandAssetUsagePolicy' }
+        role: { $ref: '#/components/schemas/DesignReferenceRole' }
+        sent: { type: boolean }
+    DesignCostEstimate:
+      description: An estimate from a published per-image output cost, or `unavailable`; never a final cost.
+      type: object
+      required: [status, currency, perImage, total, basis, pricingSource, pricingCheckedOn]
+      additionalProperties: false
+      properties:
+        status: { type: string, enum: [estimated, unavailable] }
+        currency: { oneOf: [{ type: string, const: USD }, { type: 'null' }] }
+        perImage: { type: [number, 'null'], minimum: 0, maximum: 100000 }
+        total: { type: [number, 'null'], minimum: 0, maximum: 100000 }
+        basis: { type: string, enum: [published_output_cost, none] }
+        pricingSource: { type: [string, 'null'], minLength: 1, maxLength: 300 }
+        pricingCheckedOn: { oneOf: [{ type: string, format: date }, { type: 'null' }] }
+    DesignEstimate:
+      type: object
+      required:
+        [provider, mode, model, quality, count, requestSize, outputWidth, outputHeight, adaptation, references, prompt, promptVersion, cost, imagesUsedToday, maxImagesPerDay, spentThisMonth, monthlySpendLimit]
+      additionalProperties: false
+      properties:
+        provider: { type: string, enum: [openai] }
+        mode: { $ref: '#/components/schemas/DesignMode' }
+        model: { type: string, minLength: 1, maxLength: 100, pattern: '^[a-z0-9][a-z0-9._-]{0,99}$' }
+        quality: { type: string, minLength: 2, maxLength: 16, pattern: '^[a-z]{2,16}$' }
+        count: { type: integer, minimum: 1, maximum: 8 }
+        requestSize: { type: string, minLength: 5, maxLength: 9, pattern: '^[1-9][0-9]{1,3}x[1-9][0-9]{1,3}$' }
+        outputWidth: { type: integer, minimum: 1, maximum: 4096 }
+        outputHeight: { type: integer, minimum: 1, maximum: 4096 }
+        adaptation: { type: string, enum: [none, center_crop] }
+        references:
+          type: array
+          maxItems: 9
+          items: { $ref: '#/components/schemas/DesignReference' }
+        prompt: { type: string, minLength: 1, maxLength: 32000 }
+        promptVersion: { type: string, minLength: 1, maxLength: 64 }
+        cost: { $ref: '#/components/schemas/DesignCostEstimate' }
+        imagesUsedToday: { type: integer, minimum: 0 }
+        maxImagesPerDay: { type: integer, minimum: 1, maximum: 500 }
+        spentThisMonth: { type: [number, 'null'], minimum: 0, maximum: 100000 }
+        monthlySpendLimit: { type: [number, 'null'], minimum: 0, maximum: 100000 }
+    DesignGeneration:
+      type: object
+      required:
+        [id, mode, status, contentType, format, model, quality, requestedCount, completedCount, currentIndex, parentProposalId, proposalIds, errorCode, errorMessage, retryAfterSeconds, cost, createdAt, startedAt, updatedAt, completedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        mode: { $ref: '#/components/schemas/DesignMode' }
+        status: { $ref: '#/components/schemas/DesignGenerationStatus' }
+        contentType: { $ref: '#/components/schemas/DesignContentType' }
+        format: { $ref: '#/components/schemas/DesignFormat' }
+        model: { type: string, minLength: 1, maxLength: 100, pattern: '^[a-z0-9][a-z0-9._-]{0,99}$' }
+        quality: { type: string, minLength: 2, maxLength: 16, pattern: '^[a-z]{2,16}$' }
+        requestedCount: { type: integer, minimum: 1, maximum: 8 }
+        completedCount: { type: integer, minimum: 0, maximum: 8 }
+        currentIndex: { type: [integer, 'null'], minimum: 1, maximum: 8 }
+        parentProposalId: { oneOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        proposalIds:
+          type: array
+          maxItems: 8
+          items: { $ref: '#/components/schemas/Uuid' }
+        errorCode: { oneOf: [{ $ref: '#/components/schemas/DesignGenerationErrorCode' }, { type: 'null' }] }
+        errorMessage: { type: [string, 'null'], minLength: 1, maxLength: 300 }
+        retryAfterSeconds: { type: [integer, 'null'], minimum: 0 }
+        cost: { type: [number, 'null'], minimum: 0, maximum: 100000 }
+        createdAt: { type: string, format: date-time }
+        startedAt: { oneOf: [{ type: string, format: date-time }, { type: 'null' }] }
+        updatedAt: { type: string, format: date-time }
+        completedAt: { oneOf: [{ type: string, format: date-time }, { type: 'null' }] }
+    DesignGenerationEvent:
+      description: One event of the SSE stream of a generation.
+      type: object
+      required: [id, type, generationId, status, imageIndex, proposalId, timestamp]
+      additionalProperties: false
+      properties:
+        id: { type: integer, minimum: 1 }
+        type: { type: string, minLength: 1, maxLength: 64 }
+        generationId: { $ref: '#/components/schemas/Uuid' }
+        status: { $ref: '#/components/schemas/DesignGenerationStatus' }
+        imageIndex: { type: [integer, 'null'], minimum: 1, maximum: 8 }
+        proposalId: { oneOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        timestamp: { type: string, format: date-time }
+    DesignProposal:
+      description: A generated bitmap for human review; never a template and never a brand asset.
+      type: object
+      required:
+        [id, generationId, mode, name, contentType, format, width, height, mime, status, model, quality, parentProposalId, references, decisionNote, decidedAt, createdAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        generationId: { $ref: '#/components/schemas/Uuid' }
+        mode: { $ref: '#/components/schemas/DesignMode' }
+        name: { type: string, minLength: 1, maxLength: 120 }
+        contentType: { $ref: '#/components/schemas/DesignContentType' }
+        format: { $ref: '#/components/schemas/DesignFormat' }
+        width: { type: integer, minimum: 1, maximum: 4096 }
+        height: { type: integer, minimum: 1, maximum: 4096 }
+        mime: { type: string, enum: [image/png, image/jpeg] }
+        status: { $ref: '#/components/schemas/DesignProposalStatus' }
+        model: { type: string, minLength: 1, maxLength: 100, pattern: '^[a-z0-9][a-z0-9._-]{0,99}$' }
+        quality: { type: string, minLength: 2, maxLength: 16, pattern: '^[a-z]{2,16}$' }
+        parentProposalId: { oneOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        references:
+          type: array
+          maxItems: 9
+          items: { $ref: '#/components/schemas/DesignReference' }
+        decisionNote: { oneOf: [{ type: string, minLength: 1, maxLength: 1200, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+        decidedAt: { oneOf: [{ type: string, format: date-time }, { type: 'null' }] }
+        createdAt: { type: string, format: date-time }
+    DesignProposalDetail:
+      type: object
+      required: [proposal, generation, usage, cost, decisions, variantIds, layers, hasBackground]
+      additionalProperties: false
+      properties:
+        proposal: { $ref: '#/components/schemas/DesignProposal' }
+        generation:
+          type: object
+          required: [id, mode, style, instructions, inheritedInstructions, requestSize, adaptation, prompt, promptVersion, estimate, requestedCount, createdAt]
+          additionalProperties: false
+          properties:
+            id: { $ref: '#/components/schemas/Uuid' }
+            mode: { $ref: '#/components/schemas/DesignMode' }
+            style: { oneOf: [{ type: string, minLength: 1, maxLength: 300, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+            instructions: { oneOf: [{ type: string, minLength: 1, maxLength: 12000, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+            inheritedInstructions: { oneOf: [{ type: string, minLength: 1, maxLength: 12000, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+            requestSize: { type: string, minLength: 5, maxLength: 9, pattern: '^[1-9][0-9]{1,3}x[1-9][0-9]{1,3}$' }
+            adaptation: { type: string, enum: [none, center_crop] }
+            prompt: { type: string, minLength: 1, maxLength: 32000 }
+            promptVersion: { type: string, minLength: 1, maxLength: 64 }
+            estimate: { $ref: '#/components/schemas/DesignCostEstimate' }
+            requestedCount: { type: integer, minimum: 1, maximum: 8 }
+            createdAt: { type: string, format: date-time }
+        usage:
+          oneOf:
+            - type: object
+              required: [inputTextTokens, inputImageTokens, outputImageTokens, outputTextTokens, totalTokens]
+              additionalProperties: false
+              properties:
+                inputTextTokens: { type: [integer, 'null'], minimum: 0 }
+                inputImageTokens: { type: [integer, 'null'], minimum: 0 }
+                outputImageTokens: { type: [integer, 'null'], minimum: 0 }
+                outputTextTokens: { type: [integer, 'null'], minimum: 0 }
+                totalTokens: { type: [integer, 'null'], minimum: 0 }
+            - type: 'null'
+        cost: { type: [number, 'null'], minimum: 0, maximum: 100000 }
+        decisions:
+          type: array
+          maxItems: 200
+          items:
+            type: object
+            required: [decision, note, decidedAt]
+            additionalProperties: false
+            properties:
+              decision: { type: string, enum: [approved, rejected, changes_requested] }
+              note: { oneOf: [{ type: string, minLength: 1, maxLength: 1200, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+              decidedAt: { type: string, format: date-time }
+        variantIds:
+          type: array
+          maxItems: 200
+          items: { $ref: '#/components/schemas/Uuid' }
+        layers:
+          description: Original brand assets drawn unchanged over the generated background, with their pixel boxes.
+          type: array
+          maxItems: 3
+          items:
+            type: object
+            required: [assetId, label, kind, x, y, width, height]
+            additionalProperties: false
+            properties:
+              assetId: { $ref: '#/components/schemas/Uuid' }
+              label: { $ref: '#/components/schemas/Label' }
+              kind: { $ref: '#/components/schemas/BrandAssetKind' }
+              x: { type: integer, minimum: 0, maximum: 4096 }
+              y: { type: integer, minimum: 0, maximum: 4096 }
+              width: { type: integer, minimum: 1, maximum: 4096 }
+              height: { type: integer, minimum: 1, maximum: 4096 }
+        hasBackground: { type: boolean }

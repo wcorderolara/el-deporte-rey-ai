@@ -106,6 +106,10 @@ const COMMITTED = [
   { version: 22, name: 'unplayed_slide_types' },
   { version: 23, name: 'content_kinds_reconcile' },
   { version: 24, name: 'brand_asset_library' },
+  { version: 25, name: 'design_proposals' },
+  { version: 26, name: 'design_proposal_layers' },
+  { version: 27, name: 'design_generation_modes' },
+  { version: 28, name: 'design_decision_notes' },
 ];
 
 describe('committed migrations', () => {
@@ -151,6 +155,10 @@ describe('committed migrations', () => {
       { version: 22, name: 'unplayed_slide_types', fileName: '0022_unplayed_slide_types.sql' },
       { version: 23, name: 'content_kinds_reconcile', fileName: '0023_content_kinds_reconcile.sql' },
       { version: 24, name: 'brand_asset_library', fileName: '0024_brand_asset_library.sql' },
+      { version: 25, name: 'design_proposals', fileName: '0025_design_proposals.sql' },
+      { version: 26, name: 'design_proposal_layers', fileName: '0026_design_proposal_layers.sql' },
+      { version: 27, name: 'design_generation_modes', fileName: '0027_design_generation_modes.sql' },
+      { version: 28, name: 'design_decision_notes', fileName: '0028_design_decision_notes.sql' },
     ]);
   });
 
@@ -215,8 +223,12 @@ describe('committed migrations', () => {
           { version: 22, name: 'unplayed_slide_types' },
           { version: 23, name: 'content_kinds_reconcile' },
           { version: 24, name: 'brand_asset_library' },
+          { version: 25, name: 'design_proposals' },
+          { version: 26, name: 'design_proposal_layers' },
+          { version: 27, name: 'design_generation_modes' },
+          { version: 28, name: 'design_decision_notes' },
         ],
-        currentVersion: 24,
+        currentVersion: 28,
       });
       expect(
         db
@@ -273,8 +285,12 @@ describe('committed migrations', () => {
           { version: 22, name: 'unplayed_slide_types' },
           { version: 23, name: 'content_kinds_reconcile' },
           { version: 24, name: 'brand_asset_library' },
+          { version: 25, name: 'design_proposals' },
+          { version: 26, name: 'design_proposal_layers' },
+          { version: 27, name: 'design_generation_modes' },
+          { version: 28, name: 'design_decision_notes' },
         ],
-        currentVersion: 24,
+        currentVersion: 28,
       });
       expect(JSON.stringify(snapshot())).toBe(before);
       for (const table of [
@@ -328,8 +344,12 @@ CREATE INDEX idx_content_generation_item_matches_match ON content_generation_ite
           { version: 22, name: 'unplayed_slide_types' },
           { version: 23, name: 'content_kinds_reconcile' },
           { version: 24, name: 'brand_asset_library' },
+          { version: 25, name: 'design_proposals' },
+          { version: 26, name: 'design_proposal_layers' },
+          { version: 27, name: 'design_generation_modes' },
+          { version: 28, name: 'design_decision_notes' },
         ],
-        currentVersion: 24,
+        currentVersion: 28,
       });
       expect(columns(empty.db)).toContain('import_id');
       expect(empty.db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
@@ -405,8 +425,12 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga', 's1', '2026/27', NU
         applied: [
           { version: 23, name: 'content_kinds_reconcile' },
           { version: 24, name: 'brand_asset_library' },
+          { version: 25, name: 'design_proposals' },
+          { version: 26, name: 'design_proposal_layers' },
+          { version: 27, name: 'design_generation_modes' },
+          { version: 28, name: 'design_decision_notes' },
         ],
-        currentVersion: 24,
+        currentVersion: 28,
       });
       expect(
         JSON.stringify(reconciled.db.prepare('SELECT rowid, * FROM content_generation_items ORDER BY rowid, id').all()),
@@ -436,20 +460,20 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga', 's1', '2026/27', NU
     const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
     const first = openMigratedDatabase({ location, now: () => FIXED_NOW });
     try {
-      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 24 });
+      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 28 });
       expect(first.db.prepare('PRAGMA journal_mode').get()).toEqual({ journal_mode: 'wal' });
       expect(first.db.prepare('PRAGMA foreign_keys').get()).toEqual({ foreign_keys: 1 });
       expect(appliedMigrations(first.db)).toEqual(
         COMMITTED.map((record) => ({ ...record, appliedAt: '2026-10-27T16:32:21.123Z' })),
       );
-      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 24 });
+      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 28 });
     } finally {
       first.db.close();
     }
 
     const second = openMigratedDatabase({ location });
     try {
-      expect(second.report).toEqual({ applied: [], currentVersion: 24 });
+      expect(second.report).toEqual({ applied: [], currentVersion: 28 });
       expect(tableExists(second.db, 'competition_teams')).toBe(true);
       expect(tableExists(second.db, 'facts')).toBe(true);
       expect(tableExists(second.db, 'competitions')).toBe(true);
@@ -539,8 +563,12 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga', 's1', '2026/27', NU
           { version: 22, name: 'unplayed_slide_types' },
           { version: 23, name: 'content_kinds_reconcile' },
           { version: 24, name: 'brand_asset_library' },
+          { version: 25, name: 'design_proposals' },
+          { version: 26, name: 'design_proposal_layers' },
+          { version: 27, name: 'design_generation_modes' },
+          { version: 28, name: 'design_decision_notes' },
         ],
-        currentVersion: 24,
+        currentVersion: 28,
       });
       expect(db.prepare('SELECT competition_id, team_id FROM competition_teams ORDER BY team_id').all()).toEqual([
         { competition_id: 'c1', team_id: 't1' },
@@ -892,8 +920,12 @@ describe('migrations 0021 and 0022 upgrade a database at version 20 (PD-ARCH-01E
           { version: 22, name: 'unplayed_slide_types' },
           { version: 23, name: 'content_kinds_reconcile' },
           { version: 24, name: 'brand_asset_library' },
+          { version: 25, name: 'design_proposals' },
+          { version: 26, name: 'design_proposal_layers' },
+          { version: 27, name: 'design_generation_modes' },
+          { version: 28, name: 'design_decision_notes' },
         ],
-        currentVersion: 24,
+        currentVersion: 28,
       });
 
       expect(JSON.stringify(snapshot())).toBe(before);
@@ -972,8 +1004,12 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
           { version: 22, name: 'unplayed_slide_types' },
           { version: 23, name: 'content_kinds_reconcile' },
           { version: 24, name: 'brand_asset_library' },
+          { version: 25, name: 'design_proposals' },
+          { version: 26, name: 'design_proposal_layers' },
+          { version: 27, name: 'design_generation_modes' },
+          { version: 28, name: 'design_decision_notes' },
         ],
-        currentVersion: 24,
+        currentVersion: 28,
       });
 
       expect(db.prepare(QA_RESULT_BYTES).all()).toEqual(bytesBefore);
@@ -1008,7 +1044,7 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
     // Reopening applies nothing more.
     const reopened = openMigratedDatabase({ location });
     try {
-      expect(reopened.report).toEqual({ applied: [], currentVersion: 24 });
+      expect(reopened.report).toEqual({ applied: [], currentVersion: 28 });
     } finally {
       reopened.db.close();
     }

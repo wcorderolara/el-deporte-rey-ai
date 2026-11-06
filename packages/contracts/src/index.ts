@@ -15,6 +15,7 @@ export * from './http/review.js';
 export * from './http/exports.js';
 export * from './http/imports.js';
 export * from './http/brand.js';
+export * from './http/design.js';
 export * from './http/problem.js';
 export * from './http/components.js';
 export * from './http/operations.js';

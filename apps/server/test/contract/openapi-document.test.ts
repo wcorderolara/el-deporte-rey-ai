@@ -64,16 +64,16 @@ describe('contract document', () => {
     );
   });
 
-  it('has 103 operations on 76 paths, 47 of them mutating, with unique operation IDs', () => {
-    expect(Object.keys(child(document, 'paths'))).toHaveLength(76);
-    expect(operations).toHaveLength(103);
-    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(47);
+  it('has 115 operations on 87 paths, 52 of them mutating, with unique operation IDs', () => {
+    expect(Object.keys(child(document, 'paths'))).toHaveLength(87);
+    expect(operations).toHaveLength(115);
+    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(52);
     const ids = operations.map((operation) => operation.operation.operationId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('has 143 component schemas', () => {
-    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(143);
+  it('has 162 component schemas', () => {
+    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(162);
   });
 });
 
@@ -265,6 +265,7 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/tags/10/name: changed',
       '/tags/11: added',
       '/tags/12: added',
+      '/tags/13: added',
       '/paths/~1projects~1{projectId}/delete: added',
       `${ack}/requestBody/content/application~1json/schema/properties/checks/items/enum/1: added`,
       '/paths/~1brand~1assets/post/parameters/3: added',
@@ -331,6 +332,19 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/paths/~1content-batches~1{batchId}: added',
       '/paths/~1exports~1{exportId}~1download: added',
       '/paths/~1brand~1identity: added',
+      '/paths/~1design~1capabilities: added',
+      '/paths/~1design~1capabilities~1check: added',
+      '/paths/~1design~1estimates: added',
+      '/paths/~1design~1generations: added',
+      '/paths/~1design~1generations~1{generationId}: added',
+      '/paths/~1design~1generations~1{generationId}~1events: added',
+      '/paths/~1design~1proposals: added',
+      '/paths/~1design~1proposals~1{proposalId}: added',
+      '/paths/~1design~1proposals~1{proposalId}~1file: added',
+      '/paths/~1design~1proposals~1{proposalId}~1background: added',
+      '/paths/~1design~1proposals~1{proposalId}~1decisions: added',
+      '/components/parameters/GenerationId: added',
+      '/components/parameters/ProposalId: added',
       '/components/schemas/Problem/properties/code/enum/15: changed',
       '/components/schemas/Problem/properties/code/enum/16: changed',
       '/components/schemas/Problem/properties/code/enum/17: changed',
@@ -357,6 +371,9 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/Problem/properties/code/enum/38: added',
       '/components/schemas/Problem/properties/code/enum/39: added',
       '/components/schemas/Problem/properties/code/enum/40: added',
+      '/components/schemas/Problem/properties/code/enum/41: added',
+      '/components/schemas/Problem/properties/code/enum/42: added',
+      '/components/schemas/Problem/properties/code/enum/43: added',
       '/components/schemas/ProjectSummaryFields/required/13: added',
       '/components/schemas/ProjectSummaryFields/required/14: added',
       '/components/schemas/ProjectSummaryFields/properties/latestRunStatus: added',
@@ -459,6 +476,25 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/BrandAssetUsage: added',
       '/components/schemas/BrandAssetDetail: added',
       '/components/schemas/BrandIdentity: added',
+      '/components/schemas/DesignMode: added',
+      '/components/schemas/DesignContentType: added',
+      '/components/schemas/DesignFormat: added',
+      '/components/schemas/DesignReferenceRole: added',
+      '/components/schemas/DesignGenerationStatus: added',
+      '/components/schemas/DesignProposalStatus: added',
+      '/components/schemas/DesignGenerationErrorCode: added',
+      '/components/schemas/DesignPricing: added',
+      '/components/schemas/DesignModel: added',
+      '/components/schemas/DesignCapabilities: added',
+      '/components/schemas/DesignGenerationInput: added',
+      '/components/schemas/DesignGenerationCreate: added',
+      '/components/schemas/DesignReference: added',
+      '/components/schemas/DesignCostEstimate: added',
+      '/components/schemas/DesignEstimate: added',
+      '/components/schemas/DesignGeneration: added',
+      '/components/schemas/DesignGenerationEvent: added',
+      '/components/schemas/DesignProposal: added',
+      '/components/schemas/DesignProposalDetail: added',
     ]);
   });
 

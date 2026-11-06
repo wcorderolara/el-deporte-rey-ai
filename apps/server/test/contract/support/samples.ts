@@ -502,6 +502,174 @@ const applyOperation = {
   completedAt: T1,
 };
 
+// PD-ARCH-01G-B: AI design proposals.
+const designReference = {
+  assetId: uuid(40),
+  label: 'Logo principal',
+  kind: 'brand_logo',
+  usagePolicy: 'protected',
+  role: 'reserved_placement',
+  sent: false,
+};
+
+const designPricing = {
+  currency: 'USD',
+  textInputPerMillionTokens: 5,
+  imageInputPerMillionTokens: 8,
+  imageOutputPerMillionTokens: 30,
+  textOutputPerMillionTokens: null,
+  source: 'https://developers.openai.com/api/docs/pricing',
+  checkedOn: '2026-11-05',
+};
+
+const designModel = {
+  id: 'gpt-image-2.5-flare',
+  label: 'GPT Image 2.5 Flare',
+  flexibleSizes: true,
+  qualities: ['low', 'medium', 'high'],
+  pricing: designPricing,
+  estimable: false,
+};
+
+const designCapabilities = {
+  adapter: 'openai',
+  status: 'ready',
+  defaultModel: 'gpt-image-2.5-flare',
+  models: [designModel],
+  contentTypes: ['match_preview', 'round_overview', 'fixture', 'match_result'],
+  formats: ['1:1', '4:5', '9:16'],
+  policyRoles: [
+    { policy: 'protected', roles: ['reserved_placement'] },
+    { policy: 'transformable', roles: ['style_reference', 'transform_base', 'reserved_placement'] },
+  ],
+  limits: {
+    maxImagesPerRequest: 4,
+    maxReferences: 4,
+    maxImagesPerDay: 20,
+    imagesUsedToday: 2,
+    monthlySpendLimit: 10,
+    spentThisMonth: 0.25,
+    maxConcurrentRequests: 1,
+  },
+  promptVersion: 'edr-design-prompt/3',
+};
+
+const designInput = {
+  mode: 'guided',
+  contentType: 'match_preview',
+  format: '4:5',
+  model: 'gpt-image-2.5-flare',
+  quality: 'medium',
+  count: 2,
+  style: 'Cinematográfico',
+  instructions: 'Estadio de noche.\nLuces frías.',
+  references: [{ assetId: uuid(40), role: 'reserved_placement' }],
+  parentProposalId: uuid(41),
+};
+
+const designCostEstimate = {
+  status: 'estimated',
+  currency: 'USD',
+  perImage: 0.05,
+  total: 0.1,
+  basis: 'published_output_cost',
+  pricingSource: 'https://developers.openai.com/api/docs/pricing',
+  pricingCheckedOn: '2026-11-05',
+};
+
+const designEstimate = {
+  provider: 'openai',
+  mode: 'guided',
+  model: 'gpt-image-2.5-flare',
+  quality: 'medium',
+  count: 2,
+  requestSize: '1024x1280',
+  outputWidth: 1024,
+  outputHeight: 1280,
+  adaptation: 'none',
+  references: [designReference],
+  prompt: 'Design the visual background composition of a preview poster.',
+  promptVersion: 'edr-design-prompt/3',
+  cost: designCostEstimate,
+  imagesUsedToday: 2,
+  maxImagesPerDay: 20,
+  spentThisMonth: null,
+  monthlySpendLimit: null,
+};
+
+const designGeneration = {
+  id: uuid(42),
+  mode: 'own_prompt',
+  status: 'generating',
+  contentType: 'match_preview',
+  format: '4:5',
+  model: 'gpt-image-2.5-flare',
+  quality: 'medium',
+  requestedCount: 2,
+  completedCount: 1,
+  currentIndex: 2,
+  parentProposalId: null,
+  proposalIds: [uuid(41)],
+  errorCode: null,
+  errorMessage: null,
+  retryAfterSeconds: null,
+  cost: 0.0486,
+  createdAt: T1,
+  startedAt: T1,
+  updatedAt: T1,
+  completedAt: null,
+};
+
+const designProposal = {
+  id: uuid(41),
+  generationId: uuid(42),
+  mode: 'guided',
+  name: 'Previa individual · 4:5 · 1/2',
+  contentType: 'match_preview',
+  format: '4:5',
+  width: 1024,
+  height: 1280,
+  mime: 'image/png',
+  status: 'changes_requested',
+  model: 'gpt-image-2.5-flare',
+  quality: 'medium',
+  parentProposalId: null,
+  references: [designReference],
+  decisionNote: 'Más contraste.',
+  decidedAt: T1,
+  createdAt: T1,
+};
+
+const designProposalDetail = {
+  proposal: designProposal,
+  generation: {
+    id: uuid(42),
+    mode: 'guided',
+    style: 'Cinematográfico',
+    instructions: 'Estadio de noche.',
+    inheritedInstructions: null,
+    requestSize: '1024x1280',
+    adaptation: 'none',
+    prompt: 'Design the visual background composition of a preview poster.',
+    promptVersion: 'edr-design-prompt/3',
+    estimate: designCostEstimate,
+    requestedCount: 2,
+    createdAt: T1,
+  },
+  usage: {
+    inputTextTokens: 120,
+    inputImageTokens: 0,
+    outputImageTokens: 1600,
+    outputTextTokens: null,
+    totalTokens: 1720,
+  },
+  cost: 0.0486,
+  decisions: [{ decision: 'changes_requested', note: 'Más contraste.', decidedAt: T1 }],
+  variantIds: [uuid(43)],
+  layers: [{ assetId: uuid(40), label: 'Logo principal', kind: 'brand_logo', x: 369, y: 38, width: 287, height: 154 }],
+  hasBackground: true,
+};
+
 export const componentSamples: Record<ComponentName, unknown> = {
   Uuid: uuid(1),
   Slug: 'liga-demo',
@@ -960,6 +1128,34 @@ export const componentSamples: Record<ComponentName, unknown> = {
     badgeSlots: 0,
     imageSlots: ['brand_logo', 'decoration'],
   },
+  DesignMode: 'own_prompt',
+  DesignContentType: 'round_overview',
+  DesignFormat: '9:16',
+  DesignReferenceRole: 'style_reference',
+  DesignGenerationStatus: 'saving',
+  DesignProposalStatus: 'approved',
+  DesignGenerationErrorCode: 'RATE_LIMITED',
+  DesignPricing: designPricing,
+  DesignModel: designModel,
+  DesignCapabilities: designCapabilities,
+  DesignGenerationInput: designInput,
+  DesignGenerationCreate: { ...designInput, requestKey: uuid(44), confirmCost: true },
+  DesignReference: designReference,
+  DesignCostEstimate: designCostEstimate,
+  DesignEstimate: designEstimate,
+  DesignGeneration: designGeneration,
+  DesignGenerationEvent: {
+    id: 7,
+    type: 'proposal.saved',
+    generationId: uuid(42),
+    status: 'saving',
+    imageIndex: 1,
+    proposalId: uuid(41),
+    timestamp: T1,
+  },
+  DesignProposal: designProposal,
+  DesignProposalDetail: designProposalDetail,
+
   ProjectSportsContext: projectSportsContext,
   ContentBatchSelection: contentBatchSelection,
   ContentBatchCreate: { requestKey: uuid(127), selection: contentBatchSelection },
@@ -1037,6 +1233,10 @@ export const requestSamples: Partial<Record<OperationId, unknown>> = {
     colorUsage: { accent: 'Acentos.', light: null },
     typographyUsage: { heading: 'Titulares.' },
   },
+  checkDesignModelAccess: { model: 'gpt-image-2.5-flare' },
+  estimateDesignGeneration: designInput,
+  createDesignGeneration: { ...designInput, requestKey: uuid(44), confirmCost: true },
+  decideDesignProposal: { decision: 'changes_requested', note: 'Más contraste.' },
 };
 
 /** Samples of the JSON success responses of every operation that returns JSON. */
@@ -1240,4 +1440,20 @@ export const responseSamples: Partial<Record<OperationId, unknown>> = {
   getBrandIdentity: brandIdentity,
   updateBrandIdentity: brandIdentity,
   listTemplates: { templates: [componentSamples.Template] },
+  getDesignCapabilities: designCapabilities,
+  checkDesignModelAccess: {
+    model: 'gpt-image-2.5-flare',
+    access: 'not_authorized',
+    errorCode: 'ACCOUNT_NOT_AUTHORIZED',
+  },
+  estimateDesignGeneration: designEstimate,
+  createDesignGeneration: {
+    generation: designGeneration,
+    statusUrl: `/api/v1/design/generations/${uuid(42)}`,
+    eventsUrl: `/api/v1/design/generations/${uuid(42)}/events`,
+  },
+  getDesignGeneration: designGeneration,
+  listDesignProposals: { proposals: [designProposal] },
+  getDesignProposal: designProposalDetail,
+  decideDesignProposal: designProposal,
 };

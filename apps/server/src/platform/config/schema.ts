@@ -244,6 +244,10 @@ export const appDocumentSchema = z.strictObject({
   providers: z.strictObject({
     sports: z.strictObject({ sources: z.array(sourceSchema).max(32) }),
     ai: z.strictObject({ adapter: pattern(ADAPTER_KIND_PATTERN, 41), options: adapterOptions.default({}) }),
+    /** Image generation for design proposals (PD-ARCH-01G-B); `disabled` unless configured. */
+    images: z
+      .strictObject({ adapter: pattern(ADAPTER_KIND_PATTERN, 41), options: adapterOptions.default({}) })
+      .prefault({ adapter: 'disabled' }),
   }),
   verificationPolicy: verificationPolicySchema.prefault({}),
   catalogue: z.strictObject({ linksFile: filePath }).optional(),

@@ -259,6 +259,7 @@ export const identityCopy = {
 export const templatesCopy = {
   eyebrow: 'Diseño de carruseles',
   heading: 'Plantillas',
+  engineHeading: 'Plantillas del motor',
   versioned:
     'Las plantillas son código versionado y no se editan desde esta página. Una versión nueva se aplica a los carruseles que se generen después.',
   brandNote: 'El logotipo y la mascota que dibujan las plantillas se gestionan en',

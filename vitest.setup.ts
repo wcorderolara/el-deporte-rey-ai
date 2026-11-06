@@ -22,7 +22,12 @@ export const TEST_DUMMY_API_KEY = 'edr-test-dummy-key-0000';
 export const TEST_MARKER_TOKEN = 'edr-test-marker-token-0000';
 
 /** Variables removed from `process.env` before any test module is loaded. */
-export const SCRUBBED_ENV_VARIABLES = ['FOOTBALL_DATA_API_TOKEN', 'EDR_LIVE_TESTS', 'EDR_AI_API_KEY'] as const;
+export const SCRUBBED_ENV_VARIABLES = [
+  'FOOTBALL_DATA_API_TOKEN',
+  'EDR_LIVE_TESTS',
+  'EDR_AI_API_KEY',
+  'EDR_IMAGE_API_KEY',
+] as const;
 
 for (const name of SCRUBBED_ENV_VARIABLES) {
   delete process.env[name];

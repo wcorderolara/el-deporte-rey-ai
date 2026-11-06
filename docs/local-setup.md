@@ -34,6 +34,7 @@ Always install with `npm ci` from the committed `package-lock.json`.
 | --- | ------- | ------- |
 | Development | `npm run dev` | API `http://127.0.0.1:4300` (watch mode) and Vite `http://127.0.0.1:5173` with `/api` proxied to the API |
 | Development with football-data.org | `EDR_CONFIG=config/dev-live.config.json npm run dev` | Same separate API + Vite workflow; uses the existing `data/` database |
+| Development with AI design proposals (OpenAI) | `EDR_CONFIG=config/dev-images.config.json npm run dev` | Same workflow; adds the OpenAI image adapter (`EDR_IMAGE_API_KEY` in `.env.local`) |
 | Local use | `npm run build`, then `npm start` | UI and API on `http://127.0.0.1:4300` |
 | Verification runs (gates, verify worktree) | started by the end-to-end runner | `http://127.0.0.1:4310` |
 | Product Owner demonstration (demo worktree) | started for the demonstration only | `http://127.0.0.1:4320` |
@@ -97,6 +98,23 @@ precedence.
 - The token is sent only in the `X-Auth-Token` header to `https://api.football-data.org`, from the server; it never
   reaches the browser, the database, the logs or an API response.
 
+**AI design proposals with the OpenAI Image API (PD-ARCH-01G-B):**
+
+- `config/dev-images.config.json` is `config/dev.config.json` plus the `openai` image adapter (`providers.images`): the
+  base URL, the models, their qualities, the prices copied from the provider's published list with the date they were
+  checked, and the limits (images per request, references, images per day, monthly computed spend, concurrency). No
+  secret is in it. Every other configuration keeps the adapter `disabled`. Start with
+  `EDR_CONFIG=config/dev-images.config.json npm run dev`.
+- Put the key in `.env.local` as `EDR_IMAGE_API_KEY=` followed by the key, with the file at mode 0600, and restart the
+  server. Check that it is present without printing it: `grep -c '^EDR_IMAGE_API_KEY=..*' .env.local`.
+- The key is read by the image adapter at call time, sent only in the `Authorization` header to the configured origin
+  (`https://api.openai.com`), and deleted from `process.env` at startup. It never reaches the browser, the database,
+  the logs or an API response.
+- Nothing is sent to OpenAI at startup, during tests, migrations or the build: only a confirmed generation in
+  Plantillas (with the explicit cost confirmation) and the "Comprobar acceso al modelo" button (a free metadata
+  request) reach it. Generations may be charged by OpenAI; your account may need the API Organization Verification
+  for GPT Image models.
+
 ## 5. Data modes
 
 | Mode | How to enable | External access |
@@ -138,7 +156,7 @@ Owner decision; its key goes in `EDR_AI_API_KEY` in `.env.local` under the same 
 | `npm run test:unit`, `npm run test:integration`, `npm run test:contract` | default suites |
 | `npm run test:e2e`, `npm run test:a11y` | browser journeys and accessibility checks on the built app (`127.0.0.1:4310`) |
 
-The default suites run on DEMO_DATA. Their shared setup removes `FOOTBALL_DATA_API_TOKEN`, `EDR_AI_API_KEY` and
+The default suites run on DEMO_DATA. Their shared setup removes `FOOTBALL_DATA_API_TOKEN`, `EDR_AI_API_KEY`, `EDR_IMAGE_API_KEY` and
 `EDR_LIVE_TESTS` from the environment and installs a network guard that fails any test that connects to a non-loopback
 address. Tests use synthetic credential values (`edr-test-marker-token-0000`, `edr-test-dummy-key-0000`), never real
 ones.

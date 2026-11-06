@@ -57,6 +57,9 @@ export const PROBLEM_CODES = [
   'CONTENT_BATCH_NOT_GENERATABLE',
   'REQUEST_KEY_REUSED',
   'ASSET_IN_USE',
+  'IMAGE_PROVIDER_UNAVAILABLE',
+  'DESIGN_REFERENCE_REFUSED',
+  'GENERATION_LIMIT_REACHED',
 ] as const;
 export type ProblemCode = (typeof PROBLEM_CODES)[number];
 
@@ -197,6 +200,9 @@ const TITLES: Readonly<Record<ProblemCode, string>> = {
   CONTENT_BATCH_NOT_GENERATABLE: 'The selection has no content piece that can be generated',
   REQUEST_KEY_REUSED: 'The request key was already used for another selection',
   ASSET_IN_USE: 'The brand asset is used by rendered content',
+  IMAGE_PROVIDER_UNAVAILABLE: 'The image generation provider is not ready',
+  DESIGN_REFERENCE_REFUSED: 'A selected brand asset cannot be used this way',
+  GENERATION_LIMIT_REACHED: 'An image generation limit is reached',
   INTERNAL: 'Internal error',
 };
 

@@ -8,6 +8,7 @@ import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { appRoutes } from '../../app/routes';
+import { createDesignApi } from '../design/designApi';
 import { createBrandApi } from './brandApi';
 import { TemplatesPage } from './TemplatesPage';
 import {
@@ -60,7 +61,7 @@ describe('TemplatesPage: page frame', () => {
 
     expect(screen.getByText('Cargando las plantillas…').closest('[role="status"]')).toBeTruthy();
     templates.resolve(jsonResponse({ templates: [] }));
-    expect(await screen.findByRole('heading', { level: 2, name: 'No hay plantillas disponibles.' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { level: 3, name: 'No hay plantillas disponibles.' })).toBeTruthy();
   });
 });
 
@@ -147,5 +148,45 @@ describe('TemplatesFeature nested routes', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Página no encontrada' })).toBeTruthy();
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
+  });
+});
+
+describe('TemplatesPage: AI design proposals (PD-ARCH-01G-B)', () => {
+  it('shows the proposals apart from the engine templates, never as templates', async () => {
+    const fake = fakeFetch({
+      'GET /templates': () => jsonResponse({ templates: [TEMPLATE_COVER] }),
+      'GET /design/capabilities': () =>
+        jsonResponse({
+          adapter: 'disabled',
+          status: 'disabled',
+          defaultModel: null,
+          models: [],
+          contentTypes: ['match_preview', 'round_overview', 'fixture', 'match_result'],
+          formats: ['1:1', '4:5', '9:16'],
+          policyRoles: [],
+          limits: {
+            maxImagesPerRequest: 1,
+            maxReferences: 0,
+            maxImagesPerDay: 1,
+            imagesUsedToday: 0,
+            monthlySpendLimit: null,
+            spentThisMonth: null,
+            maxConcurrentRequests: 1,
+          },
+          promptVersion: 'edr-design-prompt/1',
+        }),
+      'GET /design/proposals': () => jsonResponse({ proposals: [] }),
+    });
+    render(
+      <MemoryRouter>
+        <TemplatesPage api={createBrandApi({ fetch: fake.fetch })} designApi={createDesignApi({ fetch: fake.fetch })} />
+      </MemoryRouter>,
+    );
+    const proposals = await screen.findByRole('region', { name: 'Propuestas visuales con IA' });
+    expect(within(proposals).getByText(/no es una plantilla/)).toBeTruthy();
+    const engine = screen.getByRole('region', { name: 'Plantillas del motor' });
+    expect(await within(engine).findByRole('heading', { level: 3, name: TEMPLATE_COVER.label })).toBeTruthy();
+    expect(within(engine).queryByText(/Propuesta/)).toBeNull();
+    expect(screen.getByRole('button', { name: /Crear diseño con IA/ })).toBeTruthy();
   });
 });

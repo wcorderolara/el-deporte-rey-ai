@@ -26,11 +26,14 @@ export function Modal({
   onClose,
   children,
   closeDisabled = false,
+  size = 'md',
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   closeDisabled?: boolean;
+  /** `lg` for side-by-side content (for example comparing images). */
+  size?: 'md' | 'lg';
 }) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
@@ -84,7 +87,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="studio-modal-title"
-        className="my-auto max-h-[min(90vh,48rem)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border-subtle bg-surface-raised p-5 shadow-2xl sm:p-7"
+        className={`my-auto max-h-[min(90vh,48rem)] w-full ${size === 'lg' ? 'max-w-5xl' : 'max-w-2xl'} overflow-y-auto rounded-2xl border border-border-subtle bg-surface-raised p-5 shadow-2xl sm:p-7`}
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <h2 id="studio-modal-title" className="m-0 font-display text-heading-md font-bold text-text-primary">

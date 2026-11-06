@@ -3,6 +3,8 @@ import { useCallback, useId, useState } from 'react';
 import { Link } from 'react-router';
 
 import { Badge, Card, EmptyState, ErrorBanner, LoadingState } from '../../ui';
+import { DesignProposalsSection } from '../design/DesignProposalsSection';
+import type { DesignApi } from '../design/designApi';
 import type { BrandApi } from './brandApi';
 import { assetKindLabel, languageLabel, slideTypeLabel, templatesCopy } from './copy';
 import { PreviewImage } from './PreviewImage';
@@ -89,6 +91,8 @@ function TemplateCard({ api, template, language }: TemplateCardProps) {
 
 export interface TemplatesPageProps {
   api: BrandApi;
+  /** The AI design proposals (PD-ARCH-01G-B), shown apart from the templates; absent in template-only views. */
+  designApi?: DesignApi;
 }
 
 /**
@@ -96,7 +100,7 @@ export interface TemplatesPageProps {
  * reserved badge slots (always empty in the MVP), image slots and a preview per language. Templates are versioned
  * code; there is no editing control. The brand assets they draw are managed in Mi marca.
  */
-export function TemplatesPage({ api }: TemplatesPageProps) {
+export function TemplatesPage({ api, designApi }: TemplatesPageProps) {
   const id = useId();
   const [language, setLanguage] = useState<Language>(DEFAULT_LANGUAGE);
   const loadTemplates = useCallback((signal: AbortSignal) => api.listTemplates(signal), [api]);
@@ -122,46 +126,56 @@ export function TemplatesPage({ api }: TemplatesPageProps) {
         </p>
       </div>
 
-      <fieldset className="m-0 grid gap-2 border-0 p-0">
-        <legend className="mb-1 text-body-sm font-bold text-text-primary">{templatesCopy.languageLegend}</legend>
-        <div className="flex flex-wrap gap-2">
-          {LANGUAGES.map((value) => (
-            <label
-              key={value}
-              className={`flex min-h-touch items-center gap-2 rounded-xl border px-4 py-2 text-body-sm text-text-primary ${language === value ? 'border-brand-gold bg-surface-card' : 'border-border-subtle bg-surface-raised'}`}
-            >
-              <input
-                type="radio"
-                name={`${id}-language`}
-                value={value}
-                checked={language === value}
-                onChange={() => setLanguage(value)}
-              />
-              {languageLabel[value]}
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      {designApi === undefined ? null : <DesignProposalsSection api={designApi} brandApi={api} />}
 
-      {state.status === 'loading' ? <LoadingState layout="panel" label={templatesCopy.loading} /> : null}
-      {state.status === 'error' ? (
-        <ErrorBanner error={state.error} title={templatesCopy.loadFailedTitle} onRetry={reload} />
-      ) : null}
-      {state.status === 'ready' && state.data.length === 0 ? (
-        <EmptyState
-          headingLevel={2}
-          title={templatesCopy.empty}
-          description={templatesCopy.emptyDescription}
-          icon="▥"
-        />
-      ) : null}
-      {state.status === 'ready' && state.data.length > 0 ? (
-        <ul aria-label={templatesCopy.listLabel} className="m-0 grid list-none gap-5 p-0 sm:grid-cols-2 xl:grid-cols-3">
-          {state.data.map((template) => (
-            <TemplateCard key={template.id} api={api} template={template} language={language} />
-          ))}
-        </ul>
-      ) : null}
+      <section aria-labelledby="engine-templates-title" className="grid min-w-0 gap-5">
+        <h2 id="engine-templates-title" className="m-0 font-display text-heading-sm font-extrabold text-text-primary">
+          {templatesCopy.engineHeading}
+        </h2>
+        <fieldset className="m-0 grid gap-2 border-0 p-0">
+          <legend className="mb-1 text-body-sm font-bold text-text-primary">{templatesCopy.languageLegend}</legend>
+          <div className="flex flex-wrap gap-2">
+            {LANGUAGES.map((value) => (
+              <label
+                key={value}
+                className={`flex min-h-touch items-center gap-2 rounded-xl border px-4 py-2 text-body-sm text-text-primary ${language === value ? 'border-brand-gold bg-surface-card' : 'border-border-subtle bg-surface-raised'}`}
+              >
+                <input
+                  type="radio"
+                  name={`${id}-language`}
+                  value={value}
+                  checked={language === value}
+                  onChange={() => setLanguage(value)}
+                />
+                {languageLabel[value]}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        {state.status === 'loading' ? <LoadingState layout="panel" label={templatesCopy.loading} /> : null}
+        {state.status === 'error' ? (
+          <ErrorBanner error={state.error} title={templatesCopy.loadFailedTitle} onRetry={reload} />
+        ) : null}
+        {state.status === 'ready' && state.data.length === 0 ? (
+          <EmptyState
+            headingLevel={3}
+            title={templatesCopy.empty}
+            description={templatesCopy.emptyDescription}
+            icon="▥"
+          />
+        ) : null}
+        {state.status === 'ready' && state.data.length > 0 ? (
+          <ul
+            aria-label={templatesCopy.listLabel}
+            className="m-0 grid list-none gap-5 p-0 sm:grid-cols-2 xl:grid-cols-3"
+          >
+            {state.data.map((template) => (
+              <TemplateCard key={template.id} api={api} template={template} language={language} />
+            ))}
+          </ul>
+        ) : null}
+      </section>
     </section>
   );
 }

@@ -10,7 +10,13 @@ import { describe, expect, it } from 'vitest';
 
 import { type AppConfig, ConfigError, buildAppConfig, loadConfig } from '../config/index.js';
 
-import { EgressAllowList, EgressDenied, buildEgressAllowList, isLoopbackHostname } from './index.js';
+import {
+  EgressAllowList,
+  EgressDenied,
+  buildEgressAllowList,
+  buildImageEgressAllowList,
+  isLoopbackHostname,
+} from './index.js';
 
 const repoRoot = fileURLToPath(new URL('../../../../../', import.meta.url));
 
@@ -29,10 +35,16 @@ const BRAND = {
   },
 };
 
-function configWith(sources: Json[], aiOptions: Json = {}): AppConfig {
+function configWith(sources: Json[], aiOptions: Json = {}, images: Json | null = null): AppConfig {
   return buildAppConfig(
     {
-      app: { providers: { sports: { sources }, ai: { adapter: 'openai-compatible', options: aiOptions } } },
+      app: {
+        providers: {
+          sports: { sources },
+          ai: { adapter: 'openai-compatible', options: aiOptions },
+          ...(images === null ? {} : { images }),
+        },
+      },
       languages: LANGUAGES,
       brand: BRAND,
     },
@@ -103,6 +115,34 @@ describe('allow-list from the configuration', () => {
       }
       expect(error).toBeInstanceOf(ConfigError);
       expect((error as ConfigError).setting).toBe('providers.ai.options.baseUrl');
+    }
+  });
+});
+
+describe('image generation allow-list (PD-ARCH-01G-B)', () => {
+  it('is empty while the image adapter is disabled, the default', () => {
+    expect(buildImageEgressAllowList(configWith([DEMO])).isEmpty).toBe(true);
+    expect(configWith([DEMO]).providers.images).toEqual({ adapter: 'disabled', options: {} });
+  });
+
+  it('holds only the image origin, which the default client never gets', () => {
+    const config = configWith(
+      [DEMO],
+      { baseUrl: 'https://ai.example.test/v1' },
+      {
+        adapter: 'openai',
+        options: { baseUrl: 'https://images.example.test/v1' },
+      },
+    );
+    expect(buildImageEgressAllowList(config).origins).toEqual(['https://images.example.test']);
+    expect(buildEgressAllowList(config).origins).toEqual(['https://ai.example.test']);
+  });
+
+  it('stops startup for an http: image base URL, even on a loopback host', () => {
+    for (const baseUrl of ['http://127.0.0.1:8080/v1', 'https://user:pw@images.example.test/v1']) {
+      expect(() =>
+        buildImageEgressAllowList(configWith([DEMO], {}, { adapter: 'openai', options: { baseUrl } })),
+      ).toThrow(/providers\.images\.options\.baseUrl/);
     }
   });
 });

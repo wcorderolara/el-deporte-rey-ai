@@ -18,6 +18,20 @@ import {
   TemplateSchema,
   noteSchema,
 } from './brand.js';
+import {
+  DesignCapabilitiesSchema,
+  DesignEstimateSchema,
+  DesignGenerationCreateSchema,
+  DesignGenerationInputSchema,
+  DesignGenerationSchema,
+  DesignGenerationStartSchema,
+  DesignModelAccessCheckSchema,
+  DesignModelAccessSchema,
+  DesignProposalDecisionInputSchema,
+  DesignProposalDetailSchema,
+  DesignProposalListSchema,
+  DesignProposalSchema,
+} from './design.js';
 import { CatalogueSchema, SeasonListSchema, StageListSchema } from './catalog.js';
 import {
   ManagedCompetitionCreateSchema,
@@ -227,6 +241,8 @@ export const ExportParamsSchema = z.strictObject({ exportId: UuidSchema });
 export const SlideTraceParamsSchema = z.strictObject({ exportId: UuidSchema, position: PositionParamSchema });
 export const ImportParamsSchema = z.strictObject({ importId: UuidSchema });
 export const AssetParamsSchema = z.strictObject({ assetId: UuidSchema });
+export const DesignGenerationParamsSchema = z.strictObject({ generationId: UuidSchema });
+export const DesignProposalParamsSchema = z.strictObject({ proposalId: UuidSchema });
 export const TemplateParamsSchema = z.strictObject({ templateId: SlugSchema });
 
 /** Query of listManualSelections. Undeclared query parameters are ignored. */
@@ -293,6 +309,7 @@ export interface OperationDefinition {
 const JSON_ONLY = [JSON_MEDIA_TYPE] as const;
 const PNG = ['image/png'] as const;
 const IMAGES = ['image/png', 'image/jpeg', 'image/webp'] as const;
+const PROPOSAL_IMAGES = ['image/png', 'image/jpeg'] as const;
 const OCTET_STREAM = ['application/octet-stream'] as const;
 const ZIP = ['application/zip'] as const;
 
@@ -1160,6 +1177,150 @@ export const operations = {
     body: null,
     success: { status: 200, mediaTypes: PNG, schema: null },
     problemStatuses: READ_BY_ID,
+  },
+  getDesignCapabilities: {
+    operationId: 'getDesignCapabilities',
+    method: 'get',
+    path: '/design/capabilities',
+    tag: 'design',
+    params: null,
+    query: null,
+    clientHeader: false,
+    body: null,
+    success: json(200, DesignCapabilitiesSchema),
+    problemStatuses: READ,
+  },
+  checkDesignModelAccess: {
+    operationId: 'checkDesignModelAccess',
+    method: 'post',
+    path: '/design/capabilities/check',
+    tag: 'design',
+    params: null,
+    query: null,
+    clientHeader: true,
+    body: jsonBody(DesignModelAccessCheckSchema),
+    success: json(200, DesignModelAccessSchema),
+    problemStatuses: [400, 403, 413, 415, 421],
+  },
+  estimateDesignGeneration: {
+    operationId: 'estimateDesignGeneration',
+    method: 'post',
+    path: '/design/estimates',
+    tag: 'design',
+    params: null,
+    query: null,
+    clientHeader: true,
+    body: jsonBody(DesignGenerationInputSchema),
+    success: json(200, DesignEstimateSchema),
+    problemStatuses: [400, 403, 404, 409, 413, 415, 421, 503],
+  },
+  createDesignGeneration: {
+    operationId: 'createDesignGeneration',
+    method: 'post',
+    path: '/design/generations',
+    tag: 'design',
+    params: null,
+    query: null,
+    clientHeader: true,
+    body: jsonBody(DesignGenerationCreateSchema),
+    success: json(202, DesignGenerationStartSchema),
+    problemStatuses: [400, 403, 404, 409, 413, 415, 421, 429, 503],
+  },
+  getDesignGeneration: {
+    operationId: 'getDesignGeneration',
+    method: 'get',
+    path: '/design/generations/{generationId}',
+    tag: 'design',
+    params: DesignGenerationParamsSchema,
+    query: null,
+    clientHeader: false,
+    body: null,
+    success: json(200, DesignGenerationSchema),
+    problemStatuses: READ_BY_ID,
+  },
+  streamDesignGenerationEvents: {
+    operationId: 'streamDesignGenerationEvents',
+    method: 'get',
+    path: '/design/generations/{generationId}/events',
+    tag: 'design',
+    params: DesignGenerationParamsSchema,
+    query: null,
+    clientHeader: false,
+    body: null,
+    success: { status: 200, mediaTypes: ['text/event-stream'], schema: null },
+    problemStatuses: [400, 403, 404, 421, 429],
+  },
+  listDesignProposals: {
+    operationId: 'listDesignProposals',
+    method: 'get',
+    path: '/design/proposals',
+    tag: 'design',
+    params: null,
+    query: null,
+    clientHeader: false,
+    body: null,
+    success: json(200, DesignProposalListSchema),
+    problemStatuses: READ,
+  },
+  getDesignProposal: {
+    operationId: 'getDesignProposal',
+    method: 'get',
+    path: '/design/proposals/{proposalId}',
+    tag: 'design',
+    params: DesignProposalParamsSchema,
+    query: null,
+    clientHeader: false,
+    body: null,
+    success: json(200, DesignProposalDetailSchema),
+    problemStatuses: READ_BY_ID,
+  },
+  getDesignProposalFile: {
+    operationId: 'getDesignProposalFile',
+    method: 'get',
+    path: '/design/proposals/{proposalId}/file',
+    tag: 'design',
+    params: DesignProposalParamsSchema,
+    query: null,
+    clientHeader: false,
+    body: null,
+    success: { status: 200, mediaTypes: PROPOSAL_IMAGES, schema: null },
+    problemStatuses: READ_BY_ID,
+  },
+  getDesignProposalBackground: {
+    operationId: 'getDesignProposalBackground',
+    method: 'get',
+    path: '/design/proposals/{proposalId}/background',
+    tag: 'design',
+    params: DesignProposalParamsSchema,
+    query: null,
+    clientHeader: false,
+    body: null,
+    success: { status: 200, mediaTypes: PROPOSAL_IMAGES, schema: null },
+    problemStatuses: READ_BY_ID,
+  },
+  deleteDesignProposal: {
+    operationId: 'deleteDesignProposal',
+    method: 'delete',
+    path: '/design/proposals/{proposalId}',
+    tag: 'design',
+    params: DesignProposalParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: null,
+    success: { status: 204, mediaTypes: [], schema: null },
+    problemStatuses: [400, 403, 404, 409, 415, 421],
+  },
+  decideDesignProposal: {
+    operationId: 'decideDesignProposal',
+    method: 'post',
+    path: '/design/proposals/{proposalId}/decisions',
+    tag: 'design',
+    params: DesignProposalParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: jsonBody(DesignProposalDecisionInputSchema),
+    success: json(200, DesignProposalSchema),
+    problemStatuses: [400, 403, 404, 413, 415, 421],
   },
 } as const satisfies Record<string, OperationDefinition>;
 

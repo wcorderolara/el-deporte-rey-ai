@@ -29,6 +29,14 @@ export const ContractPatterns = {
   Base64: '^[A-Za-z0-9+/]*={0,2}$',
   /** Prefix of the status/events URLs returned when an asynchronous operation starts. */
   CompetitionOperationUrl: '^/api/v1/competitions/',
+  /** Configured image model identifier (PD-ARCH-01G-B). */
+  ImageModelId: '^[a-z0-9][a-z0-9._-]{0,99}$',
+  /** Image generation quality value of a configured model. */
+  ImageQuality: '^[a-z]{2,16}$',
+  /** Requested image size, `WIDTHxHEIGHT`. */
+  ImageSize: '^[1-9][0-9]{1,3}x[1-9][0-9]{1,3}$',
+  /** Prefix of the status/events URLs returned when a design generation starts. */
+  DesignGenerationUrl: '^/api/v1/design/generations/',
 } as const;
 
 export type ContractPatternName = keyof typeof ContractPatterns;

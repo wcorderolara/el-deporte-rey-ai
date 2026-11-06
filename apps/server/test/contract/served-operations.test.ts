@@ -32,12 +32,13 @@ import type {
 } from '@edr/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { TEST_MARKER_TOKEN } from '../../../../vitest.setup.js';
+import { TEST_DUMMY_API_KEY, TEST_MARKER_TOKEN } from '../../../../vitest.setup.js';
 import {
   FIXTURES_DIR,
   type Json,
   LIGA_DEMO_MD1,
   type ProjectSelection,
+  type ScriptedImageEgress,
   TOKEN_VARIABLE,
   type TestApp,
   expectNoNetworkViolations,
@@ -45,10 +46,14 @@ import {
   providerResponsesDirectory,
   readJson,
   replayTransport,
+  scriptedImageEgress,
   sourcesOf,
   startTestApp,
+  testImageProviderConfig,
   testLiveAdapter,
 } from '../support/index.js';
+
+import { designServiceOf } from '../../src/modules/design/index.js';
 
 import type { JsonValue } from './support/contract-document.js';
 import { providerValues, responseFindings, type ProviderValues } from './support/neutrality.js';
@@ -67,10 +72,13 @@ let demo: TestApp;
 let live: TestApp;
 let limited: TestApp;
 let warned: TestApp;
+let designer: TestApp;
+let images: ScriptedImageEgress;
 let d: ContractClient;
 let l: ContractClient;
 let r: ContractClient;
 let w: ContractClient;
+let g: ContractClient;
 let provider: ProviderValues;
 
 const MANUAL_DIR = join(FIXTURES_DIR, 'manual');
@@ -157,6 +165,16 @@ beforeAll(async () => {
       ai['options'] = { ...(ai['options'] as Json), scenario: 'translated-team-name' };
     },
   });
+  // PD-ARCH-01G-B: the openai image adapter over a scripted egress client (no connection, no credit used).
+  images = scriptedImageEgress();
+  designer = await startTestApp({
+    mutate: (document) => {
+      (document['providers'] as Json)['images'] = testImageProviderConfig() as Json;
+    },
+    imageEgress: images,
+    env: { EDR_IMAGE_API_KEY: TEST_DUMMY_API_KEY },
+  });
+  g = new ContractClient(designer, spec);
   d = new ContractClient(demo, spec);
   l = new ContractClient(live, spec);
   r = new ContractClient(limited, spec);
@@ -365,7 +383,7 @@ beforeAll(async () => {
 }, RUN_TIMEOUT);
 
 afterAll(async () => {
-  await Promise.all([demo?.close(), live?.close(), limited?.close(), warned?.close()]);
+  await Promise.all([demo?.close(), live?.close(), limited?.close(), warned?.close(), designer?.close()]);
 });
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -836,6 +854,92 @@ describe('DEMO_DATA and MANUAL_DATA operations on the running app', { timeout: R
     await problem(d, 'getBrandAsset', { params: { assetId: extra.id } }, 404, 'NOT_FOUND');
   });
 
+  it('generates, streams, lists, describes, serves and reviews AI design proposals with a scripted provider', async () => {
+    const capabilities = await ok<{ status: string; models: { id: string }[] }>(g, 'getDesignCapabilities');
+    expect(capabilities.status).toBe('ready');
+    const access = await ok<{ access: string }>(g, 'checkDesignModelAccess', { json: { model: 'test-image-flex' } });
+    expect(access.access).toBe('available');
+    await problem(g, 'checkDesignModelAccess', { json: { model: 'not-configured' } }, 400, 'VALIDATION_FAILED');
+
+    const request = { contentType: 'fixture', format: '1:1', quality: 'low', count: 1, references: [] };
+    const estimate = await ok<{ requestSize: string }>(g, 'estimateDesignGeneration', { json: request });
+    expect(estimate.requestSize).toBe('1024x1024');
+    await problem(
+      g,
+      'estimateDesignGeneration',
+      {
+        json: {
+          ...request,
+          references: [{ assetId: '00000000-0000-4000-8000-000000000777', role: 'style_reference' }],
+        },
+      },
+      409,
+      'DESIGN_REFERENCE_REFUSED',
+    );
+    await problem(
+      g,
+      'estimateDesignGeneration',
+      { json: { ...request, parentProposalId: '00000000-0000-4000-8000-000000000778' } },
+      404,
+      'NOT_FOUND',
+    );
+    await problem(d, 'estimateDesignGeneration', { json: request }, 503, 'IMAGE_PROVIDER_UNAVAILABLE');
+
+    const requestKey = '00000000-0000-4000-8000-000000000779';
+    const started = await ok<{ generation: { id: string } }>(g, 'createDesignGeneration', {
+      json: { ...request, requestKey, confirmCost: true },
+    });
+    const generationId = started.generation.id;
+    await designServiceOf(designer.container).settled(generationId);
+    await problem(
+      g,
+      'createDesignGeneration',
+      { json: { ...request, count: 2, requestKey, confirmCost: true } },
+      409,
+      'REQUEST_KEY_REUSED',
+    );
+    const generation = await ok<{ status: string; proposalIds: string[] }>(g, 'getDesignGeneration', {
+      params: { generationId },
+    });
+    expect(generation.status).toBe('completed');
+    const stream = await g.call('streamDesignGenerationEvents', { params: { generationId } });
+    expect(stream.status, describeExchange(stream)).toBe(200);
+    expect(stream.text).toContain('event: generation.completed');
+    await problem(
+      g,
+      'getDesignGeneration',
+      { params: { generationId: '00000000-0000-4000-8000-000000000780' } },
+      404,
+      'NOT_FOUND',
+    );
+
+    const list = await ok<{ proposals: { id: string }[] }>(g, 'listDesignProposals');
+    const proposalId = required(list.proposals[0], 'proposal').id;
+    await ok(g, 'getDesignProposal', { params: { proposalId } });
+    const file = await g.call('getDesignProposalFile', { params: { proposalId } });
+    expect(file.status, describeExchange(file)).toBe(200);
+    expect(file.mediaType).toBe('image/png');
+    const reviewed = await ok<{ status: string }>(g, 'decideDesignProposal', {
+      params: { proposalId },
+      json: { decision: 'approved' },
+    });
+    expect(reviewed.status).toBe('approved');
+    await problem(
+      g,
+      'decideDesignProposal',
+      { params: { proposalId }, json: { decision: 'changes_requested' } },
+      400,
+      'VALIDATION_FAILED',
+    );
+    const background = await g.call('getDesignProposalBackground', { params: { proposalId } });
+    expect(background.status, describeExchange(background)).toBe(200);
+    const deleted = await g.call('deleteDesignProposal', { params: { proposalId } });
+    expect(deleted.status, describeExchange(deleted)).toBe(204);
+    await problem(g, 'getDesignProposal', { params: { proposalId } }, 404, 'NOT_FOUND');
+    await problem(g, 'deleteDesignProposal', { params: { proposalId } }, 404, 'NOT_FOUND');
+    expect(images.requests.filter((entry) => entry.url.includes('/images/'))).toHaveLength(1);
+  });
+
   it('lists templates and renders previews in both languages; 404 for an unknown template', async () => {
     const templates = await ok<{ templates: Template[] }>(d, 'listTemplates');
     expect(templates.templates.length).toBeGreaterThan(0);
@@ -969,7 +1073,7 @@ describe('LIVE_DATA operations over recorded provider responses (no network)', {
 // ---------------------------------------------------------------------------------------------------------------
 
 function allExchanges(): Exchange[] {
-  return [...d.exchanges, ...l.exchanges, ...r.exchanges, ...w.exchanges];
+  return [...d.exchanges, ...l.exchanges, ...r.exchanges, ...w.exchanges, ...g.exchanges];
 }
 
 describe.each(OPERATION_IDS)('operation %s on the running app', (operationId) => {

@@ -152,6 +152,18 @@ describe('committed development configuration (config/dev.config.json)', () => {
     expect(config.server.allowedOrigins).toContain('http://127.0.0.1:5173');
     expect(config.paths.dataDir).toBe(join(repoRoot, 'data'));
   });
+
+  it('loads the Vite development configuration with the OpenAI image adapter (PD-ARCH-01G-B)', () => {
+    const config = loadConfig({ rootDir: repoRoot, env: { EDR_CONFIG: 'config/dev-images.config.json' } });
+    expect(config.providers.images.adapter).toBe('openai');
+    expect(config.providers.images.options['baseUrl']).toBe('https://api.openai.com/v1');
+    expect(JSON.stringify(config.providers.images)).not.toMatch(/api_?key|secret|bearer|sk-/i);
+    const development = loadConfig({ rootDir: repoRoot, env: { EDR_CONFIG: 'config/dev.config.json' } });
+    expect({ ...config, providers: { ...config.providers, images: development.providers.images } }).toEqual(
+      development,
+    );
+    expect(development.providers.images).toEqual({ adapter: 'disabled', options: {} });
+  });
 });
 
 describe('environment (OD-20, R-266, AD-30)', () => {

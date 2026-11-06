@@ -171,6 +171,7 @@ export function buildAppConfig(documents: ConfigDocuments, context: BuildContext
     providers: {
       sports: { sources },
       ai: { adapter: app.providers.ai.adapter, options: app.providers.ai.options },
+      images: { adapter: app.providers.images.adapter, options: app.providers.images.options },
     },
     verificationPolicy: { ...app.verificationPolicy },
     catalogue,

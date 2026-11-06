@@ -37,7 +37,7 @@ export { type ImageDecodeCheck, resvgDecodeCheck } from './decode.js';
 export { BrandIdentityService } from './identity.js';
 export { MAX_IMAGE_DIMENSION, type ImageHeader, detectImageType, readImageHeader } from './image.js';
 export { type BrandAssetFile, BrandAssetService, BrandFileIntegrityError, type DrawableBrandAsset } from './service.js';
-export { BRAND_ASSET_DIRECTORY, BrandFileError } from './storage.js';
+export { BRAND_ASSET_DIRECTORY, BrandFileError, BrandFileStore, type FileStoreLayout } from './storage.js';
 
 export interface BrandModuleOptions {
   /** Decode check; default resvg (`decode.ts`). */

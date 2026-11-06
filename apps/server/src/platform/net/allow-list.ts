@@ -2,7 +2,7 @@
  * Egress allow-list (contracts/provider-ports.md section 4; architecture.md section 5.1; T10-F07, T10-F08).
  *
  * The allow-list is the set of origins of the `options.baseUrl` values of the enabled sports-data sources and of the
- * configured AI adapter, and nothing else: with the fixture, manual and stub adapters it is empty. Origins are
+ * configured AI adapter, and nothing else (the image generation client has its own list, `buildImageEgressAllowList`): with the fixture, manual and stub adapters it is empty. Origins are
  * compared exactly (scheme, host, port) after WHATWG URL parsing, which lowercases and IDNA-processes hosts. Only
  * `https:` is allowed, with one exception: `http:` to the exact origin of the configured AI base URL when its host is
  * a loopback address (a local model server).
@@ -131,4 +131,22 @@ export function buildEgressAllowList(config: AppConfig): EgressAllowList {
     origins.push(origin);
   }
   return new EgressAllowList(origins);
+}
+
+/**
+ * Builds the allow-list of the image generation client (PD-ARCH-01G-B): only the `https:` origin of the configured
+ * image adapter's base URL, and nothing when the adapter is `disabled`. The default client never reaches it, and
+ * this client reaches nothing else. An unusable base URL stops startup with a `ConfigError` naming the setting.
+ */
+export function buildImageEgressAllowList(config: AppConfig): EgressAllowList {
+  const images = config.providers.images;
+  const baseUrl = images.adapter === 'disabled' ? undefined : optionBaseUrl(images.options);
+  if (baseUrl === undefined) {
+    return new EgressAllowList([]);
+  }
+  const origin = httpsOrigin(baseUrl);
+  if (origin === null) {
+    throw new ConfigError('providers.images.options.baseUrl', 'must be an https: URL without user information');
+  }
+  return new EgressAllowList([origin]);
 }
