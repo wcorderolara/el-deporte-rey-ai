@@ -11,7 +11,7 @@
  * - Text boxes are filled with `fitText`: the largest size that fits, else the smallest size with `overflow` set
  *   (visual QA then blocks the slide; nothing is cut silently).
  */
-import type { BrandAssetMime, SlideType, TextFieldName } from '@edr/contracts';
+import type { SlideType, TextFieldName } from '@edr/contracts';
 
 import { templateText } from '../../../platform/format/index.js';
 import { type FontRole, type FontSet } from '../fonts.js';
@@ -39,7 +39,8 @@ export const REFERENCE_HEIGHT = 1350;
 export interface AssetRef {
   readonly id: string;
   readonly sha256: string;
-  readonly mime: BrandAssetMime;
+  /** The renderer draws PNG and JPEG only (WebP style references never reach a template; PD-ARCH-01G-A). */
+  readonly mime: 'image/png' | 'image/jpeg';
 }
 
 /** Everything a template needs besides the slide content. */

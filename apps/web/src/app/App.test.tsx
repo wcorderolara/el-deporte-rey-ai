@@ -60,8 +60,8 @@ describe('App shell (R-235)', () => {
       'Mis proyectos',
       'Competiciones',
       'Exportaciones',
-      'Plantillas',
       'Mi marca',
+      'Plantillas',
       'Datos',
     ]);
     expect(within(navigation).getByRole('link', { name: 'Inicio' }).getAttribute('aria-current')).toBe('page');
@@ -95,6 +95,35 @@ describe('App shell (R-235)', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Exportaciones' })).toBeTruthy();
     expect(router.state.location.pathname).toBe('/exports');
     expect(screen.getByRole('link', { name: 'Exportaciones' }).getAttribute('aria-current')).toBe('page');
+  });
+
+  it('opens Mi marca and Plantillas as separate pages on the studio surface (PD-ARCH-01G-A)', async () => {
+    const user = userEvent.setup();
+    const router = renderAt('/');
+    await screen.findByRole('heading', { level: 1, name: 'Tu próximo contenido empieza aquí' });
+    const navigation = screen.getByRole('navigation', { name: 'Navegación principal' });
+
+    await user.click(within(navigation).getByRole('link', { name: 'Mi marca' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'Mi marca' })).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/brand');
+    expect(within(navigation).getByRole('link', { name: 'Mi marca' }).getAttribute('aria-current')).toBe('page');
+    expect(within(navigation).getByRole('link', { name: 'Plantillas' }).getAttribute('aria-current')).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Plantillas' })).toBeNull();
+    expect(screen.getByRole('main').className).not.toContain('bg-legacy-canvas');
+
+    await user.click(within(navigation).getByRole('link', { name: 'Plantillas' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'Plantillas' })).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/templates');
+    expect(within(navigation).getByRole('link', { name: 'Plantillas' }).getAttribute('aria-current')).toBe('page');
+    expect(within(navigation).getByRole('link', { name: 'Mi marca' }).getAttribute('aria-current')).toBeNull();
+    expect(screen.getByRole('main').className).not.toContain('bg-legacy-canvas');
+  });
+
+  it('sends the former templates anchor of the brand page to /templates', async () => {
+    const router = renderAt('/brand#brand-templates-title');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Plantillas' })).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/templates');
   });
 
   it('opens the sports content wizard from the shell action, the navigation and the hero (PD-ARCH-01F)', async () => {
@@ -157,7 +186,8 @@ describe('Route table: lazy feature stubs', () => {
     [featurePaths.review('00000000-0000-4000-8000-000000000001'), 'Revisión del contenido'],
     // The former exports page redirects to the project detail (PD-ARCH-01F).
     [featurePaths.history('00000000-0000-4000-8000-000000000001'), 'Proyectos'],
-    [featurePaths.brand, 'Marca y plantillas'],
+    [featurePaths.brand, 'Mi marca'],
+    [featurePaths.templates, 'Plantillas'],
     [`${featurePaths.imports}/00000000-0000-4000-8000-000000000003`, 'Importaciones manuales'],
   ])('renders %s with the %s feature', async (path, heading) => {
     renderAt(path);

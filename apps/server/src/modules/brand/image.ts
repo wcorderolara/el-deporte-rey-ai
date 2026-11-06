@@ -1,9 +1,11 @@
 /**
  * Brand image inspection before any decode (architecture-delta.md TB-4; T10-F12; PD-10, PD-15).
  *
- * Pure TypeScript, no image library: the file signature decides the type (PNG or JPEG only; SVG, GIF, text and every
+ * Pure TypeScript, no image library: the file signature decides the type (PNG, JPEG or WebP; SVG, GIF, text and every
  * other content are refused), and the dimensions come from the header only: PNG `IHDR` (length, type, fields and
- * CRC checked) and the first JPEG SOF marker, found by a bounded marker scan. Nothing here allocates memory in
+ * CRC checked), the first JPEG SOF marker, found by a bounded marker scan, and the first WebP chunk (`VP8 `, `VP8L` or
+ * `VP8X`). A WebP file is also checked as a RIFF container: the declared size equals the file size and every chunk
+ * fits in it (PD-ARCH-01G-A; WebP is accepted for style references only, which the renderer never draws). Nothing here allocates memory in
  * proportion to the declared dimensions, so an oversize header is refused before the decode check runs.
  */
 import { crc32 } from 'node:zlib';
@@ -31,6 +33,8 @@ export type HeaderResult =
 
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] as const;
 const JPEG_SIGNATURE = [0xff, 0xd8, 0xff] as const;
+const RIFF = [0x52, 0x49, 0x46, 0x46] as const;
+const WEBP = [0x57, 0x45, 0x42, 0x50] as const;
 
 function startsWith(bytes: Uint8Array, signature: readonly number[]): boolean {
   return bytes.length >= signature.length && signature.every((value, index) => bytes[index] === value);
@@ -43,6 +47,9 @@ export function detectImageType(bytes: Uint8Array): BrandAssetMime | null {
   }
   if (startsWith(bytes, JPEG_SIGNATURE)) {
     return 'image/jpeg';
+  }
+  if (startsWith(bytes, RIFF) && bytes.length >= 12 && WEBP.every((value, index) => bytes[8 + index] === value)) {
+    return 'image/webp';
   }
   return null;
 }
@@ -174,7 +181,94 @@ function readJpegHeader(bytes: Uint8Array): HeaderResult {
   return invalid;
 }
 
+function u32le(bytes: Uint8Array, offset: number): number {
+  return (
+    (bytes[offset] ?? 0) +
+    ((bytes[offset + 1] ?? 0) << 8) +
+    ((bytes[offset + 2] ?? 0) << 16) +
+    (((bytes[offset + 3] ?? 0) << 24) >>> 0)
+  );
+}
+
+function u24le(bytes: Uint8Array, offset: number): number {
+  return (bytes[offset] ?? 0) + ((bytes[offset + 1] ?? 0) << 8) + ((bytes[offset + 2] ?? 0) << 16);
+}
+
+function fourCc(bytes: Uint8Array, offset: number): string {
+  return String.fromCharCode(...Array.from(bytes.subarray(offset, offset + 4)));
+}
+
+/** Largest number of RIFF chunks walked when checking a WebP container. */
+export const MAX_WEBP_CHUNKS = 64;
+
+/** The RIFF container of a WebP file: the declared size equals the file and every chunk (padded to even) fits. */
+function webpContainerValid(bytes: Uint8Array): boolean {
+  if (bytes.length < 20 || u32le(bytes, 4) + 8 !== bytes.length) {
+    return false;
+  }
+  let position = 12;
+  for (let chunks = 0; chunks < MAX_WEBP_CHUNKS && position < bytes.length; chunks += 1) {
+    if (position + 8 > bytes.length) {
+      return false;
+    }
+    const size = u32le(bytes, position + 4);
+    const next = position + 8 + size + (size % 2);
+    if (next > bytes.length) {
+      return false;
+    }
+    position = next;
+  }
+  return position === bytes.length;
+}
+
+function readWebpHeader(bytes: Uint8Array): HeaderResult {
+  const invalid: HeaderResult = { ok: false, reason: 'header_invalid' };
+  if (detectImageType(bytes) !== 'image/webp' || !webpContainerValid(bytes)) {
+    return invalid;
+  }
+  const chunk = fourCc(bytes, 12);
+  const size = u32le(bytes, 16);
+  const data = 20;
+  if (chunk === 'VP8 ') {
+    // Frame tag (3), start code 9d 01 2a, then 14-bit width and height.
+    if (size < 10 || bytes[data + 3] !== 0x9d || bytes[data + 4] !== 0x01 || bytes[data + 5] !== 0x2a) {
+      return invalid;
+    }
+    const width = (bytes[data + 6] ?? 0) + (((bytes[data + 7] ?? 0) & 0x3f) << 8);
+    const height = (bytes[data + 8] ?? 0) + (((bytes[data + 9] ?? 0) & 0x3f) << 8);
+    return dimensions('image/webp', width, height);
+  }
+  if (chunk === 'VP8L') {
+    // Signature 0x2f, then 14-bit width - 1 and 14-bit height - 1 (little endian bit packing).
+    if (size < 5 || bytes[data] !== 0x2f) {
+      return invalid;
+    }
+    const b1 = bytes[data + 1] ?? 0;
+    const b2 = bytes[data + 2] ?? 0;
+    const b3 = bytes[data + 3] ?? 0;
+    const b4 = bytes[data + 4] ?? 0;
+    const width = 1 + (b1 | ((b2 & 0x3f) << 8));
+    const height = 1 + ((b2 >> 6) | (b3 << 2) | ((b4 & 0x0f) << 10));
+    return dimensions('image/webp', width, height);
+  }
+  if (chunk === 'VP8X') {
+    // Flags (1), reserved (3), canvas width - 1 (3), canvas height - 1 (3).
+    if (size < 10) {
+      return invalid;
+    }
+    return dimensions('image/webp', 1 + u24le(bytes, data + 4), 1 + u24le(bytes, data + 7));
+  }
+  return invalid;
+}
+
 /** Reads the dimensions of an image of the given (detected) type from its header, without decoding it. */
 export function readImageHeader(bytes: Uint8Array, mime: BrandAssetMime): HeaderResult {
-  return mime === 'image/png' ? readPngHeader(bytes) : readJpegHeader(bytes);
+  switch (mime) {
+    case 'image/png':
+      return readPngHeader(bytes);
+    case 'image/jpeg':
+      return readJpegHeader(bytes);
+    case 'image/webp':
+      return readWebpHeader(bytes);
+  }
 }

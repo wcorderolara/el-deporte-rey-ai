@@ -56,6 +56,7 @@ export const PROBLEM_CODES = [
   'IMPORT_PREVIEW_EXPIRED',
   'CONTENT_BATCH_NOT_GENERATABLE',
   'REQUEST_KEY_REUSED',
+  'ASSET_IN_USE',
 ] as const;
 export type ProblemCode = (typeof PROBLEM_CODES)[number];
 
@@ -195,6 +196,7 @@ const TITLES: Readonly<Record<ProblemCode, string>> = {
   MANUAL_APPROVAL_REFUSED: 'Manual approval refused',
   CONTENT_BATCH_NOT_GENERATABLE: 'The selection has no content piece that can be generated',
   REQUEST_KEY_REUSED: 'The request key was already used for another selection',
+  ASSET_IN_USE: 'The brand asset is used by rendered content',
   INTERNAL: 'Internal error',
 };
 

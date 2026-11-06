@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { MAX_IMAGE_DIMENSION, MAX_JPEG_MARKERS, detectImageType, readImageHeader } from './image.js';
-import { gif, ihdr, jpeg, png, pngHeaderOnly, svg, text } from './test/images.js';
+import { gif, ihdr, jpeg, png, pngHeaderOnly, svg, text, webp } from './test/images.js';
 
 describe('detectImageType', () => {
   it('detects PNG and JPEG by signature', () => {
@@ -134,5 +134,56 @@ describe('readImageHeader: JPEG', () => {
     const started = performance.now();
     expect(readImageHeader(fill, 'image/jpeg')).toEqual({ ok: false, reason: 'header_invalid' });
     expect(performance.now() - started).toBeLessThan(2000);
+  });
+});
+
+describe('WebP headers (PD-ARCH-01G-A)', () => {
+  function container(chunk: string, data: Buffer): Buffer {
+    const padded = data.length % 2 === 1 ? Buffer.concat([data, Buffer.alloc(1)]) : data;
+    const head = Buffer.alloc(8);
+    head.write(chunk, 0, 'latin1');
+    head.writeUInt32LE(data.length, 4);
+    const body = Buffer.concat([Buffer.from('WEBP', 'latin1'), head, padded]);
+    const riff = Buffer.alloc(8);
+    riff.write('RIFF', 0, 'latin1');
+    riff.writeUInt32LE(body.length, 4);
+    return Buffer.concat([riff, body]);
+  }
+
+  it('detects WebP by its RIFF and WEBP signatures only', () => {
+    expect(detectImageType(webp())).toBe('image/webp');
+    expect(detectImageType(Buffer.from('RIFF\u0000\u0000\u0000\u0000WAVEfmt ', 'latin1'))).toBeNull();
+  });
+
+  it('reads the canvas of a lossless, a lossy and an extended WebP', () => {
+    expect(readImageHeader(webp({ width: 300, height: 200 }), 'image/webp')).toEqual({
+      ok: true,
+      header: { mime: 'image/webp', width: 300, height: 200 },
+    });
+    const vp8 = Buffer.from([0x9d, 0x01, 0x00, 0x9d, 0x01, 0x2a, 0x40, 0x01, 0xc8, 0x00]);
+    expect(readImageHeader(container('VP8 ', vp8), 'image/webp')).toEqual({
+      ok: true,
+      header: { mime: 'image/webp', width: 320, height: 200 },
+    });
+    const vp8x = Buffer.from([0x10, 0, 0, 0, 0x3f, 0x01, 0x00, 0xef, 0x00, 0x00]);
+    expect(readImageHeader(container('VP8X', vp8x), 'image/webp')).toEqual({
+      ok: true,
+      header: { mime: 'image/webp', width: 320, height: 240 },
+    });
+  });
+
+  it('refuses a broken container, an unknown first chunk, a bad start code and oversize canvases', () => {
+    expect(readImageHeader(webp({ brokenSize: true }), 'image/webp')).toEqual({ ok: false, reason: 'header_invalid' });
+    expect(readImageHeader(webp({ unknownChunk: true }), 'image/webp')).toEqual({
+      ok: false,
+      reason: 'header_invalid',
+    });
+    const badStart = Buffer.from([0, 0, 0, 0, 0, 0, 0x40, 0x01, 0xc8, 0x00]);
+    expect(readImageHeader(container('VP8 ', badStart), 'image/webp')).toEqual({ ok: false, reason: 'header_invalid' });
+    expect(readImageHeader(webp({ width: 5000, height: 10 }), 'image/webp')).toEqual({
+      ok: false,
+      reason: 'dimensions_too_large',
+    });
+    expect(readImageHeader(webp().subarray(0, 18), 'image/webp')).toEqual({ ok: false, reason: 'header_invalid' });
   });
 });

@@ -17,7 +17,15 @@ import {
   StageListSchema,
   StageSchema,
 } from './catalog.js';
-import { BrandAssetKindSchema, BrandAssetSchema, TemplateSchema } from './brand.js';
+import {
+  BrandAssetDetailSchema,
+  BrandAssetKindSchema,
+  BrandAssetSchema,
+  BrandAssetUsagePolicySchema,
+  BrandAssetUsageSchema,
+  BrandIdentitySchema,
+  TemplateSchema,
+} from './brand.js';
 import {
   ManagedCompetitionSchema,
   SportsProviderSchema,
@@ -293,6 +301,11 @@ export const componentSchemas = {
   ManualVersion: ManualVersionSchema,
   BrandAssetKind: BrandAssetKindSchema,
   BrandAsset: BrandAssetSchema,
+  // PD-ARCH-01G-A: brand library and identity.
+  BrandAssetUsagePolicy: BrandAssetUsagePolicySchema,
+  BrandAssetUsage: BrandAssetUsageSchema,
+  BrandAssetDetail: BrandAssetDetailSchema,
+  BrandIdentity: BrandIdentitySchema,
   Template: TemplateSchema,
 } as const satisfies Record<string, z.ZodType>;
 

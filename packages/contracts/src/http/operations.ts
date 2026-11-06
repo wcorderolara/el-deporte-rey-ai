@@ -7,7 +7,17 @@
  */
 import { z } from 'zod';
 
-import { BrandAssetKindSchema, BrandAssetSchema, TemplateSchema } from './brand.js';
+import {
+  BrandAssetDescriptionSchema,
+  BrandAssetDetailSchema,
+  BrandAssetKindSchema,
+  BrandAssetSchema,
+  BrandAssetUsagePolicySchema,
+  BrandIdentitySchema,
+  BrandUsageNoteSchema,
+  TemplateSchema,
+  noteSchema,
+} from './brand.js';
 import { CatalogueSchema, SeasonListSchema, StageListSchema } from './catalog.js';
 import {
   ManagedCompetitionCreateSchema,
@@ -152,8 +162,40 @@ export const ImportListResponseSchema = z.strictObject({ imports: z.array(Import
 /** Response of listBrandAssets. */
 export const BrandAssetListResponseSchema = z.strictObject({ assets: z.array(BrandAssetSchema) });
 
-/** Request of updateBrandAsset (activate or deactivate; no deletion, OD-08). */
-export const BrandAssetUpdateSchema = z.strictObject({ active: z.boolean() });
+/**
+ * Request of updateBrandAsset (PD-ARCH-01G-A): the editable metadata, the AI usage policy, the official and primary
+ * marks and the active state. Every field is optional; at least one must be present. The stored file never changes.
+ */
+export const BrandAssetUpdateSchema = z.strictObject({
+  active: z.boolean().optional(),
+  label: LabelSchema.optional(),
+  description: BrandAssetDescriptionSchema.nullable().optional(),
+  usagePolicy: BrandAssetUsagePolicySchema.optional(),
+  official: z.boolean().optional(),
+  primary: z.boolean().optional(),
+  variant: LabelSchema.nullable().optional(),
+  pose: LabelSchema.nullable().optional(),
+  expression: LabelSchema.nullable().optional(),
+}).refine((body) => Object.values(body).some((value) => value !== undefined), {
+  message: 'Give at least one field to change.',
+});
+
+/** Usage notes per colour or font role; null clears a note. */
+const usageNotes = <T extends string>(roles: readonly [T, ...T[]]) =>
+  z.strictObject(Object.fromEntries(roles.map((role) => [role, BrandUsageNoteSchema.nullable().optional()])) as {
+    [K in T]: z.ZodOptional<z.ZodNullable<typeof BrandUsageNoteSchema>>;
+  });
+
+/**
+ * Request of updateBrandIdentity: the descriptive fields of the identity. The name, handle, palette and fonts are the
+ * renderer's configuration and are not edited here.
+ */
+export const BrandIdentityUpdateSchema = z.strictObject({
+  description: noteSchema(1000).nullable().optional(),
+  graphicPreferences: noteSchema(2000).nullable().optional(),
+  colorUsage: usageNotes(['primary', 'primaryDark', 'accent', 'secondary', 'light']).optional(),
+  typographyUsage: usageNotes(['heading', 'body', 'numeric']).optional(),
+});
 
 /** Response of listTemplates. */
 export const TemplateListResponseSchema = z.strictObject({ templates: z.array(TemplateSchema) });
@@ -190,8 +232,24 @@ export const TemplateParamsSchema = z.strictObject({ templateId: SlugSchema });
 /** Query of listManualSelections. Undeclared query parameters are ignored. */
 export const ManualSelectionsQuerySchema = z.object({ competitionId: SlugSchema, seasonId: SlugSchema });
 
-/** Query of registerBrandAsset. Undeclared query parameters are ignored. */
-export const BrandAssetRegisterQuerySchema = z.object({ kind: BrandAssetKindSchema, label: LabelSchema });
+/** A boolean query value written `true` or `false`. */
+const QueryBooleanSchema = z.enum(['true', 'false']).transform((value) => value === 'true');
+
+/**
+ * Query of registerBrandAsset. Undeclared query parameters are ignored. Without `usagePolicy` the category's default
+ * applies (logos and mascot `protected`, style references `reference_only`, others `reusable`); `transformable` is
+ * never a default.
+ */
+export const BrandAssetRegisterQuerySchema = z.object({
+  kind: BrandAssetKindSchema,
+  label: LabelSchema,
+  description: BrandAssetDescriptionSchema.optional(),
+  usagePolicy: BrandAssetUsagePolicySchema.optional(),
+  official: QueryBooleanSchema.optional(),
+  variant: LabelSchema.optional(),
+  pose: LabelSchema.optional(),
+  expression: LabelSchema.optional(),
+});
 
 /** Query of previewTemplate. Undeclared query parameters are ignored. */
 export const TemplatePreviewQuerySchema = z.object({ language: LanguageSchema.optional() });
@@ -234,7 +292,7 @@ export interface OperationDefinition {
 
 const JSON_ONLY = [JSON_MEDIA_TYPE] as const;
 const PNG = ['image/png'] as const;
-const IMAGES = ['image/png', 'image/jpeg'] as const;
+const IMAGES = ['image/png', 'image/jpeg', 'image/webp'] as const;
 const OCTET_STREAM = ['application/octet-stream'] as const;
 const ZIP = ['application/zip'] as const;
 
@@ -1007,6 +1065,18 @@ export const operations = {
     success: json(201, BrandAssetSchema),
     problemStatuses: [400, 403, 409, 413, 415, 421],
   },
+  getBrandAsset: {
+    operationId: 'getBrandAsset',
+    method: 'get',
+    path: '/brand/assets/{assetId}',
+    tag: 'brand',
+    params: AssetParamsSchema,
+    query: null,
+    clientHeader: false,
+    body: null,
+    success: json(200, BrandAssetDetailSchema),
+    problemStatuses: READ_BY_ID,
+  },
   updateBrandAsset: {
     operationId: 'updateBrandAsset',
     method: 'patch',
@@ -1017,7 +1087,19 @@ export const operations = {
     clientHeader: true,
     body: jsonBody(BrandAssetUpdateSchema),
     success: json(200, BrandAssetSchema),
-    problemStatuses: [400, 403, 404, 413, 415, 421],
+    problemStatuses: [400, 403, 404, 409, 413, 415, 421],
+  },
+  deleteBrandAsset: {
+    operationId: 'deleteBrandAsset',
+    method: 'delete',
+    path: '/brand/assets/{assetId}',
+    tag: 'brand',
+    params: AssetParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: null,
+    success: { status: 204, mediaTypes: [], schema: null },
+    problemStatuses: [400, 403, 404, 409, 415, 421],
   },
   getBrandAssetFile: {
     operationId: 'getBrandAssetFile',
@@ -1030,6 +1112,30 @@ export const operations = {
     body: null,
     success: { status: 200, mediaTypes: IMAGES, schema: null },
     problemStatuses: READ_BY_ID,
+  },
+  getBrandIdentity: {
+    operationId: 'getBrandIdentity',
+    method: 'get',
+    path: '/brand/identity',
+    tag: 'brand',
+    params: null,
+    query: null,
+    clientHeader: false,
+    body: null,
+    success: json(200, BrandIdentitySchema),
+    problemStatuses: READ,
+  },
+  updateBrandIdentity: {
+    operationId: 'updateBrandIdentity',
+    method: 'patch',
+    path: '/brand/identity',
+    tag: 'brand',
+    params: null,
+    query: null,
+    clientHeader: true,
+    body: jsonBody(BrandIdentityUpdateSchema),
+    success: json(200, BrandIdentitySchema),
+    problemStatuses: [400, 403, 413, 415, 421],
   },
   listTemplates: {
     operationId: 'listTemplates',
@@ -1071,6 +1177,7 @@ export type ExportListResponse = z.infer<typeof ExportListResponseSchema>;
 export type ImportListResponse = z.infer<typeof ImportListResponseSchema>;
 export type BrandAssetListResponse = z.infer<typeof BrandAssetListResponseSchema>;
 export type BrandAssetUpdate = z.infer<typeof BrandAssetUpdateSchema>;
+export type BrandIdentityUpdate = z.infer<typeof BrandIdentityUpdateSchema>;
 export type TemplateListResponse = z.infer<typeof TemplateListResponseSchema>;
 export type ManualSelectionsQuery = z.infer<typeof ManualSelectionsQuerySchema>;
 export type BrandAssetRegisterQuery = z.infer<typeof BrandAssetRegisterQuerySchema>;

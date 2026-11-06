@@ -204,3 +204,38 @@ export function gif(): Buffer {
 export function text(): Buffer {
   return Buffer.from('team,score\nalfa,2\nbeta,1\n', 'utf8');
 }
+
+export interface WebpOptions {
+  readonly width?: number;
+  readonly height?: number;
+  /** Text bytes in the bitstream, to make otherwise equal files differ. */
+  readonly note?: string;
+  /** Declares a RIFF size that does not match the file (a truncated or padded container). */
+  readonly brokenSize?: boolean;
+  /** Uses an unknown first chunk instead of `VP8L`. */
+  readonly unknownChunk?: boolean;
+}
+
+/**
+ * A lossless WebP container (`RIFF`, `WEBP`, one `VP8L` chunk) with the given canvas size (PD-ARCH-01G-A). The
+ * header is exact; the bitstream after it is filler, which is enough for the structure checks of the brand module
+ * (the renderer never decodes WebP).
+ */
+export function webp(options: WebpOptions = {}): Buffer {
+  const width = options.width ?? 8;
+  const height = options.height ?? 8;
+  const bits = ((width - 1) | ((height - 1) << 14) | (1 << 28)) >>> 0;
+  const header = Buffer.alloc(5);
+  header[0] = 0x2f;
+  header.writeUInt32LE(bits, 1);
+  const data = Buffer.concat([header, Buffer.from(options.note ?? 'webp', 'utf8')]);
+  const chunk = Buffer.alloc(8);
+  chunk.write(options.unknownChunk === true ? 'ABCD' : 'VP8L', 0, 'latin1');
+  chunk.writeUInt32LE(data.length, 4);
+  const padding = data.length % 2 === 1 ? Buffer.alloc(1) : Buffer.alloc(0);
+  const body = Buffer.concat([Buffer.from('WEBP', 'latin1'), chunk, data, padding]);
+  const riff = Buffer.alloc(8);
+  riff.write('RIFF', 0, 'latin1');
+  riff.writeUInt32LE(body.length + (options.brokenSize === true ? 6 : 0), 4);
+  return Buffer.concat([riff, body]);
+}

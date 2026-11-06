@@ -41,7 +41,8 @@ export function shellContext(pathname: string): ShellContext {
       hideHeaderTitle: isReview,
     };
   }
-  if (pathname === '/brand' || pathname === '/brand/') return { title: 'Marca y plantillas' };
+  if (pathname === '/brand' || pathname === '/brand/') return { title: 'Mi marca' };
+  if (pathname === '/templates' || pathname === '/templates/') return { title: 'Plantillas' };
   if (pathname === '/imports' || pathname === '/imports/') return { title: 'Datos' };
   if (pathname === '/competitions' || pathname === '/competitions/') {
     return { title: 'Competiciones', parent: { label: 'Inicio', to: '/' } };

@@ -116,12 +116,22 @@ describe('registerBrandAsset', () => {
       id: expect.stringMatching(/^[0-9a-f-]{36}$/) as unknown as string,
       kind: 'brand_logo',
       label: 'Logo principal',
+      description: null,
       mime: 'image/png',
       width: 20,
       height: 10,
+      byteSize: image.length,
       sha256: sha256(image),
+      // PD-ARCH-01G-A: a logo is protected by default; it is never transformable or primary unless set.
+      usagePolicy: 'protected',
+      official: false,
+      primary: false,
+      variant: null,
+      pose: null,
+      expression: null,
       active: true,
       registeredAt: FIXED_NOW,
+      updatedAt: FIXED_NOW,
     });
     const directory = join(app.root.dataDir, 'brand-assets');
     expect(brandFiles(app)).toEqual([`${asset.id}.png`]);
@@ -448,16 +458,29 @@ describe('updateBrandAsset (OD-08)', () => {
     expectProblem(await patch(app, asset.id, {}), 400, 'VALIDATION_FAILED');
   });
 
-  it('offers no deletion route', async () => {
+  it('deletes an unused asset logically: it leaves the library, its row and file are kept (PD-ARCH-01G-A)', async () => {
     const app = await start();
     const asset = await register(app, png({ note: 'keep' }), 'image/png');
-    const response = await app.inject({
-      method: 'DELETE',
-      url: `/api/v1/brand/assets/${asset.id}`,
-      headers: { host: JSON_HEADERS.host, origin: JSON_HEADERS.origin, 'x-edr-client': 'web' },
-    });
-    expectProblem(response, 404, 'NOT_FOUND');
+    const remove = () =>
+      app.inject({
+        method: 'DELETE',
+        url: `/api/v1/brand/assets/${asset.id}`,
+        headers: { host: JSON_HEADERS.host, origin: JSON_HEADERS.origin, 'x-edr-client': 'web' },
+      });
+    expect((await remove()).statusCode).toBe(204);
+    expect((await remove()).statusCode).toBe(204);
     expect(rowCount(app)).toBe(1);
+    expect(brandFiles(app)).toEqual([`${asset.id}.png`]);
+    expect(
+      BrandAssetListResponseSchema.parse(
+        (await app.inject({ method: 'GET', url: '/api/v1/brand/assets', headers: READ_HEADERS })).json(),
+      ).assets,
+    ).toEqual([]);
+    expectProblem(
+      await app.inject({ method: 'GET', url: `/api/v1/brand/assets/${asset.id}/file`, headers: READ_HEADERS }),
+      404,
+      'NOT_FOUND',
+    );
   });
 });
 

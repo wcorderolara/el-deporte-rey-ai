@@ -779,7 +779,7 @@ describe('DEMO_DATA and MANUAL_DATA operations on the running app', { timeout: R
     expect(['not_manual_data', 'verified', 'not_latest_run']).toContain(refused.refusalReason);
   });
 
-  it('registers, lists, updates and serves a brand asset; refuses a duplicate', async () => {
+  it('registers, lists, updates, describes, deletes and serves brand assets and the identity; refuses a duplicate', async () => {
     const image = syntheticPng(16, 8, 'served-operations');
     const asset = await ok<{ id: string; sha256: string; active: boolean }>(d, 'registerBrandAsset', {
       query: { kind: 'brand_logo', label: 'Logotipo sintético' },
@@ -805,6 +805,35 @@ describe('DEMO_DATA and MANUAL_DATA operations on the running app', { timeout: R
     expect(
       await ok<{ active: boolean }>(d, 'updateBrandAsset', { params: { assetId: asset.id }, json: { active: false } }),
     ).toMatchObject({ active: false });
+
+    // PD-ARCH-01G-A: detail with usage, metadata edits, identity and logical deletion.
+    expect(
+      await ok<{ asset: { id: string }; usage: { renderedVersions: number } }>(d, 'getBrandAsset', {
+        params: { assetId: asset.id },
+      }),
+    ).toMatchObject({ asset: { id: asset.id }, usage: { renderedVersions: 0 } });
+    expect(
+      await ok<{ label: string; official: boolean }>(d, 'updateBrandAsset', {
+        params: { assetId: asset.id },
+        json: { label: 'Logotipo horizontal', official: true, description: 'Variante horizontal.' },
+      }),
+    ).toMatchObject({ label: 'Logotipo horizontal', official: true });
+    const identity = await ok<{ palette: unknown[] }>(d, 'getBrandIdentity');
+    expect(identity.palette).toHaveLength(5);
+    expect(
+      await ok<{ description: string }>(d, 'updateBrandIdentity', {
+        json: { description: 'Identidad sintética.', colorUsage: { accent: 'Acentos.' } },
+      }),
+    ).toMatchObject({ description: 'Identidad sintética.' });
+    const extra = await ok<{ id: string }>(d, 'registerBrandAsset', {
+      query: { kind: 'style_reference', label: 'Referencia sintética' },
+      payload: syntheticPng(8, 8, 'served-operations-reference'),
+      contentType: 'image/png',
+    });
+    const deleted = await d.call('deleteBrandAsset', { params: { assetId: extra.id } });
+    expect(deleted.status, describeExchange(deleted)).toBe(204);
+    expect(deleted.violations).toEqual([]);
+    await problem(d, 'getBrandAsset', { params: { assetId: extra.id } }, 404, 'NOT_FOUND');
   });
 
   it('lists templates and renders previews in both languages; 404 for an unknown template', async () => {

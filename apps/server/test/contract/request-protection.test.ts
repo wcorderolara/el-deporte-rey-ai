@@ -375,7 +375,14 @@ describe('request bodies (R-224)', () => {
       { versionId: '00000000-0000-4000-8000-000000000001', checks: ['text_fit'] },
       { versionId: '00000000-0000-4000-8000-000000000001', checks: ['style_consistency', 'capitalized_tokens'] },
     ],
-    updateBrandAsset: [{}, { active: 'yes' }, { active: true, label: 'x' }],
+    updateBrandAsset: [
+      {},
+      { active: 'yes' },
+      { active: true, kind: 'mascot' },
+      { usagePolicy: 'everything' },
+      { description: '' },
+    ],
+    updateBrandIdentity: [{ palette: [] }, { description: '' }, { colorUsage: { gold: 'Dorado' } }, { name: 'Otra' }],
   };
 
   it.each(Object.keys(invalidBodies))(

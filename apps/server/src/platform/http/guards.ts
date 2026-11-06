@@ -13,7 +13,7 @@
  *    `Origin` header is present, an origin in the configured `server.allowedOrigins` (`Origin: null` is refused).
  *    Otherwise 403 `FORBIDDEN_ORIGIN`.
  * 4. Such a request with a body needs the route's body media type: `application/json`, or `image/png` and
- *    `image/jpeg` on routes with the binary exception. Otherwise 415 `UNSUPPORTED_MEDIA_TYPE`.
+ *    `image/jpeg` or `image/webp` on routes with the binary exception. Otherwise 415 `UNSUPPORTED_MEDIA_TYPE`.
  *
  * No CORS header is ever sent (`headers.ts` removes any `Access-Control-*` header).
  */

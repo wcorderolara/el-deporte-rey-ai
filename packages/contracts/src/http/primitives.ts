@@ -15,6 +15,8 @@ export const ContractPatterns = {
   SourceId: '^[a-z0-9][a-z0-9-]{1,40}$',
   MatchKey: '^[a-z0-9][a-z0-9:_-]{0,127}$',
   Label: '^[^\\p{Cc}\\p{Cf}]{1,80}$',
+  /** Printable multi-line text: line feeds allowed, every other control or format character refused. */
+  Note: '^(?:[^\\p{Cc}\\p{Cf}]|\\n)+$',
   DisplayName: "^[\\p{L}\\p{M}\\p{N} .'&()/-]{1,80}$",
   StageName: "^[\\p{L}\\p{M}\\p{N} .'&()/_-]{1,80}$",
   TeamName: "^[\\p{L}\\p{M}\\p{N} .'&()-]{1,64}$",

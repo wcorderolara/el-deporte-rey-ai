@@ -10,6 +10,7 @@ import {
   ASSET_LOGO,
   ASSET_MASCOT,
   fakeFetch,
+  IDENTITY,
   imageFile,
   jsonResponse,
   problemResponse,
@@ -153,11 +154,78 @@ describe('brandApi: updateBrandAsset', () => {
 });
 
 describe('brandApi: media types', () => {
-  it('accepts only PNG and JPEG, with a 5 MiB size cap', () => {
+  it('accepts PNG, JPEG and WebP (style references only), never SVG, with a 5 MiB size cap', async () => {
     expect(isAssetMime('image/png')).toBe(true);
     expect(isAssetMime('image/jpeg')).toBe(true);
+    expect(isAssetMime('image/webp')).toBe(true);
     expect(isAssetMime('image/svg+xml')).toBe(false);
-    expect(isAssetMime('image/webp')).toBe(false);
     expect(MAX_ASSET_BYTES).toBe(5 * 1024 * 1024);
+    const { fetch } = fakeFetch({});
+    await expect(
+      createBrandApi({ fetch }).registerAsset({
+        kind: 'brand_logo',
+        label: 'x',
+        file: imageFile('x.webp', 'image/webp'),
+      }),
+    ).rejects.toBeInstanceOf(TypeError);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('brandApi: library operations (PD-ARCH-01G-A)', () => {
+  it('sends the registration metadata in the query, leaving empty values out', async () => {
+    const { fetch, requests } = fakeFetch({ 'POST /brand/assets': () => jsonResponse(ASSET_LOGO, 201) });
+    await createBrandApi({ fetch }).registerAsset({
+      kind: 'style_reference',
+      label: 'Referencia',
+      file: imageFile('r.webp', 'image/webp'),
+      description: 'Portada',
+      usagePolicy: 'reference_only',
+      official: false,
+      variant: '',
+    });
+    const query = new URL(requests[0]?.url ?? '', 'http://local').searchParams;
+    expect(Object.fromEntries(query)).toEqual({
+      kind: 'style_reference',
+      label: 'Referencia',
+      description: 'Portada',
+      usagePolicy: 'reference_only',
+      official: 'false',
+    });
+    expect(requests[0]?.headers['Content-Type']).toBe('image/webp');
+  });
+
+  it('reads an asset detail, edits it, deletes it and reads and edits the identity', async () => {
+    const { fetch, requests } = fakeFetch({
+      [`GET /brand/assets/${ASSET_LOGO.id}`]: () =>
+        jsonResponse({ asset: ASSET_LOGO, usage: { renderedVersions: 1, projects: 1, exports: 0 } }),
+      [`PATCH /brand/assets/${ASSET_LOGO.id}`]: () => jsonResponse({ ...ASSET_LOGO, label: 'Nuevo' }),
+      [`DELETE /brand/assets/${ASSET_LOGO.id}`]: () => new Response(null, { status: 204 }),
+      'GET /brand/identity': () => jsonResponse(IDENTITY),
+      'PATCH /brand/identity': () => jsonResponse({ ...IDENTITY, description: 'Marca' }),
+    });
+    const api = createBrandApi({ fetch });
+    expect((await api.getAsset(ASSET_LOGO.id)).usage.renderedVersions).toBe(1);
+    expect((await api.updateAsset(ASSET_LOGO.id, { label: 'Nuevo', primary: true })).label).toBe('Nuevo');
+    await api.deleteAsset(ASSET_LOGO.id);
+    expect((await api.getIdentity()).palette).toHaveLength(5);
+    expect((await api.updateIdentity({ description: 'Marca' })).description).toBe('Marca');
+    expect(requests.map((request) => `${request.method} ${request.url}`)).toEqual([
+      `GET /api/v1/brand/assets/${ASSET_LOGO.id}`,
+      `PATCH /api/v1/brand/assets/${ASSET_LOGO.id}`,
+      `DELETE /api/v1/brand/assets/${ASSET_LOGO.id}`,
+      'GET /api/v1/brand/identity',
+      'PATCH /api/v1/brand/identity',
+    ]);
+    expect(JSON.parse(String(requests[1]?.body))).toEqual({ label: 'Nuevo', primary: true });
+    expect(requests[2]?.headers['X-EDR-Client']).toBe('web');
+  });
+
+  it('refuses an identity response that does not match the contract', async () => {
+    const { fetch } = fakeFetch({ 'GET /brand/identity': () => jsonResponse({ ...IDENTITY, palette: 'gold' }) });
+    const error = await createBrandApi({ fetch })
+      .getIdentity()
+      .catch((caught: unknown) => caught);
+    expect((error as ApiError).kind).toBe('invalid_response');
   });
 });

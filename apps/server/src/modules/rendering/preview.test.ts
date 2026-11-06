@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import type { BrandAsset } from '@edr/contracts';
 import { describe, expect, it } from 'vitest';
 
-import type { BrandAssetLookup } from '../brand/index.js';
+import type { BrandAssetLookup, DrawableBrandAsset } from '../brand/index.js';
 import { png } from '../brand/test/images.js';
 
 import { TemplatePreviewService, sampleContent } from './preview.js';
@@ -20,29 +20,38 @@ const config = renderConfig('/srv/edr-test-root');
 const fonts = testFonts();
 
 class FakeAssets implements BrandAssetLookup {
-  assets: BrandAsset[] = [];
+  assets: DrawableBrandAsset[] = [];
   readonly files = new Map<string, Buffer>();
   reads = 0;
 
-  add(kind: BrandAsset['kind'], n: number): BrandAsset {
+  add(kind: BrandAsset['kind'], n: number): DrawableBrandAsset {
     const content = png({ width: 24, height: 24, rgba: [n % 255, 120, 40, 255] });
-    const asset: BrandAsset = {
+    const asset: DrawableBrandAsset = {
       id: uuid(n),
       kind,
       label: 'Sintético',
+      description: null,
       mime: 'image/png',
       width: 24,
       height: 24,
+      byteSize: content.length,
       sha256: createHash('sha256').update(content).digest('hex'),
+      usagePolicy: 'protected',
+      official: false,
+      primary: false,
+      variant: null,
+      pose: null,
+      expression: null,
       active: true,
       registeredAt: '2026-10-27T12:00:00.000Z',
+      updatedAt: '2026-10-27T12:00:00.000Z',
     };
     this.assets.push(asset);
     this.files.set(asset.id, content);
     return asset;
   }
 
-  activeAssets(kind: BrandAsset['kind']): readonly BrandAsset[] {
+  activeAssets(kind: BrandAsset['kind']): readonly DrawableBrandAsset[] {
     return this.assets.filter((asset) => asset.kind === kind && asset.active);
   }
 

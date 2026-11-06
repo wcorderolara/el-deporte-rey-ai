@@ -33,7 +33,8 @@ export const appCopy = {
 export const navCopy = {
   projects: 'Proyectos',
   imports: 'Importaciones manuales',
-  brand: 'Marca y plantillas',
+  brand: 'Mi marca',
+  templates: 'Plantillas',
 } as const;
 
 export const featureCopy = {
@@ -41,7 +42,8 @@ export const featureCopy = {
   facts: 'Datos y verificación',
   review: 'Revisión y aprobación',
   history: 'Exportaciones e historial',
-  brand: 'Marca y plantillas',
+  brand: 'Mi marca',
+  templates: 'Plantillas',
   imports: 'Importaciones manuales',
   pending: 'Esta sección todavía no está disponible.',
 } as const;
@@ -177,6 +179,8 @@ export const problemCodeMessage: Record<ProblemCode, string> = {
   CONTENT_BATCH_NOT_GENERATABLE:
     'Ninguna pieza de la selección se puede generar con los datos locales. Revisa los partidos y los tipos elegidos.',
   REQUEST_KEY_REUSED: 'Esta confirmación ya se usó para otra selección. Revisa la propuesta y confirma de nuevo.',
+  ASSET_IN_USE:
+    'El recurso aparece en diapositivas ya generadas, así que no se puede eliminar. Puedes desactivarlo para que no se use en contenido nuevo.',
   PROVIDER_RATE_LIMITED: 'Se alcanzó el límite de solicitudes de la fuente de datos.',
   SELECTION_UNAVAILABLE: 'La selección no está disponible en la fuente elegida.',
   IMPORT_REJECTED: 'La importación fue rechazada. No se guardó ningún dato.',

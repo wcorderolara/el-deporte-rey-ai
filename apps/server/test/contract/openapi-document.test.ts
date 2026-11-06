@@ -64,16 +64,16 @@ describe('contract document', () => {
     );
   });
 
-  it('has 99 operations on 75 paths, 45 of them mutating, with unique operation IDs', () => {
-    expect(Object.keys(child(document, 'paths'))).toHaveLength(75);
-    expect(operations).toHaveLength(99);
-    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(45);
+  it('has 103 operations on 76 paths, 47 of them mutating, with unique operation IDs', () => {
+    expect(Object.keys(child(document, 'paths'))).toHaveLength(76);
+    expect(operations).toHaveLength(103);
+    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(47);
     const ids = operations.map((operation) => operation.operation.operationId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('has 139 component schemas', () => {
-    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(139);
+  it('has 143 component schemas', () => {
+    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(143);
   });
 });
 
@@ -267,6 +267,26 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/tags/12: added',
       '/paths/~1projects~1{projectId}/delete: added',
       `${ack}/requestBody/content/application~1json/schema/properties/checks/items/enum/1: added`,
+      '/paths/~1brand~1assets/post/parameters/3: added',
+      '/paths/~1brand~1assets/post/parameters/4: added',
+      '/paths/~1brand~1assets/post/parameters/5: added',
+      '/paths/~1brand~1assets/post/parameters/6: added',
+      '/paths/~1brand~1assets/post/parameters/7: added',
+      '/paths/~1brand~1assets/post/parameters/8: added',
+      '/paths/~1brand~1assets/post/requestBody/content/image~1webp: added',
+      '/paths/~1brand~1assets~1{assetId}/patch/requestBody/content/application~1json/schema/required: removed',
+      '/paths/~1brand~1assets~1{assetId}/patch/requestBody/content/application~1json/schema/properties/label: added',
+      '/paths/~1brand~1assets~1{assetId}/patch/requestBody/content/application~1json/schema/properties/usagePolicy: added',
+      '/paths/~1brand~1assets~1{assetId}/patch/requestBody/content/application~1json/schema/properties/official: added',
+      '/paths/~1brand~1assets~1{assetId}/patch/requestBody/content/application~1json/schema/properties/primary: added',
+      '/paths/~1brand~1assets~1{assetId}/patch/requestBody/content/application~1json/schema/properties/variant: added',
+      '/paths/~1brand~1assets~1{assetId}/patch/requestBody/content/application~1json/schema/properties/pose: added',
+      '/paths/~1brand~1assets~1{assetId}/patch/requestBody/content/application~1json/schema/properties/expression: added',
+      '/paths/~1brand~1assets~1{assetId}/patch/requestBody/content/application~1json/schema/minProperties: added',
+      '/paths/~1brand~1assets~1{assetId}/patch/responses/409: added',
+      '/paths/~1brand~1assets~1{assetId}/get: added',
+      '/paths/~1brand~1assets~1{assetId}/delete: added',
+      '/paths/~1brand~1assets~1{assetId}~1file/get/responses/200/content/image~1webp: added',
       '/paths/~1competitions: added',
       '/paths/~1sports~1providers: added',
       '/paths/~1sports~1providers~1{providerKey}~1competitions: added',
@@ -310,6 +330,7 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/paths/~1content-batches: added',
       '/paths/~1content-batches~1{batchId}: added',
       '/paths/~1exports~1{exportId}~1download: added',
+      '/paths/~1brand~1identity: added',
       '/components/schemas/Problem/properties/code/enum/15: changed',
       '/components/schemas/Problem/properties/code/enum/16: changed',
       '/components/schemas/Problem/properties/code/enum/17: changed',
@@ -335,6 +356,7 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/Problem/properties/code/enum/37: added',
       '/components/schemas/Problem/properties/code/enum/38: added',
       '/components/schemas/Problem/properties/code/enum/39: added',
+      '/components/schemas/Problem/properties/code/enum/40: added',
       '/components/schemas/ProjectSummaryFields/required/13: added',
       '/components/schemas/ProjectSummaryFields/required/14: added',
       '/components/schemas/ProjectSummaryFields/properties/latestRunStatus: added',
@@ -350,6 +372,32 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/TextField/properties/field/enum/13: added',
       '/components/schemas/ContentFlag/properties/code/enum/4: added',
       '/components/schemas/QaResult/oneOf/5: added',
+      '/components/schemas/BrandAssetKind/enum/3: added',
+      '/components/schemas/BrandAssetKind/enum/4: added',
+      '/components/schemas/BrandAsset/required/3: changed',
+      '/components/schemas/BrandAsset/required/4: changed',
+      '/components/schemas/BrandAsset/required/5: changed',
+      '/components/schemas/BrandAsset/required/6: changed',
+      '/components/schemas/BrandAsset/required/7: changed',
+      '/components/schemas/BrandAsset/required/8: changed',
+      '/components/schemas/BrandAsset/required/9: added',
+      '/components/schemas/BrandAsset/required/10: added',
+      '/components/schemas/BrandAsset/required/11: added',
+      '/components/schemas/BrandAsset/required/12: added',
+      '/components/schemas/BrandAsset/required/13: added',
+      '/components/schemas/BrandAsset/required/14: added',
+      '/components/schemas/BrandAsset/required/15: added',
+      '/components/schemas/BrandAsset/required/16: added',
+      '/components/schemas/BrandAsset/required/17: added',
+      '/components/schemas/BrandAsset/properties/mime/enum/2: added',
+      '/components/schemas/BrandAsset/properties/byteSize: added',
+      '/components/schemas/BrandAsset/properties/usagePolicy: added',
+      '/components/schemas/BrandAsset/properties/official: added',
+      '/components/schemas/BrandAsset/properties/primary: added',
+      '/components/schemas/BrandAsset/properties/variant: added',
+      '/components/schemas/BrandAsset/properties/pose: added',
+      '/components/schemas/BrandAsset/properties/expression: added',
+      '/components/schemas/BrandAsset/properties/updatedAt: added',
       '/components/schemas/Template/properties/slideType/enum/4: added',
       '/components/schemas/Template/properties/slideType/enum/5: added',
       '/components/schemas/Template/properties/slideType/enum/6: added',
@@ -407,6 +455,10 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/ContentBatchPreview: added',
       '/components/schemas/ContentBatchItem: added',
       '/components/schemas/ContentBatch: added',
+      '/components/schemas/BrandAssetUsagePolicy: added',
+      '/components/schemas/BrandAssetUsage: added',
+      '/components/schemas/BrandAssetDetail: added',
+      '/components/schemas/BrandIdentity: added',
     ]);
   });
 

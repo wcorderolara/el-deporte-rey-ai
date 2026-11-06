@@ -2,7 +2,7 @@
  * Test support of the brand feature: a fake fetch that answers by method and path and records every request, and
  * synthetic contract values. No network is used.
  */
-import type { BrandAsset, Template } from '@edr/contracts';
+import type { BrandAsset, BrandIdentity, Template } from '@edr/contracts';
 import { vi } from 'vitest';
 
 import type { FetchFunction } from '../../api/client';
@@ -70,28 +70,79 @@ export function deferred<T>() {
   return { promise, resolve };
 }
 
-export const ASSET_LOGO: BrandAsset = {
+/** A library asset with the given values (PD-ARCH-01G-A shape). */
+export function asset(values: Partial<BrandAsset> & Pick<BrandAsset, 'id' | 'kind' | 'label'>): BrandAsset {
+  return {
+    description: null,
+    mime: 'image/png',
+    width: 512,
+    height: 256,
+    byteSize: 20480,
+    sha256: values.id.replace(/-/g, '').padEnd(64, 'a').slice(0, 64),
+    usagePolicy: values.kind === 'style_reference' ? 'reference_only' : 'protected',
+    official: false,
+    primary: false,
+    variant: null,
+    pose: null,
+    expression: null,
+    active: true,
+    registeredAt: '2026-10-01T12:00:00Z',
+    updatedAt: '2026-10-01T12:00:00Z',
+    ...values,
+  };
+}
+
+export const ASSET_LOGO: BrandAsset = asset({
   id: '00000000-0000-4000-8000-0000000000a1',
   kind: 'brand_logo',
   label: 'Logotipo sintético',
-  mime: 'image/png',
-  width: 512,
-  height: 256,
-  sha256: 'a'.repeat(64),
-  active: true,
-  registeredAt: '2026-10-01T12:00:00Z',
-};
+  official: true,
+  primary: true,
+  variant: 'Principal',
+});
 
-export const ASSET_MASCOT: BrandAsset = {
+export const ASSET_MASCOT: BrandAsset = asset({
   id: '00000000-0000-4000-8000-0000000000a2',
   kind: 'mascot',
   label: 'Mascota sintética',
   mime: 'image/jpeg',
   width: 800,
   height: 800,
-  sha256: 'b'.repeat(64),
   active: false,
+  pose: 'Celebración',
   registeredAt: '2026-10-02T12:00:00Z',
+});
+
+export const ASSET_REFERENCE: BrandAsset = asset({
+  id: '00000000-0000-4000-8000-0000000000a3',
+  kind: 'style_reference',
+  label: 'Portada de referencia',
+  mime: 'image/webp',
+  width: 1080,
+  height: 1350,
+});
+
+export const IDENTITY: BrandIdentity = {
+  id: 'primary',
+  name: 'El Deporte Rey GT',
+  handle: '@ElDeporteReyGT',
+  mascotName: 'KETSI',
+  provisional: true,
+  description: null,
+  graphicPreferences: null,
+  palette: [
+    { role: 'primary', value: '#5b2a86', usage: null },
+    { role: 'primaryDark', value: '#2e1145', usage: null },
+    { role: 'accent', value: '#d4af37', usage: 'Acentos y datos destacados.' },
+    { role: 'secondary', value: '#1f4fb8', usage: null },
+    { role: 'light', value: '#ffffff', usage: null },
+  ],
+  typography: [
+    { role: 'heading', family: 'Montserrat', weight: 800, usage: null },
+    { role: 'body', family: 'Inter', weight: 400, usage: null },
+    { role: 'numeric', family: 'Inter', weight: 700, usage: null },
+  ],
+  updatedAt: null,
 };
 
 export const TEMPLATE_COVER: Template = {

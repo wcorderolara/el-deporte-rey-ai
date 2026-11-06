@@ -5,7 +5,7 @@
  *   which refuses values above the brand-upload limit: `POST /api/v1/imports` uses `IMPORT_BODY_LIMIT` (1.5 MiB, JSON
  *   only) and the brand upload uses `BRAND_UPLOAD_BODY_LIMIT` (5 MiB).
  * - Bodies are JSON (`application/json`) unless the route declares the binary exception with `binaryBodyRoute`
- *   (`image/png` and `image/jpeg` only, used by the brand upload, T33). The media-type check runs in the request
+ *   (`image/png`, `image/jpeg` and `image/webp` only, used by the brand upload, T33; WebP since PD-ARCH-01G-A). The media-type check runs in the request
  *   guard, before the body is read (`guards.ts`).
  * - JSON is parsed by Fastify's default parser (`onProtoPoisoning` and `onConstructorPoisoning` `error`), after a
  *   linear, iterative nesting-depth scan that refuses documents nested deeper than `MAX_JSON_DEPTH`, so a deeply
@@ -32,13 +32,13 @@ const KIB = 1024;
 export const GLOBAL_BODY_LIMIT = 64 * KIB;
 /** Body limit of `POST /api/v1/imports` (JSON only; contract `createImport`). */
 export const IMPORT_BODY_LIMIT = 1536 * KIB;
-/** Body limit of the brand upload (`image/png` or `image/jpeg`; T10-F12). The largest route limit. */
+/** Body limit of the brand upload (`image/png`, `image/jpeg` or `image/webp`; T10-F12). The largest route limit. */
 export const BRAND_UPLOAD_BODY_LIMIT = 5 * KIB * KIB;
 /** Deepest JSON nesting accepted in a request body; no contract request comes close. */
 export const MAX_JSON_DEPTH = 64;
 
 /** The only media types of the binary body exception. */
-export const BINARY_BODY_MEDIA_TYPES = ['image/png', 'image/jpeg'] as const;
+export const BINARY_BODY_MEDIA_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const;
 export type BinaryBodyMediaType = (typeof BINARY_BODY_MEDIA_TYPES)[number];
 
 /** The JSON media type. */
@@ -64,7 +64,7 @@ export function binaryBodyRoute(mediaTypes: readonly BinaryBodyMediaType[]): { e
     mediaTypes.length === 0 ||
     mediaTypes.some((type) => !(BINARY_BODY_MEDIA_TYPES as readonly string[]).includes(type))
   ) {
-    throw new TypeError('the binary body exception allows image/png and image/jpeg only');
+    throw new TypeError('the binary body exception allows image/png, image/jpeg and image/webp only');
   }
   return { edr: Object.freeze({ bodyMediaTypes: Object.freeze([...mediaTypes]) }) };
 }

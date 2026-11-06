@@ -7,7 +7,7 @@ import { shellContext } from './shellContext';
 interface NavItem {
   to: string;
   label: string;
-  isCurrent: (pathname: string, hash: string) => boolean;
+  isCurrent: (pathname: string) => boolean;
   symbol: string;
 }
 
@@ -47,21 +47,21 @@ const NAV_ITEMS: readonly NavItem[] = [
     isCurrent: (pathname) => pathname === '/exports' || pathname.startsWith('/exports/'),
   },
   {
-    to: '/brand#brand-templates-title',
-    label: 'Plantillas',
-    symbol: '▥',
-    isCurrent: (path, hash) => /^\/brand\/?$/.test(path) && hash === '#brand-templates-title',
-  },
-  {
-    to: '/brand#brand-assets-title',
+    to: '/brand',
     label: 'Mi marca',
     symbol: '◇',
-    isCurrent: (path, hash) => /^\/brand\/?$/.test(path) && hash !== '#brand-templates-title',
+    isCurrent: (pathname) => pathname === '/brand' || pathname.startsWith('/brand/'),
+  },
+  {
+    to: '/templates',
+    label: 'Plantillas',
+    symbol: '▥',
+    isCurrent: (pathname) => pathname === '/templates' || pathname.startsWith('/templates/'),
   },
   { to: '/imports', label: 'Datos', symbol: '≡', isCurrent: (pathname) => pathname.startsWith('/imports') },
 ];
 
-function MainNavigation({ pathname, hash }: { pathname: string; hash: string }) {
+function MainNavigation({ pathname }: { pathname: string }) {
   return (
     <ul className="m-0 grid list-none gap-1 p-0">
       {NAV_ITEMS.map((item) => (
@@ -69,12 +69,12 @@ function MainNavigation({ pathname, hash }: { pathname: string; hash: string }) 
           <Link
             className={classNames(
               'focus-studio flex min-h-touch items-center gap-3 rounded-control border-l-4 px-3 py-2 font-sans text-body-sm no-underline transition-colors',
-              item.isCurrent(pathname, hash)
+              item.isCurrent(pathname)
                 ? 'border-brand-gold bg-surface-overlay font-bold text-brand-gold'
                 : 'border-transparent text-text-secondary hover:bg-surface-card hover:text-text-primary',
             )}
             to={item.to}
-            aria-current={item.isCurrent(pathname, hash) ? 'page' : undefined}
+            aria-current={item.isCurrent(pathname) ? 'page' : undefined}
           >
             <span aria-hidden="true" className="inline-flex w-5 shrink-0 justify-center text-body-lg">
               {item.symbol}
@@ -114,28 +114,19 @@ export function AppShell() {
     }
   }, [location.pathname]);
 
-  useEffect(() => {
-    // These existing section anchors are the only fragment destinations offered by the shell.
-    if (navigation.state === 'idle' && ['#brand-assets-title', '#brand-templates-title'].includes(location.hash)) {
-      const target = document.getElementById(location.hash.slice(1));
-      target?.setAttribute('tabindex', '-1');
-      target?.focus();
-      target?.scrollIntoView?.({ block: 'start' });
-    }
-  }, [location.hash, location.pathname, navigation.state]);
-
   return (
     <Layout
       mainRef={mainRef}
-      navigation={<MainNavigation pathname={location.pathname} hash={location.hash} />}
+      navigation={<MainNavigation pathname={location.pathname} />}
       title={context.title}
       hideHeaderTitle={context.hideHeaderTitle}
       hideHeaderDescription={context.hideHeaderTitle || context.projectPath !== undefined}
-      navigationKey={`${location.pathname}${location.hash}`}
+      navigationKey={location.pathname}
       contentVariant={
         ['/', '/projects', '/projects/', '/exports', '/exports/'].includes(location.pathname) ||
         /^\/projects\/[^/]+\/review(?:\/.*)?$/.test(location.pathname) ||
         /^\/competitions(?:\/.*)?$/.test(location.pathname) ||
+        /^\/(?:brand|templates)(?:\/.*)?$/.test(location.pathname) ||
         /^\/projects\/[^/]+(?:\/exports(?:\/.*)?)?\/?$/.test(location.pathname)
           ? 'studio'
           : 'legacy'

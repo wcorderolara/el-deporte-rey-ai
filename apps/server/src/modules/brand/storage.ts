@@ -1,7 +1,7 @@
 /**
  * Brand asset files under `<dataDir>/brand-assets/` (data-model.md sections 1 and 2; T10-F13; AD-19, OD-08).
  *
- * - File names are generated: `<assetId>.png` or `<assetId>.jpg`, with the ID checked against the UUID pattern
+ * - File names are generated: `<assetId>.png`, `<assetId>.jpg` or `<assetId>.webp`, with the ID checked against the UUID pattern
  *   before any path is built, also for IDs read back from the database.
  * - Containment is checked against `fs.realpath(dataDir)`: the `brand-assets` directory must resolve to
  *   `<realDataDir>/brand-assets` (a symbolic link elsewhere is refused), and a file must resolve inside it.
@@ -31,7 +31,11 @@ export const BRAND_FILE_MODE = 0o600;
 /** Lowercase UUID (contract schema `Uuid`). */
 export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-const EXTENSIONS: Readonly<Record<BrandAssetMime, string>> = { 'image/png': 'png', 'image/jpeg': 'jpg' };
+const EXTENSIONS: Readonly<Record<BrandAssetMime, string>> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+};
 
 /** A brand file operation failed; the message is fixed text without any path. */
 export class BrandFileError extends Error {
@@ -43,7 +47,7 @@ export function brandFileExtension(mime: BrandAssetMime): string {
   return EXTENSIONS[mime];
 }
 
-/** The generated file name of an asset (`<id>.png` or `<id>.jpg`); refuses an ID that is not a UUID. */
+/** The generated file name of an asset (`<id>.png`, `<id>.jpg` or `<id>.webp`); refuses an ID that is not a UUID. */
 export function brandFileName(assetId: string, mime: BrandAssetMime): string {
   if (!UUID_PATTERN.test(assetId)) {
     throw new BrandFileError('a brand asset ID is not a UUID');

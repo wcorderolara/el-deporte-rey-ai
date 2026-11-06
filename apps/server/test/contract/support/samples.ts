@@ -378,12 +378,46 @@ const brandAsset = {
   id: uuid(50),
   kind: 'brand_logo',
   label: 'Logo principal',
+  description: 'Logotipo oficial.\nUso sobre fondos oscuros.',
   mime: 'image/png',
   width: 512,
   height: 512,
+  byteSize: 20480,
   sha256: SHA,
+  usagePolicy: 'protected',
+  official: true,
+  primary: true,
+  variant: 'Principal',
+  pose: null,
+  expression: null,
   active: true,
   registeredAt: T1,
+  updatedAt: T1,
+};
+
+const brandAssetDetail = { asset: brandAsset, usage: { renderedVersions: 4, projects: 1, exports: 1 } };
+
+const brandIdentity = {
+  id: 'primary',
+  name: 'El Deporte Rey GT',
+  handle: '@ElDeporteReyGT',
+  mascotName: 'KETSI',
+  provisional: true,
+  description: 'Fútbol guatemalteco.',
+  graphicPreferences: null,
+  palette: [
+    { role: 'primary', value: '#5b2a86', usage: 'Fondos principales.' },
+    { role: 'primaryDark', value: '#2e1145', usage: null },
+    { role: 'accent', value: '#d4af37', usage: 'Acentos.' },
+    { role: 'secondary', value: '#1f4fb8', usage: null },
+    { role: 'light', value: '#ffffff', usage: null },
+  ],
+  typography: [
+    { role: 'heading', family: 'Montserrat', weight: 800, usage: 'Titulares.' },
+    { role: 'body', family: 'Inter', weight: 400, usage: null },
+    { role: 'numeric', family: 'Inter', weight: 700, usage: null },
+  ],
+  updatedAt: T1,
 };
 
 const applyCounts = {
@@ -914,6 +948,10 @@ export const componentSamples: Record<ComponentName, unknown> = {
   },
   BrandAssetKind: 'mascot',
   BrandAsset: brandAsset,
+  BrandAssetUsagePolicy: 'reference_only',
+  BrandAssetUsage: brandAssetDetail.usage,
+  BrandAssetDetail: brandAssetDetail,
+  BrandIdentity: brandIdentity,
   Template: {
     id: 'match-result',
     version: '1.0.0',
@@ -986,7 +1024,19 @@ export const requestSamples: Partial<Record<OperationId, unknown>> = {
   approveElement: componentSamples.VersionRef,
   acknowledgeQaWarnings: { versionId: uuid(20), checks: ['capitalized_tokens'] },
   createImport: componentSamples.ImportFormCreate,
-  updateBrandAsset: { active: false },
+  updateBrandAsset: {
+    active: false,
+    label: 'Logo horizontal',
+    description: null,
+    usagePolicy: 'reusable',
+    primary: false,
+  },
+  updateBrandIdentity: {
+    description: 'Fútbol guatemalteco.',
+    graphicPreferences: null,
+    colorUsage: { accent: 'Acentos.', light: null },
+    typographyUsage: { heading: 'Titulares.' },
+  },
 };
 
 /** Samples of the JSON success responses of every operation that returns JSON. */
@@ -1186,5 +1236,8 @@ export const responseSamples: Partial<Record<OperationId, unknown>> = {
   listBrandAssets: { assets: [brandAsset] },
   registerBrandAsset: brandAsset,
   updateBrandAsset: brandAsset,
+  getBrandAsset: brandAssetDetail,
+  getBrandIdentity: brandIdentity,
+  updateBrandIdentity: brandIdentity,
   listTemplates: { templates: [componentSamples.Template] },
 };

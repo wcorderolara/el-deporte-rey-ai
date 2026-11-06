@@ -15,7 +15,7 @@
  */
 import { createHash } from 'node:crypto';
 
-import { BrandAssetMimeSchema, type Language, LanguageSchema, SlideTypeSchema, UuidSchema } from '@edr/contracts';
+import { type Language, LanguageSchema, SlideTypeSchema, UuidSchema } from '@edr/contracts';
 import { z } from 'zod';
 
 import type { AppContainer } from '../../container.js';
@@ -47,7 +47,8 @@ const SlotAssetSchema = z.strictObject({
   slot: ImageSlotSchema,
   id: UuidSchema,
   sha256: Sha256Schema,
-  mime: BrandAssetMimeSchema,
+  // The renderer draws PNG and JPEG only; WebP style references never reach it (PD-ARCH-01G-A).
+  mime: z.enum(['image/png', 'image/jpeg']),
   content: BytesSchema,
 });
 

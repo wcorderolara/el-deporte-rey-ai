@@ -54,6 +54,7 @@ export const PROBLEM_CODES = [
   'IMPORT_PREVIEW_EXPIRED',
   'CONTENT_BATCH_NOT_GENERATABLE',
   'REQUEST_KEY_REUSED',
+  'ASSET_IN_USE',
 ] as const;
 
 export const ProblemCodeSchema = z.enum(PROBLEM_CODES);

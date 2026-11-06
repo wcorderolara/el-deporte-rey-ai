@@ -2260,10 +2260,14 @@ paths:
       tags: [brand]
       operationId: registerBrandAsset
       description: |
-        Register an authorized El Deporte Rey GT brand asset (R-309). The body is the raw image (PNG or JPEG, at most
-        5 MiB, at most 4096 x 4096 pixels). The declared Content-Type must match the detected file signature (415
-        otherwise); dimensions are read from the header before any decode; the file is decoded once at registration.
-        Club badges and competition marks cannot be registered (PD-03, R-049, R-050).
+        Register an authorized El Deporte Rey GT brand asset (R-309, PD-ARCH-01G-A). The body is the raw image (PNG or
+        JPEG for every category; WebP only for style references; at most 5 MiB and 4096 x 4096 pixels). SVG and fonts
+        are refused. The declared Content-Type must match the detected file signature (415 otherwise); dimensions are
+        read from the header before any decode; PNG and JPEG are decoded once with the renderer's decoder and WebP is
+        checked by its container structure. Without usagePolicy the category default applies (logos and mascot
+        protected, style references reference_only, others reusable); transformable is never a default. A file equal
+        to a deleted asset restores that asset with the new metadata. Club badges and competition marks cannot be
+        registered (PD-03, R-049, R-050).
       parameters:
         - $ref: '#/components/parameters/ClientHeader'
         - name: kind
@@ -2274,6 +2278,30 @@ paths:
           in: query
           required: true
           schema: { $ref: '#/components/schemas/Label' }
+        - name: description
+          in: query
+          required: false
+          schema: { type: string, minLength: 1, maxLength: 500, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }
+        - name: usagePolicy
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/BrandAssetUsagePolicy' }
+        - name: official
+          in: query
+          required: false
+          schema: { type: string, enum: ['true', 'false'] }
+        - name: variant
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Label' }
+        - name: pose
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Label' }
+        - name: expression
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Label' }
       requestBody:
         required: true
         content:
@@ -2281,6 +2309,8 @@ paths:
             schema: { type: string, contentMediaType: image/png }
           image/jpeg:
             schema: { type: string, contentMediaType: image/jpeg }
+          image/webp:
+            schema: { type: string, contentMediaType: image/webp }
       responses:
         '201':
           description: Registered.
@@ -2296,10 +2326,29 @@ paths:
   /brand/assets/{assetId}:
     parameters:
       - $ref: '#/components/parameters/AssetId'
+    get:
+      tags: [brand]
+      operationId: getBrandAsset
+      description: An asset with its usage (rendered slide versions, their projects and exports; PD-ARCH-01G-A).
+      responses:
+        '200':
+          description: The asset and its usage.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrandAssetDetail' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
     patch:
       tags: [brand]
       operationId: updateBrandAsset
-      description: Activate or deactivate an asset for future renders (no deletion, OD-08).
+      description: |
+        Edit the metadata, AI usage policy, official and primary marks or the active state of an asset (PD-ARCH-01G-A).
+        At least one field is required. The stored file never changes. A style reference stays reference_only; pose
+        and expression apply to the mascot only; the primary mark applies to an active logo or mascot whose policy is
+        not reference_only and moves from the previous primary of its kind; deactivating the primary clears the mark.
+        A deactivated asset is left out of later renders.
       parameters:
         - $ref: '#/components/parameters/ClientHeader'
       requestBody:
@@ -2308,10 +2357,18 @@ paths:
           application/json:
             schema:
               type: object
-              required: [active]
+              minProperties: 1
               additionalProperties: false
               properties:
                 active: { type: boolean }
+                label: { $ref: '#/components/schemas/Label' }
+                description: { oneOf: [{ type: string, minLength: 1, maxLength: 500, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+                usagePolicy: { $ref: '#/components/schemas/BrandAssetUsagePolicy' }
+                official: { type: boolean }
+                primary: { type: boolean }
+                variant: { oneOf: [{ $ref: '#/components/schemas/Label' }, { type: 'null' }] }
+                pose: { oneOf: [{ $ref: '#/components/schemas/Label' }, { type: 'null' }] }
+                expression: { oneOf: [{ $ref: '#/components/schemas/Label' }, { type: 'null' }] }
       responses:
         '200':
           description: Updated.
@@ -2321,7 +2378,25 @@ paths:
         '400': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
         '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [brand]
+      operationId: deleteBrandAsset
+      description: >-
+        Delete an asset that no rendered slide version uses (PD-ARCH-01G-A). The deletion is logical (OD-08 keeps every
+        row and the file is preserved): the asset leaves the library and later renders. An asset in use is refused with
+        ASSET_IN_USE (409) naming its usage; it can be deactivated instead. Deleting a deleted asset answers 204 again.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '204': { description: Asset deleted (or already deleted). }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
         '415': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
   /brand/assets/{assetId}/file:
@@ -2340,9 +2415,71 @@ paths:
               schema: { type: string, contentMediaType: image/png }
             image/jpeg:
               schema: { type: string, contentMediaType: image/jpeg }
+            image/webp:
+              schema: { type: string, contentMediaType: image/webp }
         '400': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /brand/identity:
+    get:
+      tags: [brand]
+      operationId: getBrandIdentity
+      description: |
+        The brand identity (PD-ARCH-01G-A): name, handle, mascot name, palette and fonts as the renderer uses them
+        (configuration, read only), with the operator's description, graphic preferences and usage notes.
+      responses:
+        '200':
+          description: The identity.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrandIdentity' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [brand]
+      operationId: updateBrandIdentity
+      description: |
+        Edit the descriptive fields of the identity. The name, handle, palette and fonts are the renderer's
+        configuration and are not edited here; null clears a field or a usage note.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                description: { oneOf: [{ type: string, minLength: 1, maxLength: 1000, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+                graphicPreferences: { oneOf: [{ type: string, minLength: 1, maxLength: 2000, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+                colorUsage:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    primary: { oneOf: [{ type: string, minLength: 1, maxLength: 300, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+                    primaryDark: { oneOf: [{ type: string, minLength: 1, maxLength: 300, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+                    accent: { oneOf: [{ type: string, minLength: 1, maxLength: 300, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+                    secondary: { oneOf: [{ type: string, minLength: 1, maxLength: 300, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+                    light: { oneOf: [{ type: string, minLength: 1, maxLength: 300, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+                typographyUsage:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    heading: { oneOf: [{ type: string, minLength: 1, maxLength: 300, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+                    body: { oneOf: [{ type: string, minLength: 1, maxLength: 300, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+                    numeric: { oneOf: [{ type: string, minLength: 1, maxLength: 300, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrandIdentity' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
   /templates:
     get:
@@ -3087,6 +3224,7 @@ components:
             - IMPORT_PREVIEW_EXPIRED
             - CONTENT_BATCH_NOT_GENERATABLE
             - REQUEST_KEY_REUSED
+            - ASSET_IN_USE
         detail: { type: string, maxLength: 500, description: 'Fixed text plus sanitized parameters only (T10-F10)' }
         errors:
           type: array
@@ -4342,21 +4480,105 @@ components:
         selection: { $ref: '#/components/schemas/ManualSelection' }
     BrandAssetKind:
       type: string
-      enum: [brand_logo, mascot, decoration]
+      enum: [brand_logo, mascot, decoration, background, style_reference]
     BrandAsset:
       type: object
-      required: [id, kind, label, mime, width, height, sha256, active, registeredAt]
+      required:
+        [
+          id,
+          kind,
+          label,
+          description,
+          mime,
+          width,
+          height,
+          byteSize,
+          sha256,
+          usagePolicy,
+          official,
+          primary,
+          variant,
+          pose,
+          expression,
+          active,
+          registeredAt,
+          updatedAt,
+        ]
       additionalProperties: false
       properties:
         id: { $ref: '#/components/schemas/Uuid' }
         kind: { $ref: '#/components/schemas/BrandAssetKind' }
         label: { $ref: '#/components/schemas/Label' }
-        mime: { type: string, enum: [image/png, image/jpeg] }
+        description: { oneOf: [{ type: string, minLength: 1, maxLength: 500, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+        mime: { type: string, enum: [image/png, image/jpeg, image/webp] }
         width: { type: integer }
         height: { type: integer }
+        byteSize: { type: [integer, 'null'] }
         sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        usagePolicy: { $ref: '#/components/schemas/BrandAssetUsagePolicy' }
+        official: { type: boolean }
+        primary: { type: boolean }
+        variant: { oneOf: [{ $ref: '#/components/schemas/Label' }, { type: 'null' }] }
+        pose: { oneOf: [{ $ref: '#/components/schemas/Label' }, { type: 'null' }] }
+        expression: { oneOf: [{ $ref: '#/components/schemas/Label' }, { type: 'null' }] }
         active: { type: boolean }
         registeredAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    BrandAssetUsagePolicy:
+      type: string
+      description: >-
+        protected: used as is (scaled and positioned only); reference_only: style reference, never placed in content;
+        reusable: placed directly in compositions; transformable: may be the base of AI variants (explicit).
+      enum: [protected, reference_only, reusable, transformable]
+    BrandAssetUsage:
+      type: object
+      required: [renderedVersions, projects, exports]
+      additionalProperties: false
+      properties:
+        renderedVersions: { type: integer, minimum: 0 }
+        projects: { type: integer, minimum: 0 }
+        exports: { type: integer, minimum: 0 }
+    BrandAssetDetail:
+      type: object
+      required: [asset, usage]
+      additionalProperties: false
+      properties:
+        asset: { $ref: '#/components/schemas/BrandAsset' }
+        usage: { $ref: '#/components/schemas/BrandAssetUsage' }
+    BrandIdentity:
+      type: object
+      required: [id, name, handle, mascotName, provisional, description, graphicPreferences, palette, typography, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { type: string, const: primary }
+        name: { type: string, minLength: 1, maxLength: 80 }
+        handle: { type: string, minLength: 1, maxLength: 80 }
+        mascotName: { type: [string, 'null'], minLength: 1, maxLength: 80 }
+        provisional: { type: boolean }
+        description: { oneOf: [{ type: string, minLength: 1, maxLength: 1000, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+        graphicPreferences: { oneOf: [{ type: string, minLength: 1, maxLength: 2000, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+        palette:
+          type: array
+          items:
+            type: object
+            required: [role, value, usage]
+            additionalProperties: false
+            properties:
+              role: { type: string, enum: [primary, primaryDark, accent, secondary, light] }
+              value: { type: string, pattern: '^#[0-9a-f]{6}$' }
+              usage: { oneOf: [{ type: string, minLength: 1, maxLength: 300, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+        typography:
+          type: array
+          items:
+            type: object
+            required: [role, family, weight, usage]
+            additionalProperties: false
+            properties:
+              role: { type: string, enum: [heading, body, numeric] }
+              family: { type: string, minLength: 1, maxLength: 80 }
+              weight: { type: integer, minimum: 100, maximum: 900 }
+              usage: { oneOf: [{ type: string, minLength: 1, maxLength: 300, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+        updatedAt: { type: [string, 'null'], format: date-time }
     Template:
       type: object
       required: [id, version, slideType, label, badgeSlots, imageSlots]

@@ -11,15 +11,21 @@
  */
 import {
   BRAND_ASSET_MEDIA_TYPES,
+  BrandAssetDetailSchema,
   BrandAssetListResponseSchema,
   BrandAssetSchema,
+  BrandIdentitySchema,
   TemplateListResponseSchema,
   type BrandAsset,
+  type BrandAssetDetail,
   type BrandAssetKind,
   type BrandAssetMime,
+  type BrandAssetUsagePolicy,
+  type BrandIdentity,
   type Language,
   type Template,
 } from '@edr/contracts';
+import type { BrandAssetUpdate, BrandIdentityUpdate } from '@edr/contracts';
 
 import {
   API_BASE_PATH,
@@ -35,7 +41,9 @@ import {
 export const MAX_ASSET_BYTES = 5 * 1024 * 1024;
 
 /** File picker filter: PNG and JPEG only (T10-F12). */
+/** PNG and JPEG for every category; WebP for style references only (PD-ARCH-01G-A). */
 export const ASSET_ACCEPT = 'image/png,image/jpeg,.png,.jpg,.jpeg';
+export const REFERENCE_ACCEPT = 'image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp';
 
 export function isAssetMime(value: string): value is BrandAssetMime {
   return (BRAND_ASSET_MEDIA_TYPES as readonly string[]).includes(value);
@@ -44,14 +52,29 @@ export function isAssetMime(value: string): value is BrandAssetMime {
 export interface RegisterAssetInput {
   kind: BrandAssetKind;
   label: string;
-  /** The image; its `type` must be `image/png` or `image/jpeg`. */
+  /** The image; its `type` must be `image/png`, `image/jpeg` or (style references) `image/webp`. */
   file: Blob;
+  description?: string;
+  usagePolicy?: BrandAssetUsagePolicy;
+  official?: boolean;
+  variant?: string;
+  pose?: string;
+  expression?: string;
 }
+
+export type UpdateAssetInput = BrandAssetUpdate;
+export type UpdateIdentityInput = BrandIdentityUpdate;
 
 export interface BrandApi {
   listAssets(signal?: AbortSignal): Promise<BrandAsset[]>;
   registerAsset(input: RegisterAssetInput, signal?: AbortSignal): Promise<BrandAsset>;
   setAssetActive(assetId: string, active: boolean, signal?: AbortSignal): Promise<BrandAsset>;
+  getAsset(assetId: string, signal?: AbortSignal): Promise<BrandAssetDetail>;
+  updateAsset(assetId: string, input: UpdateAssetInput, signal?: AbortSignal): Promise<BrandAsset>;
+  /** Logical deletion; refused with ASSET_IN_USE while rendered content uses the asset. */
+  deleteAsset(assetId: string, signal?: AbortSignal): Promise<void>;
+  getIdentity(signal?: AbortSignal): Promise<BrandIdentity>;
+  updateIdentity(input: UpdateIdentityInput, signal?: AbortSignal): Promise<BrandIdentity>;
   listTemplates(signal?: AbortSignal): Promise<Template[]>;
   /** URL of getBrandAssetFile. */
   assetFileUrl(assetId: string): string;
@@ -103,10 +126,19 @@ export function createBrandApi(options: BrandApiOptions = {}): BrandApi {
   const client = createApiClient({ basePath, fetch: fetchFunction });
 
   async function registerAsset(input: RegisterAssetInput, signal?: AbortSignal): Promise<BrandAsset> {
-    if (!isAssetMime(input.file.type)) {
-      throw new TypeError('Brand assets must be PNG or JPEG images');
+    if (!isAssetMime(input.file.type) || (input.file.type === 'image/webp' && input.kind !== 'style_reference')) {
+      throw new TypeError('Brand assets must be PNG or JPEG images (WebP for style references only)');
     }
     const query = new URLSearchParams({ kind: input.kind, label: input.label });
+    for (const key of ['description', 'usagePolicy', 'variant', 'pose', 'expression'] as const) {
+      const value = input[key];
+      if (value !== undefined && value !== '') {
+        query.set(key, value);
+      }
+    }
+    if (input.official !== undefined) {
+      query.set('official', String(input.official));
+    }
     const init: RequestInit = {
       method: 'POST',
       headers: {
@@ -158,6 +190,35 @@ export function createBrandApi(options: BrandApiOptions = {}): BrandApi {
         { active },
         { schema: BrandAssetSchema, ...(signal === undefined ? {} : { signal }) },
       );
+    },
+    getAsset(assetId, signal) {
+      return client.get(`/brand/assets/${encodeURIComponent(assetId)}`, {
+        schema: BrandAssetDetailSchema,
+        ...(signal === undefined ? {} : { signal }),
+      });
+    },
+    updateAsset(assetId, input, signal) {
+      return client.patch(`/brand/assets/${encodeURIComponent(assetId)}`, input, {
+        schema: BrandAssetSchema,
+        ...(signal === undefined ? {} : { signal }),
+      });
+    },
+    async deleteAsset(assetId, signal) {
+      await client.delete(`/brand/assets/${encodeURIComponent(assetId)}`, {
+        ...(signal === undefined ? {} : { signal }),
+      });
+    },
+    getIdentity(signal) {
+      return client.get('/brand/identity', {
+        schema: BrandIdentitySchema,
+        ...(signal === undefined ? {} : { signal }),
+      });
+    },
+    updateIdentity(input, signal) {
+      return client.patch('/brand/identity', input, {
+        schema: BrandIdentitySchema,
+        ...(signal === undefined ? {} : { signal }),
+      });
     },
     async listTemplates(signal) {
       const body = await client.get('/templates', {
