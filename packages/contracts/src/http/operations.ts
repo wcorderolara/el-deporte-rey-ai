@@ -32,6 +32,19 @@ import {
   DesignProposalListSchema,
   DesignProposalSchema,
 } from './design.js';
+import {
+  VisualTemplateCreateSchema,
+  VisualTemplateDetailSchema,
+  VisualTemplateListSchema,
+  VisualTemplatePreviewRequestSchema,
+  VisualTemplatePreviewSchema,
+  VisualTemplatePublishSchema,
+  VisualTemplateSchema,
+  VisualTemplateUpdateSchema,
+  VisualTemplateVersionCreateSchema,
+  VisualTemplateVersionSaveSchema,
+  VisualTemplateVersionSchema,
+} from './visual-templates.js';
 import { CatalogueSchema, SeasonListSchema, StageListSchema } from './catalog.js';
 import {
   ManagedCompetitionCreateSchema,
@@ -122,6 +135,7 @@ import {
   SlugSchema,
   SourceIdSchema,
   UuidSchema,
+  contractRegExp,
   uniquePrimitives,
 } from './primitives.js';
 import { ProjectCreateSchema, ProjectSchema, ProjectSummarySchema, ProjectUpdateSchema, RunSchema, RunStartSchema } from './projects.js';
@@ -244,6 +258,8 @@ export const AssetParamsSchema = z.strictObject({ assetId: UuidSchema });
 export const DesignGenerationParamsSchema = z.strictObject({ generationId: UuidSchema });
 export const DesignProposalParamsSchema = z.strictObject({ proposalId: UuidSchema });
 export const TemplateParamsSchema = z.strictObject({ templateId: SlugSchema });
+export const VisualTemplateParamsSchema = z.strictObject({ templateId: UuidSchema });
+export const VisualTemplateVersionParamsSchema = z.strictObject({ templateId: UuidSchema, versionId: UuidSchema });
 
 /** Query of listManualSelections. Undeclared query parameters are ignored. */
 export const ManualSelectionsQuerySchema = z.object({ competitionId: SlugSchema, seasonId: SlugSchema });
@@ -269,6 +285,20 @@ export const BrandAssetRegisterQuerySchema = z.object({
 
 /** Query of previewTemplate. Undeclared query parameters are ignored. */
 export const TemplatePreviewQuerySchema = z.object({ language: LanguageSchema.optional() });
+
+/**
+ * Query of renderVisualTemplatePreview: the local sports data (as in VisualTemplatePreviewSelection), the language
+ * and the revision the image belongs to (a changed revision is a new address). Undeclared query parameters are
+ * ignored.
+ */
+export const VisualTemplatePreviewQuerySchema = z.object({
+  competitionId: UuidSchema,
+  seasonId: UuidSchema,
+  roundId: UuidSchema.optional(),
+  matchId: UuidSchema.optional(),
+  language: LanguageSchema.optional(),
+  revision: z.string().regex(contractRegExp('RevisionParam')).optional(),
+});
 
 // ---------------------------------------------------------------------------------------------------------------
 // Operation registry
@@ -1322,6 +1352,186 @@ export const operations = {
     success: json(200, DesignProposalSchema),
     problemStatuses: [400, 403, 404, 413, 415, 421],
   },
+  listVisualTemplates: {
+    operationId: 'listVisualTemplates',
+    method: 'get',
+    path: '/visual-templates',
+    tag: 'visual-templates',
+    params: null,
+    query: null,
+    clientHeader: false,
+    body: null,
+    success: json(200, VisualTemplateListSchema),
+    problemStatuses: READ,
+  },
+  createVisualTemplate: {
+    operationId: 'createVisualTemplate',
+    method: 'post',
+    path: '/visual-templates',
+    tag: 'visual-templates',
+    params: null,
+    query: null,
+    clientHeader: true,
+    body: jsonBody(VisualTemplateCreateSchema),
+    success: json(201, VisualTemplateDetailSchema),
+    problemStatuses: WRITE_BODY,
+  },
+  getVisualTemplate: {
+    operationId: 'getVisualTemplate',
+    method: 'get',
+    path: '/visual-templates/{templateId}',
+    tag: 'visual-templates',
+    params: VisualTemplateParamsSchema,
+    query: null,
+    clientHeader: false,
+    body: null,
+    success: json(200, VisualTemplateDetailSchema),
+    problemStatuses: READ_BY_ID,
+  },
+  updateVisualTemplate: {
+    operationId: 'updateVisualTemplate',
+    method: 'patch',
+    path: '/visual-templates/{templateId}',
+    tag: 'visual-templates',
+    params: VisualTemplateParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: jsonBody(VisualTemplateUpdateSchema),
+    success: json(200, VisualTemplateSchema),
+    problemStatuses: WRITE_BODY,
+  },
+  deleteVisualTemplate: {
+    operationId: 'deleteVisualTemplate',
+    method: 'delete',
+    path: '/visual-templates/{templateId}',
+    tag: 'visual-templates',
+    params: VisualTemplateParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: null,
+    success: { status: 204, mediaTypes: [], schema: null },
+    problemStatuses: WRITE_NO_BODY,
+  },
+  archiveVisualTemplate: {
+    operationId: 'archiveVisualTemplate',
+    method: 'post',
+    path: '/visual-templates/{templateId}/archive',
+    tag: 'visual-templates',
+    params: VisualTemplateParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: null,
+    success: json(200, VisualTemplateSchema),
+    problemStatuses: WRITE_NO_BODY,
+  },
+  restoreVisualTemplate: {
+    operationId: 'restoreVisualTemplate',
+    method: 'post',
+    path: '/visual-templates/{templateId}/restore',
+    tag: 'visual-templates',
+    params: VisualTemplateParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: null,
+    success: json(200, VisualTemplateSchema),
+    problemStatuses: WRITE_NO_BODY,
+  },
+  createVisualTemplateVersion: {
+    operationId: 'createVisualTemplateVersion',
+    method: 'post',
+    path: '/visual-templates/{templateId}/versions',
+    tag: 'visual-templates',
+    params: VisualTemplateParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: jsonBody(VisualTemplateVersionCreateSchema),
+    success: json(201, VisualTemplateVersionSchema),
+    problemStatuses: WRITE_BODY,
+  },
+  getVisualTemplateVersion: {
+    operationId: 'getVisualTemplateVersion',
+    method: 'get',
+    path: '/visual-templates/{templateId}/versions/{versionId}',
+    tag: 'visual-templates',
+    params: VisualTemplateVersionParamsSchema,
+    query: null,
+    clientHeader: false,
+    body: null,
+    success: json(200, VisualTemplateVersionSchema),
+    problemStatuses: READ_BY_ID,
+  },
+  saveVisualTemplateVersion: {
+    operationId: 'saveVisualTemplateVersion',
+    method: 'put',
+    path: '/visual-templates/{templateId}/versions/{versionId}',
+    tag: 'visual-templates',
+    params: VisualTemplateVersionParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: jsonBody(VisualTemplateVersionSaveSchema),
+    success: json(200, VisualTemplateVersionSchema),
+    problemStatuses: WRITE_BODY,
+  },
+  deleteVisualTemplateVersion: {
+    operationId: 'deleteVisualTemplateVersion',
+    method: 'delete',
+    path: '/visual-templates/{templateId}/versions/{versionId}',
+    tag: 'visual-templates',
+    params: VisualTemplateVersionParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: null,
+    success: { status: 204, mediaTypes: [], schema: null },
+    problemStatuses: WRITE_NO_BODY,
+  },
+  releaseVisualTemplateVersion: {
+    operationId: 'releaseVisualTemplateVersion',
+    method: 'post',
+    path: '/visual-templates/{templateId}/versions/{versionId}/release',
+    tag: 'visual-templates',
+    params: VisualTemplateVersionParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: jsonBody(VisualTemplatePublishSchema),
+    success: json(200, VisualTemplateVersionSchema),
+    problemStatuses: WRITE_BODY,
+  },
+  getVisualTemplateBackground: {
+    operationId: 'getVisualTemplateBackground',
+    method: 'get',
+    path: '/visual-templates/{templateId}/versions/{versionId}/background',
+    tag: 'visual-templates',
+    params: VisualTemplateVersionParamsSchema,
+    query: null,
+    clientHeader: false,
+    body: null,
+    success: { status: 200, mediaTypes: PROPOSAL_IMAGES, schema: null },
+    problemStatuses: READ_BY_ID,
+  },
+  previewVisualTemplate: {
+    operationId: 'previewVisualTemplate',
+    method: 'post',
+    path: '/visual-templates/{templateId}/versions/{versionId}/previews',
+    tag: 'visual-templates',
+    params: VisualTemplateVersionParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: jsonBody(VisualTemplatePreviewRequestSchema),
+    success: json(200, VisualTemplatePreviewSchema),
+    problemStatuses: WRITE_BODY,
+  },
+  renderVisualTemplatePreview: {
+    operationId: 'renderVisualTemplatePreview',
+    method: 'get',
+    path: '/visual-templates/{templateId}/versions/{versionId}/preview',
+    tag: 'visual-templates',
+    params: VisualTemplateVersionParamsSchema,
+    query: VisualTemplatePreviewQuerySchema,
+    clientHeader: false,
+    body: null,
+    success: { status: 200, mediaTypes: PNG, schema: null },
+    problemStatuses: [400, 403, 404, 409, 421],
+  },
 } as const satisfies Record<string, OperationDefinition>;
 
 export type OperationId = keyof typeof operations;
@@ -1343,6 +1553,8 @@ export type TemplateListResponse = z.infer<typeof TemplateListResponseSchema>;
 export type ManualSelectionsQuery = z.infer<typeof ManualSelectionsQuerySchema>;
 export type BrandAssetRegisterQuery = z.infer<typeof BrandAssetRegisterQuerySchema>;
 export type TemplatePreviewQuery = z.infer<typeof TemplatePreviewQuerySchema>;
+export type VisualTemplatePreviewQuery = z.infer<typeof VisualTemplatePreviewQuerySchema>;
+export type VisualTemplateList = z.infer<typeof VisualTemplateListSchema>;
 
 /** Request body type of an operation with a JSON body. */
 export type OperationRequest<K extends OperationId> = (typeof operations)[K]['body'] extends {

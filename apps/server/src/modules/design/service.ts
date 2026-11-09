@@ -206,6 +206,20 @@ function joinInstructions(record: GenerationRecord): string | null {
   return text === '' ? null : text.slice(0, MAX_DESIGN_INSTRUCTIONS);
 }
 
+/** A proposal as a visual template source (`templateSource`). */
+export interface DesignTemplateSource {
+  readonly proposal: DesignProposal;
+  readonly deleted: boolean;
+  readonly layers: readonly ProposalLayer[];
+  readonly background: {
+    readonly sha256: string;
+    readonly mime: 'image/png' | 'image/jpeg';
+    readonly width: number;
+    readonly height: number;
+  };
+  readonly sentBrandImage: boolean;
+}
+
 export class DesignService {
   readonly #repository: DesignRepository;
   readonly #files: BrandFileStore;
@@ -944,6 +958,35 @@ export class DesignService {
     });
   }
 
+  /**
+   * What a visual template needs from a proposal (PD-ARCH-01G-C): its view, whether it was deleted, its original layers
+   * with their pixel boxes, the hash, type and size of its clean background (the generated bitmap; the file itself when
+   * no original layer was drawn), and whether a logo or the mascot was sent to the provider as an image. Null for an
+   * unknown proposal. Nothing is changed.
+   */
+  templateSource(id: string): DesignTemplateSource | null {
+    const record = this.#repository.proposal(id);
+    if (record === null) {
+      return null;
+    }
+    const generation = this.#record(record.generationId);
+    const path = record.backgroundFilePath ?? record.filePath;
+    return {
+      proposal: this.#proposalView(record, generation),
+      deleted: record.deletedAt !== null,
+      layers: record.layers.map((layer) => ({ ...layer })),
+      background: {
+        sha256: record.backgroundSha256 ?? record.sha256,
+        mime: path.endsWith('.jpg') ? 'image/jpeg' : 'image/png',
+        width: record.width,
+        height: record.height,
+      },
+      sentBrandImage: generation.references.some(
+        (reference) => reference.sent && (reference.kind === 'brand_logo' || reference.kind === 'mascot'),
+      ),
+    };
+  }
+
   proposalDetail(id: string): DesignProposalDetail {
     const record = this.#proposal(id);
     const generation = this.#record(record.generationId);
@@ -976,12 +1019,21 @@ export class DesignService {
 
   /**
    * Discards a proposal: it leaves the library and can no longer be reviewed or used for a variant. The row, its
-   * decisions and its files are kept (logical deletion, OD-08). Refused while a variant of it is being generated.
+   * decisions and its files are kept (logical deletion, OD-08). Refused while a variant of it is being generated or
+   * while a visual template uses it (PD-ARCH-01G-C).
    */
   delete(id: string): void {
     const record = this.#proposal(id);
     if (this.#repository.runningVariantsOf(record.id) > 0) {
       throw new HttpProblem(409, 'RUN_IN_PROGRESS', 'Hay una variante de esta propuesta en generación.');
+    }
+    const templates = this.#repository.templatesUsing(record.id);
+    if (templates > 0) {
+      throw new HttpProblem(
+        409,
+        'PROPOSAL_IN_USE',
+        `La propuesta es la base de ${String(templates)} plantilla(s) visual(es); no se puede eliminar.`,
+      );
     }
     this.#repository.markDeleted(record.id, this.#now());
     this.#logger.info({ proposalId: id }, 'design proposal deleted');

@@ -54,7 +54,7 @@ function identitySection(): HTMLElement {
   return screen.getByRole('region', { name: 'Identidad visual' });
 }
 
-function detail(value: BrandAsset, usage = { renderedVersions: 0, projects: 0, exports: 0 }): Handler {
+function detail(value: BrandAsset, usage = { renderedVersions: 0, projects: 0, exports: 0, templates: 0 }): Handler {
   return () => jsonResponse({ asset: value, usage });
 }
 
@@ -326,6 +326,7 @@ describe('BrandPage: asset detail (PD-ARCH-01G-A)', () => {
         renderedVersions: 3,
         projects: 1,
         exports: 2,
+        templates: 0,
       }),
       'PATCH /brand/assets/00000000-0000-4000-8000-0000000000a1': (request) => {
         edits.push(JSON.parse(String(request.body)));

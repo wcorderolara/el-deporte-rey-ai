@@ -180,10 +180,16 @@ export const problemCodeMessage: Record<ProblemCode, string> = {
     'Ninguna pieza de la selección se puede generar con los datos locales. Revisa los partidos y los tipos elegidos.',
   REQUEST_KEY_REUSED: 'Esta confirmación ya se usó para otra selección. Revisa la propuesta y confirma de nuevo.',
   ASSET_IN_USE:
-    'El recurso aparece en diapositivas ya generadas, así que no se puede eliminar. Puedes desactivarlo para que no se use en contenido nuevo.',
+    'El recurso aparece en diapositivas ya generadas o en plantillas visuales, así que no se puede eliminar. Puedes desactivarlo para que no se use en contenido nuevo.',
   IMAGE_PROVIDER_UNAVAILABLE: 'La generación de imágenes no está disponible en el servidor.',
   DESIGN_REFERENCE_REFUSED: 'Un recurso de marca seleccionado no se puede usar de esa forma.',
   GENERATION_LIMIT_REACHED: 'Se alcanzó un límite de generación de imágenes.',
+  TEMPLATE_SOURCE_REFUSED:
+    'No se puede usar ese origen para la plantilla: la propuesta debe estar aprobada y el fondo debe ser válido.',
+  TEMPLATE_VERSION_PUBLISHED: 'Esta versión ya está publicada y no se puede modificar. Crea una nueva versión.',
+  TEMPLATE_NOT_PUBLISHABLE: 'La versión tiene errores de validación. Corrígelos antes de publicar.',
+  TEMPLATE_IN_USE: 'La plantilla tiene versiones publicadas, así que no se puede eliminar. Puedes archivarla.',
+  PROPOSAL_IN_USE: 'Una plantilla visual usa esta propuesta, así que no se puede eliminar.',
   PROVIDER_RATE_LIMITED: 'Se alcanzó el límite de solicitudes de la fuente de datos.',
   SELECTION_UNAVAILABLE: 'La selección no está disponible en la fuente elegida.',
   IMPORT_REJECTED: 'La importación fue rechazada. No se guardó ningún dato.',

@@ -40,6 +40,8 @@ export const featurePaths = {
   exportHistory: '/exports',
   brand: '/brand',
   templates: '/templates',
+  templatesCreate: '/templates/create',
+  templatesEngine: '/templates/engine',
   imports: '/imports',
   competitions: '/competitions',
 } as const;

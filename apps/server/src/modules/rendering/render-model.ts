@@ -7,7 +7,9 @@
  * - Text elements carry the source text, the lines measured by `layoutText`, the font size and an `overflow` flag;
  *   `factIds` are the fact segments the text was built from, `semantic` says what the text shows (a team name, a
  *   score, a standings cell...), so that QA can compare each element with the facts.
- * - Image elements carry the asset ID and SHA-256 only; the bytes are embedded as a `data:` URI at render time.
+ * - Image elements carry the asset ID and SHA-256 only; the bytes are embedded as a `data:` URI at render time. A
+ *   structured visual template (PD-ARCH-01G-C) also draws its `background` and its image `layer`s, with a `fit`
+ *   (`contain` when absent, as before), and its text may carry an effect and be shown in capital letters.
  * - Badge slots are reserved boxes, always empty in the MVP (PD-03, R-050, R-231): the model has no asset field for
  *   them and the renderer draws nothing there.
  */
@@ -49,6 +51,14 @@ export type Box = z.infer<typeof BoxSchema>;
 export const ImageSlotSchema = z.enum(['brand_logo', 'mascot']);
 export type ImageSlot = z.infer<typeof ImageSlotSchema>;
 
+/** What an image element draws: an image slot of a template, or the background or an image layer of a visual template. */
+export const ImageElementSlotSchema = z.enum([...ImageSlotSchema.options, 'background', 'layer']);
+export type ImageElementSlot = z.infer<typeof ImageElementSlotSchema>;
+
+/** How an image fills its box (`contain` and `cover` keep the aspect ratio, `fill` stretches). */
+export const ImageFitSchema = z.enum(['contain', 'cover', 'fill']);
+export type ImageFit = z.infer<typeof ImageFitSchema>;
+
 export const BadgeSlotSchema = z.enum(['team-badge-home', 'team-badge-away']);
 export type BadgeSlot = z.infer<typeof BadgeSlotSchema>;
 
@@ -78,6 +88,21 @@ export type TextSemantic = z.infer<typeof TextSemanticSchema>;
 
 export const ProvenanceSchema = z.enum(['fact', 'commentary', 'template_text', 'mixed']);
 
+/**
+ * Text effects of structured visual templates (PD-ARCH-01G-C, decision 01G-C-2): shadows, glows and outlines in the
+ * palette colours, drawn by the renderer from this closed list. Absent in the models of the built-in templates.
+ */
+export const TextEffectSchema = z.enum([
+  'none',
+  'soft_shadow',
+  'strong_shadow',
+  'glow_gold',
+  'glow_purple',
+  'outline_dark',
+  'scoreboard_gold',
+]);
+export type TextEffect = z.infer<typeof TextEffectSchema>;
+
 export const TextElementSchema = z.strictObject({
   kind: z.literal('text'),
   id: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
@@ -99,6 +124,12 @@ export const TextElementSchema = z.strictObject({
   overflow: z.boolean(),
   factIds: z.array(UuidSchema).max(400),
   provenance: ProvenanceSchema,
+  effect: TextEffectSchema.optional(),
+  /**
+   * True when the lines are drawn in capital letters (PD-29): `text` keeps the stored value (an official name stays as
+   * recorded) and `lines` are the measured, uppercased lines.
+   */
+  uppercase: z.boolean().optional(),
 });
 export type TextElement = z.infer<typeof TextElementSchema>;
 
@@ -115,11 +146,13 @@ export type RectElement = z.infer<typeof RectElementSchema>;
 export const ImageElementSchema = z.strictObject({
   kind: z.literal('image'),
   id: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
-  slot: ImageSlotSchema,
+  slot: ImageElementSlotSchema,
   box: BoxSchema,
   assetId: UuidSchema,
   sha256: Sha256Schema,
   mime: z.enum(['image/png', 'image/jpeg']),
+  /** Absent in the models of the built-in templates: `contain`. */
+  fit: ImageFitSchema.optional(),
 });
 export type ImageElement = z.infer<typeof ImageElementSchema>;
 

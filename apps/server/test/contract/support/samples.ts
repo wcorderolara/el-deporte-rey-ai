@@ -395,7 +395,7 @@ const brandAsset = {
   updatedAt: T1,
 };
 
-const brandAssetDetail = { asset: brandAsset, usage: { renderedVersions: 4, projects: 1, exports: 1 } };
+const brandAssetDetail = { asset: brandAsset, usage: { renderedVersions: 4, projects: 1, exports: 1, templates: 2 } };
 
 const brandIdentity = {
   id: 'primary',
@@ -668,6 +668,181 @@ const designProposalDetail = {
   variantIds: [uuid(43)],
   layers: [{ assetId: uuid(40), label: 'Logo principal', kind: 'brand_logo', x: 369, y: 38, width: 287, height: 154 }],
   hasBackground: true,
+};
+
+// PD-ARCH-01G-C: structured visual templates.
+const visualTextStyle = {
+  fontRole: 'heading',
+  maxFontSize: 56,
+  minFontSize: 28,
+  maxLines: 2,
+  colorRole: 'light',
+  align: 'center',
+  verticalAlign: 'middle',
+  overflow: 'shrink',
+  effect: 'strong_shadow',
+  uppercase: true,
+};
+
+const visualTextLayer = {
+  id: 'title',
+  name: 'Título',
+  x: 0.1,
+  y: 0.05,
+  width: 0.8,
+  height: 0.1,
+  visible: true,
+  type: 'text',
+  text: 'PREVIA\nJornada',
+  style: visualTextStyle,
+};
+
+const visualSportsLayer = {
+  id: 'home-team',
+  name: 'Equipo local',
+  x: 0.05,
+  y: 0.4,
+  width: 0.42,
+  height: 0.1,
+  visible: true,
+  type: 'sports_data',
+  binding: 'match.homeTeam.name',
+  required: true,
+  style: visualTextStyle,
+};
+
+const visualImageLayer = {
+  id: 'graphic',
+  name: 'Trazo dorado',
+  x: 0.03,
+  y: 0.8,
+  width: 0.26,
+  height: 0.17,
+  visible: false,
+  type: 'image',
+  assetId: uuid(52),
+  fit: 'cover',
+};
+
+const visualBrandLayer = {
+  id: 'logo',
+  name: 'Logo principal',
+  x: 0.36,
+  y: 0.03,
+  width: 0.28,
+  height: 0.12,
+  visible: true,
+  type: 'brand_asset',
+  assetId: uuid(40),
+};
+
+const visualBackground = {
+  source: 'design_proposal',
+  id: uuid(41),
+  label: 'Previa individual · 4:5 · 1/2',
+  sha256: SHA,
+  mime: 'image/png',
+  width: 1024,
+  height: 1280,
+};
+
+const visualIssue = {
+  code: 'LOW_CONTRAST',
+  severity: 'warning',
+  layerId: 'home-team',
+  message: 'El contraste del texto con el fondo es bajo. Relación 2.1:1 (mínimo recomendado 3:1).',
+};
+
+const visualTemplate = {
+  id: uuid(50),
+  name: 'Previa nocturna',
+  description: 'Estadio de noche.\nDorado y morado.',
+  category: 'Previas',
+  contentType: 'match_preview',
+  format: '4:5',
+  status: 'published',
+  sourceProposalId: uuid(41),
+  publishedVersion: { id: uuid(51), version: 1, publishedAt: T1 },
+  draftVersionId: uuid(53),
+  versionCount: 2,
+  createdAt: T1,
+  updatedAt: T1,
+  archivedAt: null,
+};
+
+const visualTemplateDetail = {
+  template: visualTemplate,
+  versions: [
+    { id: uuid(51), version: 1, status: 'published', layerCount: 4, createdAt: T1, updatedAt: T1, publishedAt: T1 },
+    { id: uuid(53), version: 2, status: 'draft', layerCount: 4, createdAt: T1, updatedAt: T1, publishedAt: null },
+  ],
+};
+
+const visualAssetRef = {
+  assetId: uuid(40),
+  label: 'Logo principal',
+  kind: 'brand_logo',
+  usagePolicy: 'protected',
+  official: true,
+  sha256: SHA,
+};
+
+const visualTemplateVersion = {
+  id: uuid(53),
+  templateId: uuid(50),
+  version: 2,
+  status: 'draft',
+  revision: 3,
+  canvasWidth: 1080,
+  canvasHeight: 1350,
+  background: visualBackground,
+  layers: [visualImageLayer, visualBrandLayer, visualTextLayer, visualSportsLayer],
+  bindings: ['match.homeTeam.name'],
+  assets: [visualAssetRef],
+  validation: { publishable: true, issues: [visualIssue] },
+  createdAt: T1,
+  updatedAt: T1,
+  publishedAt: null,
+};
+
+const visualPreviewSelection = {
+  competitionId: uuid(60),
+  seasonId: uuid(61),
+  roundId: null,
+  matchId: uuid(62),
+};
+
+const visualPreview = {
+  values: [
+    { binding: 'match.homeTeam.name', value: 'Club Deportivo Ejemplo' },
+    { binding: 'stage.name', value: null },
+  ],
+  issues: [
+    {
+      code: 'VALUE_MISSING',
+      severity: 'warning',
+      layerId: 'stage',
+      message: 'Los datos elegidos no tienen este valor.',
+    },
+  ],
+  imageUrl: `/api/v1/visual-templates/${uuid(50)}/versions/${uuid(53)}/preview?competitionId=${uuid(60)}`,
+  width: 1080,
+  height: 1350,
+};
+
+const visualTemplateCreate = {
+  sourceProposalId: uuid(41),
+  name: 'Previa nocturna',
+  description: 'Estadio de noche.',
+  category: 'Previas',
+  contentType: 'match_result',
+  acknowledgeWarnings: true,
+};
+
+const visualTemplateSave = {
+  revision: 3,
+  background: { source: 'brand_asset', id: uuid(54) },
+  layers: [visualBrandLayer, visualSportsLayer],
 };
 
 export const componentSamples: Record<ComponentName, unknown> = {
@@ -1155,6 +1330,37 @@ export const componentSamples: Record<ComponentName, unknown> = {
   },
   DesignProposal: designProposal,
   DesignProposalDetail: designProposalDetail,
+  VisualTemplateStatus: 'archived',
+  VisualTemplateVersionStatus: 'published',
+  VisualTemplateBinding: 'round.fixtures',
+  VisualTemplateTextEffect: 'scoreboard_gold',
+  VisualTemplateTextStyle: visualTextStyle,
+  VisualTemplateImageFit: 'contain',
+  VisualTemplateTextLayer: visualTextLayer,
+  VisualTemplateSportsDataLayer: { ...visualSportsLayer, binding: null, required: false },
+  VisualTemplateImageLayer: visualImageLayer,
+  VisualTemplateBrandAssetLayer: visualBrandLayer,
+  VisualTemplateLayer: visualSportsLayer,
+  VisualTemplateBackgroundSource: 'brand_asset',
+  VisualTemplateBackgroundInput: { source: 'design_proposal', id: uuid(41) },
+  VisualTemplateBackground: visualBackground,
+  VisualTemplateAssetRef: visualAssetRef,
+  VisualTemplateIssueCode: 'REQUIRED_BINDING_MISSING',
+  VisualTemplateIssue: visualIssue,
+  VisualTemplateValidation: { publishable: false, issues: [{ ...visualIssue, severity: 'error', layerId: null }] },
+  VisualTemplate: visualTemplate,
+  VisualTemplateVersionSummary: visualTemplateDetail.versions[1],
+  VisualTemplateDetail: visualTemplateDetail,
+  VisualTemplateVersion: visualTemplateVersion,
+  VisualTemplateVersionRef: { templateId: uuid(50), versionId: uuid(51), version: 1 },
+  VisualTemplateCreate: visualTemplateCreate,
+  VisualTemplateUpdate: { name: 'Previa nocturna', description: null, category: null },
+  VisualTemplateVersionSave: visualTemplateSave,
+  VisualTemplateVersionCreate: { fromVersionId: uuid(51) },
+  VisualTemplatePublish: { revision: 3 },
+  VisualTemplatePreviewSelection: visualPreviewSelection,
+  VisualTemplatePreviewRequest: { selection: visualPreviewSelection, language: 'es' },
+  VisualTemplatePreview: visualPreview,
 
   ProjectSportsContext: projectSportsContext,
   ContentBatchSelection: contentBatchSelection,
@@ -1237,6 +1443,12 @@ export const requestSamples: Partial<Record<OperationId, unknown>> = {
   estimateDesignGeneration: designInput,
   createDesignGeneration: { ...designInput, requestKey: uuid(44), confirmCost: true },
   decideDesignProposal: { decision: 'changes_requested', note: 'Más contraste.' },
+  createVisualTemplate: visualTemplateCreate,
+  updateVisualTemplate: { category: 'Previas' },
+  createVisualTemplateVersion: { fromVersionId: uuid(51) },
+  saveVisualTemplateVersion: visualTemplateSave,
+  releaseVisualTemplateVersion: { revision: 3 },
+  previewVisualTemplate: { selection: visualPreviewSelection, language: 'en' },
 };
 
 /** Samples of the JSON success responses of every operation that returns JSON. */
@@ -1456,4 +1668,15 @@ export const responseSamples: Partial<Record<OperationId, unknown>> = {
   listDesignProposals: { proposals: [designProposal] },
   getDesignProposal: designProposalDetail,
   decideDesignProposal: designProposal,
+  listVisualTemplates: { templates: [visualTemplate] },
+  createVisualTemplate: visualTemplateDetail,
+  getVisualTemplate: visualTemplateDetail,
+  updateVisualTemplate: visualTemplate,
+  archiveVisualTemplate: { ...visualTemplate, status: 'archived', archivedAt: T1 },
+  restoreVisualTemplate: visualTemplate,
+  createVisualTemplateVersion: visualTemplateVersion,
+  getVisualTemplateVersion: visualTemplateVersion,
+  saveVisualTemplateVersion: visualTemplateVersion,
+  releaseVisualTemplateVersion: { ...visualTemplateVersion, status: 'published', publishedAt: T1 },
+  previewVisualTemplate: visualPreview,
 };

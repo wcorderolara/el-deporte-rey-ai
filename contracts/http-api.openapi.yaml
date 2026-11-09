@@ -53,6 +53,7 @@ tags:
   - name: brand
   - name: templates
   - name: design
+  - name: visual-templates
   - name: system
 paths:
   /health:
@@ -2809,6 +2810,373 @@ paths:
         '413': { $ref: '#/components/responses/Problem' }
         '415': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
+  /visual-templates:
+    get:
+      tags: [visual-templates]
+      operationId: listVisualTemplates
+      description: |
+        Structured visual templates (PD-ARCH-01G-C) that are not deleted, most recently changed first: name, category,
+        content type, format, status (draft, published or archived), source proposal and versions.
+      responses:
+        '200':
+          description: The templates.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [templates]
+                additionalProperties: false
+                properties:
+                  templates:
+                    type: array
+                    items: { $ref: '#/components/schemas/VisualTemplate' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [visual-templates]
+      operationId: createVisualTemplate
+      description: |
+        Create a template and its first draft version from an approved, not deleted design proposal (local operation,
+        no AI call). The proposal's clean background is referenced by its hash and its original brand layers become
+        layers. An own-prompt proposal needs acknowledgeWarnings (409 TEMPLATE_SOURCE_REFUSED otherwise), as does a
+        proposal that is not approved.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VisualTemplateCreate' }
+      responses:
+        '201':
+          description: The template and its versions.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VisualTemplateDetail' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /visual-templates/{templateId}:
+    parameters:
+      - $ref: '#/components/parameters/VisualTemplateId'
+    get:
+      tags: [visual-templates]
+      operationId: getVisualTemplate
+      description: A template with the summary of its kept versions (discarded drafts left out).
+      responses:
+        '200':
+          description: The template and its versions.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VisualTemplateDetail' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [visual-templates]
+      operationId: updateVisualTemplate
+      description: Change the name, description or category. An archived template is read only (409 VERSION_CONFLICT).
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VisualTemplateUpdate' }
+      responses:
+        '200':
+          description: The template.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VisualTemplate' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [visual-templates]
+      operationId: deleteVisualTemplate
+      description: |
+        Delete a template that was never published (logical deletion; the rows are kept). A template with a published
+        version is archived instead (409 TEMPLATE_IN_USE).
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '204': { description: Deleted. }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /visual-templates/{templateId}/archive:
+    parameters:
+      - $ref: '#/components/parameters/VisualTemplateId'
+    post:
+      tags: [visual-templates]
+      operationId: archiveVisualTemplate
+      description: Archive a template; it becomes read only and its published versions are kept unchanged.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '200':
+          description: The template.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VisualTemplate' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /visual-templates/{templateId}/restore:
+    parameters:
+      - $ref: '#/components/parameters/VisualTemplateId'
+    post:
+      tags: [visual-templates]
+      operationId: restoreVisualTemplate
+      description: Restore an archived template.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '200':
+          description: The template.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VisualTemplate' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /visual-templates/{templateId}/versions:
+    parameters:
+      - $ref: '#/components/parameters/VisualTemplateId'
+    post:
+      tags: [visual-templates]
+      operationId: createVisualTemplateVersion
+      description: |
+        Start a new draft version copied from a published version (the latest one when fromVersionId is absent). The
+        version it starts from does not change. 409 VERSION_CONFLICT when the template already has a draft.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VisualTemplateVersionCreate' }
+      responses:
+        '201':
+          description: The new draft version.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VisualTemplateVersion' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /visual-templates/{templateId}/versions/{versionId}:
+    parameters:
+      - $ref: '#/components/parameters/VisualTemplateId'
+      - $ref: '#/components/parameters/VersionId'
+    get:
+      tags: [visual-templates]
+      operationId: getVisualTemplateVersion
+      description: A version with its background, layers, bindings, pinned assets and current validation.
+      responses:
+        '200':
+          description: The version.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VisualTemplateVersion' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    put:
+      tags: [visual-templates]
+      operationId: saveVisualTemplateVersion
+      description: |
+        Save a draft from the revision it was read at (409 VERSION_CONFLICT when it changed). A published version is
+        never changed (409 TEMPLATE_VERSION_PUBLISHED). A draft with validation errors is saved and reports them.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VisualTemplateVersionSave' }
+      responses:
+        '200':
+          description: The saved version.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VisualTemplateVersion' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [visual-templates]
+      operationId: deleteVisualTemplateVersion
+      description: |
+        Discard a draft when the template has a published version (the row is kept). A published version is never
+        deleted.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '204': { description: Discarded. }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /visual-templates/{templateId}/versions/{versionId}/release:
+    parameters:
+      - $ref: '#/components/parameters/VisualTemplateId'
+      - $ref: '#/components/parameters/VersionId'
+    post:
+      tags: [visual-templates]
+      operationId: releaseVisualTemplateVersion
+      description: |
+        Publish a draft at its current revision when its validation has no error (409 TEMPLATE_NOT_PUBLISHABLE
+        otherwise). The published version is immutable.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VisualTemplatePublish' }
+      responses:
+        '200':
+          description: The published version.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VisualTemplateVersion' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /visual-templates/{templateId}/versions/{versionId}/background:
+    parameters:
+      - $ref: '#/components/parameters/VisualTemplateId'
+      - $ref: '#/components/parameters/VersionId'
+    get:
+      tags: [visual-templates]
+      operationId: getVisualTemplateBackground
+      description: |
+        The background file of a version, read from its store and checked against its pinned hash, with a sandboxed
+        CSP and no caching.
+      responses:
+        '200':
+          description: The image.
+          content:
+            image/png:
+              schema: { type: string, contentMediaType: image/png }
+            image/jpeg:
+              schema: { type: string, contentMediaType: image/jpeg }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /visual-templates/{templateId}/versions/{versionId}/previews:
+    parameters:
+      - $ref: '#/components/parameters/VisualTemplateId'
+      - $ref: '#/components/parameters/VersionId'
+    post:
+      tags: [visual-templates]
+      operationId: previewVisualTemplate
+      description: |
+        Resolve the version's bindings with existing local sports data (a match for match content types, a round for
+        a round calendar) and report missing values and overflowing text. Nothing is stored and nothing is sent to an
+        AI provider. imageUrl is the PNG drawn by the slide engine for the same selection.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VisualTemplatePreviewRequest' }
+      responses:
+        '200':
+          description: The resolved values and the preview issues.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VisualTemplatePreview' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /visual-templates/{templateId}/versions/{versionId}/preview:
+    parameters:
+      - $ref: '#/components/parameters/VisualTemplateId'
+      - $ref: '#/components/parameters/VersionId'
+      - name: competitionId
+        in: query
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: seasonId
+        in: query
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: roundId
+        in: query
+        required: false
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: matchId
+        in: query
+        required: false
+        schema: { $ref: '#/components/schemas/Uuid' }
+      - name: language
+        in: query
+        required: false
+        schema: { $ref: '#/components/schemas/Language' }
+      - name: revision
+        in: query
+        required: false
+        schema: { type: string, pattern: '^[1-9][0-9]{0,8}$' }
+    get:
+      tags: [visual-templates]
+      operationId: renderVisualTemplatePreview
+      description: |
+        The PNG of a version for the selected local sports data, drawn by the slide engine with the same render model,
+        fonts and palette as the final slides. Cached in memory by version, revision, selection and language (bounded
+        work per request).
+      responses:
+        '200':
+          description: Preview.
+          content:
+            image/png:
+              schema: { type: string, contentMediaType: image/png }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
 components:
   parameters:
     ClientHeader:
@@ -2899,6 +3267,11 @@ components:
       schema: { $ref: '#/components/schemas/Uuid' }
     ProposalId:
       name: proposalId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    VisualTemplateId:
+      name: templateId
       in: path
       required: true
       schema: { $ref: '#/components/schemas/Uuid' }
@@ -3523,6 +3896,11 @@ components:
             - IMAGE_PROVIDER_UNAVAILABLE
             - DESIGN_REFERENCE_REFUSED
             - GENERATION_LIMIT_REACHED
+            - TEMPLATE_SOURCE_REFUSED
+            - TEMPLATE_VERSION_PUBLISHED
+            - TEMPLATE_NOT_PUBLISHABLE
+            - TEMPLATE_IN_USE
+            - PROPOSAL_IN_USE
         detail: { type: string, maxLength: 500, description: 'Fixed text plus sanitized parameters only (T10-F10)' }
         errors:
           type: array
@@ -4829,13 +5207,17 @@ components:
         reusable: placed directly in compositions; transformable: may be the base of AI variants (explicit).
       enum: [protected, reference_only, reusable, transformable]
     BrandAssetUsage:
+      description: |
+        Where an asset has been used: rendered slide versions, their projects and the exports holding them, and the
+        visual templates (not deleted) whose versions place it (PD-ARCH-01G-C).
       type: object
-      required: [renderedVersions, projects, exports]
+      required: [renderedVersions, projects, exports, templates]
       additionalProperties: false
       properties:
         renderedVersions: { type: integer, minimum: 0 }
         projects: { type: integer, minimum: 0 }
         exports: { type: integer, minimum: 0 }
+        templates: { type: integer, minimum: 0 }
     BrandAssetDetail:
       type: object
       required: [asset, usage]
@@ -5252,3 +5634,381 @@ components:
               width: { type: integer, minimum: 1, maximum: 4096 }
               height: { type: integer, minimum: 1, maximum: 4096 }
         hasBackground: { type: boolean }
+    VisualTemplateStatus:
+      description: Status of a visual template (PD-ARCH-01G-C); archived templates are read only.
+      type: string
+      enum: [draft, published, archived]
+    VisualTemplateVersionStatus:
+      description: A published version is immutable.
+      type: string
+      enum: [draft, published]
+    VisualTemplateBinding:
+      description: |
+        A sports-data field of the closed catalogue. Values come from the local Competiciones data (effective values,
+        protected overrides included) and are never invented; there is no venue and no team badge (PD-03).
+      type: string
+      enum: ['competition.name', 'season.label', 'stage.name', 'round.name', 'match.homeTeam.name', 'match.awayTeam.name', 'match.kickoffDate', 'match.kickoffTime', 'match.status', 'match.score', 'match.homeScore', 'match.awayScore', 'round.fixtures']
+    VisualTemplateTextEffect:
+      description: |
+        The closed palette of text effects (decision 01G-C-2), drawn by the slide engine in the palette colours and
+        scaled with the font size: none, a soft or strong shadow, a gold or purple glow, a dark outline, or the gold
+        scoreboard outline. No free CSS is accepted.
+      type: string
+      enum: [none, soft_shadow, strong_shadow, glow_gold, glow_purple, outline_dark, scoreboard_gold]
+    VisualTemplateTextStyle:
+      description: |
+        Font role (its bundled family and weight), largest and smallest size in canvas pixels, most lines, palette colour
+        role, alignment and overflow policy (shrink down to the smallest size, or fixed). Text is never cut. effect is a
+        text effect (none when absent); uppercase draws the text in capital letters without changing the stored value
+        (PD-29).
+      type: object
+      required: [fontRole, maxFontSize, minFontSize, maxLines, colorRole, align, verticalAlign, overflow]
+      additionalProperties: false
+      properties:
+        fontRole: { type: string, enum: [heading, body, numeric] }
+        maxFontSize: { type: integer, minimum: 8, maximum: 400 }
+        minFontSize: { type: integer, minimum: 8, maximum: 400 }
+        maxLines: { type: integer, minimum: 1, maximum: 12 }
+        colorRole: { type: string, enum: [primary, primaryDark, accent, secondary, light] }
+        align: { type: string, enum: [left, center, right] }
+        verticalAlign: { type: string, enum: [top, middle, bottom] }
+        overflow: { type: string, enum: [shrink, fixed] }
+        effect: { $ref: '#/components/schemas/VisualTemplateTextEffect' }
+        uppercase: { type: boolean }
+    VisualTemplateImageFit:
+      description: contain and cover keep the aspect ratio (cover crops); fill stretches.
+      type: string
+      enum: [contain, cover, fill]
+    VisualTemplateTextLayer:
+      description: Fixed text of the template. Positions and sizes are fractions of the canvas.
+      type: object
+      required: [id, name, x, y, width, height, visible, type, text, style]
+      additionalProperties: false
+      properties:
+        id: { type: string, minLength: 1, maxLength: 40, pattern: '^[a-z0-9][a-z0-9-]{0,39}$' }
+        name: { $ref: '#/components/schemas/Label' }
+        x: { type: number, minimum: 0, maximum: 1 }
+        y: { type: number, minimum: 0, maximum: 1 }
+        width: { type: number, minimum: 0, maximum: 1 }
+        height: { type: number, minimum: 0, maximum: 1 }
+        visible: { type: boolean }
+        type: { type: string, const: text }
+        text: { type: string, minLength: 1, maxLength: 500, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }
+        style: { $ref: '#/components/schemas/VisualTemplateTextStyle' }
+    VisualTemplateSportsDataLayer:
+      description: Text bound to a catalogue field; the binding is null only in a draft.
+      type: object
+      required: [id, name, x, y, width, height, visible, type, binding, required, style]
+      additionalProperties: false
+      properties:
+        id: { type: string, minLength: 1, maxLength: 40, pattern: '^[a-z0-9][a-z0-9-]{0,39}$' }
+        name: { $ref: '#/components/schemas/Label' }
+        x: { type: number, minimum: 0, maximum: 1 }
+        y: { type: number, minimum: 0, maximum: 1 }
+        width: { type: number, minimum: 0, maximum: 1 }
+        height: { type: number, minimum: 0, maximum: 1 }
+        visible: { type: boolean }
+        type: { type: string, const: sports_data }
+        binding: { anyOf: [{ $ref: '#/components/schemas/VisualTemplateBinding' }, { type: 'null' }] }
+        required: { type: boolean }
+        style: { $ref: '#/components/schemas/VisualTemplateTextStyle' }
+    VisualTemplateImageLayer:
+      description: A graphic element or background of Mi marca (never a style reference, never a URL).
+      type: object
+      required: [id, name, x, y, width, height, visible, type, assetId, fit]
+      additionalProperties: false
+      properties:
+        id: { type: string, minLength: 1, maxLength: 40, pattern: '^[a-z0-9][a-z0-9-]{0,39}$' }
+        name: { $ref: '#/components/schemas/Label' }
+        x: { type: number, minimum: 0, maximum: 1 }
+        y: { type: number, minimum: 0, maximum: 1 }
+        width: { type: number, minimum: 0, maximum: 1 }
+        height: { type: number, minimum: 0, maximum: 1 }
+        visible: { type: boolean }
+        type: { type: string, const: image }
+        assetId: { $ref: '#/components/schemas/Uuid' }
+        fit: { $ref: '#/components/schemas/VisualTemplateImageFit' }
+    VisualTemplateBrandAssetLayer:
+      description: The official logo or the mascot, drawn from its original file and only scaled proportionally.
+      type: object
+      required: [id, name, x, y, width, height, visible, type, assetId]
+      additionalProperties: false
+      properties:
+        id: { type: string, minLength: 1, maxLength: 40, pattern: '^[a-z0-9][a-z0-9-]{0,39}$' }
+        name: { $ref: '#/components/schemas/Label' }
+        x: { type: number, minimum: 0, maximum: 1 }
+        y: { type: number, minimum: 0, maximum: 1 }
+        width: { type: number, minimum: 0, maximum: 1 }
+        height: { type: number, minimum: 0, maximum: 1 }
+        visible: { type: boolean }
+        type: { type: string, const: brand_asset }
+        assetId: { $ref: '#/components/schemas/Uuid' }
+    VisualTemplateLayer:
+      description: One layer; the stacking order is the order of the layer list, bottom first.
+      oneOf:
+        - { $ref: '#/components/schemas/VisualTemplateTextLayer' }
+        - { $ref: '#/components/schemas/VisualTemplateSportsDataLayer' }
+        - { $ref: '#/components/schemas/VisualTemplateImageLayer' }
+        - { $ref: '#/components/schemas/VisualTemplateBrandAssetLayer' }
+    VisualTemplateBackgroundSource:
+      type: string
+      enum: [design_proposal, brand_asset]
+    VisualTemplateBackgroundInput:
+      type: object
+      required: [source, id]
+      additionalProperties: false
+      properties:
+        source: { $ref: '#/components/schemas/VisualTemplateBackgroundSource' }
+        id: { $ref: '#/components/schemas/Uuid' }
+    VisualTemplateBackground:
+      description: The background, pinned by its hash and drawn over the whole canvas (cover); no file is copied.
+      type: object
+      required: [source, id, label, sha256, mime, width, height]
+      additionalProperties: false
+      properties:
+        source: { $ref: '#/components/schemas/VisualTemplateBackgroundSource' }
+        id: { $ref: '#/components/schemas/Uuid' }
+        label: { type: string, minLength: 1, maxLength: 120 }
+        sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        mime: { type: string, enum: [image/png, image/jpeg] }
+        width: { type: integer, minimum: 1, maximum: 4096 }
+        height: { type: integer, minimum: 1, maximum: 4096 }
+    VisualTemplateAssetRef:
+      description: A brand asset placed by a version, pinned by its hash, with the policy it had when saved.
+      type: object
+      required: [assetId, label, kind, usagePolicy, official, sha256]
+      additionalProperties: false
+      properties:
+        assetId: { $ref: '#/components/schemas/Uuid' }
+        label: { $ref: '#/components/schemas/Label' }
+        kind: { $ref: '#/components/schemas/BrandAssetKind' }
+        usagePolicy: { $ref: '#/components/schemas/BrandAssetUsagePolicy' }
+        official: { type: boolean }
+        sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+    VisualTemplateIssueCode:
+      type: string
+      enum:
+        - OUT_OF_CANVAS
+        - TOO_SMALL
+        - FONT_SIZE_INVALID
+        - OVERLAP
+        - PROTECTED_OVERLAP
+        - BINDING_MISSING
+        - BINDING_NOT_ALLOWED
+        - REQUIRED_BINDING_MISSING
+        - ASSET_MISSING
+        - ASSET_INACTIVE
+        - ASSET_DELETED
+        - ASSET_NOT_ALLOWED
+        - TEXT_TOO_LONG
+        - TEXT_MAY_NOT_FIT
+        - LOW_CONTRAST
+        - HIDDEN_LAYER
+        - NO_LAYERS
+        - BACKGROUND_UNAVAILABLE
+        - BACKGROUND_SOURCE_DELETED
+        - BACKGROUND_ASPECT
+        - BACKGROUND_REVIEW
+        - BACKGROUND_OWN_PROMPT
+        - BACKGROUND_GENERATED_BRAND
+        - VALUE_MISSING
+        - TEXT_OVERFLOW
+    VisualTemplateIssue:
+      description: An error blocks publication; a warning is for the operator to review and decide.
+      type: object
+      required: [code, severity, layerId, message]
+      additionalProperties: false
+      properties:
+        code: { $ref: '#/components/schemas/VisualTemplateIssueCode' }
+        severity: { type: string, enum: [error, warning] }
+        layerId: { anyOf: [{ type: string, minLength: 1, maxLength: 40, pattern: '^[a-z0-9][a-z0-9-]{0,39}$' }, { type: 'null' }] }
+        message: { type: string, minLength: 1, maxLength: 300 }
+    VisualTemplateValidation:
+      type: object
+      required: [publishable, issues]
+      additionalProperties: false
+      properties:
+        publishable: { type: boolean }
+        issues:
+          type: array
+          maxItems: 400
+          items: { $ref: '#/components/schemas/VisualTemplateIssue' }
+    VisualTemplate:
+      type: object
+      required: [id, name, description, category, contentType, format, status, sourceProposalId, publishedVersion, draftVersionId, versionCount, createdAt, updatedAt, archivedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        name: { $ref: '#/components/schemas/Label' }
+        description: { oneOf: [{ type: string, minLength: 1, maxLength: 500, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+        category: { anyOf: [{ $ref: '#/components/schemas/Label' }, { type: 'null' }] }
+        contentType: { $ref: '#/components/schemas/DesignContentType' }
+        format: { $ref: '#/components/schemas/DesignFormat' }
+        status: { $ref: '#/components/schemas/VisualTemplateStatus' }
+        sourceProposalId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        publishedVersion:
+          description: The latest published version.
+          oneOf:
+            - type: object
+              required: [id, version, publishedAt]
+              additionalProperties: false
+              properties:
+                id: { $ref: '#/components/schemas/Uuid' }
+                version: { type: integer, minimum: 1 }
+                publishedAt: { type: string, format: date-time }
+            - type: 'null'
+        draftVersionId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        versionCount: { type: integer, minimum: 1 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        archivedAt: { anyOf: [{ type: string, format: date-time }, { type: 'null' }] }
+    VisualTemplateVersionSummary:
+      type: object
+      required: [id, version, status, layerCount, createdAt, updatedAt, publishedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        version: { type: integer, minimum: 1 }
+        status: { $ref: '#/components/schemas/VisualTemplateVersionStatus' }
+        layerCount: { type: integer, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        publishedAt: { anyOf: [{ type: string, format: date-time }, { type: 'null' }] }
+    VisualTemplateDetail:
+      type: object
+      required: [template, versions]
+      additionalProperties: false
+      properties:
+        template: { $ref: '#/components/schemas/VisualTemplate' }
+        versions:
+          type: array
+          maxItems: 1000
+          items: { $ref: '#/components/schemas/VisualTemplateVersionSummary' }
+    VisualTemplateVersion:
+      type: object
+      required: [id, templateId, version, status, revision, canvasWidth, canvasHeight, background, layers, bindings, assets, validation, createdAt, updatedAt, publishedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        templateId: { $ref: '#/components/schemas/Uuid' }
+        version: { type: integer, minimum: 1 }
+        status: { $ref: '#/components/schemas/VisualTemplateVersionStatus' }
+        revision:
+          description: Increases with every save of the draft; a save or a publication names the revision it starts from.
+          type: integer
+          minimum: 1
+        canvasWidth: { type: integer, minimum: 1, maximum: 4096 }
+        canvasHeight: { type: integer, minimum: 1, maximum: 4096 }
+        background: { $ref: '#/components/schemas/VisualTemplateBackground' }
+        layers:
+          type: array
+          maxItems: 40
+          items: { $ref: '#/components/schemas/VisualTemplateLayer' }
+        bindings:
+          type: array
+          maxItems: 40
+          items: { $ref: '#/components/schemas/VisualTemplateBinding' }
+        assets:
+          type: array
+          maxItems: 12
+          items: { $ref: '#/components/schemas/VisualTemplateAssetRef' }
+        validation: { $ref: '#/components/schemas/VisualTemplateValidation' }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        publishedAt: { anyOf: [{ type: string, format: date-time }, { type: 'null' }] }
+    VisualTemplateVersionRef:
+      description: The version a project used (recorded on projects by PD-ARCH-01G-D).
+      type: object
+      required: [templateId, versionId, version]
+      additionalProperties: false
+      properties:
+        templateId: { $ref: '#/components/schemas/Uuid' }
+        versionId: { $ref: '#/components/schemas/Uuid' }
+        version: { type: integer, minimum: 1 }
+    VisualTemplateCreate:
+      type: object
+      required: [sourceProposalId, name]
+      additionalProperties: false
+      properties:
+        sourceProposalId: { $ref: '#/components/schemas/Uuid' }
+        name: { $ref: '#/components/schemas/Label' }
+        description: { type: string, minLength: 1, maxLength: 500, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }
+        category: { $ref: '#/components/schemas/Label' }
+        contentType:
+          description: |
+            What the template is for; the proposal's content type when absent. The proposal is only the background, so a
+            template of another content type may use it. It cannot change later.
+          allOf:
+            - $ref: '#/components/schemas/DesignContentType'
+        acknowledgeWarnings:
+          description: Required (true) for an own-prompt proposal, whose image may contain generated text, people or brand elements.
+          type: boolean
+    VisualTemplateUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        name: { $ref: '#/components/schemas/Label' }
+        description: { oneOf: [{ type: string, minLength: 1, maxLength: 500, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
+        category: { anyOf: [{ $ref: '#/components/schemas/Label' }, { type: 'null' }] }
+    VisualTemplateVersionSave:
+      type: object
+      required: [revision, background, layers]
+      additionalProperties: false
+      properties:
+        revision: { type: integer, minimum: 1 }
+        background: { $ref: '#/components/schemas/VisualTemplateBackgroundInput' }
+        layers:
+          type: array
+          maxItems: 40
+          items: { $ref: '#/components/schemas/VisualTemplateLayer' }
+    VisualTemplateVersionCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        fromVersionId: { $ref: '#/components/schemas/Uuid' }
+    VisualTemplatePublish:
+      type: object
+      required: [revision]
+      additionalProperties: false
+      properties:
+        revision: { type: integer, minimum: 1 }
+    VisualTemplatePreviewSelection:
+      description: Local sports data; a match for match content types, a round for a round calendar.
+      type: object
+      required: [competitionId, seasonId]
+      additionalProperties: false
+      properties:
+        competitionId: { $ref: '#/components/schemas/Uuid' }
+        seasonId: { $ref: '#/components/schemas/Uuid' }
+        roundId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        matchId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+    VisualTemplatePreviewRequest:
+      type: object
+      required: [selection]
+      additionalProperties: false
+      properties:
+        selection: { $ref: '#/components/schemas/VisualTemplatePreviewSelection' }
+        language: { $ref: '#/components/schemas/Language' }
+    VisualTemplatePreview:
+      type: object
+      required: [values, issues, imageUrl, width, height]
+      additionalProperties: false
+      properties:
+        values:
+          type: array
+          maxItems: 40
+          items:
+            type: object
+            required: [binding, value]
+            additionalProperties: false
+            properties:
+              binding: { $ref: '#/components/schemas/VisualTemplateBinding' }
+              value: { anyOf: [{ type: string, maxLength: 4000 }, { type: 'null' }] }
+        issues:
+          type: array
+          maxItems: 400
+          items: { $ref: '#/components/schemas/VisualTemplateIssue' }
+        imageUrl: { type: string, maxLength: 400, pattern: '^/api/v1/visual-templates/' }
+        width: { type: integer, minimum: 1, maximum: 4096 }
+        height: { type: integer, minimum: 1, maximum: 4096 }

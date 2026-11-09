@@ -326,6 +326,8 @@ export const progressCopy = {
 } as const;
 
 export const detailCopy = {
+  /** PD-ARCH-01G-C: an approved proposal can become the base of a structured template. */
+  createTemplate: 'Crear plantilla',
   title: (name: string): string => `Propuesta: ${name}`,
   data: 'Datos de la propuesta',
   type: 'Tipo de contenido',

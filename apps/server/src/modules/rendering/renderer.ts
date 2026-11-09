@@ -2,7 +2,8 @@
  * PNG renderer (architecture.md section 9; AD-07; T10-F09).
  *
  * The render model becomes a Satori element tree built from plain objects (no React runtime on the server): one
- * absolutely positioned, non-wrapping node per measured text line, one box per rectangle, one `img` per image slot.
+ * absolutely positioned, non-wrapping node per measured text line, one box per rectangle, one `img` per image element
+ * (fitted as the element says, `contain` by default).
  * Satori lays the tree out with the bundled fonts and draws glyphs as paths (no `<text>` element), then resvg
  * rasterizes the SVG at the canvas size.
  *
@@ -20,7 +21,7 @@ import { renderAsync } from '@resvg/resvg-js';
 import satori, { type SatoriOptions } from 'satori';
 
 import type { FontSet } from './fonts.js';
-import type { RenderElement, RenderModel, TextElement } from './render-model.js';
+import type { Palette, RenderElement, RenderModel, TextEffect, TextElement } from './render-model.js';
 
 /** An image asset for an image slot: hash-checked bytes and their MIME type. */
 export interface EmbeddedAsset {
@@ -70,8 +71,61 @@ function dataUri(assets: ReadonlyMap<string, EmbeddedAsset>, assetId: string, ex
 
 const JUSTIFY = { left: 'flex-start', center: 'center', right: 'flex-end' } as const;
 
-function textNodes(element: TextElement): SatoriNode[] {
+/** A length in pixels, a fraction of the font size, rounded to hundredths (deterministic output). */
+function px(fontSize: number, factor: number): string {
+  return `${String(Math.round(fontSize * factor * 100) / 100)}px`;
+}
+
+/** A shadow in each of eight directions at a distance: an outline without the inner marks of a text stroke. */
+function outline(fontSize: number, factor: number, color: string): string[] {
+  const d = Math.max(1, Math.round(fontSize * factor * 100) / 100);
+  const diagonal = Math.round(d * 0.75 * 100) / 100;
+  return [
+    [d, 0],
+    [-d, 0],
+    [0, d],
+    [0, -d],
+    [diagonal, diagonal],
+    [-diagonal, -diagonal],
+    [diagonal, -diagonal],
+    [-diagonal, diagonal],
+  ].map(([x, y]) => `${String(x)}px ${String(y)}px 0px ${color}`);
+}
+
+/**
+ * The CSS text shadow of a text effect (decision 01G-C-2), in the palette colours and scaled with the font size; null
+ * for no effect.
+ */
+export function textShadowOf(effect: TextEffect | undefined, fontSize: number, palette: Palette): string | null {
+  const shade = 'rgba(0, 0, 0, 0.85)';
+  switch (effect) {
+    case undefined:
+    case 'none':
+      return null;
+    case 'soft_shadow':
+      return `0px ${px(fontSize, 0.06)} ${px(fontSize, 0.22)} ${shade}`;
+    case 'strong_shadow':
+      return `0px ${px(fontSize, 0.1)} 0px ${palette.primaryDark}, 0px 0px ${px(fontSize, 0.4)} ${shade}`;
+    case 'glow_gold':
+      return `0px 0px ${px(fontSize, 0.3)} ${palette.accent}, 0px 0px ${px(fontSize, 0.12)} ${palette.accent}`;
+    case 'glow_purple':
+      return `0px 0px ${px(fontSize, 0.3)} ${palette.primary}, 0px 0px ${px(fontSize, 0.12)} ${palette.primary}`;
+    case 'outline_dark':
+      return [
+        ...outline(fontSize, 0.05, palette.primaryDark),
+        `0px ${px(fontSize, 0.08)} ${px(fontSize, 0.2)} ${shade}`,
+      ].join(', ');
+    case 'scoreboard_gold':
+      return [
+        ...outline(fontSize, 0.03, palette.accent),
+        `0px ${px(fontSize, 0.07)} ${px(fontSize, 0.12)} ${shade}`,
+      ].join(', ');
+  }
+}
+
+function textNodes(element: TextElement, palette: Palette): SatoriNode[] {
   const { box, lineHeight, lines } = element;
+  const shadow = textShadowOf(element.effect, element.fontSize, palette);
   const blockHeight = lines.length * lineHeight;
   const offset =
     element.verticalAlign === 'top'
@@ -101,6 +155,7 @@ function textNodes(element: TextElement): SatoriNode[] {
                 fontSize: element.fontSize,
                 lineHeight: `${String(lineHeight)}px`,
                 color: element.color,
+                ...(shadow === null ? {} : { textShadow: shadow }),
               },
               children: line,
             },
@@ -109,7 +164,7 @@ function textNodes(element: TextElement): SatoriNode[] {
   );
 }
 
-function elementNodes(element: RenderElement, resources: RenderResources): SatoriNode[] {
+function elementNodes(element: RenderElement, resources: RenderResources, palette: Palette): SatoriNode[] {
   switch (element.kind) {
     case 'rect':
       return [
@@ -129,7 +184,7 @@ function elementNodes(element: RenderElement, resources: RenderResources): Sator
         },
       ];
     case 'text':
-      return textNodes(element);
+      return textNodes(element, palette);
     case 'image':
       return [
         {
@@ -144,7 +199,7 @@ function elementNodes(element: RenderElement, resources: RenderResources): Sator
               top: element.box.y,
               width: element.box.width,
               height: element.box.height,
-              objectFit: 'contain',
+              objectFit: element.fit ?? 'contain',
             },
           },
         },
@@ -167,7 +222,7 @@ export function satoriTree(model: RenderModel, resources: RenderResources): Sato
         height: model.canvas.height,
         backgroundColor: model.background.color,
       },
-      children: model.elements.flatMap((element) => elementNodes(element, resources)),
+      children: model.elements.flatMap((element) => elementNodes(element, resources, model.palette)),
     },
   };
 }

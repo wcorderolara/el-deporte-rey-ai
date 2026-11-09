@@ -60,6 +60,11 @@ export const PROBLEM_CODES = [
   'IMAGE_PROVIDER_UNAVAILABLE',
   'DESIGN_REFERENCE_REFUSED',
   'GENERATION_LIMIT_REACHED',
+  'TEMPLATE_SOURCE_REFUSED',
+  'TEMPLATE_VERSION_PUBLISHED',
+  'TEMPLATE_NOT_PUBLISHABLE',
+  'TEMPLATE_IN_USE',
+  'PROPOSAL_IN_USE',
 ] as const;
 export type ProblemCode = (typeof PROBLEM_CODES)[number];
 
@@ -203,6 +208,11 @@ const TITLES: Readonly<Record<ProblemCode, string>> = {
   IMAGE_PROVIDER_UNAVAILABLE: 'The image generation provider is not ready',
   DESIGN_REFERENCE_REFUSED: 'A selected brand asset cannot be used this way',
   GENERATION_LIMIT_REACHED: 'An image generation limit is reached',
+  TEMPLATE_SOURCE_REFUSED: 'The template source cannot be used',
+  TEMPLATE_VERSION_PUBLISHED: 'A published template version cannot be changed',
+  TEMPLATE_NOT_PUBLISHABLE: 'The template version has validation errors',
+  TEMPLATE_IN_USE: 'The template has published versions',
+  PROPOSAL_IN_USE: 'The design proposal is used by a visual template',
   INTERNAL: 'Internal error',
 };
 

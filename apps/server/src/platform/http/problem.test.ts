@@ -91,7 +91,7 @@ describe('HttpProblem', () => {
   });
 
   it('lists the contract problem codes and refusal reasons', () => {
-    expect(PROBLEM_CODES).toHaveLength(45);
+    expect(PROBLEM_CODES).toHaveLength(50);
     expect(PROBLEM_CODES).toContain('MISDIRECTED_HOST');
     expect(PROBLEM_CODES).toContain('FORBIDDEN_ORIGIN');
     expect(PROBLEM_CODES).toContain('PROVIDER_BINDING_EXISTS');
@@ -100,6 +100,11 @@ describe('HttpProblem', () => {
     expect(PROBLEM_CODES).toContain('CONTENT_BATCH_NOT_GENERATABLE');
     expect(PROBLEM_CODES).toContain('REQUEST_KEY_REUSED');
     expect(PROBLEM_CODES).toContain('ASSET_IN_USE');
+    expect(PROBLEM_CODES).toContain('TEMPLATE_SOURCE_REFUSED');
+    expect(PROBLEM_CODES).toContain('TEMPLATE_VERSION_PUBLISHED');
+    expect(PROBLEM_CODES).toContain('TEMPLATE_NOT_PUBLISHABLE');
+    expect(PROBLEM_CODES).toContain('TEMPLATE_IN_USE');
+    expect(PROBLEM_CODES).toContain('PROPOSAL_IN_USE');
     expect(REFUSAL_REASONS).toContain('source_not_selectable');
   });
 });

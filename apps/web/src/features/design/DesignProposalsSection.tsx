@@ -48,6 +48,8 @@ import { ProposalDetailDialog } from './ProposalDetailDialog';
 export interface DesignProposalsSectionProps {
   api: DesignApi;
   brandApi: BrandApi;
+  /** Opens "Crear plantilla" with an approved proposal (PD-ARCH-01G-C). */
+  onCreateTemplate?: (proposal: DesignProposal) => void;
 }
 
 const STATUSES: readonly DesignProposalStatus[] = ['pending_review', 'approved', 'changes_requested', 'rejected'];
@@ -82,7 +84,7 @@ function referencesText(proposal: DesignProposal): string {
  * IA", the running generations, and the proposal library (table by default, cards, status filter) with comparison,
  * detail, review and variants. Proposals are shown apart from the templates and are never offered as templates.
  */
-export function DesignProposalsSection({ api, brandApi }: DesignProposalsSectionProps) {
+export function DesignProposalsSection({ api, brandApi, onCreateTemplate }: DesignProposalsSectionProps) {
   const headingId = useId();
   const loadCapabilities = useCallback((signal: AbortSignal) => api.getCapabilities(signal), [api]);
   const capabilities = useResource(loadCapabilities);
@@ -455,6 +457,14 @@ export function DesignProposalsSection({ api, brandApi }: DesignProposalsSection
             setCreating({ parent: detail, ...(instructions === undefined ? {} : { instructions }) });
           }}
           onDelete={askDelete}
+          {...(onCreateTemplate === undefined
+            ? {}
+            : {
+                onCreateTemplate: (proposal: DesignProposal) => {
+                  setOpen(null);
+                  onCreateTemplate(proposal);
+                },
+              })}
         />
       )}
       {deleting === null ? null : (

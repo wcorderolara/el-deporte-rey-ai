@@ -35,6 +35,8 @@ export interface ProposalDetailDialogProps {
   currentPromptVersion: string;
   /** Asks to delete the proposal (the section confirms and deletes it). */
   onDelete: (proposal: DesignProposal) => void;
+  /** Opens "Crear plantilla" with this approved proposal (PD-ARCH-01G-C); absent where templates are not offered. */
+  onCreateTemplate?: (proposal: DesignProposal) => void;
 }
 
 const NOTE = contractRegExp('Note');
@@ -51,6 +53,7 @@ export function ProposalDetailDialog({
   onDecided,
   onVariant,
   onDelete,
+  onCreateTemplate,
   currentPromptVersion,
 }: ProposalDetailDialogProps) {
   const noteId = useId();
@@ -289,6 +292,11 @@ export function ProposalDetailDialog({
               >
                 {detailCopy.requestChanges}
               </Button>
+              {onCreateTemplate !== undefined && detail.proposal.status === 'approved' ? (
+                <Button variant="secondary" disabled={busy !== null} onClick={() => onCreateTemplate(detail.proposal)}>
+                  {detailCopy.createTemplate}
+                </Button>
+              ) : null}
               <Button variant="secondary" disabled={busy !== null} onClick={() => onVariant(detail)}>
                 {detailCopy.variant}
               </Button>

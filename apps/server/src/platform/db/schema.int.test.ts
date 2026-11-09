@@ -347,6 +347,40 @@ const EXPECTED_COLUMNS: Readonly<Record<string, readonly string[]>> = {
     'decision_note_text',
   ],
   design_proposal_decisions: ['sequence', 'proposal_id', 'decision', 'note', 'created_at', 'note_text'],
+  visual_templates: [
+    'id',
+    'name',
+    'description',
+    'category',
+    'content_type',
+    'format',
+    'source_proposal_id',
+    'acknowledged_warnings',
+    'created_at',
+    'updated_at',
+    'archived_at',
+    'deleted_at',
+  ],
+  visual_template_versions: [
+    'id',
+    'template_id',
+    'version',
+    'status',
+    'revision',
+    'canvas_width',
+    'canvas_height',
+    'background_source',
+    'background_id',
+    'background_sha256',
+    'background_mime',
+    'background_width',
+    'background_height',
+    'layers_json',
+    'assets_json',
+    'created_at',
+    'updated_at',
+    'published_at',
+  ],
   competitions: ['id', 'name', 'created_at', 'updated_at'],
   competition_provider_bindings: [
     'id',
@@ -671,6 +705,8 @@ const EXPECTED_FOREIGN_KEYS: Readonly<Record<string, readonly string[]>> = {
   design_generation_events: ['generation_id -> design_generations'],
   design_proposals: ['generation_id -> design_generations'],
   design_proposal_decisions: ['proposal_id -> design_proposals'],
+  visual_templates: ['source_proposal_id -> design_proposals'],
+  visual_template_versions: ['template_id -> visual_templates'],
 };
 
 /** Indexes of data-model.md section 4 as `table (columns)`. */
@@ -696,6 +732,10 @@ const EXPECTED_INDEXES = [
   'design_generation_events (generation_id, sequence)',
   'design_proposals (created_at)',
   'design_proposal_decisions (proposal_id, sequence)',
+  'visual_templates (updated_at)',
+  'visual_templates (source_proposal_id)',
+  'visual_template_versions (template_id)',
+  'visual_template_versions (background_source, background_id)',
   'imports (received_at)',
   'manual_selection_versions (competition_id, season_id, stage_id, matchday_key, superseded_at)',
   'competitions (created_at, id)',
@@ -830,6 +870,7 @@ describe('structure of the migrated schema', () => {
       { version: 26, name: 'design_proposal_layers' },
       { version: 27, name: 'design_generation_modes' },
       { version: 28, name: 'design_decision_notes' },
+      { version: 29, name: 'visual_templates' },
     ]);
   });
 

@@ -198,7 +198,7 @@ describe('brandApi: library operations (PD-ARCH-01G-A)', () => {
   it('reads an asset detail, edits it, deletes it and reads and edits the identity', async () => {
     const { fetch, requests } = fakeFetch({
       [`GET /brand/assets/${ASSET_LOGO.id}`]: () =>
-        jsonResponse({ asset: ASSET_LOGO, usage: { renderedVersions: 1, projects: 1, exports: 0 } }),
+        jsonResponse({ asset: ASSET_LOGO, usage: { renderedVersions: 1, projects: 1, exports: 0, templates: 0 } }),
       [`PATCH /brand/assets/${ASSET_LOGO.id}`]: () => jsonResponse({ ...ASSET_LOGO, label: 'Nuevo' }),
       [`DELETE /brand/assets/${ASSET_LOGO.id}`]: () => new Response(null, { status: 204 }),
       'GET /brand/identity': () => jsonResponse(IDENTITY),

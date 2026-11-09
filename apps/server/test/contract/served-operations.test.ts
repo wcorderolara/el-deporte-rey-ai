@@ -940,6 +940,188 @@ describe('DEMO_DATA and MANUAL_DATA operations on the running app', { timeout: R
     expect(images.requests.filter((entry) => entry.url.includes('/images/'))).toHaveLength(1);
   });
 
+  it('makes, edits, previews with local data, releases and versions a visual template without any image request (PD-ARCH-01G-C)', async () => {
+    const generationKey = '00000000-0000-4000-8000-000000000790';
+    const started = await ok<{ generation: { id: string } }>(g, 'createDesignGeneration', {
+      json: {
+        contentType: 'fixture',
+        format: '4:5',
+        quality: 'low',
+        count: 1,
+        references: [],
+        requestKey: generationKey,
+        confirmCost: true,
+      },
+    });
+    await designServiceOf(designer.container).settled(started.generation.id);
+    const generated = await ok<{ proposalIds: string[] }>(g, 'getDesignGeneration', {
+      params: { generationId: started.generation.id },
+    });
+    const proposalId = required(generated.proposalIds[0], 'proposal');
+    const create = { sourceProposalId: proposalId, name: 'Partido programado nocturno', category: 'Calendario' };
+    await problem(g, 'createVisualTemplate', { json: create }, 409, 'TEMPLATE_SOURCE_REFUSED');
+    await ok(g, 'decideDesignProposal', { params: { proposalId }, json: { decision: 'approved' } });
+    const imageRequests = images.requests.length;
+
+    // Local sports data of the preview.
+    const competition = await ok<{ id: string }>(g, 'createCompetition', { json: { name: 'Liga de plantillas' } });
+    const season = await ok<{ id: string }>(g, 'createManagedSeason', {
+      params: { competitionId: competition.id },
+      json: { label: '2026/27' },
+    });
+    const seasonParams = { competitionId: competition.id, seasonId: season.id };
+    const teamIds: string[] = [];
+    for (const name of ['Club Plantilla Local', 'Club Plantilla Visitante']) {
+      const team = await ok<{ id: string }>(g, 'createManagedTeam', { json: { name } });
+      await ok(g, 'addCompetitionTeam', { params: { competitionId: competition.id }, json: { teamId: team.id } });
+      await ok(g, 'addSeasonParticipant', { params: seasonParams, json: { teamId: team.id } });
+      teamIds.push(team.id);
+    }
+    const round = await ok<{ id: string }>(g, 'createSeasonRound', {
+      params: seasonParams,
+      json: { name: 'Jornada 9' },
+    });
+    const match = await ok<{ id: string }>(g, 'createCompetitionMatch', {
+      params: seasonParams,
+      json: { homeTeamId: teamIds[0], awayTeamId: teamIds[1], roundId: round.id, kickoffAt: '2027-05-10T18:00:00Z' },
+    });
+
+    const created = await ok<{ template: { id: string; status: string; draftVersionId: string } }>(
+      g,
+      'createVisualTemplate',
+      {
+        json: create,
+      },
+    );
+    const templateId = created.template.id;
+    expect(created.template.status).toBe('draft');
+    const versionId = created.template.draftVersionId;
+    const listed = await ok<{ templates: { id: string }[] }>(g, 'listVisualTemplates');
+    expect(listed.templates.map((entry) => entry.id)).toContain(templateId);
+    await ok(g, 'getVisualTemplate', { params: { templateId } });
+    await ok(g, 'updateVisualTemplate', { params: { templateId }, json: { description: 'Estadio de noche.' } });
+    const draft = await ok<{
+      revision: number;
+      background: { source: 'design_proposal' | 'brand_asset'; id: string };
+      layers: { type: string; binding?: string }[];
+    }>(g, 'getVisualTemplateVersion', { params: { templateId, versionId } });
+    expect(draft.layers.map((layer) => layer.binding)).toEqual(['match.homeTeam.name', 'match.awayTeam.name']);
+    const title = {
+      id: 'title',
+      name: 'Título',
+      type: 'text',
+      text: 'PARTIDO',
+      x: 0.1,
+      y: 0.05,
+      width: 0.8,
+      height: 0.1,
+      visible: true,
+      style: {
+        fontRole: 'heading',
+        maxFontSize: 56,
+        minFontSize: 28,
+        maxLines: 1,
+        colorRole: 'accent',
+        align: 'center',
+        verticalAlign: 'middle',
+        overflow: 'shrink',
+      },
+    };
+    const save = {
+      revision: draft.revision,
+      background: { source: draft.background.source, id: draft.background.id },
+      layers: [...draft.layers, title],
+    };
+    const saved = await ok<{ revision: number; validation: { publishable: boolean } }>(g, 'saveVisualTemplateVersion', {
+      params: { templateId, versionId },
+      json: save,
+    });
+    expect(saved.revision).toBe(draft.revision + 1);
+    expect(saved.validation.publishable).toBe(true);
+    await problem(
+      g,
+      'saveVisualTemplateVersion',
+      { params: { templateId, versionId }, json: save },
+      409,
+      'VERSION_CONFLICT',
+    );
+    const background = await g.call('getVisualTemplateBackground', { params: { templateId, versionId } });
+    expect(background.status, describeExchange(background)).toBe(200);
+    expectSandboxedFile(background);
+
+    const preview = await ok<{ values: { binding: string; value: string | null }[]; imageUrl: string }>(
+      g,
+      'previewVisualTemplate',
+      { params: { templateId, versionId }, json: { selection: { ...seasonParams, matchId: match.id } } },
+    );
+    expect(preview.values).toEqual([
+      { binding: 'match.homeTeam.name', value: 'Club Plantilla Local' },
+      { binding: 'match.awayTeam.name', value: 'Club Plantilla Visitante' },
+    ]);
+    await problem(
+      g,
+      'previewVisualTemplate',
+      { params: { templateId, versionId }, json: { selection: seasonParams } },
+      400,
+      'VALIDATION_FAILED',
+    );
+    const query = Object.fromEntries(new URL(preview.imageUrl, 'http://127.0.0.1').searchParams);
+    const png = await g.call('renderVisualTemplatePreview', { params: { templateId, versionId }, query });
+    expect(png.status, describeExchange(png)).toBe(200);
+    expect(png.mediaType).toBe('image/png');
+    await problem(
+      g,
+      'renderVisualTemplatePreview',
+      { params: { templateId, versionId }, query: { ...query, matchId: '00000000-0000-4000-8000-000000000791' } },
+      404,
+      'NOT_FOUND',
+    );
+
+    const released = await ok<{ status: string }>(g, 'releaseVisualTemplateVersion', {
+      params: { templateId, versionId },
+      json: { revision: saved.revision },
+    });
+    expect(released.status).toBe('published');
+    await problem(
+      g,
+      'saveVisualTemplateVersion',
+      { params: { templateId, versionId }, json: { ...save, revision: saved.revision } },
+      409,
+      'TEMPLATE_VERSION_PUBLISHED',
+    );
+    await problem(g, 'deleteDesignProposal', { params: { proposalId } }, 409, 'PROPOSAL_IN_USE');
+    await problem(g, 'deleteVisualTemplate', { params: { templateId } }, 409, 'TEMPLATE_IN_USE');
+    const next = await ok<{ id: string; version: number; status: string }>(g, 'createVisualTemplateVersion', {
+      params: { templateId },
+      json: {},
+    });
+    expect(next).toMatchObject({ version: 2, status: 'draft' });
+    await problem(g, 'createVisualTemplateVersion', { params: { templateId }, json: {} }, 409, 'VERSION_CONFLICT');
+    const discarded = await g.call('deleteVisualTemplateVersion', { params: { templateId, versionId: next.id } });
+    expect(discarded.status, describeExchange(discarded)).toBe(204);
+    expect(await ok<{ status: string }>(g, 'archiveVisualTemplate', { params: { templateId } })).toMatchObject({
+      status: 'archived',
+    });
+    await problem(
+      g,
+      'updateVisualTemplate',
+      { params: { templateId }, json: { name: 'Otro' } },
+      409,
+      'VERSION_CONFLICT',
+    );
+    expect(await ok<{ status: string }>(g, 'restoreVisualTemplate', { params: { templateId } })).toMatchObject({
+      status: 'published',
+    });
+
+    const unused = await ok<{ template: { id: string } }>(g, 'createVisualTemplate', {
+      json: { ...create, name: 'Borrador' },
+    });
+    const removed = await g.call('deleteVisualTemplate', { params: { templateId: unused.template.id } });
+    expect(removed.status, describeExchange(removed)).toBe(204);
+    await problem(g, 'getVisualTemplate', { params: { templateId: unused.template.id } }, 404, 'NOT_FOUND');
+    expect(images.requests).toHaveLength(imageRequests);
+  });
+
   it('lists templates and renders previews in both languages; 404 for an unknown template', async () => {
     const templates = await ok<{ templates: Template[] }>(d, 'listTemplates');
     expect(templates.templates.length).toBeGreaterThan(0);

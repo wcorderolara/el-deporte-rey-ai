@@ -43,6 +43,15 @@ export function shellContext(pathname: string): ShellContext {
   }
   if (pathname === '/brand' || pathname === '/brand/') return { title: 'Mi marca' };
   if (pathname === '/templates' || pathname === '/templates/') return { title: 'Plantillas' };
+  if (pathname === '/templates/create' || pathname === '/templates/create/') {
+    return { title: 'Crear plantilla', parent: { label: 'Plantillas', to: '/templates' } };
+  }
+  if (pathname === '/templates/engine' || pathname === '/templates/engine/') {
+    return { title: 'Plantillas del motor', parent: { label: 'Plantillas', to: '/templates' } };
+  }
+  if (/^\/templates\/visual\/[^/]+\/?$/.test(pathname)) {
+    return { title: 'Editor de plantilla', parent: { label: 'Crear plantilla', to: '/templates/create' } };
+  }
   if (pathname === '/imports' || pathname === '/imports/') return { title: 'Datos' };
   if (pathname === '/competitions' || pathname === '/competitions/') {
     return { title: 'Competiciones', parent: { label: 'Inicio', to: '/' } };

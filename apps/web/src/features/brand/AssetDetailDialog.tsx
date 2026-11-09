@@ -97,7 +97,7 @@ export function AssetDetailDialog({ api, asset: initial, onClose, onChanged, onD
   }
 
   const usage = state.status === 'ready' ? state.data.usage : null;
-  const inUse = usage !== null && usage.renderedVersions > 0;
+  const inUse = usage !== null && (usage.renderedVersions > 0 || usage.templates > 0);
   const busy = action !== null;
   const fieldId = (name: string) => `${baseId}-${name}`;
 
@@ -150,9 +150,12 @@ export function AssetDetailDialog({ api, asset: initial, onClose, onChanged, onD
                 <ErrorBanner error={state.error} title={detailCopy.loadFailedTitle} onRetry={reload} />
               ) : null}
               {usage === null ? null : (
-                <p className="m-0 text-text-primary">
-                  {detailCopy.usageValue(usage.renderedVersions, usage.projects, usage.exports)}
-                </p>
+                <>
+                  <p className="m-0 text-text-primary">
+                    {detailCopy.usageValue(usage.renderedVersions, usage.projects, usage.exports)}
+                  </p>
+                  <p className="m-0 text-text-primary">{detailCopy.templateUsage(usage.templates)}</p>
+                </>
               )}
             </section>
           </div>
@@ -298,7 +301,9 @@ export function AssetDetailDialog({ api, asset: initial, onClose, onChanged, onD
         <section aria-label={detailCopy.delete} className="grid gap-3 border-t border-border-subtle pt-4">
           {inUse ? (
             <Alert tone="warning" role="note">
-              {detailCopy.deleteBlocked}
+              {usage !== null && usage.renderedVersions > 0
+                ? detailCopy.deleteBlocked
+                : detailCopy.deleteBlockedTemplates}
             </Alert>
           ) : null}
           {confirming && !inUse ? (

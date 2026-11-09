@@ -243,7 +243,7 @@ describe('image adapter options and the disabled adapter', () => {
       { ...OPTIONS, baseUrl: 'http://images.example.test/v1' },
       { ...OPTIONS, defaultModel: 'missing' },
       { ...OPTIONS, models: [] },
-      { ...OPTIONS, apiKey: 'sk-should-never-be-here' },
+      { ...OPTIONS, apiKey: 'edr-test-key-never-echoed' },
       { ...OPTIONS, timeoutMs: 999_999 },
       { ...OPTIONS, limits: { maxImagesPerRequest: 50 } },
     ];
@@ -252,7 +252,7 @@ describe('image adapter options and the disabled adapter', () => {
       try {
         parseOpenAiImageOptions(value);
       } catch (error) {
-        expect(String(error)).not.toContain('sk-should-never-be-here');
+        expect(String(error)).not.toContain('edr-test-key-never-echoed');
         expect(String(error)).toContain('providers.images.options');
       }
     }

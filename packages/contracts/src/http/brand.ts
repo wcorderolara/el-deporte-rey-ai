@@ -71,11 +71,15 @@ export const BrandAssetSchema = z.strictObject({
   updatedAt: DateTimeSchema,
 });
 
-/** Where an asset has been used: rendered slide versions, their projects and the exports that hold them. */
+/**
+ * Where an asset has been used: rendered slide versions, their projects and the exports that hold them, and the
+ * visual templates (not deleted) whose versions place it (PD-ARCH-01G-C).
+ */
 export const BrandAssetUsageSchema = z.strictObject({
   renderedVersions: z.int().min(0),
   projects: z.int().min(0),
   exports: z.int().min(0),
+  templates: z.int().min(0),
 });
 
 /** Response of getBrandAsset: the asset and its usage (the dependencies checked before a deletion). */

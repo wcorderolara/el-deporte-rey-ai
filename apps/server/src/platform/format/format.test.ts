@@ -4,6 +4,7 @@ import {
   CONTENT_LANGUAGES,
   formatDate,
   formatInt,
+  formatTime,
   formatScore,
   hashtagFor,
   isLanguage,
@@ -46,6 +47,14 @@ describe('formatInt and formatScore (R-036)', () => {
     expect(resultRelation({ home: 0, away: 3 })).toBe('awayWin');
     expect(templateText('es').resultRelation.draw).toBe('empate');
     expect(templateText('en').resultRelation.homeWin).toBe('home win');
+  });
+});
+
+describe('formatTime (PD-ARCH-01G-C)', () => {
+  it('formats a 24-hour time at the display offset, across midnight', () => {
+    expect(formatTime('2026-10-27T18:00:00Z', -360)).toBe('12:00');
+    expect(formatTime('2026-10-27T03:05:00Z', -360)).toBe('21:05');
+    expect(formatTime('2026-10-27T23:30:00+02:00', 0)).toBe('21:30');
   });
 });
 

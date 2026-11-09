@@ -7,6 +7,7 @@ export {
   MIN_UTC_OFFSET_MINUTES,
   assertUtcOffset,
   formatDate,
+  formatTime,
   formatInt,
   formatScore,
   hashtagFor,

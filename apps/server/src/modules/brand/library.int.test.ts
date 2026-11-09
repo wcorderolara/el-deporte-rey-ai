@@ -310,7 +310,7 @@ describe('metadata edits (PD-ARCH-01G-A)', () => {
     const cleared = await patched(app, asset.id, { description: null, variant: null });
     expect(cleared).toMatchObject({ description: null, variant: null, label: 'Logo horizontal' });
     const detail = BrandAssetDetailSchema.parse((await get(app, `/brand/assets/${asset.id}`)).json());
-    expect(detail).toEqual({ asset: cleared, usage: { renderedVersions: 0, projects: 0, exports: 0 } });
+    expect(detail).toEqual({ asset: cleared, usage: { renderedVersions: 0, projects: 0, exports: 0, templates: 0 } });
   });
 
   it('refuses an empty edit, a reference that could be placed, pose on a logo and an unknown field', async () => {
@@ -367,7 +367,7 @@ describe('deletion with dependencies (PD-ARCH-01G-A)', () => {
     const asset = await register(app, png({ note: 'used' }), LOGO);
     seedRenderedUse(app, asset.id, true);
     const detail = BrandAssetDetailSchema.parse((await get(app, `/brand/assets/${asset.id}`)).json());
-    expect(detail.usage).toEqual({ renderedVersions: 1, projects: 1, exports: 1 });
+    expect(detail.usage).toEqual({ renderedVersions: 1, projects: 1, exports: 1, templates: 0 });
     const refused = await remove(app, asset.id);
     expectProblem(refused, 409, 'ASSET_IN_USE');
     expect((refused.json() as { detail: string }).detail).toContain(

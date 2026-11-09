@@ -62,6 +62,8 @@ describe('App shell (R-235)', () => {
       'Exportaciones',
       'Mi marca',
       'Plantillas',
+      'Crear plantilla',
+      'Plantillas del motor',
       'Datos',
     ]);
     expect(within(navigation).getByRole('link', { name: 'Inicio' }).getAttribute('aria-current')).toBe('page');
@@ -111,19 +113,29 @@ describe('App shell (R-235)', () => {
     expect(screen.queryByRole('heading', { name: 'Plantillas' })).toBeNull();
     expect(screen.getByRole('main').className).not.toContain('bg-legacy-canvas');
 
+    // Plantillas opens its first view, «Crear plantilla»; the sub-item is the current page.
     await user.click(within(navigation).getByRole('link', { name: 'Plantillas' }));
-    expect(await screen.findByRole('heading', { level: 1, name: 'Plantillas' })).toBeTruthy();
-    expect(router.state.location.pathname).toBe('/templates');
-    expect(within(navigation).getByRole('link', { name: 'Plantillas' }).getAttribute('aria-current')).toBe('page');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Crear plantilla' })).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/templates/create');
+    expect(within(navigation).getByRole('link', { name: 'Crear plantilla' }).getAttribute('aria-current')).toBe('page');
+    expect(within(navigation).getByRole('link', { name: 'Plantillas' }).getAttribute('aria-current')).toBeNull();
     expect(within(navigation).getByRole('link', { name: 'Mi marca' }).getAttribute('aria-current')).toBeNull();
     expect(screen.getByRole('main').className).not.toContain('bg-legacy-canvas');
+
+    await user.click(within(navigation).getByRole('link', { name: 'Plantillas del motor' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'Plantillas del motor' })).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/templates/engine');
+    expect(within(navigation).getByRole('link', { name: 'Plantillas del motor' }).getAttribute('aria-current')).toBe(
+      'page',
+    );
+    expect(within(navigation).getByRole('link', { name: 'Crear plantilla' }).getAttribute('aria-current')).toBeNull();
   });
 
-  it('sends the former templates anchor of the brand page to /templates', async () => {
+  it('sends the former templates anchor of the brand page to the engine templates', async () => {
     const router = renderAt('/brand#brand-templates-title');
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Plantillas' })).toBeTruthy();
-    expect(router.state.location.pathname).toBe('/templates');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Plantillas del motor' })).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/templates/engine');
   });
 
   it('opens the sports content wizard from the shell action, the navigation and the hero (PD-ARCH-01F)', async () => {
@@ -187,7 +199,9 @@ describe('Route table: lazy feature stubs', () => {
     // The former exports page redirects to the project detail (PD-ARCH-01F).
     [featurePaths.history('00000000-0000-4000-8000-000000000001'), 'Proyectos'],
     [featurePaths.brand, 'Mi marca'],
-    [featurePaths.templates, 'Plantillas'],
+    [featurePaths.templates, 'Crear plantilla'],
+    [featurePaths.templatesCreate, 'Crear plantilla'],
+    [featurePaths.templatesEngine, 'Plantillas del motor'],
     [`${featurePaths.imports}/00000000-0000-4000-8000-000000000003`, 'Importaciones manuales'],
   ])('renders %s with the %s feature', async (path, heading) => {
     renderAt(path);

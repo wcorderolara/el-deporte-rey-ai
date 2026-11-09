@@ -137,6 +137,11 @@ const SQL = {
   versionsUsing: VERSIONS_USING,
   exportsOf:
     'SELECT count(DISTINCT export_id) AS n FROM export_files WHERE element_version_id IN (SELECT value FROM json_each(?))',
+  // PD-ARCH-01G-C: visual templates (not deleted) whose kept versions place the asset or use it as background.
+  templatesUsing:
+    'SELECT count(DISTINCT t.id) AS n FROM visual_templates t JOIN visual_template_versions v ON v.template_id = t.id ' +
+    "WHERE t.deleted_at IS NULL AND v.status <> 'discarded' AND ((v.background_source = 'brand_asset' AND " +
+    "v.background_id = ?) OR EXISTS (SELECT 1 FROM json_each(v.assets_json) j WHERE json_extract(j.value, '$.assetId') = ?))",
   identity:
     'SELECT description, graphic_preferences, color_usage, typography_usage, updated_at FROM brand_identity ' +
     "WHERE id = 'primary'",
@@ -354,7 +359,7 @@ export class BrandAssetRepository {
       ]);
   }
 
-  /** Where an asset has been drawn: rendered slide versions, their projects and the exports holding them. */
+  /** Where an asset has been used: rendered slide versions, their projects, the exports holding them and templates. */
   usage(id: string): BrandAssetUsage {
     const rows = this.#db.prepare<{ version_id: string; project_id: string }>(SQL.versionsUsing).all([id]);
     const versions = rows.map((row) => row.version_id);
@@ -366,6 +371,7 @@ export class BrandAssetRepository {
       renderedVersions: versions.length,
       projects: new Set(rows.map((row) => row.project_id)).size,
       exports,
+      templates: this.#db.prepare<{ n: number }>(SQL.templatesUsing).get([id, id])?.n ?? 0,
     };
   }
 

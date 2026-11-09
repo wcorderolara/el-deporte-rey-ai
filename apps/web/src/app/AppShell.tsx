@@ -9,6 +9,8 @@ interface NavItem {
   label: string;
   isCurrent: (pathname: string) => boolean;
   symbol: string;
+  /** Sub-items shown under the item; the item is highlighted while one of them is the current page. */
+  children?: readonly NavItem[];
 }
 
 /** The creation page: the sports wizard. */
@@ -57,6 +59,21 @@ const NAV_ITEMS: readonly NavItem[] = [
     label: 'Plantillas',
     symbol: '▥',
     isCurrent: (pathname) => pathname === '/templates' || pathname.startsWith('/templates/'),
+    children: [
+      {
+        // The visual templates, their editor and the AI design proposals.
+        to: '/templates/create',
+        label: 'Crear plantilla',
+        symbol: '✦',
+        isCurrent: (pathname) => pathname.startsWith('/templates/create') || pathname.startsWith('/templates/visual/'),
+      },
+      {
+        to: '/templates/engine',
+        label: 'Plantillas del motor',
+        symbol: '▦',
+        isCurrent: (pathname) => pathname.startsWith('/templates/engine'),
+      },
+    ],
   },
   { to: '/imports', label: 'Datos', symbol: '≡', isCurrent: (pathname) => pathname.startsWith('/imports') },
 ];
@@ -64,25 +81,53 @@ const NAV_ITEMS: readonly NavItem[] = [
 function MainNavigation({ pathname }: { pathname: string }) {
   return (
     <ul className="m-0 grid list-none gap-1 p-0">
-      {NAV_ITEMS.map((item) => (
-        <li key={item.to}>
-          <Link
-            className={classNames(
-              'focus-studio flex min-h-touch items-center gap-3 rounded-control border-l-4 px-3 py-2 font-sans text-body-sm no-underline transition-colors',
-              item.isCurrent(pathname)
-                ? 'border-brand-gold bg-surface-overlay font-bold text-brand-gold'
-                : 'border-transparent text-text-secondary hover:bg-surface-card hover:text-text-primary',
+      {NAV_ITEMS.map((item) => {
+        const current = item.isCurrent(pathname);
+        const child = item.children?.find((entry) => entry.isCurrent(pathname));
+        return (
+          <li key={item.to}>
+            <Link
+              className={classNames(
+                'focus-studio flex min-h-touch items-center gap-3 rounded-control border-l-4 px-3 py-2 font-sans text-body-sm no-underline transition-colors',
+                current
+                  ? 'border-brand-gold bg-surface-overlay font-bold text-brand-gold'
+                  : 'border-transparent text-text-secondary hover:bg-surface-card hover:text-text-primary',
+              )}
+              to={item.to}
+              // With a current sub-item, the sub-item is the page; the parent only stays highlighted.
+              aria-current={current && child === undefined ? 'page' : undefined}
+            >
+              <span aria-hidden="true" className="inline-flex w-5 shrink-0 justify-center text-body-lg">
+                {item.symbol}
+              </span>
+              <span>{item.label}</span>
+            </Link>
+            {item.children === undefined ? null : (
+              <ul aria-label={item.label} className="m-0 mt-1 grid list-none gap-1 py-0 pr-0 pl-6">
+                {item.children.map((entry) => (
+                  <li key={entry.to}>
+                    <Link
+                      className={classNames(
+                        'focus-studio flex min-h-touch items-center gap-3 rounded-control border-l-2 px-3 py-1.5 font-sans text-body-sm no-underline transition-colors',
+                        entry.isCurrent(pathname)
+                          ? 'border-brand-gold font-bold text-text-primary'
+                          : 'border-border-subtle text-text-secondary hover:bg-surface-card hover:text-text-primary',
+                      )}
+                      to={entry.to}
+                      aria-current={entry.isCurrent(pathname) ? 'page' : undefined}
+                    >
+                      <span aria-hidden="true" className="inline-flex w-5 shrink-0 justify-center text-body-sm">
+                        {entry.symbol}
+                      </span>
+                      <span>{entry.label}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             )}
-            to={item.to}
-            aria-current={item.isCurrent(pathname) ? 'page' : undefined}
-          >
-            <span aria-hidden="true" className="inline-flex w-5 shrink-0 justify-center text-body-lg">
-              {item.symbol}
-            </span>
-            <span>{item.label}</span>
-          </Link>
-        </li>
-      ))}
+          </li>
+        );
+      })}
       <li className="flex min-h-touch items-center gap-3 px-4 py-2 text-body-sm text-text-subtle" aria-disabled="true">
         <span aria-hidden="true" className="w-5 text-center">
           ⚙

@@ -546,6 +546,21 @@ export class DesignRepository {
       .map((row) => ({ decision: row.decision, note: row.note, createdAt: row.created_at }));
   }
 
+  /**
+   * Visual templates (not deleted) made from a proposal or using its background in a kept version (PD-ARCH-01G-C).
+   */
+  templatesUsing(proposalId: string): number {
+    return (
+      this.#db
+        .prepare<{ n: number }>(
+          'SELECT count(DISTINCT t.id) AS n FROM visual_templates t WHERE t.deleted_at IS NULL AND ' +
+            '(t.source_proposal_id = ? OR EXISTS (SELECT 1 FROM visual_template_versions v WHERE v.template_id = t.id ' +
+            "AND v.status <> 'discarded' AND v.background_source = 'design_proposal' AND v.background_id = ?))",
+        )
+        .get([proposalId, proposalId])?.n ?? 0
+    );
+  }
+
   /** Generations still running from a proposal (a variant being generated). */
   runningVariantsOf(proposalId: string): number {
     return (

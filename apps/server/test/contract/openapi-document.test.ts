@@ -64,16 +64,16 @@ describe('contract document', () => {
     );
   });
 
-  it('has 115 operations on 87 paths, 52 of them mutating, with unique operation IDs', () => {
-    expect(Object.keys(child(document, 'paths'))).toHaveLength(87);
-    expect(operations).toHaveLength(115);
-    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(52);
+  it('has 130 operations on 97 paths, 62 of them mutating, with unique operation IDs', () => {
+    expect(Object.keys(child(document, 'paths'))).toHaveLength(97);
+    expect(operations).toHaveLength(130);
+    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(62);
     const ids = operations.map((operation) => operation.operation.operationId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('has 162 component schemas', () => {
-    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(162);
+  it('has 193 component schemas', () => {
+    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(193);
   });
 });
 
@@ -266,6 +266,7 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/tags/11: added',
       '/tags/12: added',
       '/tags/13: added',
+      '/tags/14: added',
       '/paths/~1projects~1{projectId}/delete: added',
       `${ack}/requestBody/content/application~1json/schema/properties/checks/items/enum/1: added`,
       '/paths/~1brand~1assets/post/parameters/3: added',
@@ -343,8 +344,19 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/paths/~1design~1proposals~1{proposalId}~1file: added',
       '/paths/~1design~1proposals~1{proposalId}~1background: added',
       '/paths/~1design~1proposals~1{proposalId}~1decisions: added',
+      '/paths/~1visual-templates: added',
+      '/paths/~1visual-templates~1{templateId}: added',
+      '/paths/~1visual-templates~1{templateId}~1archive: added',
+      '/paths/~1visual-templates~1{templateId}~1restore: added',
+      '/paths/~1visual-templates~1{templateId}~1versions: added',
+      '/paths/~1visual-templates~1{templateId}~1versions~1{versionId}: added',
+      '/paths/~1visual-templates~1{templateId}~1versions~1{versionId}~1release: added',
+      '/paths/~1visual-templates~1{templateId}~1versions~1{versionId}~1background: added',
+      '/paths/~1visual-templates~1{templateId}~1versions~1{versionId}~1previews: added',
+      '/paths/~1visual-templates~1{templateId}~1versions~1{versionId}~1preview: added',
       '/components/parameters/GenerationId: added',
       '/components/parameters/ProposalId: added',
+      '/components/parameters/VisualTemplateId: added',
       '/components/schemas/Problem/properties/code/enum/15: changed',
       '/components/schemas/Problem/properties/code/enum/16: changed',
       '/components/schemas/Problem/properties/code/enum/17: changed',
@@ -374,6 +386,11 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/Problem/properties/code/enum/41: added',
       '/components/schemas/Problem/properties/code/enum/42: added',
       '/components/schemas/Problem/properties/code/enum/43: added',
+      '/components/schemas/Problem/properties/code/enum/44: added',
+      '/components/schemas/Problem/properties/code/enum/45: added',
+      '/components/schemas/Problem/properties/code/enum/46: added',
+      '/components/schemas/Problem/properties/code/enum/47: added',
+      '/components/schemas/Problem/properties/code/enum/48: added',
       '/components/schemas/ProjectSummaryFields/required/13: added',
       '/components/schemas/ProjectSummaryFields/required/14: added',
       '/components/schemas/ProjectSummaryFields/properties/latestRunStatus: added',
@@ -495,6 +512,37 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/DesignGenerationEvent: added',
       '/components/schemas/DesignProposal: added',
       '/components/schemas/DesignProposalDetail: added',
+      '/components/schemas/VisualTemplateStatus: added',
+      '/components/schemas/VisualTemplateVersionStatus: added',
+      '/components/schemas/VisualTemplateBinding: added',
+      '/components/schemas/VisualTemplateTextEffect: added',
+      '/components/schemas/VisualTemplateTextStyle: added',
+      '/components/schemas/VisualTemplateImageFit: added',
+      '/components/schemas/VisualTemplateTextLayer: added',
+      '/components/schemas/VisualTemplateSportsDataLayer: added',
+      '/components/schemas/VisualTemplateImageLayer: added',
+      '/components/schemas/VisualTemplateBrandAssetLayer: added',
+      '/components/schemas/VisualTemplateLayer: added',
+      '/components/schemas/VisualTemplateBackgroundSource: added',
+      '/components/schemas/VisualTemplateBackgroundInput: added',
+      '/components/schemas/VisualTemplateBackground: added',
+      '/components/schemas/VisualTemplateAssetRef: added',
+      '/components/schemas/VisualTemplateIssueCode: added',
+      '/components/schemas/VisualTemplateIssue: added',
+      '/components/schemas/VisualTemplateValidation: added',
+      '/components/schemas/VisualTemplate: added',
+      '/components/schemas/VisualTemplateVersionSummary: added',
+      '/components/schemas/VisualTemplateDetail: added',
+      '/components/schemas/VisualTemplateVersion: added',
+      '/components/schemas/VisualTemplateVersionRef: added',
+      '/components/schemas/VisualTemplateCreate: added',
+      '/components/schemas/VisualTemplateUpdate: added',
+      '/components/schemas/VisualTemplateVersionSave: added',
+      '/components/schemas/VisualTemplateVersionCreate: added',
+      '/components/schemas/VisualTemplatePublish: added',
+      '/components/schemas/VisualTemplatePreviewSelection: added',
+      '/components/schemas/VisualTemplatePreviewRequest: added',
+      '/components/schemas/VisualTemplatePreview: added',
     ]);
   });
 

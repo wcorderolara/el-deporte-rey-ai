@@ -17,6 +17,7 @@ describe('module registry', () => {
       'content',
       'brand',
       'design',
+      'visual-templates',
       'rendering',
       'visual-qa',
       'review',

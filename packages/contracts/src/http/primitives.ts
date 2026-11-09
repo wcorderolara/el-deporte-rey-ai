@@ -37,6 +37,12 @@ export const ContractPatterns = {
   ImageSize: '^[1-9][0-9]{1,3}x[1-9][0-9]{1,3}$',
   /** Prefix of the status/events URLs returned when a design generation starts. */
   DesignGenerationUrl: '^/api/v1/design/generations/',
+  /** Layer identifier of a visual template version (PD-ARCH-01G-C). */
+  LayerId: '^[a-z0-9][a-z0-9-]{0,39}$',
+  /** Prefix of the preview image URL of a visual template version. */
+  VisualTemplateUrl: '^/api/v1/visual-templates/',
+  /** A revision number written in a query string. */
+  RevisionParam: '^[1-9][0-9]{0,8}$',
 } as const;
 
 export type ContractPatternName = keyof typeof ContractPatterns;

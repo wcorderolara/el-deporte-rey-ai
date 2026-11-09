@@ -2,15 +2,16 @@
  * Templates page (PD-ARCH-01G-A; R-031, R-050, R-231; OD-13, PD-06), separate from Mi marca: each template with its
  * version, slide type, empty badge slots, image slots and a preview per language, with no editing control.
  */
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { appRoutes } from '../../app/routes';
 import { createDesignApi } from '../design/designApi';
+import { createVisualTemplatesApi } from '../visual-templates/visualTemplatesApi';
 import { createBrandApi } from './brandApi';
-import { TemplatesPage } from './TemplatesPage';
+import { CreateTemplatesPage, EngineTemplatesPage } from './TemplatesPage';
 import {
   deferred,
   fakeFetch,
@@ -30,7 +31,7 @@ function renderPage(routes: Record<string, Handler | Handler[]> = {}) {
   });
   render(
     <MemoryRouter>
-      <TemplatesPage api={createBrandApi({ fetch: fake.fetch })} />
+      <EngineTemplatesPage api={createBrandApi({ fetch: fake.fetch })} />
     </MemoryRouter>,
   );
   return fake;
@@ -44,11 +45,11 @@ function card(label: string): HTMLElement {
   return screen.getByRole('article', { name: label });
 }
 
-describe('TemplatesPage: page frame', () => {
+describe('Plantillas del motor: page frame', () => {
   it('shows its own heading, the versioned-code rule and a link to Mi marca, without brand requests', async () => {
     const fake = renderPage();
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Plantillas' })).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: 'Plantillas del motor' })).toBeTruthy();
     expect(document.body.textContent).toContain('no se editan desde esta página');
     expect(screen.getByRole('link', { name: 'Mi marca' }).getAttribute('href')).toBe('/brand');
     await templateList();
@@ -65,7 +66,7 @@ describe('TemplatesPage: page frame', () => {
   });
 });
 
-describe('TemplatesPage: templates (R-231, OD-13)', () => {
+describe('Plantillas del motor: templates (R-231, OD-13)', () => {
   it('lists each template with version, slide type, empty badge slots and image slots', async () => {
     renderPage();
     await templateList();
@@ -151,10 +152,11 @@ describe('TemplatesFeature nested routes', () => {
   });
 });
 
-describe('TemplatesPage: AI design proposals (PD-ARCH-01G-B)', () => {
-  it('shows the proposals apart from the engine templates, never as templates', async () => {
+describe('Crear plantilla and Plantillas del motor: separate views (PD-ARCH-01G-C)', () => {
+  it('shows the AI design proposals in «Crear plantilla», never the engine templates, which have their own view', async () => {
     const fake = fakeFetch({
       'GET /templates': () => jsonResponse({ templates: [TEMPLATE_COVER] }),
+      'GET /visual-templates': () => jsonResponse({ templates: [] }),
       'GET /design/capabilities': () =>
         jsonResponse({
           adapter: 'disabled',
@@ -179,14 +181,36 @@ describe('TemplatesPage: AI design proposals (PD-ARCH-01G-B)', () => {
     });
     render(
       <MemoryRouter>
-        <TemplatesPage api={createBrandApi({ fetch: fake.fetch })} designApi={createDesignApi({ fetch: fake.fetch })} />
+        <CreateTemplatesPage
+          api={createBrandApi({ fetch: fake.fetch })}
+          designApi={createDesignApi({ fetch: fake.fetch })}
+          visualApi={createVisualTemplatesApi({ fetch: fake.fetch })}
+        />
       </MemoryRouter>,
     );
+    expect(screen.getByRole('heading', { level: 1, name: 'Crear plantilla' })).toBeTruthy();
     const proposals = await screen.findByRole('region', { name: 'Propuestas visuales con IA' });
     expect(within(proposals).getByText(/no es una plantilla/)).toBeTruthy();
-    const engine = screen.getByRole('region', { name: 'Plantillas del motor' });
-    expect(await within(engine).findByRole('heading', { level: 3, name: TEMPLATE_COVER.label })).toBeTruthy();
-    expect(within(engine).queryByText(/Propuesta/)).toBeNull();
+    expect(await screen.findByRole('region', { name: 'Plantillas visuales' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Plantillas del motor' })).toBeNull();
     expect(screen.getByRole('button', { name: /Crear diseño con IA/ })).toBeTruthy();
+    expect(fake.requests.map((request) => request.url)).not.toContain('/api/v1/templates');
+  });
+
+  it('opens «Crear plantilla» from /templates and keeps the engine templates at /templates/engine', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ templates: [] }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    const router = createMemoryRouter(appRoutes, { initialEntries: ['/templates'] });
+    render(<RouterProvider router={router} />);
+    await waitFor(() => expect(router.state.location.pathname).toBe('/templates/create'));
+    cleanup();
+    const engine = createMemoryRouter(appRoutes, { initialEntries: ['/templates/engine'] });
+    render(<RouterProvider router={engine} />);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Plantillas del motor' })).toBeTruthy();
+    vi.restoreAllMocks();
   });
 });

@@ -202,7 +202,7 @@ describe('visual QA stage after the real content and rendering stages', () => {
 
   it('stores capitalized_tokens as an acknowledgeable warning on the migrated schema (OD-26, OD-38, OD-56)', async () => {
     expect(appliedMigrations(env.fixture.db).map((record) => record.version)).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
     ]);
     const runId = env.run(leagueFacts(), NOT_AVAILABLE);
     await env.draft(runId);

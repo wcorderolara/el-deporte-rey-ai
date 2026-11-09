@@ -139,6 +139,12 @@ export const brandProblems = {
       `The asset is drawn by ${String(versions)} rendered slide versions of ${String(projects)} projects ` +
         `(${String(exports)} exports); deactivate it instead.`,
     ),
+  inUseByTemplates: (templates: number): HttpProblem =>
+    new HttpProblem(
+      409,
+      'ASSET_IN_USE',
+      `The asset is placed by ${String(templates)} visual templates; deactivate it instead.`,
+    ),
 };
 
 /** The usage policy of a category when none is given (`transformable` is never a default). */
@@ -223,6 +229,15 @@ export class BrandAssetService {
       (asset): asset is DrawableBrandAsset => asset.usagePolicy !== 'reference_only' && asset.mime !== 'image/webp',
     );
     return [...drawable.filter((asset) => !asset.primary), ...drawable.filter((asset) => asset.primary)];
+  }
+
+  /**
+   * Any registered asset, deleted ones included, with whether it was deleted; null for an unknown ID. Visual templates
+   * use it to tell a deleted asset from a missing one (PD-ARCH-01G-C).
+   */
+  find(id: string): { asset: BrandAsset; deleted: boolean } | null {
+    const record = this.#repository.get(id);
+    return record === null ? null : { asset: toBrandAsset(record), deleted: record.deletedAt !== null };
   }
 
   /** An asset of the library with its usage; 404 for an unknown or deleted asset. */
@@ -352,8 +367,8 @@ export class BrandAssetService {
   }
 
   /**
-   * Deletes an asset logically (OD-08: the row and the file are kept) when no rendered slide version draws it;
-   * otherwise 409 `ASSET_IN_USE` with its usage. Deleting a deleted asset is accepted again; an unknown one is 404.
+   * Deletes an asset logically (OD-08: the row and the file are kept) when no rendered slide version draws it and no
+   * visual template places it (PD-ARCH-01G-C); otherwise 409 `ASSET_IN_USE` with its usage. Deleting a deleted asset is accepted again; an unknown one is 404.
    */
   delete(id: string): void {
     this.#repository.transaction(() => {
@@ -367,6 +382,9 @@ export class BrandAssetService {
       const usage = this.#repository.usage(id);
       if (usage.renderedVersions > 0) {
         throw brandProblems.inUse(usage.renderedVersions, usage.projects, usage.exports);
+      }
+      if (usage.templates > 0) {
+        throw brandProblems.inUseByTemplates(usage.templates);
       }
       this.#repository.markDeleted(id, this.#now());
     });

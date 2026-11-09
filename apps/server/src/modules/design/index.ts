@@ -23,7 +23,8 @@ export const MAX_PROPOSAL_FILE_BYTES = 32 * 1024 * 1024;
 
 export { DESIGN_PROMPT_VERSION, buildDesignPrompt } from './prompt.js';
 export { ROLES_BY_POLICY, allowsRole } from './policies.js';
-export { DesignService } from './service.js';
+export { type DesignTemplateSource, DesignService } from './service.js';
+export type { ProposalLayer } from './repository.js';
 export { proposalSize } from './sizes.js';
 
 export interface DesignModuleOptions {

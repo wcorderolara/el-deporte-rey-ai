@@ -2,7 +2,8 @@
  * Rendering module (architecture.md sections 4, 6 and 9; AD-07; OD-13): versioned carousel templates (cover,
  * match-result, standings, closing), measured text layout with the bundled fonts, render models, deterministic Satori
  * and resvg rendering to PNG at the configured size, the rendering stage, the template registry and the template
- * routes (listTemplates, previewTemplate).
+ * routes (listTemplates, previewTemplate). The render models of structured visual templates (PD-ARCH-01G-C,
+ * `structured.ts`) use the same model and renderer.
  *
  * Integration points:
  * - visual QA (T35): `RenderModelSchema` (the stored `element_versions.render_model`), `layoutText` / `fitText`,
@@ -39,12 +40,29 @@ export { PREVIEW_CACHE_ENTRIES, TemplatePreviewService } from './preview.js';
 export {
   PALETTE_ROLES,
   type RenderElement,
+  type ImageFit,
+  type Palette,
+  type PaletteRole,
   type RenderModel,
   RenderModelSchema,
+  type TextEffect,
   type TextElement,
   type TextSemantic,
 } from './render-model.js';
-export { RenderError, pngSize, renderSlide } from './renderer.js';
+export { type EmbeddedAsset, RenderError, pngSize, renderSlide, textShadowOf } from './renderer.js';
+export {
+  type FractionBox,
+  type StructuredDocument,
+  type StructuredImageItem,
+  type StructuredItem,
+  type StructuredModel,
+  type StructuredTextItem,
+  type StructuredTextStyle,
+  buildStructuredModel,
+  displayText,
+  layoutTextBox,
+  pixelBox,
+} from './structured.js';
 export {
   type RenderedVersion,
   RenderIntegrityError,
@@ -59,7 +77,8 @@ export {
   slideImageUrl,
 } from './stage.js';
 export { type StoredElementText, StoredElementTextSchema } from './slide-content.js';
-export type { TemplateDefinition } from './templates/common.js';
+export type { AssetRef, TemplateDefinition } from './templates/common.js';
+export type { SegmentRun } from './slide-content.js';
 export { BUILT_IN_TEMPLATES, TemplateRegistry, toContractTemplate } from './templates/registry.js';
 
 /** Options of the rendering module (tests pass their own registry, fonts or asset lookup). */

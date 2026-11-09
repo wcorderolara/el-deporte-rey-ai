@@ -191,6 +191,10 @@ export const detailCopy = {
     versions === 0
       ? 'No aparece en ninguna diapositiva generada.'
       : `Aparece en ${versions} ${versions === 1 ? 'diapositiva generada' : 'diapositivas generadas'} de ${projects} ${projects === 1 ? 'proyecto' : 'proyectos'} y en ${exports} ${exports === 1 ? 'exportación' : 'exportaciones'}.`,
+  templateUsage: (templates: number): string =>
+    templates === 0
+      ? 'No lo usa ninguna plantilla visual.'
+      : `Lo ${templates === 1 ? 'usa 1 plantilla visual' : `usan ${templates} plantillas visuales`}.`,
   editHeading: 'Editar propiedades',
   fileUnchanged: 'Editar el nombre o la descripción no cambia el archivo original.',
   save: 'Guardar cambios',
@@ -210,6 +214,8 @@ export const detailCopy = {
     'Desaparece de la biblioteca y del contenido que se genere después. El archivo se conserva y vuelve a la biblioteca si lo subes de nuevo.',
   deleteBlocked:
     'Este recurso aparece en diapositivas ya generadas, así que no se puede eliminar sin romper ese contenido. Puedes desactivarlo.',
+  deleteBlockedTemplates:
+    'Una plantilla visual coloca este recurso, así que no se puede eliminar sin romperla. Puedes desactivarlo.',
   confirmDelete: 'Sí, eliminar',
   cancel: 'Cancelar',
   deleting: 'Eliminando…',
@@ -257,11 +263,14 @@ export const identityCopy = {
 } as const;
 
 export const templatesCopy = {
-  eyebrow: 'Diseño de carruseles',
+  eyebrow: 'Plantillas',
   heading: 'Plantillas',
+  createHeading: 'Crear plantilla',
+  createIntro:
+    'Convierte una propuesta visual aprobada en una plantilla reutilizable y edítala: fondo, recursos oficiales y textos con datos deportivos. Reutilizarla no llama a OpenAI.',
   engineHeading: 'Plantillas del motor',
   versioned:
-    'Las plantillas son código versionado y no se editan desde esta página. Una versión nueva se aplica a los carruseles que se generen después.',
+    'Las plantillas del motor son código versionado y no se editan desde esta página. Una versión nueva se aplica a los carruseles que se generen después. Las plantillas visuales se crean y se editan en «Crear plantilla».',
   brandNote: 'El logotipo y la mascota que dibujan las plantillas se gestionan en',
   brandLink: 'Mi marca',
   listLabel: 'Plantillas disponibles',

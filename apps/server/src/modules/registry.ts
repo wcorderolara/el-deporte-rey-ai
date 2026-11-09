@@ -10,6 +10,7 @@ import { serverModule as rendering } from './rendering/index.js';
 import { serverModule as research } from './research/index.js';
 import { serverModule as review } from './review/index.js';
 import { serverModule as verification } from './verification/index.js';
+import { serverModule as visualTemplates } from './visual-templates/index.js';
 import { serverModule as visualQa } from './visual-qa/index.js';
 
 /**
@@ -25,6 +26,7 @@ export const serverModules: readonly ServerModule[] = [
   content,
   brand,
   design,
+  visualTemplates,
   rendering,
   visualQa,
   review,

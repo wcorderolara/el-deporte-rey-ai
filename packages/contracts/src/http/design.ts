@@ -19,7 +19,7 @@ export const DesignContentTypeSchema = z.enum(['match_preview', 'round_overview'
  * - `guided`: the server's versioned prompt, a background design with empty data zones and no text or people, which a
  *   structured template can reuse;
  * - `own_prompt`: the operator's prompt as written (only the input-image numbering and the zones of original layers are
- *   added); an inspiration image that is never a template base.
+ *   added); an inspiration image, a template base only with the operator's acknowledgement (PD-ARCH-01G-C).
  */
 export const DesignModeSchema = z.enum(['guided', 'own_prompt']);
 
@@ -245,7 +245,10 @@ const DecisionNoteSchema = noteSchema(MAX_DESIGN_DECISION_NOTE);
 export const DesignProposalSchema = z.strictObject({
   id: UuidSchema,
   generationId: UuidSchema,
-  /** `own_prompt` proposals are inspiration images, never a template base. */
+  /**
+   * `own_prompt` proposals are inspiration images: they become a template base only after the operator acknowledges
+   * that the image may contain generated text, people or brand elements (PD-ARCH-01G-C).
+   */
   mode: DesignModeSchema,
   name: z.string().min(1).max(120),
   contentType: DesignContentTypeSchema,
