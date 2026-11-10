@@ -19,6 +19,7 @@ import type {
   RoundHistoryEntry,
   RoundUpdatePatch,
 } from '../domain/port.js';
+import { badgeJson, badgeOf } from '../../badges/sql.js';
 
 interface StageRow {
   id: string;
@@ -58,6 +59,8 @@ interface MatchRow extends TeamRow {
   away_id: string;
   away_name: string;
   away_region: string | null;
+  home_badge_json: string | null;
+  away_badge_json: string | null;
   away_created_at: string;
   away_updated_at: string;
 }
@@ -109,11 +112,19 @@ function matchFrom(row: MatchRow): CompetitionMatch {
     seasonId: row.season_id,
     stage: row.stage_id ? { id: row.stage_id, name: row.stage_name ?? '' } : null,
     round: row.round_id ? { id: row.round_id, name: row.round_name ?? '' } : null,
-    homeTeam: { id: row.id, name: row.name, region: row.region, createdAt: row.created_at, updatedAt: row.updated_at },
+    homeTeam: {
+      id: row.id,
+      name: row.name,
+      region: row.region,
+      badge: badgeOf(row.home_badge_json),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    },
     awayTeam: {
       id: row.away_id,
       name: row.away_name,
       region: row.away_region,
+      badge: badgeOf(row.away_badge_json),
       createdAt: row.away_created_at,
       updatedAt: row.away_updated_at,
     },
@@ -126,11 +137,15 @@ function matchFrom(row: MatchRow): CompetitionMatch {
   };
 }
 
+/** Season participants with the active badge of each team (PD-ARCH-01G-D). */
+const PARTICIPANTS_SELECT = `SELECT t.id, t.name, t.region, ${badgeJson('t')} AS badge_json, t.created_at, t.updated_at FROM season_participants p JOIN managed_teams t ON t.id = p.team_id WHERE p.season_id = ? ORDER BY t.normalized_name, t.normalized_region, t.id`;
+
 const MATCH_SELECT = `
   SELECT m.id AS match_id, m.season_id, m.stage_id, s.name AS stage_name, m.round_id, r.name AS round_name,
     m.kickoff_at, m.status, mr.home_score, mr.away_score, m.created_at AS match_created_at, m.updated_at AS match_updated_at,
     h.id, h.name, h.region, h.created_at, h.updated_at, a.id AS away_id, a.name AS away_name,
-    a.region AS away_region, a.created_at AS away_created_at, a.updated_at AS away_updated_at
+    a.region AS away_region, a.created_at AS away_created_at, a.updated_at AS away_updated_at,
+    ${badgeJson('h')} AS home_badge_json, ${badgeJson('a')} AS away_badge_json
   FROM competition_matches m
   JOIN match_results mr ON mr.match_id = m.id
   JOIN managed_teams h ON h.id = m.home_team_id
@@ -385,14 +400,20 @@ export class SQLiteCompetitionCalendarRepository implements CompetitionCalendarP
   listParticipants(competitionId: string, seasonId: string) {
     this.#requireSeason(competitionId, seasonId);
     return this.#db
-      .prepare<{ id: string; name: string; region: string | null; created_at: string; updated_at: string }>(
-        'SELECT t.id, t.name, t.region, t.created_at, t.updated_at FROM season_participants p JOIN managed_teams t ON t.id = p.team_id WHERE p.season_id = ? ORDER BY t.normalized_name, t.normalized_region, t.id',
-      )
+      .prepare<{
+        id: string;
+        name: string;
+        region: string | null;
+        badge_json: string | null;
+        created_at: string;
+        updated_at: string;
+      }>(PARTICIPANTS_SELECT)
       .all([seasonId])
       .map((row) => ({
         id: row.id,
         name: row.name,
         region: row.region,
+        badge: badgeOf(row.badge_json),
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));

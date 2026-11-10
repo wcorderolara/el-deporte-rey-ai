@@ -287,6 +287,133 @@ describe('conversion of an approved proposal', () => {
     expect(imageRequests(egress)).toBe(before);
   });
 
+  it('makes cover and closing templates for the engine slide types, with optional starter layers (01G-D-3)', async () => {
+    const { app, egress } = await start();
+    const proposalId = await proposal(app);
+    const before = imageRequests(egress);
+    const cover = await create(app, { sourceProposalId: proposalId, contentType: 'cover', name: 'Portada' });
+    expect(cover.template.contentType).toBe('cover');
+    const coverDraft = await version(app, cover.template.id, cover.template.draftVersionId ?? '');
+    expect(coverDraft.bindings).toEqual(['competition.name', 'round.name']);
+    expect(coverDraft.layers.map((layer) => layer.type === 'sports_data' && layer.required)).toContain(false);
+    expect(coverDraft.layers.filter((layer) => layer.type === 'sports_data').every((layer) => !layer.required)).toBe(
+      true,
+    );
+    expect(coverDraft.validation.publishable).toBe(true);
+
+    const closing = await create(app, { sourceProposalId: proposalId, contentType: 'closing', name: 'Cierre' });
+    const closingDraft = await version(app, closing.template.id, closing.template.draftVersionId ?? '');
+    expect(closingDraft.bindings).toEqual([]);
+    expect(closingDraft.layers.filter((layer) => layer.type === 'text').map((layer) => layer.name)).toEqual([
+      'Texto de cierre',
+    ]);
+    expect(closingDraft.validation.publishable).toBe(true);
+
+    // Nothing is required of a cover: a fixed text, or no layer at all (a warning only), can be released.
+    const coverOnlyText = VisualTemplateVersionSchema.parse(
+      (await save(app, coverDraft, [text('title', 'Jornada especial')])).json(),
+    );
+    expect(coverOnlyText.validation.issues.map((issue) => issue.code)).not.toContain('REQUIRED_BINDING_MISSING');
+    expect(coverOnlyText.validation.publishable).toBe(true);
+    const coverEmpty = VisualTemplateVersionSchema.parse((await save(app, coverOnlyText, [])).json());
+    expect(coverEmpty.validation.issues.filter((issue) => issue.severity === 'error')).toEqual([]);
+    expect(coverEmpty.validation.issues).toContainEqual(
+      expect.objectContaining({ code: 'NO_LAYERS', severity: 'warning' }),
+    );
+    expect(coverEmpty.validation.publishable).toBe(true);
+    const closingEmpty = VisualTemplateVersionSchema.parse((await save(app, closingDraft, [])).json());
+    expect(closingEmpty.validation.publishable).toBe(true);
+
+    // Several variants of a cover live side by side, from the same background.
+    const variant = await create(app, { sourceProposalId: proposalId, contentType: 'cover', name: 'Portada B' });
+    const variantDraft = await version(app, variant.template.id, variant.template.draftVersionId ?? '');
+    const released = await app.send(
+      'POST',
+      `/visual-templates/${variant.template.id}/versions/${variantDraft.id}/release`,
+      { revision: variantDraft.revision },
+    );
+    expect(released.statusCode, released.body).toBe(200);
+    const covers = (
+      (await app.get('/visual-templates')).json() as { templates: { contentType: string; name: string }[] }
+    ).templates
+      .filter((template) => template.contentType === 'cover')
+      .map((template) => template.name)
+      .sort();
+    expect(covers).toEqual(['Portada', 'Portada B']);
+
+    // A team badge or a match value belongs to the match slides.
+    const coverMatch = VisualTemplateVersionSchema.parse(
+      (
+        await save(app, coverEmpty, [
+          data('round', 'round.name', 0.2, true),
+          data('home', 'match.homeTeam.name', 0.4),
+          {
+            id: 'badge',
+            name: 'Escudo',
+            type: 'team_badge',
+            binding: 'match.homeTeam.badge',
+            x: 0.1,
+            y: 0.6,
+            width: 0.2,
+            height: 0.15,
+            visible: true,
+          },
+        ])
+      ).json(),
+    );
+    expect(
+      coverMatch.validation.issues.filter((issue) => issue.severity === 'error').map((issue) => issue.code),
+    ).toEqual(['BINDING_NOT_ALLOWED', 'BINDING_NOT_ALLOWED']);
+    expect(
+      (
+        await app.send('POST', '/visual-templates', {
+          sourceProposalId: proposalId,
+          name: 'Tabla',
+          contentType: 'standings',
+        })
+      ).statusCode,
+    ).toBe(400);
+    expect(imageRequests(egress)).toBe(before);
+  });
+
+  it('previews a cover and a closing with the competition and season only; the round is optional', async () => {
+    const { app } = await start();
+    const proposalId = await proposal(app);
+    const local = await sportsData(app);
+    const previewOf = async (templateId: string, versionId: string, selection: Record<string, unknown>) =>
+      app.send('POST', `/visual-templates/${templateId}/versions/${versionId}/previews`, { selection });
+    const cover = await create(app, { sourceProposalId: proposalId, contentType: 'cover', name: 'Portada' });
+    const withRound = await previewOf(cover.template.id, cover.template.draftVersionId ?? '', {
+      competitionId: local.competitionId,
+      seasonId: local.seasonId,
+      roundId: local.roundId,
+    });
+    expect(withRound.statusCode, withRound.body).toBe(200);
+    expect(VisualTemplatePreviewSchema.parse(withRound.json()).values).toEqual([
+      { binding: 'competition.name', value: 'Liga de plantillas' },
+      { binding: 'round.name', value: 'Jornada 9' },
+    ]);
+    // Without a round, the optional round value is left out and reported as a warning, never invented.
+    const withoutRound = VisualTemplatePreviewSchema.parse(
+      (
+        await previewOf(cover.template.id, cover.template.draftVersionId ?? '', {
+          competitionId: local.competitionId,
+          seasonId: local.seasonId,
+        })
+      ).json(),
+    );
+    expect(withoutRound.values).toContainEqual({ binding: 'round.name', value: null });
+    expect(withoutRound.issues.map((issue) => [issue.code, issue.severity])).toEqual([['VALUE_MISSING', 'warning']]);
+
+    const closing = await create(app, { sourceProposalId: proposalId, contentType: 'closing', name: 'Cierre' });
+    const closingPreview = await previewOf(closing.template.id, closing.template.draftVersionId ?? '', {
+      competitionId: local.competitionId,
+      seasonId: local.seasonId,
+    });
+    expect(closingPreview.statusCode, closingPreview.body).toBe(200);
+    expect(VisualTemplatePreviewSchema.parse(closingPreview.json()).issues).toEqual([]);
+  });
+
   it('refuses a proposal that is not approved or not found, and an own-prompt proposal without acknowledgement', async () => {
     const { app } = await start();
     const pending = await proposal(app, {}, null);
@@ -412,7 +539,7 @@ describe('drafts, release and versions', () => {
     expect(imageRequests(egress)).toBe(before);
   });
 
-  it('archives and restores, discards a draft, and deletes only a template that was never released', async () => {
+  it('archives and restores, discards a draft, and deletes a template never released or archived (01G-D-4)', async () => {
     const { app } = await start();
     const proposalId = await proposal(app);
     const detail = await create(app, { sourceProposalId: proposalId });
@@ -458,6 +585,18 @@ describe('drafts, release and versions', () => {
     expect((await app.send('DELETE', `/visual-templates/${unreleased.template.id}`)).statusCode).toBe(204);
     const list = VisualTemplateListSchema.parse((await app.get('/visual-templates')).json());
     expect(list.templates.map((template) => template.id)).toEqual([templateId]);
+
+    // Archived, the published template can be deleted; its rows and published versions stay.
+    await app.send('POST', `/visual-templates/${templateId}/archive`);
+    expect((await app.send('DELETE', `/visual-templates/${templateId}`)).statusCode).toBe(204);
+    expect(VisualTemplateListSchema.parse((await app.get('/visual-templates')).json()).templates).toEqual([]);
+    expect(
+      app.container.db
+        .prepare<{ n: number }>(
+          "SELECT count(*) AS n FROM visual_template_versions WHERE template_id = ? AND status = 'published'",
+        )
+        .get([templateId])?.n,
+    ).toBe(1);
   });
 
   it('keeps templates, versions and their layers after a restart', async () => {

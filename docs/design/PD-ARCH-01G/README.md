@@ -7,9 +7,11 @@
 - **PD-ARCH-01G-B** — propuestas visuales generadas con la API de imágenes de OpenAI. **Aceptada por el Product Owner
   el 2026-11-06** y cerrada en `work/PD-ARCH-01G-B` con el commit `9da113b11f572fcf062d950546a9cf4182a481fe`.
 - **PD-ARCH-01G-C** — plantillas visuales estructuradas y reutilizables a partir de propuestas aprobadas. **Aceptada por
-  el Product Owner el 2026-11-09** y cerrada con un commit en `work/PD-ARCH-01G-C`.
+  el Product Owner el 2026-11-09** y cerrada en `work/PD-ARCH-01G-C` con el commit
+  `cc3559093d80d39fb842c9d755d72c3932d9c89c`.
 - **PD-ARCH-01G-D** — integración de plantillas en la generación de contenido y escudos de equipo subidos a mano
-  (PD-28; la fase 01G-E prevista se integra aquí por decisión del 2026-11-09). No iniciada.
+  (PD-28; la fase 01G-E prevista se integra aquí por decisión del 2026-11-09). Implementada en `work/PD-ARCH-01G-D`,
+  sin commit, **pendiente de aceptación del Product Owner**.
 
 ## Documentos
 
@@ -24,12 +26,21 @@
 - [Informe de implementación de 01G-C](./pd-arch-01g-c-implementation-report.md): plantillas, versiones y capas,
   motor de render compartido, contratos, migración 0029, reglas de validación, interfaz, pruebas, limitaciones y
   validación manual.
+- [Assessment de 01G-D](./pd-arch-01g-d-assessment.md): respuestas A a G del encargo (modelo de equipos, escudos de
+  proveedores, identidad, protección manual, almacenamiento, bindings de imagen, consistencia), decisiones D1 a D12,
+  riesgos y migración.
+- [Informe de implementación de 01G-D](./pd-arch-01g-d-implementation-report.md): escudos de equipo, integración con
+  el wizard y la generación, versionado y reproducibilidad, QA de plantillas, contratos, migración 0030, pruebas,
+  limitaciones y validación manual.
 
 ## Decisiones del Product Owner
 
 | ID | Decisión | Fecha |
 | --- | --- | --- |
 | 01G-D-1 | Para 01G-D: los escudos se suben solo a mano (PD-28 sin cambios): se descarta cualquier referencia, URL o importación de escudos de proveedores, también como dato. Los escudos se implementan dentro de 01G-D (enmienda del punto 5 de PD-28; no hay fase 01G-E). En los proyectos solo se ofrecen plantillas 4:5 (BR-08 sin cambios). El binding de escudo es `badge`. | 2026-11-09 |
+| 01G-D-2 | Corrección: la base real conservaba claves foráneas de un borrador de la migración 0016 que impedían confirmar cualquier importación. Se agrega la migración de reconciliación 0031 (sin editar 0016), probada antes sobre una copia de la base. Ver el informe de 01G-D, sección 13.1. | 2026-11-09 |
+| 01G-D-3 | Las plantillas visuales usan los tipos de diapositiva del motor: Portada, Resultado de partido, Calendario de jornada, Partido programado, Previa de partido y Cierre. Clasificación queda fuera. En el asistente se elige una plantilla por tipo de diapositiva (portada, partidos, cierre), y el proyecto fija la versión de cada una. La portada y el cierre no tienen campos obligatorios y pueden tener varias variantes. Migración 0032. Se implementa dentro de 01G-D, antes de crear plantillas desde un fondo de Mi marca. Ver el informe de 01G-D, sección 13.2. | 2026-11-09 |
+| 01G-D-4 | Se pueden eliminar las plantillas visuales archivadas, además de las que nunca se publicaron; una plantilla publicada se archiva antes de eliminarla. La eliminación es lógica y los proyectos conservan sus versiones. Cambia la regla de 01G-C. Ver el informe de 01G-D, sección 13.3. | 2026-11-09 |
 | 01G-C (cierre) | Aceptación formal de 01G-C y autorización de su cierre. | 2026-11-09 |
 | 01G-C-3 | Plantillas pasa a ser un menú padre (`/templates`) con dos sub-opciones y vistas separadas: **Crear plantilla** (`/templates/create`: Plantillas visuales y Propuestas visuales con IA; el editor `/templates/visual/:id` pertenece a esta vista) y **Plantillas del motor** (`/templates/engine`). `/templates` abre «Crear plantilla». El enlace antiguo `/brand#brand-templates-title` lleva a «Plantillas del motor». | 2026-11-09 |
 | PD-29 | Enmienda de BR-05, solo de visualización: una capa de texto de una plantilla visual puede dibujarse en mayúsculas («Mostrar en mayúsculas»). Cambian solo las líneas dibujadas; el valor guardado y el nombre oficial del equipo no cambian. El texto se mide como se dibuja. El QA de 01G-D debe comparar con la forma en mayúsculas. Registrada en `.orchestrate/source-of-truth.md`. | 2026-11-09 |

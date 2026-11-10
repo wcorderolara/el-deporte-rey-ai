@@ -3,7 +3,7 @@
  * background. An `error` blocks publication; a `warning` is for the operator to review. No check claims a perfect
  * visual result: the operator keeps the final approval.
  *
- * Errors: a layer outside the canvas or too small; a minimum font size above the maximum; a sports-data layer without
+ * Errors: a layer outside the canvas or too small; a team badge layer in a content type without a match; a minimum font size above the maximum; a sports-data layer without
  * a binding or with a binding the content type does not have; a value the content type requires that no visible layer
  * shows; a missing, deleted, inactive or not allowed asset (style references, `reference_only`, WebP, a logo or mascot
  * in an image layer, a protected asset that is not scaled proportionally); fixed text that does not fit; an unusable
@@ -17,10 +17,10 @@
 import {
   type BrandAsset,
   VISUAL_TEMPLATE_REQUIRED_BINDINGS,
+  type VisualTemplateBadgeBinding,
   type VisualTemplateBinding,
   type VisualTemplateContentType,
   type VisualTemplateIssue,
-  type VisualTemplateIssueCode,
   type VisualTemplateLayer,
   type VisualTemplateValidation,
 } from '@edr/contracts';
@@ -28,6 +28,7 @@ import {
 import { type FontSet, type FractionBox, type Palette, layoutTextBox, pixelBox } from '../rendering/index.js';
 
 import { STRESS_VALUES, bindingAllowed } from './catalog.js';
+import { issueOf } from './issues.js';
 import { type LuminanceSampler, contrastRatio, hexLuminance } from './contrast.js';
 
 /** The smallest layer side, in canvas pixels. */
@@ -68,48 +69,6 @@ export interface ValidationInput {
   readonly palette: Palette;
   /** Luminance under a box; null when the background could not be read. */
   readonly sampler: LuminanceSampler | null;
-}
-
-const MESSAGES: Readonly<Record<VisualTemplateIssueCode, string>> = {
-  OUT_OF_CANVAS: 'La capa sale del lienzo.',
-  TOO_SMALL: 'La capa es demasiado pequeña.',
-  FONT_SIZE_INVALID: 'El tamaño mínimo de letra es mayor que el máximo.',
-  OVERLAP: 'La capa se superpone a un texto.',
-  PROTECTED_OVERLAP: 'La capa tapa un recurso protegido (logotipo o mascota oficial).',
-  BINDING_MISSING: 'El dato deportivo no tiene un campo asociado.',
-  BINDING_NOT_ALLOWED: 'El campo no existe para este tipo de contenido.',
-  REQUIRED_BINDING_MISSING: 'Falta un dato obligatorio del tipo de contenido.',
-  ASSET_MISSING: 'El recurso no existe en Mi marca.',
-  ASSET_INACTIVE: 'El recurso está desactivado en Mi marca.',
-  ASSET_DELETED: 'El recurso se eliminó de Mi marca.',
-  ASSET_NOT_ALLOWED: 'Este recurso no se puede usar en esta capa.',
-  TEXT_TOO_LONG: 'El texto no cabe en su caja.',
-  TEXT_MAY_NOT_FIT: 'Un valor largo puede no caber en la caja.',
-  LOW_CONTRAST: 'El contraste del texto con el fondo es bajo.',
-  HIDDEN_LAYER: 'La capa está oculta y no se dibuja.',
-  NO_LAYERS: 'La plantilla no tiene capas sobre el fondo.',
-  BACKGROUND_UNAVAILABLE: 'El fondo no está disponible.',
-  BACKGROUND_SOURCE_DELETED: 'El origen del fondo se eliminó.',
-  BACKGROUND_ASPECT: 'El fondo tiene otra proporción y se recorta para cubrir el lienzo.',
-  BACKGROUND_REVIEW:
-    'El fondo lo generó la IA: revisa que no tenga textos, logos, escudos ni personas que impidan reutilizarlo.',
-  BACKGROUND_OWN_PROMPT:
-    'El fondo viene de un prompt propio: puede contener textos, personas, logos o una mascota generados por la IA.',
-  BACKGROUND_GENERATED_BRAND:
-    'Se enviaron imágenes de la marca a la IA: el fondo puede mostrar un logotipo o una Ketsi redibujados. Usa las capas oficiales.',
-  VALUE_MISSING: 'Los datos elegidos no tienen este valor.',
-  TEXT_OVERFLOW: 'El texto no cabe en su caja con los datos elegidos.',
-};
-
-/** An issue with its fixed message, and an optional detail appended. */
-export function issueOf(
-  code: VisualTemplateIssueCode,
-  severity: 'error' | 'warning',
-  layerId: string | null,
-  detail?: string,
-): VisualTemplateIssue {
-  const message = detail === undefined ? MESSAGES[code] : `${MESSAGES[code]} ${detail}`;
-  return { code, severity, layerId, message: message.slice(0, 300) };
 }
 
 function intersects(a: FractionBox, b: FractionBox): boolean {
@@ -198,6 +157,20 @@ function backgroundIssues(
   return issues;
 }
 
+/** Content types whose slides show one match: the only ones with team badges. */
+const MATCH_TYPES: ReadonlySet<string> = new Set(['match_preview', 'fixture', 'match_result']);
+
+/** The badge bindings of the team badge layers, once each, in layer order. */
+export function usedBadgeBindings(layers: readonly VisualTemplateLayer[]): VisualTemplateBadgeBinding[] {
+  const used: VisualTemplateBadgeBinding[] = [];
+  for (const layer of layers) {
+    if (layer.type === 'team_badge' && !used.includes(layer.binding)) {
+      used.push(layer.binding);
+    }
+  }
+  return used;
+}
+
 /** The bindings of the visible sports-data layers. */
 export function usedBindings(layers: readonly VisualTemplateLayer[]): VisualTemplateBinding[] {
   const used: VisualTemplateBinding[] = [];
@@ -246,6 +219,11 @@ export function validateVersion(input: ValidationInput): VisualTemplateValidatio
     }
     if (layer.type === 'image' || layer.type === 'brand_asset') {
       issues.push(...assetIssues(layer, input.assets.get(layer.assetId)));
+    } else if (layer.type === 'team_badge') {
+      // A team badge exists for the teams of a match only (PD-ARCH-01G-D).
+      if (!MATCH_TYPES.has(input.contentType)) {
+        issues.push(issueOf('BINDING_NOT_ALLOWED', 'error', layer.id));
+      }
     } else {
       const { style } = layer;
       if (style.minFontSize > style.maxFontSize) {

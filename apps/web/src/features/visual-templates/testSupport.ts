@@ -208,7 +208,7 @@ export const STAGED_ROUND = {
 };
 
 function team(n: number, name: string) {
-  return { id: uuid(n), name, region: null, createdAt: T, updatedAt: T };
+  return { id: uuid(n), name, region: null, badge: null, createdAt: T, updatedAt: T };
 }
 
 export const MATCH: CompetitionMatch = {

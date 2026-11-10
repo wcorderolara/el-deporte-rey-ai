@@ -250,6 +250,9 @@ export const textFieldLabel: Record<TextFieldName, string> = {
   demo_label: 'Etiqueta de demostración',
   match_status: 'Estado del partido',
   fixtures: 'Partidos',
+  score_home: 'Goles local',
+  score_away: 'Goles visitante',
+  kickoff_time: 'Hora',
 };
 
 export const contentFlagLabel: Record<ContentFlag['code'], string> = {

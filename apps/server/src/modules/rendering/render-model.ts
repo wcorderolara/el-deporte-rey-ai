@@ -71,6 +71,10 @@ export const TextSemanticSchema = z.enum([
   'title',
   'team_name',
   'score',
+  /** One team's goals or the kickoff time, drawn on their own by a visual template (PD-ARCH-01G-D). */
+  'score_home',
+  'score_away',
+  'kickoff_time',
   'kickoff',
   /** The status label of a match not played yet (PD-ARCH-01E-B). */
   'match_status',

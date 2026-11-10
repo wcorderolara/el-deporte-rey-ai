@@ -17,6 +17,8 @@ import {
 } from '../../../ui';
 import { ApiError } from '../../../api/client';
 import { useCompetitionsApi } from '../CompetitionsContext';
+import { TeamBadge } from '../TeamBadge';
+import { TeamBadgeManager } from '../TeamBadgeManager';
 
 type AddMode = 'catalogue' | 'create';
 
@@ -186,6 +188,13 @@ export function CompetitionTeamsPage() {
     }
   }
 
+  /** The team after a badge change (PD-ARCH-01G-D): updated everywhere it is shown. */
+  function badgeChanged(updated: ManagedTeam) {
+    setTeams((current) => current.map((item) => (item.team.id === updated.id ? { ...item, team: updated } : item)));
+    setCatalogue((current) => current.map((team) => (team.id === updated.id ? updated : team)));
+    setEditingTeam((current) => (current === null ? null : { ...current, team: updated }));
+  }
+
   async function confirmRemoval() {
     if (!competitionId || !removingTeam) return;
     setBusy(true);
@@ -321,7 +330,10 @@ export function CompetitionTeamsPage() {
               {teams.map((item) => (
                 <tr key={item.team.id} className="border-b border-border-subtle last:border-0">
                   <th scope="row" className="px-4 py-4 font-display text-body-md font-bold text-text-primary">
-                    {item.team.name}
+                    <span className="flex items-center gap-3">
+                      <TeamBadge team={item.team} size="sm" />
+                      <span>{item.team.name}</span>
+                    </span>
                   </th>
                   <td className="px-4 py-4 text-body-sm text-text-secondary">{item.team.region ?? '—'}</td>
                   <td className="px-4 py-3">{actions(item)}</td>
@@ -335,9 +347,12 @@ export function CompetitionTeamsPage() {
           {teams.map((item) => (
             <li key={item.team.id} className="min-w-0">
               <Card as="article" className="grid min-w-0 gap-2">
-                <h3 className="m-0 break-normal font-display text-heading-sm font-bold text-text-primary">
-                  {item.team.name}
-                </h3>
+                <div className="flex items-center gap-3">
+                  <TeamBadge team={item.team} size="md" />
+                  <h3 className="m-0 break-normal font-display text-heading-sm font-bold text-text-primary">
+                    {item.team.name}
+                  </h3>
+                </div>
                 <p className="m-0 text-body-sm text-text-secondary">{item.team.region ?? 'Sin zona registrada'}</p>
                 <div className="flex items-center justify-between gap-2">
                   <p className="m-0 text-caption font-semibold text-status-success">Asociado</p>
@@ -541,6 +556,9 @@ export function CompetitionTeamsPage() {
               </Button>
             </ModalFooter>
           </form>
+          <div className="mt-5">
+            <TeamBadgeManager team={editingTeam.team} api={api} onChanged={badgeChanged} />
+          </div>
         </Modal>
       ) : null}
 

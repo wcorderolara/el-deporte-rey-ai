@@ -1,4 +1,9 @@
-import { contractRegExp, type DesignContentType, DesignContentTypeSchema, type DesignProposal } from '@edr/contracts';
+import {
+  contractRegExp,
+  type DesignProposal,
+  type VisualTemplateContentType,
+  VisualTemplateContentTypeSchema,
+} from '@edr/contracts';
 import { useCallback, useId, useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -18,7 +23,7 @@ import { PreviewImage } from '../brand/PreviewImage';
 import { useResource } from '../brand/useResource';
 import { contentTypeLabel, modeBadge } from '../design/copy';
 import type { DesignApi } from '../design/designApi';
-import { createCopy } from './copy';
+import { createCopy, templateContentTypeLabel } from './copy';
 import { editorPath } from './VisualTemplatesSection';
 import type { VisualTemplatesApi } from './visualTemplatesApi';
 
@@ -57,8 +62,11 @@ export function CreateTemplateDialog({ api, designApi, initialProposalId = null,
   const [name, setName] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
-  /** The content type of the template; the proposal's until the operator chooses another (decision 01G-C-1). */
-  const [contentType, setContentType] = useState<DesignContentType | null>(null);
+  /**
+   * The slide type of the template; the proposal's until the operator chooses another (decision 01G-C-1), a cover or a
+   * closing included (01G-D-3).
+   */
+  const [contentType, setContentType] = useState<VisualTemplateContentType | null>(null);
   const [acknowledged, setAcknowledged] = useState(false);
   const [errors, setErrors] = useState<{ select?: string; name?: string; acknowledge?: string }>({});
   const [busy, setBusy] = useState(false);
@@ -203,11 +211,11 @@ export function CreateTemplateDialog({ api, designApi, initialProposalId = null,
               }
               value={contentTypeValue ?? ''}
               disabled={selected === null}
-              onChange={(event) => setContentType(DesignContentTypeSchema.parse(event.target.value))}
+              onChange={(event) => setContentType(VisualTemplateContentTypeSchema.parse(event.target.value))}
             >
-              {DesignContentTypeSchema.options.map((value) => (
+              {VisualTemplateContentTypeSchema.options.map((value) => (
                 <option key={value} value={value}>
-                  {contentTypeLabel[value]}
+                  {templateContentTypeLabel[value]}
                 </option>
               ))}
             </Select>

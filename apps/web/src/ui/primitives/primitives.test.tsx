@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FormEvent } from 'react';
 
+import { ActionMenu } from './ActionMenu';
 import { Alert } from './Alert';
 import { Badge } from './Badge';
 import { Button } from './Button';
@@ -176,6 +177,41 @@ describe('design-system actions', () => {
     expect((loading as HTMLButtonElement).disabled).toBe(true);
     await user.click(loading);
     expect(onSubmit).toHaveBeenCalledOnce();
+  });
+
+  it('opens an action menu from its button, skips disabled actions and closes on an outside click', async () => {
+    const user = userEvent.setup();
+    const archive = vi.fn();
+    const remove = vi.fn();
+    render(
+      <ActionMenu
+        label="Más acciones de «Portada»"
+        items={[
+          { label: 'Archivar', onSelect: archive, disabled: true },
+          { label: 'Eliminar', onSelect: remove, tone: 'danger' },
+        ]}
+      />,
+    );
+    const button = screen.getByRole('button', { name: 'Más acciones de «Portada»' });
+    expect(button.getAttribute('aria-haspopup')).toBe('menu');
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+
+    await user.click(button);
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+    const menu = screen.getByRole('menu', { name: 'Más acciones de «Portada»' });
+    expect(button.getAttribute('aria-controls')).toBe(menu.id);
+    // The first enabled action takes the focus; a disabled one cannot be chosen.
+    expect(document.activeElement?.textContent).toBe('Eliminar');
+    await user.click(screen.getByRole('menuitem', { name: 'Archivar' }));
+    expect(archive).not.toHaveBeenCalled();
+
+    await user.click(document.body);
+    expect(screen.queryByRole('menu')).toBeNull();
+    await user.click(button);
+    await user.click(screen.getByRole('menuitem', { name: 'Eliminar' }));
+    expect(remove).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(document.activeElement).toBe(button);
   });
 
   it('requires IconButton callers to supply its accessible name', async () => {

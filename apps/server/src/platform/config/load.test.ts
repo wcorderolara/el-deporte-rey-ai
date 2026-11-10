@@ -164,6 +164,15 @@ describe('committed development configuration (config/dev.config.json)', () => {
     );
     expect(development.providers.images).toEqual({ adapter: 'disabled', options: {} });
   });
+
+  it('loads the full Vite development configuration: the live sports source and the OpenAI image adapter together', () => {
+    const config = loadConfig({ rootDir: repoRoot, env: { EDR_CONFIG: 'config/dev-full.config.json' } });
+    const live = loadConfig({ rootDir: repoRoot, env: { EDR_CONFIG: 'config/dev-live.config.json' } });
+    const images = loadConfig({ rootDir: repoRoot, env: { EDR_CONFIG: 'config/dev-images.config.json' } });
+    expect(config.providers.sports).toEqual(live.providers.sports);
+    expect(config.providers.images).toEqual(images.providers.images);
+    expect({ ...config, providers: { ...config.providers, images: live.providers.images } }).toEqual(live);
+  });
 });
 
 describe('environment (OD-20, R-266, AD-30)', () => {

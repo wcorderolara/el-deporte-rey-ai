@@ -126,6 +126,7 @@ export class ProjectsService {
       stageId: project.stageId,
       latestRun: this.#runner.runs.latestView(project.id),
       activeDraftId: this.#projects.draftState(project.id).activeDraftId,
+      visualTemplates: this.#projects.visualTemplatesOf(project.id),
     };
   }
 

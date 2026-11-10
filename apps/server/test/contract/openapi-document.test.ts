@@ -64,16 +64,16 @@ describe('contract document', () => {
     );
   });
 
-  it('has 130 operations on 97 paths, 62 of them mutating, with unique operation IDs', () => {
-    expect(Object.keys(child(document, 'paths'))).toHaveLength(97);
-    expect(operations).toHaveLength(130);
-    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(62);
+  it('has 133 operations on 98 paths, 64 of them mutating, with unique operation IDs', () => {
+    expect(Object.keys(child(document, 'paths'))).toHaveLength(98);
+    expect(operations).toHaveLength(133);
+    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(64);
     const ids = operations.map((operation) => operation.operation.operationId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('has 193 component schemas', () => {
-    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(193);
+  it('has 198 component schemas', () => {
+    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(198);
   });
 });
 
@@ -325,6 +325,7 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/paths/~1competitions~1{competitionId}~1teams~1{teamId}: added',
       '/paths/~1teams: added',
       '/paths/~1teams~1{teamId}: added',
+      '/paths/~1teams~1{teamId}~1badge: added',
       '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1participants: added',
       '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1participants~1batch: added',
       '/paths/~1competitions~1{competitionId}~1seasons~1{seasonId}~1participants~1{teamId}: added',
@@ -395,6 +396,8 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/ProjectSummaryFields/required/14: added',
       '/components/schemas/ProjectSummaryFields/properties/latestRunStatus: added',
       '/components/schemas/ProjectSummaryFields/properties/sportsContext: added',
+      '/components/schemas/Project/allOf/1/required/6: added',
+      '/components/schemas/Project/allOf/1/properties/visualTemplates: added',
       // PD-ARCH-01E-B: matches not played yet (calendar, upcoming matches and previews).
       '/components/schemas/LeftOutMatch/properties/reason/enum/3: added',
       '/components/schemas/LeftOutMatch/properties/reason/enum/4: added',
@@ -404,6 +407,9 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/Element/properties/slideType/enum/7: added',
       '/components/schemas/TextField/properties/field/enum/12: added',
       '/components/schemas/TextField/properties/field/enum/13: added',
+      '/components/schemas/TextField/properties/field/enum/14: added',
+      '/components/schemas/TextField/properties/field/enum/15: added',
+      '/components/schemas/TextField/properties/field/enum/16: added',
       '/components/schemas/ContentFlag/properties/code/enum/4: added',
       '/components/schemas/QaResult/oneOf/5: added',
       '/components/schemas/BrandAssetKind/enum/3: added',
@@ -472,6 +478,7 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/SportsFieldProvenanceResponse: added',
       '/components/schemas/ImportApplicationHistoryResponse: added',
       '/components/schemas/ManagedSeason: added',
+      '/components/schemas/TeamBadge: added',
       '/components/schemas/ManagedTeam: added',
       '/components/schemas/CompetitionTeam: added',
       '/components/schemas/SeasonParticipant: added',
@@ -522,6 +529,9 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/VisualTemplateSportsDataLayer: added',
       '/components/schemas/VisualTemplateImageLayer: added',
       '/components/schemas/VisualTemplateBrandAssetLayer: added',
+      '/components/schemas/VisualTemplateContentType: added',
+      '/components/schemas/VisualTemplateBadgeBinding: added',
+      '/components/schemas/VisualTemplateTeamBadgeLayer: added',
       '/components/schemas/VisualTemplateLayer: added',
       '/components/schemas/VisualTemplateBackgroundSource: added',
       '/components/schemas/VisualTemplateBackgroundInput: added',
@@ -535,6 +545,7 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/VisualTemplateDetail: added',
       '/components/schemas/VisualTemplateVersion: added',
       '/components/schemas/VisualTemplateVersionRef: added',
+      '/components/schemas/VisualTemplateUsage: added',
       '/components/schemas/VisualTemplateCreate: added',
       '/components/schemas/VisualTemplateUpdate: added',
       '/components/schemas/VisualTemplateVersionSave: added',

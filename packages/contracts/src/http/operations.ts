@@ -116,6 +116,7 @@ import {
   SeasonParticipantSchema,
   SportsFieldProvenanceParamsSchema,
   SportsFieldProvenanceResponseSchema,
+  TeamBadgeUploadQuerySchema,
 } from './competitions.js';
 import {
   ContentBatchCreateSchema,
@@ -606,6 +607,22 @@ export const operations = {
     operationId: 'updateManagedTeam', method: 'patch', path: '/teams/{teamId}', tag: 'teams',
     params: ManagedTeamParamsSchema, query: null, clientHeader: true, body: jsonBody(ManagedTeamUpdateSchema),
     success: json(200, ManagedTeamSchema), problemStatuses: WRITE_BODY,
+  },
+  uploadTeamBadge: {
+    operationId: 'uploadTeamBadge', method: 'put', path: '/teams/{teamId}/badge', tag: 'teams',
+    params: ManagedTeamParamsSchema, query: TeamBadgeUploadQuerySchema, clientHeader: true,
+    body: { mediaTypes: PROPOSAL_IMAGES, schema: null },
+    success: json(200, ManagedTeamSchema), problemStatuses: [400, 403, 404, 413, 415, 421],
+  },
+  getTeamBadgeFile: {
+    operationId: 'getTeamBadgeFile', method: 'get', path: '/teams/{teamId}/badge', tag: 'teams',
+    params: ManagedTeamParamsSchema, query: null, clientHeader: false, body: null,
+    success: { status: 200, mediaTypes: PROPOSAL_IMAGES, schema: null }, problemStatuses: READ_BY_ID,
+  },
+  deleteTeamBadge: {
+    operationId: 'deleteTeamBadge', method: 'delete', path: '/teams/{teamId}/badge', tag: 'teams',
+    params: ManagedTeamParamsSchema, query: null, clientHeader: true, body: null,
+    success: json(200, ManagedTeamSchema), problemStatuses: WRITE_NO_BODY,
   },
   listSeasonParticipants: {
     operationId: 'listSeasonParticipants', method: 'get', path: '/competitions/{competitionId}/seasons/{seasonId}/participants',

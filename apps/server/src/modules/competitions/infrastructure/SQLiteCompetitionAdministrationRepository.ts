@@ -3,6 +3,7 @@ import type { Db } from '../../../platform/db/db.js';
 import { constraintKind } from '../../../platform/db/errors.js';
 import { CompetitionAdministrationError as AdminError } from '../domain/errors.js';
 import type { CompetitionAdministrationPort, NewManagedSeason, NewManagedTeam } from '../domain/ports.js';
+import { badgeJson, badgeOf } from '../badges/sql.js';
 
 interface SeasonRow {
   id: string;
@@ -14,6 +15,7 @@ interface TeamRow {
   id: string;
   name: string;
   region: string | null;
+  badge_json: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -24,11 +26,25 @@ interface CompetitionTeamRow extends TeamRow {
   associated_at: string;
 }
 
+/** Team queries with the active badge of each team (PD-ARCH-01G-D); constants, values bound (T10-F14). */
+const TEAMS_SQL = `SELECT t.id, t.name, t.region, ${badgeJson('t')} AS badge_json, t.created_at, t.updated_at FROM managed_teams t ORDER BY t.normalized_name, t.normalized_region, t.id`;
+const TEAM_SQL = `SELECT t.id, t.name, t.region, ${badgeJson('t')} AS badge_json, t.created_at, t.updated_at FROM managed_teams t WHERE t.id = ?`;
+const COMPETITION_TEAMS_SQL = `SELECT t.id, t.name, t.region, ${badgeJson('t')} AS badge_json, t.created_at, t.updated_at, ct.associated_at FROM competition_teams ct JOIN managed_teams t ON t.id = ct.team_id WHERE ct.competition_id = ? ORDER BY t.normalized_name, t.normalized_region, t.id`;
+const PARTICIPANTS_SQL = `SELECT t.id, t.name, t.region, ${badgeJson('t')} AS badge_json, t.created_at, t.updated_at, p.joined_at FROM season_participants p JOIN managed_teams t ON t.id = p.team_id JOIN competition_seasons s ON s.id = p.season_id JOIN competition_teams ct ON ct.competition_id = s.competition_id AND ct.team_id = p.team_id WHERE p.season_id = ? ORDER BY t.normalized_name, t.normalized_region, t.id`;
+const PARTICIPANT_SQL = `SELECT t.id, t.name, t.region, ${badgeJson('t')} AS badge_json, t.created_at, t.updated_at, p.joined_at FROM season_participants p JOIN managed_teams t ON t.id = p.team_id WHERE p.season_id = ? AND p.team_id = ?`;
+
 function seasonFrom(row: SeasonRow): LocalSeason {
   return { id: row.id, competitionId: row.competition_id, label: row.label, createdAt: row.created_at };
 }
 function teamFrom(row: TeamRow): LocalTeam {
-  return { id: row.id, name: row.name, region: row.region, createdAt: row.created_at, updatedAt: row.updated_at };
+  return {
+    id: row.id,
+    name: row.name,
+    region: row.region,
+    badge: badgeOf(row.badge_json),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 function participantFrom(row: ParticipantRow): SeasonParticipant {
   return { team: teamFrom(row), joinedAt: row.joined_at };
@@ -118,12 +134,7 @@ export class SQLiteCompetitionAdministrationRepository implements CompetitionAdm
   }
 
   listTeams(): LocalTeam[] {
-    return this.#db
-      .prepare<TeamRow>(
-        'SELECT id, name, region, created_at, updated_at FROM managed_teams ORDER BY normalized_name, normalized_region, id',
-      )
-      .all()
-      .map(teamFrom);
+    return this.#db.prepare<TeamRow>(TEAMS_SQL).all().map(teamFrom);
   }
 
   createTeam(input: NewManagedTeam): LocalTeam {
@@ -167,21 +178,14 @@ export class SQLiteCompetitionAdministrationRepository implements CompetitionAdm
   }
 
   getTeam(teamId: string): LocalTeam {
-    const row = this.#db
-      .prepare<TeamRow>('SELECT id, name, region, created_at, updated_at FROM managed_teams WHERE id = ?')
-      .get([teamId]);
+    const row = this.#db.prepare<TeamRow>(TEAM_SQL).get([teamId]);
     if (!row) throw new AdminError('team_not_found');
     return teamFrom(row);
   }
 
   listCompetitionTeams(competitionId: string): CompetitionTeam[] {
     this.#requireCompetition(competitionId);
-    return this.#db
-      .prepare<CompetitionTeamRow>(
-        'SELECT t.id, t.name, t.region, t.created_at, t.updated_at, ct.associated_at FROM competition_teams ct JOIN managed_teams t ON t.id = ct.team_id WHERE ct.competition_id = ? ORDER BY t.normalized_name, t.normalized_region, t.id',
-      )
-      .all([competitionId])
-      .map(competitionTeamFrom);
+    return this.#db.prepare<CompetitionTeamRow>(COMPETITION_TEAMS_SQL).all([competitionId]).map(competitionTeamFrom);
   }
 
   addCompetitionTeam(competitionId: string, teamId: string, associatedAt: string): CompetitionTeam {
@@ -256,12 +260,7 @@ export class SQLiteCompetitionAdministrationRepository implements CompetitionAdm
 
   listParticipants(competitionId: string, seasonId: string): SeasonParticipant[] {
     this.#requireSeason(competitionId, seasonId);
-    return this.#db
-      .prepare<ParticipantRow>(
-        'SELECT t.id, t.name, t.region, t.created_at, t.updated_at, p.joined_at FROM season_participants p JOIN managed_teams t ON t.id = p.team_id JOIN competition_seasons s ON s.id = p.season_id JOIN competition_teams ct ON ct.competition_id = s.competition_id AND ct.team_id = p.team_id WHERE p.season_id = ? ORDER BY t.normalized_name, t.normalized_region, t.id',
-      )
-      .all([seasonId])
-      .map(participantFrom);
+    return this.#db.prepare<ParticipantRow>(PARTICIPANTS_SQL).all([seasonId]).map(participantFrom);
   }
 
   addParticipant(competitionId: string, seasonId: string, teamId: string, joinedAt: string): SeasonParticipant {
@@ -287,11 +286,7 @@ export class SQLiteCompetitionAdministrationRepository implements CompetitionAdm
       }
       throw error;
     }
-    const result = this.#db
-      .prepare<ParticipantRow>(
-        'SELECT t.id, t.name, t.region, t.created_at, t.updated_at, p.joined_at FROM season_participants p JOIN managed_teams t ON t.id = p.team_id WHERE p.season_id = ? AND p.team_id = ?',
-      )
-      .get([seasonId, teamId]);
+    const result = this.#db.prepare<ParticipantRow>(PARTICIPANT_SQL).get([seasonId, teamId]);
     if (!result) throw new AdminError('participant_not_found');
     return participantFrom(result);
   }

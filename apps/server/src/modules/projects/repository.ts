@@ -4,7 +4,14 @@
  * keeps its row with a tombstone (`deleted_at`, PD-ARCH-01F, OD-08) and is excluded from every read. Every statement is
  * a constant with bound parameters (T10-F14).
  */
-import { type ApprovalState, DataModeSchema, LanguageSchema, StandingsExpectationSchema } from '@edr/contracts';
+import {
+  type ApprovalState,
+  DataModeSchema,
+  LanguageSchema,
+  StandingsExpectationSchema,
+  VisualTemplateContentTypeSchema,
+  type VisualTemplateUsage,
+} from '@edr/contracts';
 
 import type { SourceConfig } from '../../platform/config/index.js';
 import type { Db } from '../../platform/db/index.js';
@@ -90,6 +97,17 @@ const SQL = {
     'stage_id, stage_label, matchday, selection_ref, standings_expected, language, created_at, updated_at, ' +
     'content_kind) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
   project: `${PROJECT_SELECT} WHERE p.id = ? AND p.deleted_at IS NULL`,
+  // PD-ARCH-01G-D: the visual template version of each slide type of a generated project (decision 01G-D-3) and
+  // the badge of each of its teams.
+  assignVisualTemplate:
+    'INSERT INTO project_visual_templates (project_id, slide_type, visual_template_id, visual_template_version_id) ' +
+    'VALUES (?, ?, ?, ?)',
+  assignBadges: 'UPDATE projects SET badge_snapshot_json = ? WHERE id = ?',
+  visualTemplatesOf:
+    'SELECT t.id AS template_id, v.id AS version_id, v.version, t.name, t.content_type FROM project_visual_templates pt ' +
+    'JOIN visual_template_versions v ON v.id = pt.visual_template_version_id JOIN visual_templates t ' +
+    "ON t.id = pt.visual_template_id WHERE pt.project_id = ? ORDER BY CASE pt.slide_type WHEN 'cover' THEN 0 " +
+    "WHEN 'closing' THEN 2 ELSE 1 END, pt.slide_type",
   projects: `${PROJECT_SELECT} WHERE p.deleted_at IS NULL ORDER BY p.created_at DESC, p.rowid DESC`,
   exists: 'SELECT 1 AS found FROM projects WHERE id = ? AND deleted_at IS NULL',
   deletedAt: 'SELECT deleted_at FROM projects WHERE id = ?',
@@ -216,6 +234,39 @@ export class ProjectRepository {
   /** Supersedes the project's active draft, if any (a language or exclusion change needs a redraft). */
   supersedeActiveDraft(projectId: string, at: string): number {
     return this.#db.prepare(SQL.supersedeDrafts).run([at, projectId]).changes;
+  }
+
+  /**
+   * Records the visual template version of each slide type of a project (decision 01G-D-3) and the badge of each of
+   * its teams, as they are when the project is created (PD-ARCH-01G-D).
+   */
+  assignVisualTemplates(
+    projectId: string,
+    templates: readonly { readonly templateId: string; readonly versionId: string; readonly contentType: string }[],
+    badges: Readonly<Record<string, string | null>>,
+  ): void {
+    for (const template of templates) {
+      this.#db
+        .prepare(SQL.assignVisualTemplate)
+        .run([projectId, template.contentType, template.templateId, template.versionId]);
+    }
+    this.#db.prepare(SQL.assignBadges).run([JSON.stringify(badges), projectId]);
+  }
+
+  /** The visual template versions a project uses, one per slide type: cover, match slides, closing (PD-ARCH-01G-D). */
+  visualTemplatesOf(projectId: string): VisualTemplateUsage[] {
+    return this.#db
+      .prepare<{ template_id: string; version_id: string; version: number; name: string; content_type: string }>(
+        SQL.visualTemplatesOf,
+      )
+      .all([projectId])
+      .map((row) => ({
+        templateId: row.template_id,
+        versionId: row.version_id,
+        version: row.version,
+        name: row.name,
+        contentType: VisualTemplateContentTypeSchema.parse(row.content_type),
+      }));
   }
 
   /**

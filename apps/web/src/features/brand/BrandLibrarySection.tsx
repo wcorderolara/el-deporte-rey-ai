@@ -16,7 +16,16 @@ import {
 } from '../../ui';
 import { AssetDetailDialog } from './AssetDetailDialog';
 import type { BrandApi } from './brandApi';
-import { assetKindLabel, detailCopy, libraryCopy, uploadCopy, usagePolicyLabel, usagePolicyTone } from './copy';
+import { BrandViewHeader } from './BrandViewHeader';
+import {
+  assetKindLabel,
+  brandCopy,
+  detailCopy,
+  libraryCopy,
+  uploadCopy,
+  usagePolicyLabel,
+  usagePolicyTone,
+} from './copy';
 import { ASSET_KINDS, filterAssets } from './library';
 import { PreviewImage } from './PreviewImage';
 import { UploadAssetDialog } from './UploadAssetDialog';
@@ -219,19 +228,19 @@ export function BrandLibrarySection({ api, announce }: BrandLibrarySectionProps)
   }
 
   return (
-    <section aria-labelledby={headingId} className="grid min-w-0 gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="max-w-reading">
-          <h2 id={headingId} className="m-0 font-display text-heading-sm font-extrabold text-text-primary">
-            {libraryCopy.heading}
-          </h2>
-          <p className="m-0 mt-2 text-body-sm text-text-secondary">{libraryCopy.intro}</p>
-        </div>
-        <Button onClick={() => setUploading(true)}>
-          <span aria-hidden="true">＋</span>
-          {libraryCopy.upload}
-        </Button>
-      </div>
+    <section aria-labelledby={headingId} className="grid min-w-0 gap-6">
+      <BrandViewHeader
+        headingId={headingId}
+        heading={libraryCopy.heading}
+        intro={libraryCopy.intro}
+        notes={[brandCopy.authorizedOnly, brandCopy.provisional]}
+        action={
+          <Button onClick={() => setUploading(true)}>
+            <span aria-hidden="true">＋</span>
+            {libraryCopy.upload}
+          </Button>
+        }
+      />
 
       {state.status === 'ready' && assets.length > 0 ? (
         <div className="flex flex-wrap items-end gap-3">

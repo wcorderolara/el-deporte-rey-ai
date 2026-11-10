@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { AppContainer } from '../../container.js';
 import type { ServerModule } from '../module-kit.js';
 import { registerCompetitionRoutes } from './routes.js';
+import { registerTeamBadgeRoutes, teamBadgeServiceOf } from './badges/index.js';
 import { CompetitionService } from './service.js';
 import { CompetitionAdministrationService } from './application/CompetitionAdministrationService.js';
 import { SQLiteCompetitionAdministrationRepository } from './infrastructure/SQLiteCompetitionAdministrationRepository.js';
@@ -76,17 +77,19 @@ export function createCompetitionModule(): ServerModule {
       const now = () => container.clock.now();
       const transaction = <T>(action: () => T): T => container.db.transaction(action as never) as T;
       const provenance = new CompetitionFieldProvenanceService(container.db, now);
-      registerCompetitionRoutes(
-        app,
-        new CompetitionService(container),
-        new CompetitionAdministrationService(new SQLiteCompetitionAdministrationRepository(container.db), {
+      const administration = new CompetitionAdministrationService(
+        new SQLiteCompetitionAdministrationRepository(container.db),
+        {
           newId: randomUUID,
           now,
           transaction,
           onManualMutation: (mutation) =>
             provenance.recordManual(mutation.competitionId, mutation.entityType, mutation.entityId, mutation.fields),
-        }),
+        },
       );
+      registerCompetitionRoutes(app, new CompetitionService(container), administration);
+      // PD-ARCH-01G-D: team badges, uploaded manually (PD-28).
+      registerTeamBadgeRoutes(app, teamBadgeServiceOf(container), (teamId) => administration.getTeam(teamId));
       registerCompetitionCalendarRoutes(
         app,
         new CompetitionCalendarService(new SQLiteCompetitionCalendarRepository(container.db), {

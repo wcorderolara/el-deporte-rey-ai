@@ -45,7 +45,9 @@ describe('visualTemplatesApi', () => {
     const fake = fakeFetch({ [`GET ${BASE}`]: () => jsonResponse({ template: { id: 'x' }, versions: [] }) });
     const api = createVisualTemplatesApi({ fetch: fake.fetch });
 
-    expect(api.backgroundUrl(TEMPLATE_ID, DRAFT_ID)).toBe(`/api/v1${BASE}/versions/${DRAFT_ID}/background`);
+    expect(api.backgroundUrl(TEMPLATE_ID, DRAFT_ID, 'a'.repeat(64))).toBe(
+      `/api/v1${BASE}/versions/${DRAFT_ID}/background?v=${'a'.repeat(64)}`,
+    );
     await expect(api.get(TEMPLATE_ID)).rejects.toMatchObject({ kind: 'invalid_response' });
   });
 

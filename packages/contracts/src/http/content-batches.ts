@@ -7,6 +7,7 @@
 import { z } from 'zod';
 
 import { TemplateSchema } from './brand.js';
+import { VisualTemplateContentTypeSchema, VisualTemplateUsageSchema } from './visual-templates.js';
 import { CompetitionMatchStatusSchema } from './competitions.js';
 import {
   DateTimeSchema,
@@ -18,6 +19,9 @@ import {
   uniquePrimitives,
 } from './primitives.js';
 import { FailureSchema } from './system.js';
+
+/** Most visual templates of a selection: one per slide type. */
+const VISUAL_TEMPLATE_SLIDE_TYPES = VisualTemplateContentTypeSchema.options.length;
 
 /** Most matches one batch can select: a round of 32 matches has at most 64 teams, the bound of one frozen selection. */
 export const CONTENT_BATCH_MAX_MATCHES = 32;
@@ -73,6 +77,13 @@ export const ContentBatchSelectionSchema = z.strictObject({
   matchIds: uniquePrimitives(z.array(UuidSchema).min(1).max(CONTENT_BATCH_MAX_MATCHES)),
   kinds: uniquePrimitives(z.array(ContentPieceKindSchema).min(1).max(5)),
   language: LanguageSchema.optional(),
+  /**
+   * Published versions of visual templates (PD-ARCH-01G-D), at most one per slide type (decision 01G-D-3): each 4:5,
+   * not archived, and of a slide type of the selected piece kinds (a cover, the match slides, a closing). The slides of
+   * each chosen type are drawn with its version; the others with the engine templates. Absent: the engine templates
+   * only, as before.
+   */
+  visualTemplateVersionIds: uniquePrimitives(z.array(UuidSchema).min(1).max(VISUAL_TEMPLATE_SLIDE_TYPES)).optional(),
 });
 
 /** A confirmed selection; `requestKey` makes a retried confirmation return the same batch. */
@@ -129,6 +140,8 @@ export const ContentBatchPreviewSchema = z.strictObject({
   templates: z.array(TemplateSchema),
   pieces: z.array(ContentPiecePlanSchema),
   totals: z.strictObject({ requested: z.int().min(0), ready: z.int().min(0), skipped: z.int().min(0) }),
+  /** The visual templates of the selection (checked), one per slide type; empty when the engine templates are used. */
+  visualTemplates: z.array(VisualTemplateUsageSchema).max(VISUAL_TEMPLATE_SLIDE_TYPES),
 });
 
 /** `deleted`: the piece's project was deleted afterwards (PD-ARCH-01F); its identifiers stay for traceability. */

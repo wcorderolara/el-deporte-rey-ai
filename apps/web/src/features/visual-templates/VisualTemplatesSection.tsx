@@ -1,16 +1,18 @@
 import {
-  DesignContentTypeSchema,
   DesignFormatSchema,
+  VisualTemplateContentTypeSchema,
   VisualTemplateStatusSchema,
-  type DesignContentType,
   type DesignFormat,
   type VisualTemplate,
+  type VisualTemplateContentType,
   type VisualTemplateStatus,
 } from '@edr/contracts';
 import { useCallback, useId, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import {
+  ActionMenu,
+  type ActionMenuItem,
   Badge,
   Button,
   Card,
@@ -28,8 +30,8 @@ import {
 } from '../../ui';
 import { PreviewImage } from '../brand/PreviewImage';
 import { useResource } from '../brand/useResource';
-import { contentTypeLabel, formatLabel } from '../design/copy';
-import { sectionCopy, templateStatusLabel, templateStatusTone } from './copy';
+import { formatLabel } from '../design/copy';
+import { sectionCopy, templateContentTypeLabel, templateStatusLabel, templateStatusTone } from './copy';
 import type { VisualTemplatesApi } from './visualTemplatesApi';
 
 export interface VisualTemplatesSectionProps {
@@ -61,7 +63,8 @@ function Thumbnail({ api, template, size }: { api: VisualTemplatesApi; template:
       {versionId === null ? null : (
         <PreviewImage
           key={versionId}
-          src={api.backgroundUrl(template.id, versionId)}
+          // Saving a draft updates the template, so a changed background gets another address.
+          src={api.backgroundUrl(template.id, versionId, template.updatedAt)}
           alt={sectionCopy.thumbnailAlt(template.name)}
           failedText={sectionCopy.thumbnailFailed}
           className="absolute inset-0 h-full w-full object-contain"
@@ -90,7 +93,7 @@ export function VisualTemplatesSection({ api, onCreate }: VisualTemplatesSection
   const [view, setView] = useState<'table' | 'cards'>('table');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<VisualTemplateStatus | ''>('');
-  const [type, setType] = useState<DesignContentType | ''>('');
+  const [type, setType] = useState<VisualTemplateContentType | ''>('');
   const [format, setFormat] = useState<DesignFormat | ''>('');
   const [busy, setBusy] = useState<string | null>(null);
   const [failure, setFailure] = useState<unknown>(null);
@@ -147,56 +150,47 @@ export function VisualTemplatesSection({ api, onCreate }: VisualTemplatesSection
     }
   }
 
+  /** One icon to open the template (edit its draft, or view it) and a menu with every other action of its state. */
   function actions(template: VisualTemplate) {
     const archived = template.status === 'archived';
+    const editable = template.draftVersionId !== null && !archived;
     const disabled = busy !== null;
+    const items: ActionMenuItem[] = [
+      { label: sectionCopy.preview, onSelect: () => void navigate(editorPath(template.id, { preview: true })) },
+    ];
+    if (editable) {
+      items.push({ label: sectionCopy.publish, onSelect: () => void navigate(editorPath(template.id)) });
+    }
+    if (template.publishedVersion !== null && template.draftVersionId === null && !archived) {
+      items.push({ label: sectionCopy.newVersion, disabled, onSelect: () => void act(template, 'version') });
+    }
+    if (template.publishedVersion !== null) {
+      items.push({
+        label: archived ? sectionCopy.restore : sectionCopy.archive,
+        disabled,
+        onSelect: () => void act(template, archived ? 'restore' : 'archive'),
+      });
+    }
+    if (template.publishedVersion === null || archived) {
+      items.push({
+        label: sectionCopy.deleteAction,
+        tone: 'danger',
+        disabled,
+        onSelect: () => {
+          setDeleteFailure(null);
+          setDeleting(template);
+        },
+      });
+    }
     return (
-      <span className="inline-flex flex-wrap justify-end gap-2">
-        <Button
-          size="sm"
-          variant={template.draftVersionId !== null && !archived ? 'primary' : 'secondary'}
-          aria-label={sectionCopy.open(template.name)}
+      <span className="inline-flex justify-end gap-2">
+        <IconButton
+          label={editable ? sectionCopy.editTemplate(template.name) : sectionCopy.viewTemplate(template.name)}
           onClick={() => void navigate(editorPath(template.id))}
         >
-          <Icon name={template.draftVersionId !== null && !archived ? 'pencil' : 'eye'} />
-          {template.draftVersionId !== null && !archived ? sectionCopy.edit : sectionCopy.view}
-        </Button>
-        <Button size="sm" variant="secondary" onClick={() => void navigate(editorPath(template.id, { preview: true }))}>
-          {sectionCopy.preview}
-        </Button>
-        {template.draftVersionId !== null && !archived ? (
-          <Button size="sm" variant="secondary" onClick={() => void navigate(editorPath(template.id))}>
-            {sectionCopy.publish}
-          </Button>
-        ) : null}
-        {template.publishedVersion !== null && template.draftVersionId === null && !archived ? (
-          <Button size="sm" variant="secondary" disabled={disabled} onClick={() => void act(template, 'version')}>
-            {sectionCopy.newVersion}
-          </Button>
-        ) : null}
-        {template.publishedVersion !== null ? (
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={disabled}
-            onClick={() => void act(template, archived ? 'restore' : 'archive')}
-          >
-            {archived ? sectionCopy.restore : sectionCopy.archive}
-          </Button>
-        ) : null}
-        {template.publishedVersion === null ? (
-          <IconButton
-            label={sectionCopy.delete(template.name)}
-            tone="danger"
-            disabled={disabled}
-            onClick={() => {
-              setDeleteFailure(null);
-              setDeleting(template);
-            }}
-          >
-            <Icon name="trash" />
-          </IconButton>
-        ) : null}
+          <Icon name={editable ? 'pencil' : 'eye'} />
+        </IconButton>
+        <ActionMenu label={sectionCopy.moreActions(template.name)} items={items} />
       </span>
     );
   }
@@ -258,12 +252,12 @@ export function VisualTemplatesSection({ api, onCreate }: VisualTemplatesSection
               label={sectionCopy.filterType}
               value={type}
               wrapperClassName="min-w-48"
-              onChange={(event) => setType(event.target.value as DesignContentType | '')}
+              onChange={(event) => setType(event.target.value as VisualTemplateContentType | '')}
             >
               <option value="">{sectionCopy.all}</option>
-              {DesignContentTypeSchema.options.map((value) => (
+              {VisualTemplateContentTypeSchema.options.map((value) => (
                 <option key={value} value={value}>
-                  {contentTypeLabel[value]}
+                  {templateContentTypeLabel[value]}
                 </option>
               ))}
             </Select>
@@ -325,7 +319,7 @@ export function VisualTemplatesSection({ api, onCreate }: VisualTemplatesSection
                         )}
                       </th>
                       <td className="px-3 py-3 text-body-sm text-text-secondary">
-                        {contentTypeLabel[template.contentType]}
+                        {templateContentTypeLabel[template.contentType]}
                       </td>
                       <td className="px-3 py-3 text-body-sm text-text-secondary">{template.format}</td>
                       <td className="px-3 py-3">
@@ -360,7 +354,7 @@ export function VisualTemplatesSection({ api, onCreate }: VisualTemplatesSection
                     <Thumbnail api={api} template={template} size="lg" />
                     <div className="grid gap-1">
                       <p className="m-0 text-caption font-bold tracking-label text-info uppercase">
-                        {contentTypeLabel[template.contentType]} · {template.format}
+                        {templateContentTypeLabel[template.contentType]} · {template.format}
                       </p>
                       <h3 className="m-0 break-words text-body-lg font-bold text-text-primary">{template.name}</h3>
                       <p className="m-0 text-caption text-text-secondary">

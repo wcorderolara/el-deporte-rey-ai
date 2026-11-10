@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { contentVariantOf } from './AppShell';
 import { appRoutes, featurePaths } from './routes';
 
 afterEach(cleanup);
@@ -61,6 +62,8 @@ describe('App shell (R-235)', () => {
       'Competiciones',
       'Exportaciones',
       'Mi marca',
+      'Recursos',
+      'Identidad visual',
       'Plantillas',
       'Crear plantilla',
       'Plantillas del motor',
@@ -99,18 +102,39 @@ describe('App shell (R-235)', () => {
     expect(screen.getByRole('link', { name: 'Exportaciones' }).getAttribute('aria-current')).toBe('page');
   });
 
+  it('puts the generation result of a batch on the studio surface, like the rest of the projects', () => {
+    expect(contentVariantOf('/projects/batches/e078c8d3-ef1f-4e0b-8558-485974ba4f6d')).toBe('studio');
+    expect(contentVariantOf('/projects/generate')).toBe('studio');
+    expect(contentVariantOf('/projects/p1')).toBe('studio');
+    expect(contentVariantOf('/projects/p1/runs/r1/facts')).toBe('legacy');
+    // The visual template editor uses the full width of the workspace; the template lists stay on the studio surface.
+    expect(contentVariantOf('/templates/visual/e078c8d3-ef1f-4e0b-8558-485974ba4f6d')).toBe('workspace');
+    expect(contentVariantOf('/templates/create')).toBe('studio');
+  });
+
   it('opens Mi marca and Plantillas as separate pages on the studio surface (PD-ARCH-01G-A)', async () => {
     const user = userEvent.setup();
     const router = renderAt('/');
     await screen.findByRole('heading', { level: 1, name: 'Tu próximo contenido empieza aquí' });
     const navigation = screen.getByRole('navigation', { name: 'Navegación principal' });
 
+    // Mi marca opens its first view, «Recursos»; the sub-item is the current page.
     await user.click(within(navigation).getByRole('link', { name: 'Mi marca' }));
-    expect(await screen.findByRole('heading', { level: 1, name: 'Mi marca' })).toBeTruthy();
-    expect(router.state.location.pathname).toBe('/brand');
-    expect(within(navigation).getByRole('link', { name: 'Mi marca' }).getAttribute('aria-current')).toBe('page');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Recursos' })).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/brand/resources');
+    expect(within(navigation).getByRole('link', { name: 'Recursos' }).getAttribute('aria-current')).toBe('page');
+    expect(within(navigation).getByRole('link', { name: 'Mi marca' }).getAttribute('aria-current')).toBeNull();
     expect(within(navigation).getByRole('link', { name: 'Plantillas' }).getAttribute('aria-current')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Plantillas' })).toBeNull();
+    expect(screen.getByRole('main').className).not.toContain('bg-legacy-canvas');
+
+    await user.click(within(navigation).getByRole('link', { name: 'Identidad visual' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'Identidad visual' })).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/brand/identity');
+    expect(within(navigation).getByRole('link', { name: 'Identidad visual' }).getAttribute('aria-current')).toBe(
+      'page',
+    );
+    expect(within(navigation).getByRole('link', { name: 'Recursos' }).getAttribute('aria-current')).toBeNull();
     expect(screen.getByRole('main').className).not.toContain('bg-legacy-canvas');
 
     // Plantillas opens its first view, «Crear plantilla»; the sub-item is the current page.
@@ -198,7 +222,9 @@ describe('Route table: lazy feature stubs', () => {
     [featurePaths.review('00000000-0000-4000-8000-000000000001'), 'Revisión del contenido'],
     // The former exports page redirects to the project detail (PD-ARCH-01F).
     [featurePaths.history('00000000-0000-4000-8000-000000000001'), 'Proyectos'],
-    [featurePaths.brand, 'Mi marca'],
+    [featurePaths.brand, 'Recursos'],
+    [featurePaths.brandResources, 'Recursos'],
+    [featurePaths.brandIdentity, 'Identidad visual'],
     [featurePaths.templates, 'Crear plantilla'],
     [featurePaths.templatesCreate, 'Crear plantilla'],
     [featurePaths.templatesEngine, 'Plantillas del motor'],

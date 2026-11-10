@@ -25,6 +25,7 @@ export function draftContextOf(input: ContentInput): DraftContext {
     stageLabel: input.stageLabel,
     matchday: input.matchday,
     brand: { name: input.brand.name, handle: input.brand.handle },
+    templateFields: input.templateFields === true,
   };
 }
 

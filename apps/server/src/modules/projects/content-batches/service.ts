@@ -38,6 +38,7 @@ import {
   type Language,
   MANUAL_IMPORT_FORMAT,
   type ProjectSportsContext,
+  type VisualTemplateUsage,
   SlugSchema,
   StageNameSchema,
 } from '@edr/contracts';
@@ -53,6 +54,8 @@ import {
 import type { WorkflowRunner } from '../../../workflow/index.js';
 import { ImportService, LOCAL_COMPETITIONS_ADAPTER } from '../../imports/index.js';
 import { TemplateRegistry, toContractTemplate } from '../../rendering/index.js';
+import { teamBadgeServiceOf } from '../../competitions/badges/index.js';
+import { VisualTemplateRepository } from '../../visual-templates/repository.js';
 import { ProjectRepository } from '../repository.js';
 
 import {
@@ -208,6 +211,9 @@ export function selectionHash(selection: ContentBatchSelection, language: Langua
     matchIds: [...selection.matchIds].sort(),
     kinds: [...selection.kinds].sort(),
     language,
+    // Absent for a selection without visual templates, so earlier hashes are unchanged.
+    visualTemplateVersionIds:
+      selection.visualTemplateVersionIds === undefined ? undefined : [...selection.visualTemplateVersionIds].sort(),
   };
   return createHash('sha256').update(JSON.stringify(normalized)).digest('hex');
 }
@@ -393,12 +399,72 @@ export class ContentBatchService {
   }
 
   /** The current templates of every slide type the selected kinds use. */
+  /** The active badge of every team of the given matches, by local team ID (null without a badge). */
+  #badgeSnapshot(resolved: Resolved, matchIds: readonly string[]): Record<string, string | null> {
+    const badges = teamBadgeServiceOf(this.#container);
+    const snapshot: Record<string, string | null> = {};
+    for (const matchId of matchIds) {
+      const match = resolved.records.get(matchId);
+      if (match === undefined) {
+        continue;
+      }
+      for (const teamId of [match.homeTeamId, match.awayTeamId]) {
+        snapshot[teamId] ??= badges.active(teamId)?.id ?? null;
+      }
+    }
+    return snapshot;
+  }
+
   #compatibleTemplates(kinds: readonly ContentPieceKind[]) {
     const slideTypes = new Set(kinds.flatMap((kind) => [...SLIDE_TYPES_OF[CONTENT_KIND_OF[kind]]]));
     return this.#templates
       .list()
       .filter((template) => slideTypes.has(template.slideType))
       .map(toContractTemplate);
+  }
+
+  /**
+   * The visual templates of a selection (PD-ARCH-01G-D), at most one per slide type (decision 01G-D-3): each a
+   * published version of a template that is not archived or deleted, in the carousel format (4:5, BR-08) and of a
+   * slide type of a selected piece kind. Empty without any.
+   */
+  #visualTemplates(selection: ContentBatchSelection): VisualTemplateUsage[] {
+    const templates = new VisualTemplateRepository(this.#container.db);
+    const slideTypes = new Set(selection.kinds.flatMap((kind) => [...SLIDE_TYPES_OF[CONTENT_KIND_OF[kind]]]));
+    const usages: VisualTemplateUsage[] = [];
+    for (const versionId of selection.visualTemplateVersionIds ?? []) {
+      const row = this.#container.db
+        .prepare<{ template_id: string }>('SELECT template_id FROM visual_template_versions WHERE id = ?')
+        .get([versionId]);
+      const template = row === undefined ? null : templates.template(row.template_id);
+      const version = template === null ? null : templates.version(template.id, versionId);
+      if (template === null || version === null || template.deletedAt !== null) {
+        throw new HttpProblem(404, 'NOT_FOUND', 'La plantilla visual elegida no existe.');
+      }
+      const refusal =
+        version.status !== 'published'
+          ? 'La versión elegida no está publicada.'
+          : template.archivedAt !== null
+            ? 'La plantilla está archivada.'
+            : template.format !== '4:5'
+              ? 'Los carruseles usan el formato 4:5: elige una plantilla 4:5.'
+              : !slideTypes.has(template.contentType)
+                ? 'La plantilla no corresponde a ninguno de los tipos de contenido elegidos.'
+                : usages.some((usage) => usage.contentType === template.contentType)
+                  ? 'Elige una sola plantilla por tipo de diapositiva.'
+                  : null;
+      if (refusal !== null) {
+        throw new HttpProblem(409, 'TEMPLATE_SOURCE_REFUSED', refusal);
+      }
+      usages.push({
+        templateId: template.id,
+        versionId: version.id,
+        version: version.version,
+        name: template.name,
+        contentType: template.contentType,
+      });
+    }
+    return usages;
   }
 
   preview(selection: ContentBatchSelection): ContentBatchPreview {
@@ -410,6 +476,7 @@ export class ContentBatchService {
       language: resolved.language,
       matches: resolved.matches,
       templates: this.#compatibleTemplates(selection.kinds),
+      visualTemplates: this.#visualTemplates(selection),
       pieces: resolved.pieces,
       totals: { requested: resolved.pieces.length, ready, skipped: resolved.pieces.length - ready },
     };
@@ -427,6 +494,7 @@ export class ContentBatchService {
         return existing.id;
       }
       const resolved = this.#resolve(request.selection);
+      const visualTemplates = this.#visualTemplates(request.selection);
       const source = this.#localSource();
       const ready = resolved.pieces.filter((piece) => piece.status === 'ready');
       if (source === null || resolved.selectionLabel === null || ready.length === 0) {
@@ -497,6 +565,17 @@ export class ContentBatchService {
           createdAt: at,
           contentKind: CONTENT_KIND_OF[piece.kind],
         });
+        const pieceTemplates = visualTemplates.filter((usage) =>
+          SLIDE_TYPES_OF[CONTENT_KIND_OF[piece.kind]].has(usage.contentType),
+        );
+        if (pieceTemplates.length > 0) {
+          // PD-ARCH-01G-D: the exact version of each slide type and the badge of each team of the piece, as they are now.
+          this.#projects.assignVisualTemplates(
+            projectId,
+            pieceTemplates,
+            this.#badgeSnapshot(resolved, piece.matchIds),
+          );
+        }
         const run = this.#runner.start(projectId, 'full');
         this.#batches.insertItem(id, {
           id: itemId,

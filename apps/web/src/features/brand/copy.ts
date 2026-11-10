@@ -1,5 +1,5 @@
 /**
- * Spanish copy of the brand and templates page (PD-06: Spanish by default). Shared error text comes from the copy
+ * Spanish copy of the brand views (Recursos, Identidad visual) and the templates pages (PD-06: Spanish by default). Shared error text comes from the copy
  * tables of `src/ui`; this module holds only the feature's own strings and the labels of the brand contract values.
  *
  * Wording rules (PD-03, OD-27, R-049, R-050, R-231): only authorized El Deporte Rey GT assets are registered; there is
@@ -82,10 +82,8 @@ export const languageLabel: Record<Language, string> = {
 };
 
 export const brandCopy = {
-  title: 'Mi marca',
-  eyebrow: 'Identidad y recursos',
-  intro:
-    'Administra la identidad visual y los recursos oficiales de la marca. Un recurso activo queda disponible para el contenido que se genere después.',
+  /** Eyebrow of both views of Mi marca: the parent menu item. */
+  eyebrow: 'Mi marca',
   authorizedOnly:
     'Solo se registran recursos autorizados de El Deporte Rey GT. No se registran escudos de clubes, marcas de competiciones ni imágenes sin autorización: los nombres de equipos y competiciones aparecen como texto.',
   provisional:
@@ -94,9 +92,10 @@ export const brandCopy = {
 } as const;
 
 export const libraryCopy = {
-  heading: 'Biblioteca de recursos',
+  /** The view «Recursos» (`/brand/resources`): the brand library. */
+  heading: 'Recursos',
   intro:
-    'Logotipos, mascota, elementos gráficos, fondos y referencias de estilo de la marca. Cada recurso indica cómo puede usarlo la IA en fases posteriores.',
+    'La biblioteca de recursos de la marca: logotipos, mascota, elementos gráficos, fondos y referencias de estilo. Un recurso activo queda disponible para el contenido que se genere después, y cada uno indica cómo puede usarlo la IA en fases posteriores.',
   upload: 'Subir recurso',
   loading: 'Cargando la biblioteca…',
   loadFailedTitle: 'No se pudo cargar la biblioteca',
@@ -225,6 +224,7 @@ export const detailCopy = {
 } as const;
 
 export const identityCopy = {
+  /** The view «Identidad visual» (`/brand/identity`). */
   heading: 'Identidad visual',
   intro:
     'Los colores y las tipografías son los que usa el motor de diapositivas. Aquí se consultan y se documenta su uso; los valores se cambian en la configuración de la marca.',
@@ -266,6 +266,9 @@ export const templatesCopy = {
   eyebrow: 'Plantillas',
   heading: 'Plantillas',
   createHeading: 'Crear plantilla',
+  createTabs: 'Plantillas y propuestas',
+  templatesTab: 'Plantillas visuales',
+  proposalsTab: 'Propuestas visuales con IA',
   createIntro:
     'Convierte una propuesta visual aprobada en una plantilla reutilizable y edítala: fondo, recursos oficiales y textos con datos deportivos. Reutilizarla no llama a OpenAI.',
   engineHeading: 'Plantillas del motor',

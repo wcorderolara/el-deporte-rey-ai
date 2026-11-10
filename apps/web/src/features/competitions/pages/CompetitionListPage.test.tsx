@@ -44,6 +44,7 @@ const team: ManagedTeam = {
   id: '33333333-3333-4333-8333-333333333333',
   name: 'Club Uno',
   region: null,
+  badge: null,
   createdAt: first.createdAt,
   updatedAt: first.updatedAt,
 };
@@ -143,6 +144,8 @@ function apiStub(overrides: Partial<CompetitionsApi> = {}): CompetitionsApi {
     createTeam: vi.fn(),
     updateTeam: vi.fn(),
     getTeam: vi.fn(),
+    uploadTeamBadge: vi.fn(),
+    deleteTeamBadge: vi.fn(),
     listCompetitionTeams: vi.fn().mockResolvedValue([]),
     addCompetitionTeam: vi.fn(),
     removeCompetitionTeam: vi.fn(),
@@ -1305,5 +1308,90 @@ describe('competition foundation page', () => {
     expect(screen.getByRole('link', { name: `Regresar a ${stage.name}` }).getAttribute('href')).toBe(
       `/competitions/${first.id}/seasons/${season.id}/calendar/stages/${stage.id}`,
     );
+  });
+  it('shows each team badge (or the neutral outline) and manages it from the edit dialog (PD-ARCH-01G-D)', async () => {
+    const badge = {
+      id: '99999999-9999-4999-8999-999999999999',
+      origin: 'manual' as const,
+      source: 'Sitio oficial del club',
+      mime: 'image/png' as const,
+      width: 256,
+      height: 256,
+      sha256: 'b'.repeat(64),
+      uploadedAt: first.createdAt,
+    };
+    const withBadge = { ...team, badge };
+    const api = apiStub({
+      get: vi.fn().mockResolvedValue(first),
+      listCompetitionTeams: vi.fn().mockResolvedValue([
+        { team: withBadge, associatedAt: first.createdAt },
+        { team: awayTeam, associatedAt: first.createdAt },
+      ]),
+      listTeams: vi.fn().mockResolvedValue([withBadge, awayTeam]),
+      deleteTeamBadge: vi.fn().mockResolvedValue(team),
+    });
+    render(
+      <MemoryRouter initialEntries={[`/competitions/${first.id}/teams`]}>
+        <CompetitionsProvider api={api}>
+          <Routes>
+            <Route path="/competitions/:competitionId/teams" element={<CompetitionTeamsPage />} />
+          </Routes>
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+    const row = await screen.findByRole('rowheader', { name: 'Club Uno' });
+    const badgeOf = (element: HTMLElement) => within(element).getByTestId('team-badge').dataset['badge'];
+    expect(badgeOf(row)).toBe('image');
+    expect(row.querySelector('img')?.getAttribute('src')).toMatch(new RegExp(`^/api/v1/teams/${team.id}/badge\\?v=`));
+    expect(badgeOf(screen.getByRole('rowheader', { name: 'Club Dos' }))).toBe('none');
+
+    await userEvent.click(screen.getAllByRole('button', { name: 'Editar equipo' })[0] as HTMLElement);
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText('Sitio oficial del club')).toBeTruthy();
+    expect(within(dialog).getByText('Subido a mano')).toBeTruthy();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Retirar escudo' }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Sí, retirar' }));
+    expect(api.deleteTeamBadge).toHaveBeenCalledWith(team.id);
+    await waitFor(() => expect(badgeOf(screen.getByRole('rowheader', { name: 'Club Uno' }))).toBe('none'));
+    expect(within(dialog).getByRole('button', { name: 'Subir escudo' })).toBeTruthy();
+  });
+
+  it('shows both team badges on a match card (PD-ARCH-01G-D)', async () => {
+    const badge = {
+      id: '99999999-9999-4999-8999-999999999999',
+      origin: 'manual' as const,
+      source: 'Club',
+      mime: 'image/jpeg' as const,
+      width: 200,
+      height: 220,
+      sha256: 'c'.repeat(64),
+      uploadedAt: first.createdAt,
+    };
+    const withBadge = { ...team, badge };
+    const api = apiStub({
+      getSeason: vi.fn().mockResolvedValue(season),
+      listTeams: vi.fn().mockResolvedValue([withBadge, awayTeam]),
+      listParticipants: vi.fn().mockResolvedValue([
+        { team: withBadge, joinedAt: first.createdAt },
+        { team: awayTeam, joinedAt: first.createdAt },
+      ]),
+      listMatches: vi.fn().mockResolvedValue([{ ...match, homeTeam: withBadge }]),
+    });
+    render(
+      <MemoryRouter initialEntries={[`/competitions/${first.id}/seasons/${season.id}/calendar/unassigned`]}>
+        <CompetitionsProvider api={api}>
+          <Routes>
+            <Route
+              path="/competitions/:competitionId/seasons/:seasonId/calendar/unassigned"
+              element={<SeasonDetailPage />}
+            />
+          </Routes>
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+    const versus = await screen.findByText('vs');
+    const card = versus.closest('article') ?? (versus.parentElement?.parentElement as HTMLElement);
+    const badges = within(card).getAllByTestId('team-badge');
+    expect(badges.map((element) => element.dataset['badge'])).toEqual(['image', 'none']);
   });
 });

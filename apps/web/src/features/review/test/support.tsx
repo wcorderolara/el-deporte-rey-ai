@@ -67,6 +67,7 @@ export function reviewProject(): Record<string, unknown> {
     lastExportAt: null,
     latestRunStatus: 'completed',
     sportsContext: null,
+    visualTemplates: [],
     competitionId: 'liga-prueba',
     sourceId: 'demo-a',
     seasonId: '2026',

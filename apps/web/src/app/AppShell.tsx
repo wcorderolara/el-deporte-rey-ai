@@ -53,6 +53,21 @@ const NAV_ITEMS: readonly NavItem[] = [
     label: 'Mi marca',
     symbol: '◇',
     isCurrent: (pathname) => pathname === '/brand' || pathname.startsWith('/brand/'),
+    children: [
+      {
+        // The brand library: logos, mascot, graphic elements, backgrounds and style references.
+        to: '/brand/resources',
+        label: 'Recursos',
+        symbol: '▣',
+        isCurrent: (pathname) => pathname.startsWith('/brand/resources'),
+      },
+      {
+        to: '/brand/identity',
+        label: 'Identidad visual',
+        symbol: '◐',
+        isCurrent: (pathname) => pathname.startsWith('/brand/identity'),
+      },
+    ],
   },
   {
     to: '/templates',
@@ -140,6 +155,19 @@ function MainNavigation({ pathname }: { pathname: string }) {
   );
 }
 
+/** Routes on the studio surface; every other route keeps the legacy content panel. */
+export function contentVariantOf(pathname: string): 'studio' | 'legacy' | 'workspace' {
+  if (/^\/templates\/visual\/[^/]+\/?$/.test(pathname)) return 'workspace';
+  return ['/', '/projects', '/projects/', '/exports', '/exports/'].includes(pathname) ||
+    /^\/projects\/[^/]+\/review(?:\/.*)?$/.test(pathname) ||
+    /^\/projects\/batches\/[^/]+\/?$/.test(pathname) ||
+    /^\/competitions(?:\/.*)?$/.test(pathname) ||
+    /^\/(?:brand|templates)(?:\/.*)?$/.test(pathname) ||
+    /^\/projects\/[^/]+(?:\/exports(?:\/.*)?)?\/?$/.test(pathname)
+    ? 'studio'
+    : 'legacy';
+}
+
 /**
  * Application shell: opens directly on the project list (R-235) with no login, account or sign-in element
  * (PD-05). After each navigation, focus moves to the main content so that keyboard and screen-reader users start
@@ -167,15 +195,7 @@ export function AppShell() {
       hideHeaderTitle={context.hideHeaderTitle}
       hideHeaderDescription={context.hideHeaderTitle || context.projectPath !== undefined}
       navigationKey={location.pathname}
-      contentVariant={
-        ['/', '/projects', '/projects/', '/exports', '/exports/'].includes(location.pathname) ||
-        /^\/projects\/[^/]+\/review(?:\/.*)?$/.test(location.pathname) ||
-        /^\/competitions(?:\/.*)?$/.test(location.pathname) ||
-        /^\/(?:brand|templates)(?:\/.*)?$/.test(location.pathname) ||
-        /^\/projects\/[^/]+(?:\/exports(?:\/.*)?)?\/?$/.test(location.pathname)
-          ? 'studio'
-          : 'legacy'
-      }
+      contentVariant={contentVariantOf(location.pathname)}
       primaryAction={
         <Link to="/projects/generate" className={buttonClassName('primary', 'sm', 'flex w-full')}>
           <span aria-hidden="true">＋</span>Crear contenido

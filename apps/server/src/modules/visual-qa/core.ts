@@ -4,7 +4,8 @@
  * no database access and no file I/O, so the tests call it with synthetic inputs in isolation (R-225).
  *
  * Checks of a slide version (severity per OD-09; every check gives one result, `pass` or `fail`):
- * - `data_match` (blocking): every fact-bearing text element (score, kickoff, standings position and cells) equals the
+ * - `data_match` (blocking): every fact-bearing text element (score, each team's goals, kickoff date and time, status,
+ *   standings position and cells) equals the
  *   deterministic display form (`platform/format`) of its fact's verified value, or of its candidate value when the
  *   fact is unverified (T11G). Standings rows are compared as the content stage stores them (OD-49, T32 risk 3): the
  *   row's position and number cells against `standingRowCells` of the row fact, in column order. The match-result
@@ -35,6 +36,7 @@ import { type Language, QA_CHECKS, type QaCheck, type QaMismatch, type QaResult,
 import {
   formatDate,
   formatInt,
+  formatTime,
   formatScore,
   hashtagFor,
   resultRelation,
@@ -85,14 +87,33 @@ export const DETAIL_LIMITS = Object.freeze({
 /** Text elements that show a fact value compared by `data_match`. */
 const VALUE_SEMANTICS: ReadonlySet<TextElement['semantic']> = new Set([
   'score',
+  // PD-ARCH-01G-D: values a visual template draws on their own.
+  'score_home',
+  'score_away',
+  'kickoff_time',
   'kickoff',
   'match_status',
   'standings_position',
   'standings_cell',
 ]);
 
+/**
+ * True for the render model of a structured visual template (PD-ARCH-01G-D, decision D9): it draws the values its
+ * design chooses, so data_match does not require every fact segment to be drawn nor the result title; every value it
+ * draws is still compared with its fact.
+ */
+function isVisualTemplate(model: RenderModel): boolean {
+  return model.templateId.startsWith('vt-');
+}
+
 /** Slide types of matches not played yet: they never draw a score (PD-ARCH-01E-B). */
 const UNPLAYED_SLIDE_TYPES: ReadonlySet<string> = new Set(['round_overview', 'fixture', 'match_preview']);
+
+/** Score elements: none on a match not played yet. */
+const SCORE_SEMANTICS: ReadonlySet<string> = new Set(['score', 'score_home', 'score_away']);
+
+/** Fields stored only for visual templates (PD-ARCH-01G-D); a built-in template never draws them. */
+const TEMPLATE_ONLY_FIELDS: ReadonlySet<string> = new Set(['score_home', 'score_away', 'kickoff_time']);
 
 /** The AI-written fields of a slide (content module `aiField`). */
 const SLIDE_AI_FIELDS = ['headline', 'description'] as const;
@@ -263,13 +284,21 @@ function sortedUnique(values: Iterable<string>): string[] {
 
 /** Display form of a value element's fact for the element's semantic; null when the fact cannot give it. */
 function valueDisplay(
-  semantic: 'score' | 'kickoff' | 'match_status',
+  semantic: 'score' | 'score_home' | 'score_away' | 'kickoff' | 'kickoff_time' | 'match_status',
   fact: ContentFact | undefined,
   ctx: QaContext,
 ): string | null {
   if (semantic === 'score') {
     const score = usableValue(fact, 'match_score');
     return score === null ? null : formatScore(score);
+  }
+  if (semantic === 'score_home' || semantic === 'score_away') {
+    const score = usableValue(fact, 'match_score');
+    return score === null ? null : formatInt(semantic === 'score_home' ? score.home : score.away);
+  }
+  if (semantic === 'kickoff_time') {
+    const kickoff = usableValue(fact, 'match_kickoff');
+    return kickoff === null ? null : formatTime(kickoff.kickoff, ctx.settings.utcOffsetMinutes);
   }
   if (semantic === 'match_status') {
     const status = usableValue(fact, 'match_status');
@@ -363,7 +392,13 @@ export function dataMatch(version: VersionToCheck, model: RenderModel, ctx: QaCo
       continue;
     }
     const expected = valueDisplay(
-      element.semantic === 'score' ? 'score' : element.semantic === 'match_status' ? 'match_status' : 'kickoff',
+      element.semantic === 'score' ||
+        element.semantic === 'score_home' ||
+        element.semantic === 'score_away' ||
+        element.semantic === 'kickoff_time' ||
+        element.semantic === 'match_status'
+        ? element.semantic
+        : 'kickoff',
       ctx.facts.get(factId),
       ctx,
     );
@@ -372,20 +407,22 @@ export function dataMatch(version: VersionToCheck, model: RenderModel, ctx: QaCo
     }
   }
   checkStandingsRows(rows, ctx, mismatches);
-  if (model.slideType === 'match_result') {
+  const structured = isVisualTemplate(model);
+  if (model.slideType === 'match_result' && !structured) {
     checkResultTitle(texts, ctx, mismatches);
   }
   if (UNPLAYED_SLIDE_TYPES.has(model.slideType)) {
     // A match not played yet never shows a score, whatever its stored text says.
-    for (const element of texts.filter((candidate) => candidate.semantic === 'score')) {
+    for (const element of texts.filter((candidate) => SCORE_SEMANTICS.has(candidate.semantic))) {
       mismatches.add(element.id, element.factIds[0] ?? null, '', element.text);
     }
   }
 
-  // Every fact segment of a template field is drawn by some text element.
+  // Every fact segment of a template field is drawn by some text element (built-in templates; the values stored only
+  // for visual templates are not required).
   const drawn = new Set(texts.flatMap((element) => element.factIds));
-  for (const field of version.text.fields) {
-    if ((SLIDE_AI_FIELDS as readonly string[]).includes(field.field)) {
+  for (const field of structured ? [] : version.text.fields) {
+    if ((SLIDE_AI_FIELDS as readonly string[]).includes(field.field) || TEMPLATE_ONLY_FIELDS.has(field.field)) {
       continue;
     }
     for (const segment of field.segments) {
@@ -400,6 +437,10 @@ export function dataMatch(version: VersionToCheck, model: RenderModel, ctx: QaCo
     const segments = segmentsOf(version, field);
     const stored = segments.map((segment) => segment.text).join('');
     const element = texts.find((candidate) => candidate.field === field);
+    if (structured && element === undefined) {
+      // A visual template does not draw the AI text (decision D9).
+      continue;
+    }
     if (stored.trim() !== '' && element?.text !== stored) {
       mismatches.add(element?.id ?? field, null, stored, element?.text ?? '');
     }
@@ -509,7 +550,9 @@ export function fitsBox(element: TextElement, canvas: RenderModel['canvas'], fon
   if (face === undefined) {
     return false; // not measurable with a bundled face: not shown to fit
   }
-  const layout = layoutText(element.text, face.font, element.fontSize, element.box.width, element.maxLines);
+  // Text shown in capital letters is measured as drawn (PD-29); the element keeps the stored text.
+  const shown = element.uppercase === true ? element.text.toUpperCase() : element.text;
+  const layout = layoutText(shown, face.font, element.fontSize, element.box.width, element.maxLines);
   if (
     layout.overflow ||
     layout.lines.length !== element.lines.length ||

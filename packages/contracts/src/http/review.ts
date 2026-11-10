@@ -124,6 +124,13 @@ export const TextFieldNameSchema = z.enum([
   'demo_label',
   'match_status',
   'fixtures',
+  /**
+   * Values of the slides of a project that uses a visual template (PD-ARCH-01G-D): each team's goals and the kickoff
+   * time, as fact segments, so a template can draw them independently.
+   */
+  'score_home',
+  'score_away',
+  'kickoff_time',
 ]);
 
 export const SegmentProvenanceSchema = z.enum(['fact', 'commentary', 'template_text']);

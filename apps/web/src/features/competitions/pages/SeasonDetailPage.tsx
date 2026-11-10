@@ -30,6 +30,7 @@ import {
   ViewModeToggle,
 } from '../../../ui';
 import { useCompetitionsApi } from '../CompetitionsContext';
+import { TeamBadge } from '../TeamBadge';
 import { RoundStatusIndicator } from '../components/RoundStatusIndicator';
 import { deriveRoundStatus, type RoundPresentationStatus } from '../round-status';
 
@@ -288,18 +289,24 @@ function MatchCard(props: {
         <span className={`rounded-full border px-3 py-1 text-caption font-bold ${stateClassName}`}>{stateLabel}</span>
       </div>
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
-        <h3 className="m-0 min-w-0 break-normal font-display text-heading-sm font-bold text-text-primary">
-          {match.homeTeam.name}
-        </h3>
+        <div className="flex min-w-0 items-center gap-2">
+          <TeamBadge team={match.homeTeam} size="md" />
+          <h3 className="m-0 min-w-0 break-normal font-display text-heading-sm font-bold text-text-primary">
+            {match.homeTeam.name}
+          </h3>
+        </div>
         <strong
           className="font-display text-heading-md font-extrabold text-brand-gold"
           aria-label={match.homeScore === null ? 'Sin marcador' : `Marcador ${match.homeScore} a ${match.awayScore}`}
         >
           {match.homeScore === null ? 'vs' : `${match.homeScore} – ${match.awayScore}`}
         </strong>
-        <h3 className="m-0 min-w-0 break-normal text-right font-display text-heading-sm font-bold text-text-primary">
-          {match.awayTeam.name}
-        </h3>
+        <div className="flex min-w-0 items-center justify-end gap-2">
+          <h3 className="m-0 min-w-0 break-normal text-right font-display text-heading-sm font-bold text-text-primary">
+            {match.awayTeam.name}
+          </h3>
+          <TeamBadge team={match.awayTeam} size="md" />
+        </div>
       </div>
       {match.stage || match.round ? (
         <p className="m-0 text-caption text-text-subtle">
@@ -1045,12 +1052,17 @@ export function SeasonDetailPage() {
                       return (
                         <tr key={team.id} className="border-b border-border-subtle last:border-0">
                           <th scope="row" className="px-4 py-4 font-display text-body-md font-bold text-text-primary">
-                            {team.name}
-                            {team.region ? (
-                              <span className="mt-1 block font-sans text-body-sm font-normal text-text-secondary">
-                                {team.region}
+                            <span className="flex items-center gap-3">
+                              <TeamBadge team={team} size="sm" />
+                              <span>
+                                {team.name}
+                                {team.region ? (
+                                  <span className="mt-1 block font-sans text-body-sm font-normal text-text-secondary">
+                                    {team.region}
+                                  </span>
+                                ) : null}
                               </span>
-                            ) : null}
+                            </span>
                           </th>
                           <td className="px-4 py-3">
                             <div className="flex justify-end">
@@ -1088,13 +1100,16 @@ export function SeasonDetailPage() {
                   return (
                     <li key={team.id} className="min-w-0">
                       <Card as="article" className="flex min-w-0 items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <h3 className="m-0 break-normal font-display text-heading-sm font-bold text-text-primary">
-                            {team.name}
-                          </h3>
-                          {team.region ? (
-                            <p className="m-0 mt-1 text-body-sm text-text-secondary">{team.region}</p>
-                          ) : null}
+                        <div className="flex min-w-0 items-start gap-3">
+                          <TeamBadge team={team} size="md" />
+                          <div className="min-w-0">
+                            <h3 className="m-0 break-normal font-display text-heading-sm font-bold text-text-primary">
+                              {team.name}
+                            </h3>
+                            {team.region ? (
+                              <p className="m-0 mt-1 text-body-sm text-text-secondary">{team.region}</p>
+                            ) : null}
+                          </div>
                         </div>
                         <span className="group relative inline-flex">
                           <IconButton

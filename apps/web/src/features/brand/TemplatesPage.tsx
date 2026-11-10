@@ -1,8 +1,8 @@
 import { LanguageSchema, type DesignProposal, type Language, type Template } from '@edr/contracts';
 import { useCallback, useId, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 
-import { Badge, Card, EmptyState, ErrorBanner, LoadingState } from '../../ui';
+import { Badge, Card, EmptyState, ErrorBanner, LoadingState, Tabs, tabPanelId } from '../../ui';
 import { DesignProposalsSection } from '../design/DesignProposalsSection';
 import type { DesignApi } from '../design/designApi';
 import { CreateTemplateDialog } from '../visual-templates/CreateTemplateDialog';
@@ -111,7 +111,7 @@ function TemplatesHeader({ heading, intro, headingId }: TemplatesHeaderProps) {
       <p className="m-0 text-body-md text-text-secondary">{intro}</p>
       <p className="m-0 text-body-sm text-text-secondary">
         {templatesCopy.brandNote}{' '}
-        <Link to="/brand" className="focus-studio text-text-link underline underline-offset-2">
+        <Link to="/brand/resources" className="focus-studio text-text-link underline underline-offset-2">
           {templatesCopy.brandLink}
         </Link>
         .
@@ -129,28 +129,60 @@ export interface CreateTemplatesPageProps {
   visualApi: VisualTemplatesApi;
 }
 
+type CreateTab = 'templates' | 'proposals';
+
 /**
- * «Crear plantilla» (`/templates/create`): the structured visual templates (editable, versioned, made from approved
- * proposals) and the AI design proposals they start from, with the dialog that turns an approved proposal into a
- * template.
+ * «Crear plantilla» (`/templates/create`), in two tabs: the structured visual templates (editable, versioned, made
+ * from approved proposals) and the AI design proposals they start from, with the dialog that turns an approved
+ * proposal into a template. The tab is in the address (`?tab=proposals`), so a reload or a link keeps it.
  */
 export function CreateTemplatesPage({ api, designApi, visualApi }: CreateTemplatesPageProps) {
   /** "Crear plantilla" open, with the proposal chosen beforehand (or none). */
   const [creating, setCreating] = useState<{ proposalId: string | null } | null>(null);
+  const [params, setParams] = useSearchParams();
+  const tab: CreateTab = params.get('tab') === 'proposals' ? 'proposals' : 'templates';
+  const tabsId = useId();
+
+  function choose(next: CreateTab) {
+    const query = new URLSearchParams(params);
+    if (next === 'proposals') query.set('tab', 'proposals');
+    else query.delete('tab');
+    setParams(query, { replace: true });
+  }
 
   return (
-    <section aria-labelledby="templates-create-title" className="grid min-w-0 gap-8">
+    <section aria-labelledby="templates-create-title" className="grid min-w-0 gap-6">
       <TemplatesHeader
         headingId="templates-create-title"
         heading={templatesCopy.createHeading}
         intro={templatesCopy.createIntro}
       />
-      <VisualTemplatesSection api={visualApi} onCreate={() => setCreating({ proposalId: null })} />
-      <DesignProposalsSection
-        api={designApi}
-        brandApi={api}
-        onCreateTemplate={(proposal: DesignProposal) => setCreating({ proposalId: proposal.id })}
+      <Tabs<CreateTab>
+        id={tabsId}
+        label={templatesCopy.createTabs}
+        options={[
+          { value: 'templates', label: templatesCopy.templatesTab },
+          { value: 'proposals', label: templatesCopy.proposalsTab },
+        ]}
+        value={tab}
+        onChange={choose}
       />
+      <div
+        id={tabPanelId(tabsId, tab)}
+        role="tabpanel"
+        aria-labelledby={`${tabsId}-tab-${tab}`}
+        className="grid min-w-0 gap-8"
+      >
+        {tab === 'templates' ? (
+          <VisualTemplatesSection api={visualApi} onCreate={() => setCreating({ proposalId: null })} />
+        ) : (
+          <DesignProposalsSection
+            api={designApi}
+            brandApi={api}
+            onCreateTemplate={(proposal: DesignProposal) => setCreating({ proposalId: proposal.id })}
+          />
+        )}
+      </div>
       {creating === null ? null : (
         <CreateTemplateDialog
           api={visualApi}

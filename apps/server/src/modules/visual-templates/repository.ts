@@ -7,14 +7,14 @@
  * kept with the status `discarded`.
  */
 import {
-  type DesignContentType,
-  DesignContentTypeSchema,
   type DesignFormat,
   DesignFormatSchema,
   type VisualTemplateAssetRef,
   VisualTemplateAssetRefSchema,
   type VisualTemplateBackgroundSource,
   VisualTemplateBackgroundSourceSchema,
+  type VisualTemplateContentType,
+  VisualTemplateContentTypeSchema,
   type VisualTemplateLayer,
   VisualTemplateLayerSchema,
 } from '@edr/contracts';
@@ -27,7 +27,7 @@ export interface TemplateRecord {
   readonly name: string;
   readonly description: string | null;
   readonly category: string | null;
-  readonly contentType: DesignContentType;
+  readonly contentType: VisualTemplateContentType;
   readonly format: DesignFormat;
   readonly sourceProposalId: string | null;
   readonly acknowledgedWarnings: boolean;
@@ -142,7 +142,7 @@ function templateOf(row: TemplateRow): TemplateRecord {
     name: row.name,
     description: row.description,
     category: row.category,
-    contentType: DesignContentTypeSchema.parse(row.content_type),
+    contentType: VisualTemplateContentTypeSchema.parse(row.content_type),
     format: DesignFormatSchema.parse(row.format),
     sourceProposalId: row.source_proposal_id,
     acknowledgedWarnings: row.acknowledged_warnings === 1,

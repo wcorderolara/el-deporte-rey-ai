@@ -35,6 +35,7 @@ Always install with `npm ci` from the committed `package-lock.json`.
 | Development | `npm run dev` | API `http://127.0.0.1:4300` (watch mode) and Vite `http://127.0.0.1:5173` with `/api` proxied to the API |
 | Development with football-data.org | `EDR_CONFIG=config/dev-live.config.json npm run dev` | Same separate API + Vite workflow; uses the existing `data/` database |
 | Development with AI design proposals (OpenAI) | `EDR_CONFIG=config/dev-images.config.json npm run dev` | Same workflow; adds the OpenAI image adapter (`EDR_IMAGE_API_KEY` in `.env.local`) |
+| Full development (football-data.org and OpenAI together) | `EDR_CONFIG=config/dev-full.config.json npm run dev` | Same workflow; both providers (`FOOTBALL_DATA_API_TOKEN` and `EDR_IMAGE_API_KEY` in `.env.local`) |
 | Local use | `npm run build`, then `npm start` | UI and API on `http://127.0.0.1:4300` |
 | Verification runs (gates, verify worktree) | started by the end-to-end runner | `http://127.0.0.1:4310` |
 | Product Owner demonstration (demo worktree) | started for the demonstration only | `http://127.0.0.1:4320` |
@@ -103,8 +104,11 @@ precedence.
 - `config/dev-images.config.json` is `config/dev.config.json` plus the `openai` image adapter (`providers.images`): the
   base URL, the models, their qualities, the prices copied from the provider's published list with the date they were
   checked, and the limits (images per request, references, images per day, monthly computed spend, concurrency). No
-  secret is in it. Every other configuration keeps the adapter `disabled`. Start with
+  secret is in it. Every configuration except `dev-images` and `dev-full` keeps the adapter `disabled`. Start with
   `EDR_CONFIG=config/dev-images.config.json npm run dev`.
+- `config/dev-full.config.json` is `config/dev-live.config.json` (football-data.org) plus the same `providers.images`
+  block, for a complete test with live sports data and AI proposals in one server. A test checks that it stays exactly
+  that union. Start with `EDR_CONFIG=config/dev-full.config.json npm run dev`.
 - Put the key in `.env.local` as `EDR_IMAGE_API_KEY=` followed by the key, with the file at mode 0600, and restart the
   server. Check that it is present without printing it: `grep -c '^EDR_IMAGE_API_KEY=..*' .env.local`.
 - The key is read by the image adapter at call time, sent only in the `Authorization` header to the configured origin

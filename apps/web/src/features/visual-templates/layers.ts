@@ -7,6 +7,7 @@ import {
   VISUAL_TEMPLATE_BINDINGS,
   type BrandAsset,
   type BrandColorRole,
+  type VisualTemplateBadgeBinding,
   type VisualTemplateBinding,
   type VisualTemplateContentType,
   type VisualTemplateLayer,
@@ -43,6 +44,7 @@ const PREFIX: Record<VisualTemplateLayerType, string> = {
   sports_data: 'dato',
   image: 'imagen',
   brand_asset: 'marca',
+  team_badge: 'escudo',
 };
 
 /** A layer ID not used by the given layers (contract `LayerId`). */
@@ -127,7 +129,8 @@ export type NewLayerRequest =
   | { type: 'text' }
   | { type: 'sports_data' }
   | { type: 'image'; asset: BrandAsset }
-  | { type: 'brand_asset'; asset: BrandAsset };
+  | { type: 'brand_asset'; asset: BrandAsset }
+  | { type: 'team_badge'; binding: VisualTemplateBadgeBinding };
 
 /** A new layer with defaults, placed on top of the others. */
 export function newLayer(request: NewLayerRequest, layers: readonly VisualTemplateLayer[]): VisualTemplateLayer {
@@ -175,7 +178,26 @@ export function newLayer(request: NewLayerRequest, layers: readonly VisualTempla
       const box = request.asset.kind === 'mascot' ? MARK_BOX.mascot : MARK_BOX.brand_logo;
       return { ...base, type: 'brand_asset', name: request.asset.label, ...box, assetId: request.asset.id };
     }
+    case 'team_badge': {
+      // A square box on the side of its team (PD-ARCH-01G-D); the badge is drawn proportionally inside it.
+      const home = request.binding === 'match.homeTeam.badge';
+      return {
+        ...base,
+        type: 'team_badge',
+        name: home ? 'Escudo local' : 'Escudo visitante',
+        x: home ? 0.12 : 0.64,
+        y: 0.22,
+        width: 0.24,
+        height: 0.192,
+        binding: request.binding,
+      };
+    }
   }
+}
+
+/** Content types whose slides show one match: the only ones with team badges (PD-ARCH-01G-D). */
+export function hasTeamBadges(contentType: VisualTemplateContentType): boolean {
+  return contentType === 'match_preview' || contentType === 'fixture' || contentType === 'match_result';
 }
 
 /** Moves a layer one step up (towards the top) or down in the stacking order. */

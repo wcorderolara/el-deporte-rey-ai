@@ -389,3 +389,246 @@ servido del contrato, que recorre las 15 operaciones sobre la aplicación en eje
   `work/PD-ARCH-01G-B`).
 - Cerrada con un commit tras la aceptación del Product Owner del 2026-11-09; su hash queda en el
   [índice de la fase](./README.md). Sin merge, push ni deploy.
+
+## 15. Refinamiento UX/UI del editor de plantillas (2026-11-09)
+
+Refinamiento visual del editor de 01G-C pedido por el Product Owner. No es una fase nueva ni cambia el alcance de
+01G-D. 01G-C ya estaba cerrada con su commit, así que el cambio está en el árbol de trabajo de `work/PD-ARCH-01G-D`,
+**sin commit** y pendiente de aceptación, junto con los cambios de 01G-D, que se conservan.
+
+- **Solo frontend:** no cambian el backend, los contratos, las migraciones, el renderizador ni las reglas de versionado,
+  validación y publicación.
+- **Referencias de diseño:** las dos capturas de Google Stitch citadas en el pedido no llegaron con el mensaje. Se
+  siguió la descripción escrita del pedido y, como referencia visual, las pantallas de editor del archivo
+  `docs/design/stitch_el_deporte_rey_studio.zip`, sin copiar sus datos ni sus funciones inexistentes.
+- **Pedido adicional:** «Crear plantilla» (`/templates/create`) muestra dos pestañas, «Plantillas visuales» y
+  «Propuestas visuales con IA».
+
+### 15.1 Problemas de la versión anterior
+
+- **Ocupación del espacio:**
+  - todo cabía en una sola columna larga;
+  - el lienzo ocupaba la mitad del ancho y la página entera se desplazaba;
+  - la lista de validaciones y la vista previa quedaban debajo del lienzo, lejos de las capas.
+- **Agregar capas:** había siete botones «＋ …» siempre visibles.
+- **Lista de capas:**
+  - cada capa era una tarjeta con borde y cuatro botones de 44 px;
+  - el orden era el inverso del habitual (la primera fila quedaba al fondo).
+- **Propiedades:** formaban una sola columna larga, sin grupos plegables y con controles de otros tipos.
+- **Bindings:** se elegía el dato, pero no se veía su campo ni el valor que tomaba con datos reales.
+- **Vista previa:**
+  - era una sección más al pie de la página;
+  - el botón «Previsualizar» de la lista hacía un desplazamiento automático hasta ella.
+- **Acciones:** «Publicar versión», «Editar datos», el selector de versión y los avisos competían en la cabecera.
+
+### 15.2 Nueva estructura
+
+`TemplateEditorPage` ocupa el alto disponible de la ventana: `editor/layout.ts` mide desde el borde superior del
+editor. La página no se desplaza y cada panel maneja su propio desbordamiento. La ruta del editor usa la variante
+`workspace` del marco (`contentVariantOf`):
+
+- ancho completo y márgenes estrechos;
+- sin la cabecera de página, porque la barra del editor ya nombra la plantilla.
+
+| Zona | Componente | Contenido |
+| --- | --- | --- |
+| Barra superior | `editor/EditorToolbar.tsx` | Volver a Plantillas; tipo y formato; nombre completo (truncado, con tooltip; el lápiz abre «Editar el nombre y los datos»); estado de la plantilla; versión (selector si hay varias); «Cambios sin guardar» / «Guardado · fecha» / «Solo lectura»; pestañas Diseño / Vista previa; indicador de validación; Guardar borrador; Publicar plantilla (única acción de publicación) o Crear nueva versión; menú ⋮ con «Descartar borrador» cuando aplica. Sin deshacer ni rehacer: no existen. |
+| Panel izquierdo (17,5 rem, plegable) | pestañas `Capas` / `Recursos` | Capas: botón-menú «Agregar capa» (texto, dato deportivo, imagen de Mi marca, logotipo, Ketsi y, en plantillas de partido, escudo local y visitante) y `editor/LayerList.tsx`. Recursos: `editor/ResourcesPanel.tsx`. |
+| Centro | `editor/Workspace.tsx` + `EditorCanvas` | Barra de zoom (alejar, porcentaje, acercar, «Ajustar», «100 %», «Guías», tamaño en px), lienzo centrado y nota de uso. |
+| Panel derecho (18–21 rem, plegable) | `LayerProperties` / `editor/CanvasProperties.tsx` | Propiedades de la capa seleccionada o, sin selección, del fondo y del lienzo. |
+| Modo Vista previa | `editor/PreviewPanel.tsx` | Contexto deportivo / imagen del motor / datos vinculados y observaciones. |
+
+Piezas nuevas compartidas:
+
+- `editor/Section.tsx`: grupo plegable con `aria-expanded`.
+- `ValidationIndicator` (en `ValidationPanel.tsx`): indicador compacto y panel desplegable.
+- `ActionMenu` admite:
+  - un disparador con texto («Agregar capa»);
+  - una variante compacta para filas densas;
+  - icono y tooltip por opción;
+  - alineación a la izquierda.
+- `Icon`: iconos nuevos (tipos de capa, visibilidad, bloqueo, zoom, alerta).
+
+### 15.3 Cambios implementados
+
+- **Capas:**
+  - **Orden:** la primera fila es la capa de delante y el fondo queda al final, fijo y seleccionable.
+  - **Filas compactas, sin bordes por capa:** icono del tipo, nombre (y el dato vinculado), botón de visibilidad,
+    botón de bloqueo y menú ⋮ con «Traer adelante», «Enviar atrás» y «Eliminar capa».
+  - **Selección:** borde dorado izquierdo sobre `surface-overlay`, como la navegación.
+  - **Reordenamiento:** con el menú. Arrastrar y soltar no está soportado.
+- **Bloqueo:**
+  - Es de la sesión de edición y no se guarda: el contrato de capas no tiene ese campo y no se cambió.
+  - Una capa bloqueada se selecciona, pero no se mueve en el lienzo ni con el teclado.
+  - Sus propiedades quedan deshabilitadas hasta pulsar «Desbloquear».
+  - El tooltip y el panel lo explican.
+- **Propiedades por tipo,** en grupos plegables:
+  - Contenido:
+    - etiqueta «Texto fijo» o «Dato vinculado»;
+    - texto, o campo del catálogo y estado del binding;
+    - casilla «Obligatorio».
+  - Tipografía: familia, tamaños, color con muestra, alineaciones, efecto y mayúsculas.
+  - Recurso.
+  - Ajuste y proporción: proporción del recurso y de la caja, y «Ajustar la caja a la proporción del recurso».
+  - Escudo.
+  - Posición y tamaño (% y px).
+  - Comportamiento: si el texto no cabe, líneas máximas.
+
+  No se muestran controles de otros tipos.
+- **Bindings:**
+  - **Campo:** el panel muestra el campo real del catálogo (por ejemplo `match.homeTeam.name`).
+  - **Valor:** el de la **última vista previa con datos locales**.
+  - **Estado:** «Resuelto con datos locales», «Sin dato en la selección», «Sin vista previa todavía», «Cambió tras la
+    última vista previa» o «Sin campo».
+  - **Overrides:** no existe un override manual de prueba: el contrato de la vista previa no lo admite y no se inventó.
+    Se aclara que los valores incluyen las correcciones manuales registradas en Competiciones y que previsualizar no
+    cambia ningún dato.
+- **Vista previa:**
+  - **Modo propio:** está en la barra superior, en la dirección (`?panel=preview`, el mismo parámetro que ya usaba
+    «Previsualizar» en la lista).
+  - **Al activarla:** se ocultan las herramientas de diseño y la pantalla queda en tres columnas:
+    - contexto deportivo (competición, temporada, jornada, partido e idioma, con las consultas existentes y la etiqueta
+      «Datos deportivos locales»);
+    - imagen del motor («Vista previa actualizada · W × H px» y «Descargar muestra», que descarga el PNG ya generado,
+      sin capacidades nuevas);
+    - valores resueltos y observaciones.
+  - **Al volver a Diseño:** el panel de vista previa sigue montado y oculto, así que se conservan la selección de
+    datos y la última imagen. Cambiar de modo no guarda ni descarta nada.
+  - **Desde una observación:** elegir una que tenga capa vuelve a Diseño con esa capa seleccionada.
+- **Validación:**
+  - **Indicador compacto:** muestra «Sin errores», «N errores · M advertencias» y un punto si hay cambios sin
+    validar.
+  - **Panel:** lista severidad, capa, mensaje del servidor y acción recomendada, fija por código (`issueActionCopy`).
+  - **Selección:** elegir una observación selecciona su capa.
+  - **Publicación:** se bloquea igual que antes. El motivo está en el tooltip y en la descripción accesible del botón.
+- **Zoom:**
+  - «Ajustar» (por defecto, como máximo 100 %), «100 %», pasos del 25 % al 200 % y guías de centro y tercios.
+  - El zoom cambia solo el ancho en pantalla: las capas siguen en fracciones del lienzo y los cálculos de coordenadas no
+    cambian.
+  - No hay zonas seguras, porque el motor no las define.
+- **Recursos:**
+  - **Bibliotecas activas de Mi marca:** logotipos, mascota, elementos gráficos y fondos, con miniatura.
+  - **Acciones:** «Agregar» coloca un logotipo, la mascota o un elemento gráfico; «Usar» cambia el fondo; «Cambiar
+    fondo» abre el diálogo existente, que también ofrece las propuestas aprobadas.
+  - **Escudos:** no se presentan como biblioteca; una nota remite a las capas de escudo.
+- **Avisos de solo lectura:** pasan a ser una línea compacta.
+- **Responsive:** por debajo de 1280 px el panel izquierdo empieza plegado. Los dos paneles se pliegan y despliegan con
+  sus botones.
+- **«Crear plantilla»:**
+  - **Pestañas:** «Plantillas visuales» y «Propuestas visuales con IA», con el componente `Tabs`.
+  - **Dirección:** la pestaña queda en `?tab=proposals`.
+  - **Texto del diálogo:** el texto del diálogo de creación remite a esa pestaña.
+- **Detalle técnico encontrado al verificar:** la aplicación no carga Preflight.
+  - **Bordes:** un `border-solid` aplica 3 px por defecto en los cuatro lados, así que las filas usan `border-0` antes
+    del borde izquierdo.
+  - **Tipografía de los botones:** la regla global `button { font: inherit }`, fuera de capa, gana a las utilidades de
+    tipografía, que por eso se fijan en el contenedor.
+  - **`hidden`:** no se combina con utilidades de `display`.
+
+### 15.4 Funcionalidades preservadas
+
+- **Edición:**
+  - selección por clic, teclado y observación;
+  - arrastre, redimensión y flechas (Mayús: pasos grandes);
+  - visibilidad, eliminación y reordenamiento;
+  - todos los tipos de capa y bindings, efectos y mayúsculas.
+- **Datos de la plantilla y versiones:**
+  - fondo (diálogo existente);
+  - guardado con revisión y conflicto con «Recargar»;
+  - publicación con confirmación, solo lectura de lo publicado o archivado;
+  - «Crear nueva versión», «Descartar borrador», selector de versión;
+  - datos de la plantilla.
+- **Vista previa:**
+  - mismas consultas y misma petición: guarda antes si hay cambios;
+  - cubre los 6 tipos de 01G-D-3.
+- **Fuera del editor:** sin cambios en proyectos, exportaciones, propuestas de 01G-B, recursos de 01G-A ni datos
+  deportivos.
+
+### 15.5 Limitaciones
+
+- **Edición:**
+  - Sin deshacer ni rehacer: no existían y no se agregaron controles que aparenten funcionar.
+  - Sin arrastrar y soltar en la lista de capas.
+  - Sin override manual de valores en la vista previa: el contrato no lo admite.
+- **Guías:** el bloqueo es solo de la sesión y no hay zonas seguras: el motor no las define.
+- **Ancho de pantalla:**
+  - Por debajo de 1024 px el marco pasa al menú móvil y el editor queda usable, pero no optimizado.
+  - No se hizo una experiencia de edición móvil.
+- **Lienzo:** sigue siendo una ayuda de posición; la referencia final es el PNG del motor.
+
+### 15.6 Pruebas y verificación
+
+- **Pruebas actualizadas o nuevas:**
+  - `TemplateEditorPage.test.tsx` (20 casos):
+    - barra superior (nombre completo, guardado, dimensiones, una sola acción de publicación, sin deshacer);
+    - zoom sin cambiar coordenadas;
+    - plegado de paneles;
+    - selección y propiedades contextuales, con grupos plegables que conservan los valores y binding con campo y
+      estado;
+    - bloqueo;
+    - reordenamiento y eliminación con el menú de la capa;
+    - pestaña Recursos;
+    - menú «Agregar capa»;
+    - escudos;
+    - guardado y conflicto;
+    - indicador y panel de validación con acción recomendada;
+    - modo Vista previa con valores, observaciones y «Descargar muestra», y valor resuelto de vuelta en Diseño;
+    - el cambio de modo conserva los cambios sin guardar y no hace peticiones;
+    - apertura con `?panel=preview`;
+    - portada y cierre;
+    - publicación;
+    - versión publicada;
+    - fallo de carga.
+  - `TemplatesPage.test.tsx`: las dos pestañas y la pestaña en la dirección.
+  - `VisualTemplatesSection.test.tsx`: la lista en la primera pestaña y la propuesta en la segunda.
+  - `App.test.tsx`: la variante `workspace` del editor.
+- **Resultados:**
+  - TypeScript web sin errores;
+  - ESLint sin errores;
+  - Prettier sin diferencias en `apps/web/src`;
+  - pruebas web 675/677: las 2 que fallan son las de breadcrumbs, preexistentes (`App.test.tsx` y `ReviewPage.test.tsx`);
+  - build de producción OK;
+  - `git diff --check` OK.
+- **Revisión visual:**
+  - Capturas reales con Chromium sin interfaz a 1440 × 900, 1280 × 800 y 1024 × 768, sobre el servidor de desarrollo
+    del operador y solo con lecturas (no se guardó ni previsualizó nada).
+  - La página ya no se desplaza a 1440 y 1280: solo queda fuera el pie de página.
+  - Se revisaron el panel de validación, la pestaña Recursos, el modo Vista previa y las dos pestañas de «Crear
+    plantilla».
+- **Sin llamadas externas:** ninguna prueba llama a OpenAI ni a la red.
+
+### 15.7 Validación manual
+
+1. Con el servidor de desarrollo levantado, abre «Plantillas» → «Crear plantilla»:
+   - comprueba las pestañas «Plantillas visuales» y «Propuestas visuales con IA»;
+   - recarga en la segunda y comprueba que se mantiene.
+2. Abre una plantilla en borrador:
+   - la página no se desplaza y el lienzo ocupa el centro;
+   - prueba «Ajustar», «100 %», acercar, alejar y «Guías».
+3. En «Capas»:
+   - agrega capas con «Agregar capa»;
+   - ocúltalas, bloquéalas, tráelas adelante o envíalas atrás con el menú ⋮, y elimínalas;
+   - comprueba que una capa bloqueada no se mueve ni se edita.
+4. Selecciona un dato deportivo:
+   - comprueba «Dato vinculado», el campo y el estado «Sin vista previa todavía»;
+   - pliega y despliega los grupos.
+5. Pulsa «Vista previa»:
+   - elige competición, temporada, jornada y partido, y pulsa «Previsualizar»;
+   - comprueba la imagen, los valores, las observaciones y «Descargar muestra».
+6. Vuelve a «Diseño»:
+   - los cambios sin guardar siguen;
+   - el dato seleccionado muestra el valor resuelto.
+7. Abre el indicador de validación:
+   - elige una observación con capa y comprueba que se selecciona.
+8. Comprueba la publicación:
+   - con errores, «Publicar plantilla» está deshabilitado y su tooltip explica el motivo;
+   - sin errores ni cambios, publica y comprueba el modo solo lectura.
+9. Achica la ventana a 1280 y 1024 px:
+   - pliega y despliega los paneles;
+   - comprueba que no hay desplazamiento horizontal.
+
+### 15.8 Estado Git
+
+- El cambio está en el árbol de trabajo de `work/PD-ARCH-01G-D`, sin commit y junto con los cambios pendientes de
+  01G-D.
+- Pendiente de aceptación del Product Owner. Sin merge, push ni deploy.

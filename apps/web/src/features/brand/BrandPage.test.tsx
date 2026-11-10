@@ -1,6 +1,6 @@
 /**
- * Brand page (PD-ARCH-01G-A; R-228, R-231; PD-03, OD-07, OD-13, PD-06): the visual identity with the renderer's
- * palette and fonts and editable notes, the brand library (table by default, cards, search, category filter, upload
+ * Mi marca (PD-ARCH-01G-A; R-228, R-231; PD-03, OD-07, OD-13, PD-06), in two views: «Identidad visual», with the
+ * renderer's palette and fonts and editable notes, and «Recursos», the brand library (table by default, cards, search, category filter, upload
  * with preview and usage policy, detail with editing, activation, primary mark and safe deletion). The templates
  * have their own page (`TemplatesPage.test.tsx`).
  */
@@ -12,7 +12,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { appRoutes } from '../../app/routes';
 import { createBrandApi } from './brandApi';
-import { BrandPage } from './BrandPage';
+import { BrandIdentityPage, BrandResourcesPage } from './BrandPage';
 import {
   asset,
   ASSET_LOGO,
@@ -36,18 +36,19 @@ beforeAll(() => {
 
 const ASSETS = [ASSET_LOGO, ASSET_MASCOT, ASSET_REFERENCE];
 
-function renderPage(routes: Record<string, Handler | Handler[]> = {}) {
+function renderPage(routes: Record<string, Handler | Handler[]> = {}, view: 'resources' | 'identity' = 'resources') {
   const fake = fakeFetch({
     'GET /brand/assets': () => jsonResponse({ assets: ASSETS }),
     'GET /brand/identity': () => jsonResponse(IDENTITY),
     ...routes,
   });
-  render(<BrandPage api={createBrandApi({ fetch: fake.fetch })} />);
+  const api = createBrandApi({ fetch: fake.fetch });
+  render(view === 'resources' ? <BrandResourcesPage api={api} /> : <BrandIdentityPage api={api} />);
   return fake;
 }
 
 function librarySection(): HTMLElement {
-  return screen.getByRole('region', { name: 'Biblioteca de recursos' });
+  return screen.getByRole('region', { name: 'Recursos' });
 }
 
 function identitySection(): HTMLElement {
@@ -63,13 +64,26 @@ async function libraryTable(): Promise<HTMLElement> {
 }
 
 describe('BrandPage: page frame', () => {
-  it('shows the heading, the authorized-only rule and the provisional-values note', async () => {
-    renderPage();
-    expect(screen.getByRole('heading', { level: 1, name: 'Mi marca' })).toBeTruthy();
+  it('shows Recursos with its heading, the authorized-only rule and the provisional-values note, without the identity', async () => {
+    const fake = renderPage();
+    expect(screen.getByRole('heading', { level: 1, name: 'Recursos' })).toBeTruthy();
+    expect(screen.getByText('Mi marca')).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Plantillas' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Identidad visual' })).toBeNull();
     expect(document.body.textContent).toContain('No se registran escudos de clubes, marcas de competiciones');
     expect(document.body.textContent).toContain('sin logotipo ni mascota');
+    expect(within(librarySection()).getAllByRole('button', { name: 'Subir recurso' }).length).toBeGreaterThan(0);
     await libraryTable();
+    expect(fake.requests.map((request) => request.url)).toEqual(['/api/v1/brand/assets']);
+  });
+
+  it('shows Identidad visual with its own heading, without the library', async () => {
+    const fake = renderPage({}, 'identity');
+    expect(screen.getByRole('heading', { level: 1, name: 'Identidad visual' })).toBeTruthy();
+    expect(screen.queryByRole('region', { name: 'Recursos' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Subir recurso' })).toBeNull();
+    expect(await within(identitySection()).findByText('El Deporte Rey GT')).toBeTruthy();
+    expect(fake.requests.map((request) => request.url)).toEqual(['/api/v1/brand/identity']);
   });
 
   it('shows loading states until each resource arrives', async () => {
@@ -84,7 +98,7 @@ describe('BrandPage: page frame', () => {
 
 describe('BrandPage: visual identity (PD-ARCH-01G-A)', () => {
   it('shows the renderer palette and fonts read only, with their usage notes', async () => {
-    renderPage();
+    renderPage({}, 'identity');
     const section = identitySection();
     expect(await within(section).findByText('El Deporte Rey GT')).toBeTruthy();
     expect(within(section).getByText('Valores provisionales')).toBeTruthy();
@@ -103,12 +117,15 @@ describe('BrandPage: visual identity (PD-ARCH-01G-A)', () => {
   it('edits the description, preferences and usage notes, sending null for cleared notes', async () => {
     const user = userEvent.setup();
     const updates: unknown[] = [];
-    renderPage({
-      'PATCH /brand/identity': (request) => {
-        updates.push(JSON.parse(String(request.body)));
-        return jsonResponse({ ...IDENTITY, description: 'Fútbol con identidad.', updatedAt: '2026-11-05T12:00:00Z' });
+    renderPage(
+      {
+        'PATCH /brand/identity': (request) => {
+          updates.push(JSON.parse(String(request.body)));
+          return jsonResponse({ ...IDENTITY, description: 'Fútbol con identidad.', updatedAt: '2026-11-05T12:00:00Z' });
+        },
       },
-    });
+      'identity',
+    );
     const section = identitySection();
     await user.click(await within(section).findByRole('button', { name: 'Editar descripción y usos' }));
     await user.type(within(section).getByRole('textbox', { name: 'Descripción de la marca' }), 'Fútbol con identidad.');

@@ -14,7 +14,7 @@
  */
 import type { ContentFlag } from '@edr/contracts';
 
-import { formatInt, formatScore, templateText } from '../../platform/format/index.js';
+import { formatInt, formatScore, formatTime, templateText } from '../../platform/format/index.js';
 
 import { type CheckContext, FlagList, checkHashtags, checkLength, checkText } from './checks.js';
 import {
@@ -174,6 +174,24 @@ function templateFields(
           segments: [factSegment(kickoffDisplay(match.kickoff, context), match.kickoffFactId)],
         });
       }
+      if (context.templateFields === true) {
+        // PD-ARCH-01G-D: the values a visual template draws on their own, from the same facts. A result slide
+        // exists only for a finished match (the status fact is verified as `finished`).
+        fields.push(
+          { field: 'score_home', segments: [factSegment(formatInt(match.score.home), match.scoreFactId)] },
+          { field: 'score_away', segments: [factSegment(formatInt(match.score.away), match.scoreFactId)] },
+          {
+            field: 'match_status',
+            segments: [factSegment(statusDisplay('finished', context.language), match.statusFactId)],
+          },
+        );
+        if (match.kickoff !== null && match.kickoffFactId !== null) {
+          fields.push({
+            field: 'kickoff_time',
+            segments: [factSegment(formatTime(match.kickoff, context.utcOffsetMinutes), match.kickoffFactId)],
+          });
+        }
+      }
       return fields;
     }
     case 'standings': {
@@ -242,6 +260,13 @@ function templateFields(
         { field: 'team_away', segments: [factSegment(fixture.away.name, fixture.away.factId)] },
         { field: 'kickoff', segments: [factSegment(kickoffDisplay(fixture.kickoff, context), fixture.kickoffFactId)] },
       ];
+      if (context.templateFields === true) {
+        // PD-ARCH-01G-D: the kickoff time, drawn on its own by a visual template.
+        fields.push({
+          field: 'kickoff_time',
+          segments: [factSegment(formatTime(fixture.kickoff, context.utcOffsetMinutes), fixture.kickoffFactId)],
+        });
+      }
       if (slide.type === 'match_preview') {
         fields.push({
           field: 'footer',

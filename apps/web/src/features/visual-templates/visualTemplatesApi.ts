@@ -59,8 +59,12 @@ export interface VisualTemplatesApi {
     input: VisualTemplatePreviewRequest,
     signal?: AbortSignal,
   ): Promise<VisualTemplatePreview>;
-  /** URL of getVisualTemplateBackground (the pinned background of a version). */
-  backgroundUrl(templateId: string, versionId: string): string;
+  /**
+   * URL of getVisualTemplateBackground (the pinned background of a version). `key` (`?v=`, ignored by the server)
+   * changes with the background: the version's address alone does not, and browsers reuse an image already decoded
+   * for the same address in the page, so a changed background kept showing the previous one.
+   */
+  backgroundUrl(templateId: string, versionId: string, key: string): string;
 }
 
 export interface VisualTemplatesApiOptions {
@@ -123,7 +127,8 @@ export function createVisualTemplatesApi(options: VisualTemplatesApiOptions = {}
         schema: VisualTemplatePreviewSchema,
         ...withSignal(signal),
       }),
-    backgroundUrl: (templateId, versionId) => `${basePath}${version(templateId, versionId)}/background`,
+    backgroundUrl: (templateId, versionId, key) =>
+      `${basePath}${version(templateId, versionId)}/background?v=${encodeURIComponent(key)}`,
   };
 }
 

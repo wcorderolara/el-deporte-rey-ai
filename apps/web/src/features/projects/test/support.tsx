@@ -361,6 +361,7 @@ export function project(overrides: Partial<Project> = {}): Project {
     latestRun: null,
     activeDraftId: null,
     sportsContext: null,
+    visualTemplates: [],
     ...overrides,
   };
 }
@@ -379,6 +380,7 @@ export function manualProject(overrides: Partial<Project> = {}): Project {
     latestRun: null,
     activeDraftId: null,
     sportsContext: null,
+    visualTemplates: [],
     ...overrides,
   };
 }

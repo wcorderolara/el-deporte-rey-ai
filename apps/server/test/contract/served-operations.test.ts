@@ -986,6 +986,37 @@ describe('DEMO_DATA and MANUAL_DATA operations on the running app', { timeout: R
       json: { homeTeamId: teamIds[0], awayTeamId: teamIds[1], roundId: round.id, kickoffAt: '2027-05-10T18:00:00Z' },
     });
 
+    // PD-ARCH-01G-D: a badge uploaded manually (PD-28), served, retired and uploaded again.
+    const badgeTeamId = required(teamIds[0], 'team');
+    const badgeImage = syntheticPng(24, 24, 'team-badge');
+    const withBadge = await ok<{ badge: { id: string; source: string } | null }>(g, 'uploadTeamBadge', {
+      params: { teamId: badgeTeamId },
+      query: { source: 'Sitio oficial del club', authorized: 'true' },
+      payload: badgeImage,
+      contentType: 'image/png',
+    });
+    expect(withBadge.badge?.source).toBe('Sitio oficial del club');
+    await problem(
+      g,
+      'uploadTeamBadge',
+      { params: { teamId: badgeTeamId }, query: { source: 'Club' }, payload: badgeImage, contentType: 'image/png' },
+      400,
+      'VALIDATION_FAILED',
+    );
+    const badgeFile = await g.call('getTeamBadgeFile', { params: { teamId: badgeTeamId } });
+    expect(badgeFile.status, describeExchange(badgeFile)).toBe(200);
+    expect(badgeFile.raw.equals(badgeImage)).toBe(true);
+    expectSandboxedFile(badgeFile);
+    expect((await ok<{ badge: unknown }>(g, 'deleteTeamBadge', { params: { teamId: badgeTeamId } })).badge).toBeNull();
+    await problem(g, 'deleteTeamBadge', { params: { teamId: badgeTeamId } }, 404, 'NOT_FOUND');
+    await problem(g, 'getTeamBadgeFile', { params: { teamId: badgeTeamId } }, 404, 'NOT_FOUND');
+    await ok(g, 'uploadTeamBadge', {
+      params: { teamId: badgeTeamId },
+      query: { source: 'Sitio oficial del club', authorized: 'true' },
+      payload: badgeImage,
+      contentType: 'image/png',
+    });
+
     const created = await ok<{ template: { id: string; status: string; draftVersionId: string } }>(
       g,
       'createVisualTemplate',
@@ -1030,7 +1061,32 @@ describe('DEMO_DATA and MANUAL_DATA operations on the running app', { timeout: R
     const save = {
       revision: draft.revision,
       background: { source: draft.background.source, id: draft.background.id },
-      layers: [...draft.layers, title],
+      layers: [
+        ...draft.layers,
+        title,
+        {
+          id: 'home-badge',
+          name: 'Escudo local',
+          type: 'team_badge',
+          binding: 'match.homeTeam.badge',
+          x: 0.1,
+          y: 0.25,
+          width: 0.2,
+          height: 0.12,
+          visible: true,
+        },
+        {
+          id: 'away-badge',
+          name: 'Escudo visitante',
+          type: 'team_badge',
+          binding: 'match.awayTeam.badge',
+          x: 0.7,
+          y: 0.25,
+          width: 0.2,
+          height: 0.12,
+          visible: true,
+        },
+      ],
     };
     const saved = await ok<{ revision: number; validation: { publishable: boolean } }>(g, 'saveVisualTemplateVersion', {
       params: { templateId, versionId },
@@ -1049,15 +1105,25 @@ describe('DEMO_DATA and MANUAL_DATA operations on the running app', { timeout: R
     expect(background.status, describeExchange(background)).toBe(200);
     expectSandboxedFile(background);
 
-    const preview = await ok<{ values: { binding: string; value: string | null }[]; imageUrl: string }>(
-      g,
-      'previewVisualTemplate',
-      { params: { templateId, versionId }, json: { selection: { ...seasonParams, matchId: match.id } } },
-    );
+    const preview = await ok<{
+      values: { binding: string; value: string | null }[];
+      badges: { binding: string; badgeId: string | null }[];
+      issues: { code: string; layerId: string | null }[];
+      imageUrl: string;
+    }>(g, 'previewVisualTemplate', {
+      params: { templateId, versionId },
+      json: { selection: { ...seasonParams, matchId: match.id } },
+    });
     expect(preview.values).toEqual([
       { binding: 'match.homeTeam.name', value: 'Club Plantilla Local' },
       { binding: 'match.awayTeam.name', value: 'Club Plantilla Visitante' },
     ]);
+    // The home team has a badge (by its internal identity); the away team has none: a warning, not an error.
+    expect(preview.badges.map((entry) => [entry.binding, entry.badgeId !== null])).toEqual([
+      ['match.homeTeam.badge', true],
+      ['match.awayTeam.badge', false],
+    ]);
+    expect(preview.issues).toContainEqual(expect.objectContaining({ code: 'VALUE_MISSING', layerId: 'away-badge' }));
     await problem(
       g,
       'previewVisualTemplate',

@@ -63,6 +63,7 @@ export const OPERATION_IDS = operationList.map((operation) => operation.operatio
 export const VALID_QUERY: Partial<Record<OperationId, Record<string, string>>> = {
   listManualSelections: { competitionId: 'sin-registro', seasonId: '2026' },
   registerBrandAsset: { kind: 'decoration', label: 'Adorno de prueba' },
+  uploadTeamBadge: { source: 'Sitio oficial del club', authorized: 'true' },
 };
 
 /** A well-formed request of an operation (it may still answer 404 or 409: the IDs name nothing). */
@@ -76,7 +77,7 @@ export function validRequest(spec: ContractSpec, operationId: string): CallOptio
   if (!spec.hasBody(operationId)) {
     return base;
   }
-  if (operationId === 'registerBrandAsset') {
+  if (operationId === 'registerBrandAsset' || operationId === 'uploadTeamBadge') {
     return { ...base, payload: syntheticPng(), contentType: 'image/png' };
   }
   const sample = requestSamples[id];
@@ -91,13 +92,14 @@ export const BODY_LIMITS: Partial<Record<OperationId, number>> & { readonly defa
   default: 64 * 1024,
   createImport: 1536 * 1024,
   registerBrandAsset: 5 * 1024 * 1024,
+  uploadTeamBadge: 5 * 1024 * 1024,
 };
 
 /** A body one byte over the route limit, in the route's own media type. */
 export function oversizedRequest(spec: ContractSpec, operationId: string): CallOptions {
   const limit = BODY_LIMITS[operationId as OperationId] ?? BODY_LIMITS.default;
   const base = validRequest(spec, operationId);
-  if (operationId === 'registerBrandAsset') {
+  if (operationId === 'registerBrandAsset' || operationId === 'uploadTeamBadge') {
     const png = syntheticPng();
     return { ...base, payload: Buffer.concat([png, Buffer.alloc(limit + 1 - png.length)]), contentType: 'image/png' };
   }

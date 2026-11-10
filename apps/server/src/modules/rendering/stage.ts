@@ -35,7 +35,18 @@ import { RenderFileStore } from './files.js';
 import { type FontSet, fontSetFor, loadBundledFaces } from './fonts.js';
 import { ImageSlotSchema, RenderModelSchema } from './render-model.js';
 import { RenderingRepository, type SavedRender } from './repository.js';
-import { type SlideContent, StoredElementTextSchema } from './slide-content.js';
+import { type SlideContent, type StoredElementText, StoredElementTextSchema } from './slide-content.js';
+import { renderSlide } from './renderer.js';
+import { buildStructuredModel } from './structured.js';
+import {
+  type ProjectTemplatePlan,
+  ProjectTemplatePlanSchema,
+  type SlideTeams,
+  loadProjectTemplatePlans,
+  planOf,
+  projectSlideDocument,
+  slideTeams,
+} from '../visual-templates/project.js';
 import { TemplateRegistry } from './templates/registry.js';
 
 const Sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -69,6 +80,13 @@ export const RenderingInputSchema = z.strictObject({
     )
     .max(2000),
   assets: z.array(SlotAssetSchema).max(2),
+  /**
+   * The visual templates of the project (PD-ARCH-01G-D), at most one per slide type (decision 01G-D-3); empty for the
+   * engine templates only.
+   */
+  templates: z.array(ProjectTemplatePlanSchema).max(6),
+  /** The teams (local IDs) of each slide a template draws, by element version ID. */
+  slideTeams: z.record(UuidSchema, z.strictObject({ home: UuidSchema.nullable(), away: UuidSchema.nullable() })),
 });
 export type RenderingInput = z.infer<typeof RenderingInputSchema>;
 
@@ -140,6 +158,54 @@ function renderDeps(
   };
 }
 
+/** The teams of every slide a visual template draws (empty without a template). */
+function teamsOfSlides(
+  container: AppContainer,
+  templates: readonly ProjectTemplatePlan[],
+  slides: readonly { readonly versionId: string; readonly slideType: string; readonly text: StoredElementText }[],
+): Record<string, SlideTeams> {
+  const teams: Record<string, SlideTeams> = {};
+  for (const slide of slides) {
+    if (planOf(templates, slide.slideType) !== null) {
+      teams[slide.versionId] = slideTeams(container.db, slide.text);
+    }
+  }
+  return teams;
+}
+
+/**
+ * Renders a slide with the project's visual template (PD-ARCH-01G-D): the structured model of the slide's values,
+ * drawn by the same renderer and fonts. A required value the slide does not have fails the stage with `invalid` at
+ * the given path; a team without a badge only leaves its layer empty.
+ */
+async function renderTemplateSlide(
+  plan: ProjectTemplatePlan,
+  slide: { readonly text: StoredElementText; readonly teams: SlideTeams },
+  language: Language,
+  deps: RenderDeps,
+  path: string,
+): Promise<SlideRender> {
+  const { document, issues } = projectSlideDocument(plan, slide, language, deps.settings.canvas);
+  if (issues.some((issue) => issue.severity === 'error')) {
+    throw new StageFailure('invalid', { path });
+  }
+  const { model } = buildStructuredModel(document, { palette: deps.settings.palette, fonts: deps.fonts });
+  const rendered = await renderSlide(
+    model,
+    { fonts: deps.fonts, assets: new Map(plan.files.map((file) => [file.id, file])) },
+    deps.signal,
+  );
+  return {
+    templateId: model.templateId,
+    templateVersion: model.templateVersion,
+    renderModel: model,
+    png: rendered.png,
+    sha256: rendered.sha256,
+    width: rendered.width,
+    height: rendered.height,
+  };
+}
+
 /** Writes the PNG files, then records the renders; throws `run_superseded` when a version cannot be recorded. */
 async function persistRenders(
   container: AppContainer,
@@ -182,14 +248,18 @@ export function createRenderingStage(options: RenderingOptions = {}): Stage<Rend
       if (dataMode === null || draft === null) {
         throw new StageFailure('no_data');
       }
+      const slides = repository.slidesToRender(draft.id);
+      const templates = await loadProjectTemplatePlans(ctx.container, ctx.projectId);
       return {
         projectId: ctx.projectId,
         draftId: draft.id,
         language: draft.language,
         demonstration: dataMode === 'DEMO_DATA',
         standingsAsOf: repository.standingsAsOf(draft.factsRunId),
-        slides: repository.slidesToRender(draft.id),
+        slides,
         assets: await activeSlotAssets(resolved.assets(ctx.container)),
+        templates,
+        slideTeams: teamsOfSlides(ctx.container, templates, slides),
       };
     },
 
@@ -200,7 +270,18 @@ export function createRenderingStage(options: RenderingOptions = {}): Stage<Rend
         if (ctx.signal.aborted) {
           throw new StageFailure('interrupted');
         }
-        const render = await renderContent(slideContent(input, slide), deps, `/slides/${String(index)}/text`);
+        const path = `/slides/${String(index)}/text`;
+        const plan = planOf(input.templates, slide.slideType);
+        const render =
+          plan !== null
+            ? await renderTemplateSlide(
+                plan,
+                { text: slide.text, teams: input.slideTeams[slide.versionId] ?? { home: null, away: null } },
+                input.language,
+                deps,
+                path,
+              )
+            : await renderContent(slideContent(input, slide), deps, path);
         renders.push({ versionId: slide.versionId, ...render });
       }
       return { projectId: input.projectId, renders };
@@ -269,17 +350,29 @@ export async function renderElementVersion(
     throw new RenderVersionRefused('already_rendered');
   }
   const assets = await activeSlotAssets(resolved.assets(container));
-  const render = await renderContent(
-    {
-      slideType: version.slideType,
-      language: version.language,
-      demonstration: version.dataMode === 'DEMO_DATA',
-      text: version.text,
-      standingsAsOf: repository.standingsAsOf(version.factsRunId),
-    },
-    renderDeps(container, resolved, assets, signal),
-    '/text',
-  );
+  const deps = renderDeps(container, resolved, assets, signal);
+  // A project with visual templates draws the slides of each pinned type with its version (PD-ARCH-01G-D).
+  const plan = planOf(await loadProjectTemplatePlans(container, version.projectId), version.slideType);
+  const render =
+    plan !== null
+      ? await renderTemplateSlide(
+          plan,
+          { text: version.text, teams: slideTeams(container.db, version.text) },
+          version.language,
+          deps,
+          '/text',
+        )
+      : await renderContent(
+          {
+            slideType: version.slideType,
+            language: version.language,
+            demonstration: version.dataMode === 'DEMO_DATA',
+            text: version.text,
+            standingsAsOf: repository.standingsAsOf(version.factsRunId),
+          },
+          deps,
+          '/text',
+        );
   await persistRenders(container, version.projectId, [{ ...render, versionId }]);
   const stored = repository.renderedImage(versionId);
   return {

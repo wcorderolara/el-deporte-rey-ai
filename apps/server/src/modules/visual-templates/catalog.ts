@@ -35,11 +35,11 @@ export const BINDING_ELEMENT: Readonly<
   'match.homeTeam.name': { field: 'team_home', semantic: 'team_name' },
   'match.awayTeam.name': { field: 'team_away', semantic: 'team_name' },
   'match.kickoffDate': { field: 'kickoff', semantic: 'kickoff' },
-  'match.kickoffTime': { field: 'kickoff', semantic: 'kickoff' },
+  'match.kickoffTime': { field: 'kickoff_time', semantic: 'kickoff_time' },
   'match.status': { field: 'match_status', semantic: 'match_status' },
   'match.score': { field: 'score', semantic: 'score' },
-  'match.homeScore': { field: 'score', semantic: 'score' },
-  'match.awayScore': { field: 'score', semantic: 'score' },
+  'match.homeScore': { field: 'score_home', semantic: 'score_home' },
+  'match.awayScore': { field: 'score_away', semantic: 'score_away' },
   'round.fixtures': { field: 'fixtures', semantic: 'fixture_line' },
 });
 

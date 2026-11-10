@@ -498,10 +498,22 @@ export function ImportPreviewPage() {
     const saved = sessionStorage.getItem(operationKey);
     if (!saved) return;
     const controller = new AbortController();
+    // An expired preview is purged by the server and its completed operation keeps no preview: start over.
+    const forget = () => {
+      sessionStorage.removeItem(operationKey);
+      setOperation(undefined);
+      setPreview(undefined);
+      setBusy(false);
+      void load(controller.signal);
+    };
     void api
       .getImportOperation(competitionId, saved, controller.signal)
       .then((current) => {
         if (controller.signal.aborted) return;
+        if (current.status === 'completed' && !current.previewId) {
+          forget();
+          return;
+        }
         setOperation(current);
         setBusy(current.status === 'queued' || current.status === 'running');
         if (current.status === 'failed') setProcessFailed(true);
@@ -521,7 +533,14 @@ export function ImportPreviewPage() {
             .getImportPreview(competitionId, current.previewId, controller.signal)
             .then(setPreview)
             .catch((cause) => {
-              if (!controller.signal.aborted) setError(cause);
+              if (controller.signal.aborted) return;
+              if (
+                cause instanceof ApiError &&
+                cause.kind === 'problem' &&
+                (cause.problem?.code === 'NOT_FOUND' || cause.problem?.code === 'IMPORT_PREVIEW_EXPIRED')
+              )
+                forget();
+              else setError(cause);
             });
       })
       .catch(() => {

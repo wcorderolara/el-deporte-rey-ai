@@ -4,6 +4,7 @@ import { useCallback, useId, useRef, useState } from 'react';
 
 import { Badge, Button, Card, ErrorBanner, Input, LoadingState, Textarea } from '../../ui';
 import type { BrandApi, UpdateIdentityInput } from './brandApi';
+import { BrandViewHeader } from './BrandViewHeader';
 import { identityCopy, uploadCopy } from './copy';
 import { nullableText } from './library';
 import { useResource } from './useResource';
@@ -105,13 +106,8 @@ export function BrandIdentitySection({ api, announce }: BrandIdentitySectionProp
   }
 
   return (
-    <section aria-labelledby={headingId} className="grid min-w-0 gap-5">
-      <div className="max-w-reading">
-        <h2 id={headingId} className="m-0 font-display text-heading-sm font-extrabold text-text-primary">
-          {identityCopy.heading}
-        </h2>
-        <p className="m-0 mt-2 text-body-sm text-text-secondary">{identityCopy.intro}</p>
-      </div>
+    <section aria-labelledby={headingId} className="grid min-w-0 gap-6">
+      <BrandViewHeader headingId={headingId} heading={identityCopy.heading} intro={identityCopy.intro} />
       {state.status === 'loading' ? (
         <Card className="min-h-24">
           <LoadingState layout="panel" label={identityCopy.loading} />

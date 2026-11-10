@@ -12,7 +12,13 @@ import type {
 
 import type { BadgeVariant } from '../../ui';
 
-export const generationSteps = ['Contexto deportivo', 'Tipo de contenido', 'Partidos', 'Revisión'] as const;
+export const generationSteps = [
+  'Contexto deportivo',
+  'Tipo de contenido',
+  'Partidos',
+  'Plantilla',
+  'Revisión',
+] as const;
 
 export const pieceKindCopy: Readonly<Record<ContentPieceKind, { label: string; description: string }>> = {
   round_results: {

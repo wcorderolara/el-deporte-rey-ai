@@ -151,6 +151,35 @@ const contentBatch = {
   totals: { requested: 1, generated: 0, failed: 1, skipped: 0, pending: 0, deleted: 0 },
   items: [contentBatchItem],
 };
+// PD-ARCH-01G-D: team badges and the visual template of a project.
+const teamBadge = {
+  id: uuid(90),
+  origin: 'manual',
+  source: 'Sitio oficial del club',
+  mime: 'image/png',
+  width: 512,
+  height: 512,
+  sha256: SHA,
+  uploadedAt: T1,
+};
+
+const visualTemplateUsage = {
+  templateId: uuid(50),
+  versionId: uuid(51),
+  version: 1,
+  name: 'Resultado nocturno',
+  contentType: 'match_result',
+};
+
+/** A cover template of the same selection (decision 01G-D-3). */
+const coverTemplateUsage = {
+  templateId: uuid(52),
+  versionId: uuid(53),
+  version: 2,
+  name: 'Portada nocturna',
+  contentType: 'cover',
+};
+
 const project = {
   ...projectSummary,
   competitionId: 'demo-a-liga-demo',
@@ -160,6 +189,7 @@ const project = {
   latestRun: run,
   activeDraftId: uuid(3),
   sportsContext: projectSportsContext,
+  visualTemplates: [coverTemplateUsage, visualTemplateUsage],
 };
 const matchScoreValue = { home: 2, away: 1 };
 const factRef = {
@@ -817,6 +847,10 @@ const visualPreview = {
     { binding: 'match.homeTeam.name', value: 'Club Deportivo Ejemplo' },
     { binding: 'stage.name', value: null },
   ],
+  badges: [
+    { binding: 'match.homeTeam.badge', badgeId: uuid(90) },
+    { binding: 'match.awayTeam.badge', badgeId: null },
+  ],
   issues: [
     {
       code: 'VALUE_MISSING',
@@ -1132,13 +1166,35 @@ export const componentSamples: Record<ComponentName, unknown> = {
     },
   },
   ManagedSeason: { id: uuid(81), competitionId: uuid(80), label: '2026/27', createdAt: T1 },
-  ManagedTeam: { id: uuid(82), name: 'Club Local', region: 'Ciudad Ficticia', createdAt: T1, updatedAt: T1 },
+  TeamBadge: teamBadge,
+  ManagedTeam: {
+    id: uuid(82),
+    name: 'Club Local',
+    region: 'Ciudad Ficticia',
+    badge: teamBadge,
+    createdAt: T1,
+    updatedAt: T1,
+  },
   CompetitionTeam: {
-    team: { id: uuid(82), name: 'Club Local', region: 'Ciudad Ficticia', createdAt: T1, updatedAt: T1 },
+    team: {
+      id: uuid(82),
+      name: 'Club Local',
+      region: 'Ciudad Ficticia',
+      badge: teamBadge,
+      createdAt: T1,
+      updatedAt: T1,
+    },
     associatedAt: T1,
   },
   SeasonParticipant: {
-    team: { id: uuid(82), name: 'Club Local', region: 'Ciudad Ficticia', createdAt: T1, updatedAt: T1 },
+    team: {
+      id: uuid(82),
+      name: 'Club Local',
+      region: 'Ciudad Ficticia',
+      badge: teamBadge,
+      createdAt: T1,
+      updatedAt: T1,
+    },
     joinedAt: T1,
   },
   CompetitionStage: { id: uuid(83), seasonId: uuid(81), name: 'Fase de grupos', displayOrder: 0, createdAt: T1 },
@@ -1156,8 +1212,22 @@ export const componentSamples: Record<ComponentName, unknown> = {
     seasonId: uuid(81),
     stage: null,
     round: null,
-    homeTeam: { id: uuid(82), name: 'Club Local', region: 'Ciudad Ficticia', createdAt: T1, updatedAt: T1 },
-    awayTeam: { id: uuid(86), name: 'Club Visitante', region: 'Otra Ciudad Ficticia', createdAt: T1, updatedAt: T1 },
+    homeTeam: {
+      id: uuid(82),
+      name: 'Club Local',
+      region: 'Ciudad Ficticia',
+      badge: teamBadge,
+      createdAt: T1,
+      updatedAt: T1,
+    },
+    awayTeam: {
+      id: uuid(86),
+      name: 'Club Visitante',
+      region: 'Otra Ciudad Ficticia',
+      badge: null,
+      createdAt: T1,
+      updatedAt: T1,
+    },
     kickoffAt: null,
     status: 'scheduled',
     homeScore: null,
@@ -1340,6 +1410,20 @@ export const componentSamples: Record<ComponentName, unknown> = {
   VisualTemplateSportsDataLayer: { ...visualSportsLayer, binding: null, required: false },
   VisualTemplateImageLayer: visualImageLayer,
   VisualTemplateBrandAssetLayer: visualBrandLayer,
+  VisualTemplateBadgeBinding: 'match.awayTeam.badge',
+  VisualTemplateContentType: 'closing',
+  VisualTemplateTeamBadgeLayer: {
+    id: 'home-badge',
+    name: 'Escudo local',
+    x: 0.1,
+    y: 0.2,
+    width: 0.25,
+    height: 0.2,
+    visible: true,
+    type: 'team_badge',
+    binding: 'match.homeTeam.badge',
+  },
+  VisualTemplateUsage: visualTemplateUsage,
   VisualTemplateLayer: visualSportsLayer,
   VisualTemplateBackgroundSource: 'brand_asset',
   VisualTemplateBackgroundInput: { source: 'design_proposal', id: uuid(41) },
@@ -1363,7 +1447,7 @@ export const componentSamples: Record<ComponentName, unknown> = {
   VisualTemplatePreview: visualPreview,
 
   ProjectSportsContext: projectSportsContext,
-  ContentBatchSelection: contentBatchSelection,
+  ContentBatchSelection: { ...contentBatchSelection, visualTemplateVersionIds: [uuid(53), uuid(51)] },
   ContentBatchCreate: { requestKey: uuid(127), selection: contentBatchSelection },
   ContentBatchContext: sportsContextBase,
   ContentBatchMatch: contentBatchMatch,
@@ -1373,6 +1457,7 @@ export const componentSamples: Record<ComponentName, unknown> = {
     selectionLabel: 'Jornada 12',
     language: 'es',
     matches: [contentBatchMatch],
+    visualTemplates: [coverTemplateUsage, visualTemplateUsage],
     templates: [
       {
         id: 'match-result',
@@ -1562,6 +1647,8 @@ export const responseSamples: Partial<Record<OperationId, unknown>> = {
   listManagedTeams: { teams: [componentSamples.ManagedTeam] },
   createManagedTeam: componentSamples.ManagedTeam,
   getManagedTeam: componentSamples.ManagedTeam,
+  uploadTeamBadge: componentSamples.ManagedTeam,
+  deleteTeamBadge: { ...(componentSamples.ManagedTeam as Record<string, unknown>), badge: null },
   listCompetitionTeams: { teams: [componentSamples.CompetitionTeam] },
   addCompetitionTeam: componentSamples.CompetitionTeam,
   updateManagedTeam: componentSamples.ManagedTeam,
@@ -1594,8 +1681,22 @@ export const responseSamples: Partial<Record<OperationId, unknown>> = {
     seasonId: uuid(81),
     stage: null,
     round: null,
-    homeTeam: { id: uuid(82), name: 'Club Local', region: 'Ciudad Ficticia', createdAt: T1, updatedAt: T1 },
-    awayTeam: { id: uuid(86), name: 'Club Visitante', region: 'Otra Ciudad Ficticia', createdAt: T1, updatedAt: T1 },
+    homeTeam: {
+      id: uuid(82),
+      name: 'Club Local',
+      region: 'Ciudad Ficticia',
+      badge: teamBadge,
+      createdAt: T1,
+      updatedAt: T1,
+    },
+    awayTeam: {
+      id: uuid(86),
+      name: 'Club Visitante',
+      region: 'Otra Ciudad Ficticia',
+      badge: null,
+      createdAt: T1,
+      updatedAt: T1,
+    },
     kickoffAt: null,
     status: 'finished',
     homeScore: 2,

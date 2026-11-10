@@ -1,16 +1,29 @@
 /**
- * Content generation from a locally managed competition (PD-ARCH-01E-A, PD-ARCH-01E-B). A four-step wizard: sports
- * context, content type (results of played matches, or the calendar, upcoming matches and previews of matches not
- * played yet), matches, and a review of the plan the server computes from the local data, with the compatible
- * templates and the reason of every skipped piece. The match step adapts its compatibility marks to the chosen types. Nothing is generated until the operator confirms; the confirmation carries one
+ * Content generation from a locally managed competition (PD-ARCH-01E-A, PD-ARCH-01E-B, PD-ARCH-01G-D). A five-step
+ * wizard: sports context, content type (results of played matches, or the calendar, upcoming matches and previews of
+ * matches not played yet), matches, the templates (for each slide type of the carousels, a published 4:5 visual
+ * template or the engine template; decision 01G-D-3), and a review of the plan the server computes from the local
+ * data, with the templates, the team badges, a preview drawn by the slide engine and the reason of every skipped piece. The match step adapts its compatibility marks to the chosen types. Nothing is generated until the operator confirms; the confirmation carries one
  * request key, so a double click or a retry returns the same batch. Going back keeps every choice.
  */
-import type { CompetitionMatch, CompetitionRound, ContentBatchSelection, ContentPieceKind } from '@edr/contracts';
-import { contractRegExp } from '@edr/contracts';
+import type {
+  CompetitionMatch,
+  CompetitionRound,
+  ContentBatchSelection,
+  ContentPieceKind,
+  VisualTemplate,
+  VisualTemplateContentType,
+  VisualTemplateUsage,
+} from '@edr/contracts';
+import { contractRegExp, VisualTemplateContentTypeSchema } from '@edr/contracts';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import { Alert, Badge, Button, Card, ErrorBanner, LoadingState, Select, formatDateTime } from '../../ui';
+import { PreviewImage } from '../brand/PreviewImage';
+import { TeamBadge } from '../competitions/TeamBadge';
+import { templateContentTypeLabel } from '../visual-templates/copy';
+import { visualTemplateBackgroundUrl } from './api';
 import {
   generationSteps,
   kindGroups,
@@ -122,6 +135,112 @@ function matchStepHint(kinds: ReadonlySet<ContentPieceKind>): string {
     : 'Solo los partidos finalizados con marcador se publican como resultado.';
 }
 
+/**
+ * The slide types each piece kind draws, as the content of a visual template (PD-ARCH-01G-D): every carousel opens
+ * with a cover and ends with a closing (decision 01G-D-3).
+ */
+const TEMPLATE_TYPES_OF: Readonly<Record<ContentPieceKind, readonly VisualTemplateContentType[]>> = {
+  round_results: ['cover', 'match_result', 'closing'],
+  match_result: ['cover', 'match_result', 'closing'],
+  round_calendar: ['cover', 'round_overview', 'fixture', 'closing'],
+  upcoming_matches: ['cover', 'fixture', 'closing'],
+  match_preview: ['cover', 'match_preview', 'closing'],
+};
+
+/** The slide types of the chosen kinds a visual template can draw, in carousel order (cover first, closing last). */
+export function templateSlideTypes(kinds: ReadonlySet<ContentPieceKind>): VisualTemplateContentType[] {
+  const types = new Set([...kinds].flatMap((kind) => TEMPLATE_TYPES_OF[kind]));
+  return VisualTemplateContentTypeSchema.options.filter((type) => types.has(type));
+}
+
+/** The visual templates a selection can use: published, active, 4:5 and of a slide type of the chosen kinds. */
+export function compatibleTemplates(
+  templates: readonly VisualTemplate[],
+  kinds: ReadonlySet<ContentPieceKind>,
+): VisualTemplate[] {
+  const types = new Set([...kinds].flatMap((kind) => TEMPLATE_TYPES_OF[kind]));
+  return templates.filter(
+    (template) =>
+      template.status === 'published' &&
+      template.publishedVersion !== null &&
+      template.format === '4:5' &&
+      types.has(template.contentType),
+  );
+}
+
+/** The first selected match a template of the given type can show (none for a cover, a calendar or a closing). */
+function previewMatch(
+  matches: readonly CompetitionMatch[],
+  type: VisualTemplateContentType,
+): CompetitionMatch | undefined {
+  if (type !== 'match_result' && type !== 'fixture' && type !== 'match_preview') return undefined;
+  return matches.find((match) => (type === 'match_result' ? looksLikeResult(match) : looksUnplayed(match, 'upcoming')));
+}
+
+/** The visual template a selection uses for a slide type, if any. */
+function usageOf(usages: readonly VisualTemplateUsage[], type: VisualTemplateContentType): VisualTemplateUsage | null {
+  return usages.find((usage) => usage.contentType === type) ?? null;
+}
+
+/**
+ * The slide engine's drawing of a chosen template with the selected local data (the first compatible match for a
+ * match slide; the round for a cover, a calendar or a closing). No OpenAI call.
+ */
+function TemplatePreviewFigure({
+  usage,
+  selection,
+}: {
+  usage: VisualTemplateUsage;
+  selection: { competitionId: string; seasonId: string; roundId: string; matchId: string | null };
+}) {
+  const { api } = useProjectsDependencies();
+  const { competitionId, seasonId, roundId, matchId } = selection;
+  const label = templateContentTypeLabel[usage.contentType];
+  const request = useApiRequest(
+    `template-preview:${usage.versionId}:${roundId}:${matchId ?? ''}`,
+    useCallback(
+      (signal: AbortSignal) =>
+        api.previewVisualTemplate(
+          usage.templateId,
+          usage.versionId,
+          { selection: { competitionId, seasonId, roundId, ...(matchId === null ? {} : { matchId }) } },
+          signal,
+        ),
+      [api, usage.templateId, usage.versionId, competitionId, seasonId, roundId, matchId],
+    ),
+  );
+  if (request.state.status === 'loading') return <LoadingState label={`Dibujando la vista previa de «${label}»…`} />;
+  if (request.state.status === 'error') return <ErrorBanner error={request.state.error} onRetry={request.reload} />;
+  if (request.state.status !== 'success') return null;
+  const result = request.state.data;
+  return (
+    <figure className="m-0 grid min-w-0 gap-2">
+      <img
+        src={result.imageUrl}
+        alt={`Vista previa de «${usage.name}» (${label}) con los datos seleccionados`}
+        width={result.width}
+        height={result.height}
+        className="h-auto w-full rounded-lg border border-border-subtle"
+      />
+      <figcaption className="text-caption text-text-secondary">
+        {label}: así se verá con el motor final; no usa OpenAI.
+      </figcaption>
+      {result.issues.length === 0 ? null : (
+        <ul aria-label={`Avisos de la vista previa de «${usage.name}»`} className="m-0 grid list-none gap-1 p-0">
+          {result.issues.map((issue, index) => (
+            <li
+              key={`${issue.code}-${issue.layerId ?? ''}-${String(index)}`}
+              className={`text-caption ${issue.severity === 'error' ? 'text-danger' : 'text-warning'}`}
+            >
+              {issue.message}
+            </li>
+          ))}
+        </ul>
+      )}
+    </figure>
+  );
+}
+
 function StepIndicator({ step }: { step: number }) {
   return (
     <ol aria-label="Pasos de la generación" className="m-0 flex list-none flex-wrap gap-2 p-0">
@@ -170,6 +289,13 @@ export function GenerateContentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [requestKey, setRequestKey] = useState<{ signature: string; key: string } | null>(null);
+  /**
+   * The published version chosen for each slide type; a slide type without one uses its engine template
+   * (PD-ARCH-01G-D, decision 01G-D-3).
+   */
+  const [templateChoices, setTemplateChoices] = useState<Readonly<Partial<Record<VisualTemplateContentType, string>>>>(
+    {},
+  );
 
   const competitions = useApiRequest(
     'local-competitions',
@@ -263,6 +389,36 @@ export function GenerateContentPage() {
       ? calendar.state.data.matches.filter((match) => match.round?.id === id).length
       : 0;
 
+  const visualTemplates = useApiRequest(
+    step >= 4 ? 'visual-templates' : null,
+    useCallback((signal: AbortSignal) => api.listVisualTemplates(signal), [api]),
+  );
+  const compatible =
+    visualTemplates.state.status === 'success' ? compatibleTemplates(visualTemplates.state.data, kinds) : [];
+  const slideTypes = templateSlideTypes(kinds);
+  const chosenTemplates = slideTypes.flatMap((type) => {
+    const template = compatible.find(
+      (candidate) => candidate.contentType === type && candidate.publishedVersion?.id === templateChoices[type],
+    );
+    const versionId = template?.publishedVersion?.id;
+    return template === undefined || versionId === undefined ? [] : [{ type, template, versionId }];
+  });
+  // A choice the chosen content types no longer use is dropped (its slide type uses the engine template again).
+  const choiceCount = Object.keys(templateChoices).length;
+  useEffect(() => {
+    if (visualTemplates.state.status === 'success' && choiceCount !== chosenTemplates.length) {
+      setTemplateChoices(Object.fromEntries(chosenTemplates.map((chosen) => [chosen.type, chosen.versionId])));
+    }
+  }, [visualTemplates.state.status, choiceCount, chosenTemplates]);
+  function chooseTemplate(type: VisualTemplateContentType, versionId: string | null) {
+    setTemplateChoices((current) => {
+      const next = { ...current };
+      if (versionId === null) delete next[type];
+      else next[type] = versionId;
+      return next;
+    });
+  }
+
   const selection: ContentBatchSelection | null =
     round === null || selected.size === 0 || kinds.size === 0
       ? null
@@ -273,10 +429,14 @@ export function GenerateContentPage() {
           roundId: round.id,
           matchIds: roundMatches.filter((match) => selected.has(match.id)).map((match) => match.id),
           kinds: KINDS.filter((kind) => kinds.has(kind)),
+          // Only with visual templates, so a selection without one is exactly as before.
+          ...(chosenTemplates.length === 0
+            ? {}
+            : { visualTemplateVersionIds: chosenTemplates.map((chosen) => chosen.versionId) }),
         };
   const signature = selection === null ? null : JSON.stringify(selection);
   const preview = useApiRequest(
-    step === 4 && signature !== null ? `preview:${signature}` : null,
+    step === 5 && signature !== null ? `preview:${signature}` : null,
     useCallback(
       (signal: AbortSignal) => {
         if (selection === null) {
@@ -289,6 +449,9 @@ export function GenerateContentPage() {
     ),
   );
 
+  const selectedMatches = roundMatches.filter((match) => selected.has(match.id));
+  /** The visual templates of the reviewed selection, as the server checked them. */
+  const chosenUsages = preview.state.status === 'success' ? preview.state.data.visualTemplates : [];
   function chooseCompetition(value: string) {
     setPresetStage('done');
     setPresetError(null);
@@ -346,7 +509,8 @@ export function GenerateContentPage() {
   const canContinue =
     (step === 1 && presetStage === 'done' && round !== null && roundMatches.length > 0) ||
     (step === 2 && kinds.size > 0) ||
-    (step === 3 && selected.size > 0);
+    (step === 3 && selected.size > 0) ||
+    step === 4;
   const ready = preview.state.status === 'success' ? preview.state.data.totals.ready : 0;
 
   return (
@@ -546,6 +710,10 @@ export function GenerateContentPage() {
                   checked={selected.has(match.id)}
                   onChange={() => setSelected(toggle(selected, match.id))}
                 />
+                <span className="inline-flex shrink-0 items-center gap-1">
+                  <TeamBadge team={match.homeTeam} size="sm" />
+                  <TeamBadge team={match.awayTeam} size="sm" />
+                </span>
                 <span className="min-w-0 flex-1">
                   <strong>
                     {match.homeTeam.name} – {match.awayTeam.name}
@@ -572,9 +740,110 @@ export function GenerateContentPage() {
       ) : null}
 
       {step === 4 ? (
+        <Card as="section" aria-labelledby="step-template-title" className="grid gap-4">
+          <h2 id="step-template-title" className="m-0 text-heading-sm font-bold">
+            4. Plantilla
+          </h2>
+          <p className="m-0 text-body-sm text-text-secondary">
+            Para cada tipo de diapositiva del carrusel, elige una plantilla visual publicada o deja la plantilla del
+            motor. Solo se muestran plantillas 4:5, el formato de los carruseles. Generar con plantillas no usa OpenAI.
+          </p>
+          {visualTemplates.state.status === 'loading' ? <LoadingState label="Cargando plantillas visuales…" /> : null}
+          {visualTemplates.state.status === 'error' ? (
+            <ErrorBanner error={visualTemplates.state.error} onRetry={visualTemplates.reload} />
+          ) : null}
+          {visualTemplates.state.status === 'success' && compatible.length === 0 ? (
+            <p className="m-0 text-body-sm text-text-secondary">
+              No hay plantillas visuales publicadas 4:5 para los tipos de contenido elegidos. Puedes crearlas en{' '}
+              <Link to="/templates/create" className="text-text-link underline">
+                Crear plantilla
+              </Link>
+              .
+            </p>
+          ) : null}
+          {slideTypes.map((type) => {
+            const label = templateContentTypeLabel[type];
+            const options = compatible.filter((template) => template.contentType === type);
+            const chosen = chosenTemplates.find((item) => item.type === type) ?? null;
+            return (
+              <fieldset
+                key={type}
+                className="grid min-w-0 gap-3 rounded-xl border border-border-subtle p-3"
+                data-testid={`template-choice-${type}`}
+              >
+                <legend className="px-1 text-body-md font-bold text-text-primary">{label}</legend>
+                <label className="flex min-h-touch items-start gap-3 rounded-xl border border-border-subtle px-3 py-3 text-text-primary">
+                  <input
+                    type="radio"
+                    name={`generate-template-${type}`}
+                    checked={chosen === null}
+                    onChange={() => chooseTemplate(type, null)}
+                  />
+                  <span>
+                    <strong>Plantilla del motor</strong>
+                    <small className="block text-text-secondary">
+                      La versión vigente de la plantilla «{label}» del motor, como hasta ahora.
+                    </small>
+                  </span>
+                </label>
+                {options.length > 0 ? (
+                  <ul
+                    aria-label={`Plantillas visuales de ${label}`}
+                    className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 xl:grid-cols-3"
+                  >
+                    {options.map((template) => {
+                      const version = template.publishedVersion;
+                      if (version === null) return null;
+                      return (
+                        <li key={template.id} className="min-w-0">
+                          <label
+                            className={`grid h-full min-w-0 gap-2 rounded-xl border p-3 text-text-primary ${
+                              chosen?.template.id === template.id
+                                ? 'border-brand-gold bg-surface-raised'
+                                : 'border-border-subtle'
+                            }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <input
+                                type="radio"
+                                name={`generate-template-${type}`}
+                                checked={chosen?.template.id === template.id}
+                                onChange={() => chooseTemplate(type, version.id)}
+                              />
+                              <strong className="min-w-0 break-words">{template.name}</strong>
+                            </span>
+                            <span className="relative grid aspect-[4/5] w-full place-items-center overflow-hidden rounded-lg border border-border-subtle bg-surface-canvas">
+                              <PreviewImage
+                                key={version.id}
+                                src={visualTemplateBackgroundUrl(template.id, version.id)}
+                                alt={`Fondo de la plantilla «${template.name}»`}
+                                failedText="No se pudo cargar el fondo."
+                                className="absolute inset-0 h-full w-full object-cover"
+                              />
+                            </span>
+                            <span className="flex flex-wrap gap-1.5">
+                              <Badge tone="info">{label}</Badge>
+                              <Badge>{template.format}</Badge>
+                              <Badge>Versión {version.version}</Badge>
+                            </span>
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : visualTemplates.state.status === 'success' ? (
+                  <p className="m-0 text-caption text-text-subtle">No hay plantillas publicadas 4:5 de este tipo.</p>
+                ) : null}
+              </fieldset>
+            );
+          })}
+        </Card>
+      ) : null}
+
+      {step === 5 ? (
         <Card as="section" aria-labelledby="step-review-title" className="grid gap-5">
           <h2 id="step-review-title" className="m-0 text-heading-sm font-bold">
-            4. Revisión de la generación propuesta
+            5. Revisión de la generación propuesta
           </h2>
           {preview.state.status === 'loading' ? <LoadingState label="Calculando la propuesta…" /> : null}
           {preview.state.status === 'error' ? (
@@ -616,6 +885,82 @@ export function GenerateContentPage() {
                     </li>
                   ))}
                 </ul>
+              </section>
+              <section aria-labelledby="review-visual-title" className="grid gap-3">
+                <h3 id="review-visual-title" className="m-0 text-body-lg font-bold">
+                  Plantillas visuales
+                </h3>
+                {preview.state.data.visualTemplates.length === 0 ? (
+                  <p className="m-0 text-body-sm text-text-secondary">
+                    Sin plantillas visuales: se usan las plantillas del motor.
+                  </p>
+                ) : (
+                  <>
+                    <ul
+                      aria-label="Plantilla de cada diapositiva"
+                      className="m-0 grid list-none gap-1 p-0 text-body-md"
+                    >
+                      {slideTypes.map((type) => {
+                        const usage = usageOf(chosenUsages, type);
+                        return (
+                          <li key={type}>
+                            <strong>{templateContentTypeLabel[type]}:</strong>{' '}
+                            {usage === null
+                              ? 'Plantilla del motor'
+                              : `${usage.name} · versión ${String(usage.version)}`}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <p className="m-0 text-body-sm text-text-secondary">
+                      El proyecto conserva estas versiones aunque después se publiquen otras.
+                    </p>
+                    {round === null ? null : (
+                      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                        {preview.state.data.visualTemplates.map((usage) => (
+                          <TemplatePreviewFigure
+                            key={usage.versionId}
+                            usage={usage}
+                            selection={{
+                              competitionId,
+                              seasonId,
+                              roundId: round.id,
+                              matchId: previewMatch(selectedMatches, usage.contentType)?.id ?? null,
+                            }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </section>
+              <section aria-labelledby="review-badges-title" className="grid gap-2">
+                <h3 id="review-badges-title" className="m-0 text-body-lg font-bold">
+                  Escudos
+                </h3>
+                <ul className="m-0 grid list-none gap-2 p-0">
+                  {selectedMatches.map((match) => (
+                    <li
+                      key={match.id}
+                      className="flex flex-wrap items-center gap-3 rounded-xl border border-border-subtle px-3 py-2"
+                    >
+                      {[match.homeTeam, match.awayTeam].map((team, index) => (
+                        <span key={team.id} className="flex min-w-0 items-center gap-2">
+                          {index === 1 ? <span aria-hidden="true">–</span> : null}
+                          <TeamBadge team={team} size="sm" />
+                          <span>{team.name}</span>
+                          {team.badge === null ? <small className="text-warning">(sin escudo)</small> : null}
+                        </span>
+                      ))}
+                    </li>
+                  ))}
+                </ul>
+                {selectedMatches.some((match) => match.homeTeam.badge === null || match.awayTeam.badge === null) ? (
+                  <p className="m-0 text-body-sm text-warning">
+                    Un equipo sin escudo se muestra solo con su nombre; no impide generar. Puedes subirlo en
+                    Competiciones.
+                  </p>
+                ) : null}
               </section>
               <section aria-labelledby="review-pieces-title" className="grid gap-2">
                 <h3 id="review-pieces-title" className="m-0 text-body-lg font-bold">
@@ -665,7 +1010,7 @@ export function GenerateContentPage() {
             Anterior
           </Button>
         ) : null}
-        {step < 4 ? (
+        {step < 5 ? (
           <Button disabled={!canContinue} onClick={() => setStep(step + 1)}>
             Continuar
           </Button>

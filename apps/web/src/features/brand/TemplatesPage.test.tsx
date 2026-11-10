@@ -51,7 +51,7 @@ describe('Plantillas del motor: page frame', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Plantillas del motor' })).toBeTruthy();
     expect(document.body.textContent).toContain('no se editan desde esta página');
-    expect(screen.getByRole('link', { name: 'Mi marca' }).getAttribute('href')).toBe('/brand');
+    expect(screen.getByRole('link', { name: 'Mi marca' }).getAttribute('href')).toBe('/brand/resources');
     await templateList();
     expect(fake.requests.map((request) => request.url)).toEqual(['/api/v1/templates']);
   });
@@ -189,12 +189,55 @@ describe('Crear plantilla and Plantillas del motor: separate views (PD-ARCH-01G-
       </MemoryRouter>,
     );
     expect(screen.getByRole('heading', { level: 1, name: 'Crear plantilla' })).toBeTruthy();
+    // Two tabs: the visual templates first, the AI design proposals in the second.
+    const tabs = screen.getByRole('tablist', { name: 'Plantillas y propuestas' });
+    expect(
+      within(tabs)
+        .getAllByRole('tab')
+        .map((tab) => tab.textContent),
+    ).toEqual(['Plantillas visuales', 'Propuestas visuales con IA']);
+    expect(await screen.findByRole('region', { name: 'Plantillas visuales' })).toBeTruthy();
+    expect(screen.queryByRole('region', { name: 'Propuestas visuales con IA' })).toBeNull();
+    await userEvent.setup().click(within(tabs).getByRole('tab', { name: 'Propuestas visuales con IA' }));
     const proposals = await screen.findByRole('region', { name: 'Propuestas visuales con IA' });
     expect(within(proposals).getByText(/no es una plantilla/)).toBeTruthy();
-    expect(await screen.findByRole('region', { name: 'Plantillas visuales' })).toBeTruthy();
+    expect(screen.queryByRole('region', { name: 'Plantillas visuales' })).toBeNull();
+    expect(screen.getByRole('tabpanel', { name: 'Propuestas visuales con IA' })).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Plantillas del motor' })).toBeNull();
     expect(screen.getByRole('button', { name: /Crear diseño con IA/ })).toBeTruthy();
     expect(fake.requests.map((request) => request.url)).not.toContain('/api/v1/templates');
+  });
+
+  it('keeps the chosen tab of «Crear plantilla» in the address', async () => {
+    const user = userEvent.setup();
+    const fake = fakeFetch({
+      'GET /visual-templates': () => jsonResponse({ templates: [] }),
+      'GET /design/capabilities': () => problemResponse(503, 'SERVICE_UNAVAILABLE'),
+      'GET /design/proposals': () => jsonResponse({ proposals: [] }),
+    });
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/templates/create',
+          element: (
+            <CreateTemplatesPage
+              api={createBrandApi({ fetch: fake.fetch })}
+              designApi={createDesignApi({ fetch: fake.fetch })}
+              visualApi={createVisualTemplatesApi({ fetch: fake.fetch })}
+            />
+          ),
+        },
+      ],
+      { initialEntries: ['/templates/create?tab=proposals'] },
+    );
+    render(<RouterProvider router={router} />);
+    const tab = screen.getByRole('tab', { name: 'Propuestas visuales con IA' });
+    expect(tab.getAttribute('aria-selected')).toBe('true');
+    await user.click(screen.getByRole('tab', { name: 'Plantillas visuales' }));
+    expect(router.state.location.search).toBe('');
+    expect(screen.getByRole('tab', { name: 'Plantillas visuales' }).getAttribute('aria-selected')).toBe('true');
+    await user.click(screen.getByRole('tab', { name: 'Propuestas visuales con IA' }));
+    expect(router.state.location.search).toBe('?tab=proposals');
   });
 
   it('opens «Crear plantilla» from /templates and keeps the engine templates at /templates/engine', async () => {

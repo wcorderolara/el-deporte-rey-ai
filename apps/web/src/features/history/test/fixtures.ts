@@ -92,6 +92,7 @@ export function project(overrides: Partial<Project> = {}): Project {
     stageId: 'demo-a-regular',
     latestRun: null,
     activeDraftId: DRAFT_ID,
+    visualTemplates: [],
     ...overrides,
   };
 }

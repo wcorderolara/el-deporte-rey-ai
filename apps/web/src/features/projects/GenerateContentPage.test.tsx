@@ -4,7 +4,13 @@
  * confirmation with one request key (double click and retry), loading and error states, the batch result with its
  * polling, and the sports context on the project page. All data is synthetic.
  */
-import type { CompetitionMatch, ContentBatch, ContentBatchPreview } from '@edr/contracts';
+import type {
+  CompetitionMatch,
+  ContentBatch,
+  ContentBatchPreview,
+  VisualTemplate,
+  VisualTemplateUsage,
+} from '@edr/contracts';
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -24,7 +30,7 @@ const BATCH = uuid(9);
 const BASE = `/api/v1/competitions/${COMPETITION}/seasons/${SEASON}`;
 
 function team(n: number, name: string) {
-  return { id: uuid(100 + n), name, region: null, createdAt: T, updatedAt: T };
+  return { id: uuid(100 + n), name, region: null, badge: null, createdAt: T, updatedAt: T };
 }
 
 function match(n: number, home: string, away: string, values: Partial<CompetitionMatch> = {}): CompetitionMatch {
@@ -98,6 +104,7 @@ function preview(matchIds: string[]): ContentBatchPreview {
       })),
     ],
     totals: { requested: matchIds.length, ready: 1, skipped: matchIds.length - 1 },
+    visualTemplates: [],
   };
 }
 
@@ -163,6 +170,7 @@ function localServer(extra: Record<string, Handler> = {}) {
         ],
       }),
     [`GET ${BASE}/matches`]: () => json({ matches: MATCHES }),
+    'GET /api/v1/visual-templates': () => json({ templates: [] }),
     ...extra,
   });
 }
@@ -247,8 +255,10 @@ describe('content generation wizard (PD-ARCH-01E-A)', () => {
     expect(screen.getByText('3 de 3 partidos seleccionados.')).toBeTruthy();
     await user.click(screen.getByRole('checkbox', { name: /Club Gamma – Club Delta/ }));
     await user.click(continueButton());
+    // Step 4: the template (the engine templates by default).
+    await user.click(continueButton());
 
-    // Step 4: the plan computed by the server.
+    // Step 5: the plan computed by the server.
     expect(await screen.findByTestId('preview-totals')).toHaveProperty(
       'textContent',
       'Se prepararán 1 de 2 piezas solicitadas · 1 omitidas.',
@@ -290,6 +300,8 @@ describe('content generation wizard (PD-ARCH-01E-A)', () => {
     await user.click(continueButton());
     await user.click(continueButton());
     await user.click(screen.getByRole('checkbox', { name: /Club Alfa – Club Beta/ }));
+    await user.click(continueButton());
+    // Step 4: the template (the engine templates by default).
     await user.click(continueButton());
 
     const confirm = await screen.findByRole('button', { name: 'Confirmar y generar 1 pieza' });
@@ -407,6 +419,8 @@ describe('content of matches not played yet (PD-ARCH-01E-B)', () => {
     expect(marksOf(/Club Gamma – Club Delta/)).toEqual(['Por jugar']);
     await user.click(screen.getByRole('checkbox', { name: /Club Gamma – Club Delta/ }));
     await user.click(screen.getByRole('checkbox', { name: /Club Alfa – Club Beta/ }));
+    await user.click(continueButton());
+    // Step 4: the template (the engine templates by default).
     await user.click(continueButton());
 
     expect(await screen.findByTestId('preview-totals')).toHaveProperty(
@@ -555,6 +569,8 @@ describe('double submission (PD-ARCH-01E-A)', () => {
     await user.click(continueButton());
     await user.click(screen.getByRole('checkbox', { name: /Club Alfa – Club Beta/ }));
     await user.click(continueButton());
+    // Step 4: the template (the engine templates by default).
+    await user.click(continueButton());
     const confirm = await screen.findByRole('button', { name: 'Confirmar y generar 1 pieza' });
     await user.click(confirm);
     await user.dblClick(screen.getByRole('button', { name: /Preparando contenidos|Confirmar/ }));
@@ -627,6 +643,295 @@ describe('project sports context (PD-ARCH-01E-A)', () => {
     expect(within(section).getByText(/Resultado individual · 1 partido/)).toBeTruthy();
     expect(within(section).getByRole('link', { name: 'Ver generación' }).getAttribute('href')).toBe(
       `/projects/batches/${BATCH}`,
+    );
+    expect(within(section).getByText('Plantillas del motor')).toBeTruthy();
+  });
+
+  it('shows the visual template version of each slide type a project uses (PD-ARCH-01G-D, 01G-D-3)', async () => {
+    const server = fakeServer({
+      [`GET /api/v1/projects/${PROJECT_ID}`]: () =>
+        json(
+          project({
+            sportsContext: { batchId: BATCH, itemId: uuid(60), kind: 'match_result', ...CONTEXT, matchIds: [uuid(11)] },
+            visualTemplates: [
+              { templateId: uuid(72), versionId: uuid(73), version: 1, name: 'Portada dorada', contentType: 'cover' },
+              {
+                templateId: uuid(70),
+                versionId: uuid(71),
+                version: 3,
+                name: 'Resultado dorado',
+                contentType: 'match_result',
+              },
+            ],
+          }),
+        ),
+    });
+    renderApp(`/projects/${PROJECT_ID}`, server);
+    const section = (await screen.findByRole('heading', { name: 'Contexto deportivo' })).closest(
+      'section',
+    ) as HTMLElement;
+    expect(within(section).getByText('Plantillas visuales')).toBeTruthy();
+    expect(
+      within(section)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual(['Portada: Portada dorada · versión 1', 'Resultado de partido: Resultado dorado · versión 3']);
+    expect(within(section).queryByText('Plantillas del motor')).toBeNull();
+  });
+});
+
+describe('template step and review with visual templates per slide type (PD-ARCH-01G-D, 01G-D-3)', () => {
+  const RESULT_TEMPLATE = uuid(70);
+  const RESULT_VERSION = uuid(71);
+  const PREVIEW_TEMPLATE = uuid(72);
+  const PREVIEW_VERSION = uuid(73);
+  const COVER_TEMPLATE = uuid(90);
+  const COVER_VERSION = uuid(91);
+  const CLOSING_TEMPLATE = uuid(92);
+  const CLOSING_VERSION = uuid(93);
+  const BADGE = {
+    id: uuid(80),
+    origin: 'manual' as const,
+    source: 'Sitio oficial',
+    mime: 'image/png' as const,
+    width: 64,
+    height: 64,
+    sha256: 'ab'.repeat(32),
+    uploadedAt: T,
+  };
+
+  function template(
+    id: string,
+    name: string,
+    values: Partial<VisualTemplate> & { contentType: VisualTemplate['contentType'] },
+    versionId: string | null = null,
+  ): VisualTemplate {
+    return {
+      id,
+      name,
+      description: null,
+      category: null,
+      format: '4:5',
+      status: 'published',
+      sourceProposalId: null,
+      publishedVersion: versionId === null ? null : { id: versionId, version: 2, publishedAt: T },
+      draftVersionId: null,
+      versionCount: 2,
+      createdAt: T,
+      updatedAt: T,
+      archivedAt: null,
+      ...values,
+    };
+  }
+
+  const TEMPLATES: VisualTemplate[] = [
+    template(COVER_TEMPLATE, 'Portada dorada', { contentType: 'cover' }, COVER_VERSION),
+    template(RESULT_TEMPLATE, 'Resultado dorado', { contentType: 'match_result' }, RESULT_VERSION),
+    template(PREVIEW_TEMPLATE, 'Previa nocturna', { contentType: 'match_preview' }, PREVIEW_VERSION),
+    template(CLOSING_TEMPLATE, 'Cierre dorado', { contentType: 'closing' }, CLOSING_VERSION),
+    template(uuid(74), 'Borrador sin publicar', { contentType: 'match_result', status: 'draft' }),
+    template(uuid(75), 'Vertical', { contentType: 'match_result', format: '9:16' }, uuid(76)),
+    template(uuid(77), 'Archivada', { contentType: 'match_result', status: 'archived' }, uuid(78)),
+    template(uuid(79), 'Portada vertical', { contentType: 'cover', format: '9:16' }, uuid(81)),
+  ];
+
+  /** The usage the server reports for each published version (checked; version 2 of each template). */
+  const USAGES: Record<string, VisualTemplateUsage> = Object.fromEntries(
+    TEMPLATES.filter((item) => item.publishedVersion !== null).map((item) => [
+      item.publishedVersion?.id ?? '',
+      {
+        templateId: item.id,
+        versionId: item.publishedVersion?.id ?? '',
+        version: 2,
+        name: item.name,
+        contentType: item.contentType,
+      },
+    ]),
+  );
+
+  const BADGED = [
+    { ...MATCHES[0], homeTeam: { ...(MATCHES[0] as CompetitionMatch).homeTeam, badge: BADGE } } as CompetitionMatch,
+    ...MATCHES.slice(1),
+  ];
+
+  function templatePreview(templateId: string, versionId: string): Handler {
+    return () =>
+      json({
+        values: [{ binding: 'match.homeTeam.name', value: 'Club Alfa' }],
+        badges: [
+          { binding: 'match.homeTeam.badge', badgeId: BADGE.id },
+          { binding: 'match.awayTeam.badge', badgeId: null },
+        ],
+        issues:
+          versionId === RESULT_VERSION
+            ? [
+                {
+                  code: 'VALUE_MISSING',
+                  severity: 'warning',
+                  layerId: 'away-badge',
+                  message: 'Los datos elegidos no tienen este valor. (sin escudo)',
+                },
+              ]
+            : [],
+        imageUrl: `/api/v1/visual-templates/${templateId}/versions/${versionId}/preview?competitionId=${COMPETITION}`,
+        width: 1080,
+        height: 1350,
+      });
+  }
+
+  function templateServer(extra: Record<string, Handler> = {}) {
+    return localServer({
+      [`GET ${BASE}/matches`]: () => json({ matches: BADGED }),
+      'GET /api/v1/visual-templates': () => json({ templates: TEMPLATES }),
+      'POST /api/v1/content-batches/previews': (call) => {
+        const body = call.body as { matchIds: string[]; visualTemplateVersionIds?: string[] };
+        return json({
+          ...preview(body.matchIds),
+          visualTemplates: (body.visualTemplateVersionIds ?? []).flatMap((id) => USAGES[id] ?? []),
+        } satisfies ContentBatchPreview);
+      },
+      [`POST /api/v1/visual-templates/${RESULT_TEMPLATE}/versions/${RESULT_VERSION}/previews`]: templatePreview(
+        RESULT_TEMPLATE,
+        RESULT_VERSION,
+      ),
+      [`POST /api/v1/visual-templates/${COVER_TEMPLATE}/versions/${COVER_VERSION}/previews`]: templatePreview(
+        COVER_TEMPLATE,
+        COVER_VERSION,
+      ),
+      ...extra,
+    });
+  }
+
+  function choice(type: string): HTMLElement {
+    return screen.getByTestId(`template-choice-${type}`);
+  }
+
+  async function toTemplateStep(user: User) {
+    await chooseContext(user);
+    await user.click(continueButton());
+    await user.click(continueButton());
+    await user.click(screen.getByRole('checkbox', { name: /Club Alfa – Club Beta/ }));
+    await user.click(continueButton());
+    await screen.findByRole('list', { name: 'Plantillas visuales de Resultado de partido' });
+  }
+
+  it('offers, for each slide type of the carousel, only published active 4:5 templates of that type, with the engine by default', async () => {
+    const user = userEvent.setup();
+    const server = templateServer();
+    renderApp('/projects/generate', server);
+    await toTemplateStep(user);
+
+    // Round results: a cover, the match slides and a closing, in carousel order.
+    expect(
+      screen.getAllByTestId(/^template-choice-/).map((fieldset) => fieldset.querySelector('legend')?.textContent),
+    ).toEqual(['Portada', 'Resultado de partido', 'Cierre']);
+    const names = (type: string) =>
+      within(choice(type))
+        .getAllByRole('radio')
+        .map((radio) => radio.closest('label')?.querySelector('strong')?.textContent);
+    expect(names('cover')).toEqual(['Plantilla del motor', 'Portada dorada']);
+    expect(names('match_result')).toEqual(['Plantilla del motor', 'Resultado dorado']);
+    expect(names('closing')).toEqual(['Plantilla del motor', 'Cierre dorado']);
+    for (const type of ['cover', 'match_result', 'closing']) {
+      expect(
+        (within(choice(type)).getByRole('radio', { name: /Plantilla del motor/ }) as HTMLInputElement).checked,
+      ).toBe(true);
+    }
+    await user.click(continueButton());
+
+    expect(await screen.findByTestId('preview-totals')).toBeTruthy();
+    expect(server.callsTo('POST', '/api/v1/content-batches/previews')[0]?.body).not.toHaveProperty(
+      'visualTemplateVersionIds',
+    );
+    expect(screen.getByText('Sin plantillas visuales: se usan las plantillas del motor.')).toBeTruthy();
+    expect(server.calls.some((call) => call.path.includes('/visual-templates/') && call.method === 'POST')).toBe(false);
+  });
+
+  it('sends one version per chosen slide type, lists them in the review with their previews, and generates with them', async () => {
+    const user = userEvent.setup();
+    const server = templateServer({
+      'POST /api/v1/content-batches': () => json(batch('completed', 'completed'), 202),
+      [`GET /api/v1/content-batches/${BATCH}`]: () => json(batch('completed', 'completed')),
+    });
+    renderApp('/projects/generate', server);
+    await toTemplateStep(user);
+    await user.click(within(choice('match_result')).getByRole('radio', { name: /Resultado dorado/ }));
+    await user.click(within(choice('cover')).getByRole('radio', { name: /Portada dorada/ }));
+    await user.click(continueButton());
+
+    expect(await screen.findByTestId('preview-totals')).toBeTruthy();
+    expect(server.callsTo('POST', '/api/v1/content-batches/previews')[0]?.body).toMatchObject({
+      visualTemplateVersionIds: [COVER_VERSION, RESULT_VERSION],
+    });
+    const chosen = screen.getByRole('list', { name: 'Plantilla de cada diapositiva' });
+    expect(
+      within(chosen)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual([
+      'Portada: Portada dorada · versión 2',
+      'Resultado de partido: Resultado dorado · versión 2',
+      'Cierre: Plantilla del motor',
+    ]);
+    const image = await screen.findByRole('img', {
+      name: 'Vista previa de «Resultado dorado» (Resultado de partido) con los datos seleccionados',
+    });
+    expect(image.getAttribute('src')).toContain(
+      `/visual-templates/${RESULT_TEMPLATE}/versions/${RESULT_VERSION}/preview`,
+    );
+    expect(
+      await screen.findByRole('img', {
+        name: 'Vista previa de «Portada dorada» (Portada) con los datos seleccionados',
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText(/\(sin escudo\)$/, { selector: 'li' })).toBeTruthy();
+    // A match slide is previewed with the first compatible match; a cover with the round only.
+    expect(
+      server.callsTo('POST', `/api/v1/visual-templates/${RESULT_TEMPLATE}/versions/${RESULT_VERSION}/previews`)[0]
+        ?.body,
+    ).toEqual({ selection: { competitionId: COMPETITION, seasonId: SEASON, roundId: ROUND, matchId: uuid(11) } });
+    expect(
+      server.callsTo('POST', `/api/v1/visual-templates/${COVER_TEMPLATE}/versions/${COVER_VERSION}/previews`)[0]?.body,
+    ).toEqual({ selection: { competitionId: COMPETITION, seasonId: SEASON, roundId: ROUND } });
+    const badges = screen.getByRole('heading', { name: 'Escudos' }).closest('section') as HTMLElement;
+    expect(
+      within(badges)
+        .getAllByTestId('team-badge')
+        .map((badge) => badge.getAttribute('data-badge')),
+    ).toEqual(['image', 'none']);
+    expect(within(badges).getByText('(sin escudo)')).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Confirmar y generar 1 pieza' }));
+    await screen.findByRole('heading', { name: 'Resultado de la generación' });
+    expect(server.callsTo('POST', '/api/v1/content-batches')[0]?.body).toMatchObject({
+      selection: { visualTemplateVersionIds: [COVER_VERSION, RESULT_VERSION] },
+    });
+  });
+
+  it('drops the choice of a slide type the new content types no longer draw and keeps the others', async () => {
+    const user = userEvent.setup();
+    renderApp('/projects/generate', templateServer());
+    await toTemplateStep(user);
+    await user.click(within(choice('match_result')).getByRole('radio', { name: /Resultado dorado/ }));
+    await user.click(within(choice('cover')).getByRole('radio', { name: /Portada dorada/ }));
+
+    await user.click(screen.getByRole('button', { name: 'Anterior' }));
+    await user.click(screen.getByRole('button', { name: 'Anterior' }));
+    await user.click(screen.getByRole('checkbox', { name: /Resultados de jornada/ }));
+    await user.click(screen.getByRole('checkbox', { name: /Previa individual/ }));
+    await user.click(continueButton());
+    await user.click(screen.getByRole('checkbox', { name: /Club Gamma – Club Delta/ }));
+    await user.click(continueButton());
+
+    await screen.findByRole('list', { name: 'Plantillas visuales de Previa de partido' });
+    expect(screen.queryByTestId('template-choice-match_result')).toBeNull();
+    expect(within(choice('match_preview')).getByRole('radio', { name: /Previa nocturna/ })).toBeTruthy();
+    expect(
+      (within(choice('match_preview')).getByRole('radio', { name: /Plantilla del motor/ }) as HTMLInputElement).checked,
+    ).toBe(true);
+    // The cover is drawn by every carousel: its choice stays.
+    expect((within(choice('cover')).getByRole('radio', { name: /Portada dorada/ }) as HTMLInputElement).checked).toBe(
+      true,
     );
   });
 });

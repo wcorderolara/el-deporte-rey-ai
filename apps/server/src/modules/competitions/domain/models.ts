@@ -1,3 +1,5 @@
+import type { TeamBadge } from '@edr/contracts';
+
 /** Domain values owned by the local competition administration module. */
 export interface LocalSeason {
   readonly id: string;
@@ -10,6 +12,8 @@ export interface LocalTeam {
   readonly id: string;
   readonly name: string;
   readonly region: string | null;
+  /** The active badge (PD-ARCH-01G-D), or null. */
+  readonly badge: TeamBadge | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 }

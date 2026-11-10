@@ -1330,6 +1330,84 @@ paths:
         '413': { $ref: '#/components/responses/Problem' }
         '415': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
+  /teams/{teamId}/badge:
+    parameters:
+      - name: teamId
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uuid' }
+    put:
+      tags: [teams]
+      operationId: uploadTeamBadge
+      description: |
+        Upload the badge of a local team (PD-ARCH-01G-D, PD-28): the body is the raw image, PNG or JPEG only (no SVG, no
+        URL), at most 5 MiB and 4096 x 4096 pixels. The declared Content-Type must match the file signature (415
+        otherwise); the header and a full decode are checked before the file is stored. The operator declares the
+        source and confirms the authorization. The previous active badge is retired and kept, so earlier projects
+        still draw it. Answers the team with its new badge.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+        - name: source
+          in: query
+          required: true
+          schema: { $ref: '#/components/schemas/Label' }
+        - name: authorized
+          in: query
+          required: true
+          schema: { type: string, const: 'true' }
+      requestBody:
+        required: true
+        content:
+          image/png:
+            schema: { type: string, contentMediaType: image/png }
+          image/jpeg:
+            schema: { type: string, contentMediaType: image/jpeg }
+      responses:
+        '200':
+          description: The team with its badge.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ManagedTeam' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    get:
+      tags: [teams]
+      operationId: getTeamBadgeFile
+      description: The active badge of a team, after a hash check, with a sandboxed CSP and no caching.
+      responses:
+        '200':
+          description: The image.
+          content:
+            image/png:
+              schema: { type: string, contentMediaType: image/png }
+            image/jpeg:
+              schema: { type: string, contentMediaType: image/jpeg }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [teams]
+      operationId: deleteTeamBadge
+      description: Retire the active badge of a team; the row and the file are kept for earlier projects.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '200':
+          description: The team without a badge.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ManagedTeam' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
   /competitions/{competitionId}/seasons/{seasonId}/participants:
     parameters:
       - name: competitionId
@@ -2905,8 +2983,8 @@ paths:
       tags: [visual-templates]
       operationId: deleteVisualTemplate
       description: |
-        Delete a template that was never published (logical deletion; the rows are kept). A template with a published
-        version is archived instead (409 TEMPLATE_IN_USE).
+        Delete a template that was never published or is archived (logical deletion; the rows are kept, so projects keep
+        their versions). A published template that is not archived is refused (409 TEMPLATE_IN_USE): archive it first.
       parameters:
         - $ref: '#/components/parameters/ClientHeader'
       responses:
@@ -3719,14 +3797,33 @@ components:
         competitionId: { $ref: '#/components/schemas/Uuid' }
         label: { $ref: '#/components/schemas/DisplayName' }
         createdAt: { type: string, format: date-time }
+    TeamBadge:
+      description: |
+        The active badge of a team (PD-ARCH-01G-D, PD-28): uploaded manually as a PNG or JPEG file with its declared
+        source and a confirmed authorization; never downloaded from a provider or a URL. Served by getTeamBadgeFile.
+      type: object
+      required: [id, origin, source, mime, width, height, sha256, uploadedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        origin: { type: string, enum: [manual, provider] }
+        source: { $ref: '#/components/schemas/Label' }
+        mime: { type: string, enum: [image/png, image/jpeg] }
+        width: { type: integer, minimum: 1, maximum: 4096 }
+        height: { type: integer, minimum: 1, maximum: 4096 }
+        sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        uploadedAt: { type: string, format: date-time }
     ManagedTeam:
       type: object
-      required: [id, name, region, createdAt, updatedAt]
+      required: [id, name, region, badge, createdAt, updatedAt]
       additionalProperties: false
       properties:
         id: { $ref: '#/components/schemas/Uuid' }
         name: { $ref: '#/components/schemas/TeamName' }
         region: { anyOf: [{ $ref: '#/components/schemas/DisplayName' }, { type: 'null' }] }
+        badge:
+          description: The active badge, or null when the team has none (no badge is ever invented).
+          anyOf: [{ $ref: '#/components/schemas/TeamBadge' }, { type: 'null' }]
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
     CompetitionTeam:
@@ -4193,7 +4290,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/ProjectSummaryFields'
         - type: object
-          required: [competitionId, sourceId, seasonId, stageId, latestRun, activeDraftId]
+          required: [competitionId, sourceId, seasonId, stageId, latestRun, activeDraftId, visualTemplates]
           properties:
             competitionId: { $ref: '#/components/schemas/Slug' }
             sourceId: { $ref: '#/components/schemas/SourceId' }
@@ -4207,6 +4304,13 @@ components:
               oneOf:
                 - $ref: '#/components/schemas/Uuid'
                 - type: 'null'
+            visualTemplates:
+              description: |
+                The visual template versions the project uses (PD-ARCH-01G-D), one per slide type (decision 01G-D-3);
+                empty for the engine templates only.
+              type: array
+              maxItems: 6
+              items: { $ref: '#/components/schemas/VisualTemplateUsage' }
     ProjectSportsContext:
       description: Local sports context of a project generated by a content batch (PD-ARCH-01E-A).
       type: object
@@ -4238,6 +4342,16 @@ components:
         matchIds: { type: array, minItems: 1, maxItems: 32, uniqueItems: true, items: { $ref: '#/components/schemas/Uuid' } }
         kinds: { type: array, minItems: 1, maxItems: 5, uniqueItems: true, items: { type: string, enum: [round_results, match_result, round_calendar, upcoming_matches, match_preview] } }
         language: { $ref: '#/components/schemas/Language' }
+        visualTemplateVersionIds:
+          description: |
+            Published versions of visual templates (PD-ARCH-01G-D), at most one per slide type (decision 01G-D-3): each
+            4:5, not archived, of a slide type of the selected piece kinds. The slides of each chosen type are drawn with
+            its version; the others with the engine templates.
+          type: array
+          minItems: 1
+          maxItems: 6
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/Uuid' }
     ContentBatchCreate:
       type: object
       required: [requestKey, selection]
@@ -4287,7 +4401,7 @@ components:
         skipReason: { anyOf: [{ type: string, enum: [not_finished, score_missing, kickoff_missing, team_name_not_supported, no_eligible_matches, context_not_supported, not_upcoming, already_finished] }, { type: 'null' }] }
     ContentBatchPreview:
       type: object
-      required: [context, selectionLabel, language, matches, templates, pieces, totals]
+      required: [context, selectionLabel, language, matches, templates, visualTemplates, pieces, totals]
       additionalProperties: false
       properties:
         context: { $ref: '#/components/schemas/ContentBatchContext' }
@@ -4295,6 +4409,7 @@ components:
         language: { $ref: '#/components/schemas/Language' }
         matches: { type: array, maxItems: 32, items: { $ref: '#/components/schemas/ContentBatchMatch' } }
         templates: { type: array, items: { $ref: '#/components/schemas/Template' } }
+        visualTemplates: { type: array, maxItems: 6, items: { $ref: '#/components/schemas/VisualTemplateUsage' } }
         pieces: { type: array, items: { $ref: '#/components/schemas/ContentPiecePlan' } }
         totals:
           type: object
@@ -4703,7 +4818,7 @@ components:
       required: [field, segments]
       additionalProperties: false
       properties:
-        field: { type: string, enum: [headline, description, caption, hashtags, title, score, team_home, team_away, kickoff, standings, footer, demo_label, match_status, fixtures] }
+        field: { type: string, enum: [headline, description, caption, hashtags, title, score, team_home, team_away, kickoff, standings, footer, demo_label, match_status, fixtures, score_home, score_away, kickoff_time] }
         segments:
           type: array
           items:
@@ -5743,6 +5858,33 @@ components:
         visible: { type: boolean }
         type: { type: string, const: brand_asset }
         assetId: { $ref: '#/components/schemas/Uuid' }
+    VisualTemplateContentType:
+      description: |
+        What a visual template draws: one of the slide types of the engine's carousels (decision 01G-D-3). Standings
+        are left out. A design proposal's content type is one of these.
+      type: string
+      enum: [cover, match_result, round_overview, fixture, match_preview, closing]
+    VisualTemplateBadgeBinding:
+      description: |
+        The badge of the home or away team (PD-ARCH-01G-D), resolved through the team's internal identity, never its
+        name. A team without a badge leaves the layer empty (a warning).
+      type: string
+      enum: [match.homeTeam.badge, match.awayTeam.badge]
+    VisualTemplateTeamBadgeLayer:
+      description: A team badge (PD-28), drawn from its original file and only scaled proportionally.
+      type: object
+      required: [id, name, x, y, width, height, visible, type, binding]
+      additionalProperties: false
+      properties:
+        id: { type: string, minLength: 1, maxLength: 40, pattern: '^[a-z0-9][a-z0-9-]{0,39}$' }
+        name: { $ref: '#/components/schemas/Label' }
+        x: { type: number, minimum: 0, maximum: 1 }
+        y: { type: number, minimum: 0, maximum: 1 }
+        width: { type: number, minimum: 0, maximum: 1 }
+        height: { type: number, minimum: 0, maximum: 1 }
+        visible: { type: boolean }
+        type: { type: string, const: team_badge }
+        binding: { $ref: '#/components/schemas/VisualTemplateBadgeBinding' }
     VisualTemplateLayer:
       description: One layer; the stacking order is the order of the layer list, bottom first.
       oneOf:
@@ -5750,6 +5892,7 @@ components:
         - { $ref: '#/components/schemas/VisualTemplateSportsDataLayer' }
         - { $ref: '#/components/schemas/VisualTemplateImageLayer' }
         - { $ref: '#/components/schemas/VisualTemplateBrandAssetLayer' }
+        - { $ref: '#/components/schemas/VisualTemplateTeamBadgeLayer' }
     VisualTemplateBackgroundSource:
       type: string
       enum: [design_proposal, brand_asset]
@@ -5842,7 +5985,7 @@ components:
         name: { $ref: '#/components/schemas/Label' }
         description: { oneOf: [{ type: string, minLength: 1, maxLength: 500, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }, { type: 'null' }] }
         category: { anyOf: [{ $ref: '#/components/schemas/Label' }, { type: 'null' }] }
-        contentType: { $ref: '#/components/schemas/DesignContentType' }
+        contentType: { $ref: '#/components/schemas/VisualTemplateContentType' }
         format: { $ref: '#/components/schemas/DesignFormat' }
         status: { $ref: '#/components/schemas/VisualTemplateStatus' }
         sourceProposalId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
@@ -5917,7 +6060,7 @@ components:
         updatedAt: { type: string, format: date-time }
         publishedAt: { anyOf: [{ type: string, format: date-time }, { type: 'null' }] }
     VisualTemplateVersionRef:
-      description: The version a project used (recorded on projects by PD-ARCH-01G-D).
+      description: The version a project uses (PD-ARCH-01G-D), recorded when the project is created.
       type: object
       required: [templateId, versionId, version]
       additionalProperties: false
@@ -5925,6 +6068,17 @@ components:
         templateId: { $ref: '#/components/schemas/Uuid' }
         versionId: { $ref: '#/components/schemas/Uuid' }
         version: { type: integer, minimum: 1 }
+    VisualTemplateUsage:
+      description: The visual template version of a project or of a generation selection (PD-ARCH-01G-D).
+      type: object
+      required: [templateId, versionId, version, name, contentType]
+      additionalProperties: false
+      properties:
+        templateId: { $ref: '#/components/schemas/Uuid' }
+        versionId: { $ref: '#/components/schemas/Uuid' }
+        version: { type: integer, minimum: 1 }
+        name: { $ref: '#/components/schemas/Label' }
+        contentType: { $ref: '#/components/schemas/VisualTemplateContentType' }
     VisualTemplateCreate:
       type: object
       required: [sourceProposalId, name]
@@ -5937,9 +6091,9 @@ components:
         contentType:
           description: |
             What the template is for; the proposal's content type when absent. The proposal is only the background, so a
-            template of another content type may use it. It cannot change later.
+            template of another content type may use it, a cover or a closing included. It cannot change later.
           allOf:
-            - $ref: '#/components/schemas/DesignContentType'
+            - $ref: '#/components/schemas/VisualTemplateContentType'
         acknowledgeWarnings:
           description: Required (true) for an own-prompt proposal, whose image may contain generated text, people or brand elements.
           type: boolean
@@ -5992,7 +6146,7 @@ components:
         language: { $ref: '#/components/schemas/Language' }
     VisualTemplatePreview:
       type: object
-      required: [values, issues, imageUrl, width, height]
+      required: [values, badges, issues, imageUrl, width, height]
       additionalProperties: false
       properties:
         values:
@@ -6005,6 +6159,17 @@ components:
             properties:
               binding: { $ref: '#/components/schemas/VisualTemplateBinding' }
               value: { anyOf: [{ type: string, maxLength: 4000 }, { type: 'null' }] }
+        badges:
+          description: The badge of each team badge binding of the version; null when the team has none.
+          type: array
+          maxItems: 2
+          items:
+            type: object
+            required: [binding, badgeId]
+            additionalProperties: false
+            properties:
+              binding: { $ref: '#/components/schemas/VisualTemplateBadgeBinding' }
+              badgeId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
         issues:
           type: array
           maxItems: 400

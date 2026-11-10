@@ -16,6 +16,7 @@ import {
   UuidSchema,
 } from './primitives.js';
 import { ProjectSportsContextSchema } from './content-batches.js';
+import { VisualTemplateUsageSchema } from './visual-templates.js';
 import { FailureSchema } from './system.js';
 
 /** Create a project from a catalogue selection; matchday is null when the stage is selected as a whole. */
@@ -97,6 +98,11 @@ export const ProjectSchema = z.strictObject({
   stageId: SlugSchema,
   latestRun: RunSchema.nullable(),
   activeDraftId: UuidSchema.nullable(),
+  /**
+   * The visual template versions the project uses (PD-ARCH-01G-D), one per slide type (decision 01G-D-3); empty for
+   * the engine templates only.
+   */
+  visualTemplates: z.array(VisualTemplateUsageSchema).max(6),
 });
 
 export type ProjectCreate = z.infer<typeof ProjectCreateSchema>;

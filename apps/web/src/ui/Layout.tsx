@@ -19,7 +19,8 @@ export interface LayoutProps {
   primaryAction?: ReactNode;
   projectContext?: string;
   navigationKey?: string;
-  contentVariant?: 'legacy' | 'studio';
+  /** `workspace`: the studio style at full width with narrow margins (the visual template editor). */
+  contentVariant?: 'legacy' | 'studio' | 'workspace';
 }
 
 /**
@@ -97,31 +98,41 @@ export function Layout({
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="border-b border-border-subtle bg-surface-raised px-gutter-mobile py-4 sm:px-gutter-tablet lg:px-gutter-desktop">
-          <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-5 gap-y-2">
-            {hideHeaderTitle ? null : (
-              <p className="m-0 min-w-0 break-normal text-pretty font-display text-heading-sm font-extrabold tracking-heading sm:text-heading-md">
-                {title}
+        {/* A workspace without a title or a description (the template editor) has no page header at all. */}
+        {contentVariant === 'workspace' && hideHeaderTitle && hideHeaderDescription ? null : (
+          <header className="border-b border-border-subtle bg-surface-raised px-gutter-mobile py-4 sm:px-gutter-tablet lg:px-gutter-desktop">
+            <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-5 gap-y-2">
+              {hideHeaderTitle ? null : (
+                <p className="m-0 min-w-0 break-normal text-pretty font-display text-heading-sm font-extrabold tracking-heading sm:text-heading-md">
+                  {title}
+                </p>
+              )}
+              {/* {breadcrumbs ? <div className="ml-auto min-w-0">{breadcrumbs}</div> : null} */}
+            </div>
+            {hideHeaderDescription ? null : projectContext ? (
+              <p className="m-0 mt-2 text-body-sm text-info">{projectContext}</p>
+            ) : (
+              <p className="m-0 mt-2 text-body-sm text-text-secondary">
+                De la información deportiva a tu próxima creación.
               </p>
             )}
-            {/* {breadcrumbs ? <div className="ml-auto min-w-0">{breadcrumbs}</div> : null} */}
-          </div>
-          {hideHeaderDescription ? null : projectContext ? (
-            <p className="m-0 mt-2 text-body-sm text-info">{projectContext}</p>
-          ) : (
-            <p className="m-0 mt-2 text-body-sm text-text-secondary">
-              De la información deportiva a tu próxima creación.
-            </p>
-          )}
-        </header>
-        <div className="min-w-0 flex-1 p-gutter-mobile sm:p-gutter-tablet lg:p-gutter-desktop">
+          </header>
+        )}
+        <div
+          className={
+            contentVariant === 'workspace'
+              ? 'min-w-0 flex-1 p-gutter-mobile lg:px-4 lg:py-3'
+              : 'min-w-0 flex-1 p-gutter-mobile sm:p-gutter-tablet lg:p-gutter-desktop'
+          }
+        >
           <main
             id={MAIN_CONTENT_ID}
             className={classNames(
-              'mx-auto w-full min-w-0 max-w-content outline-none',
-              contentVariant === 'studio'
-                ? 'font-sans text-text-primary'
-                : 'overflow-x-auto rounded-panel bg-legacy-canvas p-4 font-legacy text-legacy-text shadow-card sm:p-6',
+              'mx-auto w-full min-w-0 outline-none',
+              contentVariant === 'workspace' ? 'max-w-none' : 'max-w-content',
+              contentVariant === 'legacy'
+                ? 'overflow-x-auto rounded-panel bg-legacy-canvas p-4 font-legacy text-legacy-text shadow-card sm:p-6'
+                : 'font-sans text-text-primary',
             )}
             ref={mainRef}
             tabIndex={-1}

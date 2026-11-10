@@ -26,6 +26,7 @@ import {
   type VisualTemplate,
   type VisualTemplateAssetRef,
   type VisualTemplateBackgroundInput,
+  type VisualTemplateBadgeBinding,
   type VisualTemplateBinding,
   type VisualTemplateContentType,
   type VisualTemplateCreate,
@@ -47,6 +48,7 @@ import type { Clock } from '../../container.js';
 import type { Db } from '../../platform/db/index.js';
 import { HttpProblem, type Logger } from '../../platform/http/index.js';
 import type { BrandAssetService } from '../brand/index.js';
+import type { TeamBadgeRecord, TeamBadgeService } from '../competitions/badges/index.js';
 import type { DesignService, DesignTemplateSource } from '../design/index.js';
 import {
   type EmbeddedAsset,
@@ -57,11 +59,19 @@ import {
   renderSlide,
 } from '../rendering/index.js';
 
-import { BINDING_ELEMENT, type LocalSelectionData, readSelection, resolveBinding } from './catalog.js';
+import { type LocalSelectionData, readSelection, resolveBinding } from './catalog.js';
 import { type LuminanceSampler, backgroundSampler } from './contrast.js';
 import type { VisualTemplateRepository } from './repository.js';
 import { type StoredBackground, type TemplateRecord, type VersionRecord } from './repository.js';
-import { type AssetState, type BackgroundState, issueOf, usedBindings, validateVersion } from './validation.js';
+import { composeItems } from './compose.js';
+import { issueOf } from './issues.js';
+import {
+  type AssetState,
+  type BackgroundState,
+  usedBadgeBindings,
+  usedBindings,
+  validateVersion,
+} from './validation.js';
 
 /** Most preview PNGs and background samplers kept in memory. */
 export const PREVIEW_CACHE_ENTRIES = 16;
@@ -72,6 +82,8 @@ export interface VisualTemplateServiceDeps {
   readonly db: Db;
   readonly design: Pick<DesignService, 'templateSource' | 'readFile'>;
   readonly brandAssets: Pick<BrandAssetService, 'find' | 'readFile'>;
+  /** Team badges (PD-ARCH-01G-D), resolved by the internal identity of a team. */
+  readonly badges: Pick<TeamBadgeService, 'active' | 'read'>;
   readonly fonts: () => FontSet;
   readonly palette: Palette;
   readonly utcOffsetMinutes: number;
@@ -128,7 +140,10 @@ const TEAM_STYLE: VisualTemplateTextStyle = {
   effect: 'soft_shadow',
 };
 
-/** The sports-data layers a new template starts with: the values its content type requires, at neutral positions. */
+/**
+ * The layers a new template starts with, at neutral positions: the values its content type requires; a cover starts
+ * with the competition and the round as optional values (nothing is required of a cover or a closing, 01G-D-3).
+ */
 function starterLayers(contentType: VisualTemplateContentType): VisualTemplateLayer[] {
   const data = (
     id: string,
@@ -136,7 +151,45 @@ function starterLayers(contentType: VisualTemplateContentType): VisualTemplateLa
     binding: VisualTemplateBinding,
     box: { x: number; y: number; width: number; height: number },
     style: VisualTemplateTextStyle,
-  ): VisualTemplateLayer => ({ id, name, type: 'sports_data', binding, required: true, visible: true, ...box, style });
+    required = true,
+  ): VisualTemplateLayer => ({ id, name, type: 'sports_data', binding, required, visible: true, ...box, style });
+  if (contentType === 'cover') {
+    return [
+      data(
+        'competition',
+        'Competición',
+        'competition.name',
+        { x: 0.06, y: 0.2, width: 0.88, height: 0.2 },
+        { ...TEAM_STYLE, maxFontSize: 84, minFontSize: 40, maxLines: 3 },
+        false,
+      ),
+      data(
+        'round',
+        'Jornada',
+        'round.name',
+        { x: 0.06, y: 0.43, width: 0.88, height: 0.08 },
+        { ...TEAM_STYLE, fontRole: 'numeric', maxFontSize: 48, minFontSize: 26, maxLines: 1, colorRole: 'accent' },
+        false,
+      ),
+    ];
+  }
+  if (contentType === 'closing') {
+    // A closing shows no sports value: a fixed text the operator writes (the brand logo comes from the proposal).
+    return [
+      {
+        id: 'closing-text',
+        name: 'Texto de cierre',
+        type: 'text',
+        text: 'Texto de cierre',
+        visible: true,
+        x: 0.08,
+        y: 0.3,
+        width: 0.84,
+        height: 0.16,
+        style: { ...TEAM_STYLE, maxFontSize: 64, minFontSize: 32, maxLines: 2 },
+      },
+    ];
+  }
   if (contentType === 'round_overview') {
     return [
       data(
@@ -242,6 +295,7 @@ interface PreviewModel {
   readonly items: StructuredItem[];
   readonly assets: Map<string, EmbeddedAsset>;
   readonly values: { binding: VisualTemplateBinding; value: string | null }[];
+  readonly badges: { binding: VisualTemplateBadgeBinding; badgeId: string | null }[];
   readonly issues: VisualTemplateIssue[];
 }
 
@@ -250,6 +304,7 @@ export class VisualTemplateService {
   readonly #db: Db;
   readonly #design: VisualTemplateServiceDeps['design'];
   readonly #brand: VisualTemplateServiceDeps['brandAssets'];
+  readonly #badges: VisualTemplateServiceDeps['badges'];
   readonly #fonts: () => FontSet;
   readonly #palette: Palette;
   readonly #utcOffsetMinutes: number;
@@ -265,6 +320,7 @@ export class VisualTemplateService {
     this.#db = deps.db;
     this.#design = deps.design;
     this.#brand = deps.brandAssets;
+    this.#badges = deps.badges;
     this.#fonts = deps.fonts;
     this.#palette = deps.palette;
     this.#utcOffsetMinutes = deps.utcOffsetMinutes;
@@ -367,15 +423,18 @@ export class VisualTemplateService {
   }
 
   /** Deletes a template that was never published (logical); a published one is archived instead. */
+  /**
+   * Deletes a template that was never published or is archived (Product Owner decision 01G-D-4). A published template
+   * is archived first. Deletion is logical: the rows stay, so the projects that used a version keep rendering it.
+   */
   delete(id: string): void {
     this.#repository.transaction(() => {
-      this.#template(id);
-      if (this.#repository.versions(id).some((version) => version.status === 'published')) {
-        throw new HttpProblem(
-          409,
-          'TEMPLATE_IN_USE',
-          'La plantilla tiene versiones publicadas: archívala en lugar de eliminarla.',
-        );
+      const record = this.#template(id);
+      if (
+        record.archivedAt === null &&
+        this.#repository.versions(id).some((version) => version.status === 'published')
+      ) {
+        throw new HttpProblem(409, 'TEMPLATE_IN_USE', 'La plantilla está publicada: archívala antes de eliminarla.');
       }
       this.#repository.markDeleted(id, this.#now());
     });
@@ -582,6 +641,7 @@ export class VisualTemplateService {
     params.set('revision', String(version.revision));
     return {
       values: prepared.values,
+      badges: prepared.badges,
       issues: [...prepared.issues, ...overflowing.map((id) => issueOf('TEXT_OVERFLOW', 'error', id))],
       imageUrl: `/api/v1/visual-templates/${templateId}/versions/${versionId}/preview?${params.toString()}`,
       width: version.canvasWidth,
@@ -841,7 +901,7 @@ export class VisualTemplateService {
 
   /**
    * The items of a preview in stacking order with the values and issues of the selection; with `withFiles`, the
-   * verified bytes of the background and of every placed asset.
+   * verified bytes of the background, of every placed asset and of the team badges.
    */
   async #prepare(
     template: TemplateRecord,
@@ -857,10 +917,45 @@ export class VisualTemplateService {
       value: resolveBinding(binding, data, language, this.#utcOffsetMinutes),
     }));
     const valueOf = new Map(values.map((entry) => [entry.binding, entry.value]));
-    const issues: VisualTemplateIssue[] = [];
-    const assets = new Map<string, EmbeddedAsset>();
-    const items: StructuredItem[] = [];
+    // Team badges by the internal identity of the selected match's teams (PD-ARCH-01G-D).
+    const badgeRecords = new Map<VisualTemplateBadgeBinding, TeamBadgeRecord | null>();
+    for (const binding of usedBadgeBindings(version.layers)) {
+      const teamId = binding === 'match.homeTeam.badge' ? data.match?.homeTeamId : data.match?.awayTeamId;
+      badgeRecords.set(binding, teamId === undefined ? null : this.#badges.active(teamId));
+    }
     const { background } = version;
+    const assets = new Map<string, EmbeddedAsset>();
+    const composition = composeItems(
+      { background: { id: background.id, sha256: background.sha256, mime: background.mime }, layers: version.layers },
+      {
+        text: (binding) => {
+          const value = valueOf.get(binding) ?? null;
+          return value === null ? null : { text: value, factIds: [], provenance: 'fact' };
+        },
+        badge: (binding) => {
+          const record = badgeRecords.get(binding) ?? null;
+          return record === null ? null : { id: record.id, sha256: record.sha256, mime: record.mime };
+        },
+        asset: (assetId) => {
+          const pinned = version.assets.find((ref) => ref.assetId === assetId);
+          const found = this.#brand.find(assetId);
+          const asset: BrandAsset | null = found === null || found.deleted ? null : found.asset;
+          if (
+            pinned === undefined ||
+            asset === null ||
+            asset.sha256 !== pinned.sha256 ||
+            asset.usagePolicy === 'reference_only' ||
+            (asset.mime !== 'image/png' && asset.mime !== 'image/jpeg')
+          ) {
+            return null;
+          }
+          return {
+            ref: { id: asset.id, sha256: asset.sha256, mime: asset.mime },
+            protectedAsset: asset.usagePolicy === 'protected',
+          };
+        },
+      },
+    );
     if (withFiles) {
       assets.set(background.id, {
         id: background.id,
@@ -868,86 +963,23 @@ export class VisualTemplateService {
         mime: background.mime,
         content: await this.#readBackground(background),
       });
-    }
-    items.push({
-      kind: 'image',
-      id: 'background',
-      slot: 'background',
-      box: { x: 0, y: 0, width: 1, height: 1 },
-      asset: { id: background.id, sha256: background.sha256, mime: background.mime },
-      fit: 'cover',
-    });
-    for (const layer of version.layers) {
-      if (!layer.visible) {
-        continue;
-      }
-      const id = `layer-${layer.id}`;
-      if (layer.type === 'image' || layer.type === 'brand_asset') {
-        const pinned = version.assets.find((ref) => ref.assetId === layer.assetId);
-        const found = this.#brand.find(layer.assetId);
-        const asset: BrandAsset | null = found === null || found.deleted ? null : found.asset;
-        if (
-          pinned === undefined ||
-          asset === null ||
-          asset.sha256 !== pinned.sha256 ||
-          asset.usagePolicy === 'reference_only' ||
-          (asset.mime !== 'image/png' && asset.mime !== 'image/jpeg')
-        ) {
-          issues.push(issueOf('ASSET_MISSING', 'error', layer.id));
+      for (const item of composition.items) {
+        if (item.kind !== 'image' || assets.has(item.asset.id)) {
           continue;
         }
-        if (withFiles && !assets.has(asset.id)) {
-          assets.set(asset.id, {
-            id: asset.id,
-            sha256: asset.sha256,
-            mime: asset.mime,
-            content: (await this.#brand.readFile(asset.id)).content,
-          });
-        }
-        // A protected asset, and every logo or mascot, is only scaled proportionally from its original file.
-        items.push({
-          kind: 'image',
-          id,
-          slot: 'layer',
-          box: layer,
-          asset: { id: asset.id, sha256: asset.sha256, mime: asset.mime },
-          fit: layer.type === 'image' && asset.usagePolicy !== 'protected' ? layer.fit : 'contain',
-        });
-        continue;
+        const badge = [...badgeRecords.values()].find((record) => record?.id === item.asset.id) ?? null;
+        const content =
+          badge === null ? (await this.#brand.readFile(item.asset.id)).content : await this.#badges.read(badge);
+        assets.set(item.asset.id, { ...item.asset, content });
       }
-      if (layer.type === 'text') {
-        items.push({
-          kind: 'text',
-          id,
-          field: 'title',
-          semantic: 'title',
-          box: layer,
-          style: layer.style,
-          run: { text: layer.text, factIds: [], provenance: 'template_text' },
-        });
-        continue;
-      }
-      if (layer.binding === null) {
-        issues.push(issueOf('BINDING_MISSING', 'error', layer.id));
-        continue;
-      }
-      const value = valueOf.get(layer.binding) ?? null;
-      if (value === null) {
-        issues.push(issueOf('VALUE_MISSING', layer.required ? 'error' : 'warning', layer.id, `(${layer.binding})`));
-        continue;
-      }
-      const element = BINDING_ELEMENT[layer.binding];
-      items.push({
-        kind: 'text',
-        id,
-        field: element.field,
-        semantic: element.semantic,
-        box: layer,
-        style: layer.style,
-        run: { text: value, factIds: [], provenance: 'fact' },
-      });
     }
-    return { items, assets, values, issues };
+    return {
+      items: composition.items,
+      assets,
+      values,
+      badges: [...badgeRecords].map(([binding, record]) => ({ binding, badgeId: record?.id ?? null })),
+      issues: composition.issues,
+    };
   }
 
   #document(template: TemplateRecord, version: VersionRecord, items: StructuredItem[], language: Language) {

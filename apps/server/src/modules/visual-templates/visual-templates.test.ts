@@ -17,6 +17,7 @@ import type { LocalMatchRecord } from '../projects/content-batches/repository.js
 
 import { BINDING_ELEMENT, type LocalSelectionData, STRESS_VALUES, bindingAllowed, resolveBinding } from './catalog.js';
 import { contrastRatio, hexLuminance } from './contrast.js';
+import { composeItems } from './compose.js';
 import { type AssetState, type ValidationInput, validateVersion } from './validation.js';
 
 const fonts = testFonts();
@@ -452,5 +453,82 @@ describe('validateVersion', () => {
       }),
     );
     expect(codes(inactive)).toEqual(['BACKGROUND_UNAVAILABLE']);
+  });
+});
+
+describe('team badges in a template (PD-ARCH-01G-D)', () => {
+  const badgeLayer = (binding: 'match.homeTeam.badge' | 'match.awayTeam.badge'): VisualTemplateLayer => ({
+    ...BOX,
+    y: 0.1,
+    id: binding === 'match.homeTeam.badge' ? 'home-badge' : 'away-badge',
+    name: 'Escudo',
+    type: 'team_badge',
+    binding,
+  });
+
+  it('allows team badges only in content types with one match', () => {
+    expect(codes(validateVersion(input([...TEAMS, badgeLayer('match.homeTeam.badge')])), 'error')).toEqual([]);
+    const calendar: VisualTemplateLayer = {
+      ...BOX,
+      id: 'fixtures',
+      name: 'fixtures',
+      type: 'sports_data',
+      binding: 'round.fixtures',
+      required: true,
+      style: STYLE,
+    };
+    const issues = validateVersion(
+      input([calendar, badgeLayer('match.homeTeam.badge')], { contentType: 'round_overview' }),
+    ).issues;
+    expect(issues).toContainEqual(expect.objectContaining({ code: 'BINDING_NOT_ALLOWED', layerId: 'home-badge' }));
+  });
+
+  it('draws a badge proportionally by binding and leaves a missing badge out with a warning', () => {
+    const background = {
+      id: '00000000-0000-4000-8000-000000000090',
+      sha256: 'ab'.repeat(32),
+      mime: 'image/png' as const,
+    };
+    const badge = { id: '00000000-0000-4000-8000-000000000091', sha256: 'cd'.repeat(32), mime: 'image/png' as const };
+    const { items, issues } = composeItems(
+      { background, layers: [badgeLayer('match.homeTeam.badge'), badgeLayer('match.awayTeam.badge')] },
+      {
+        text: () => null,
+        badge: (binding) => (binding === 'match.homeTeam.badge' ? badge : null),
+        asset: () => null,
+      },
+    );
+    expect(items.map((item) => item.id)).toEqual(['background', 'layer-home-badge']);
+    expect(items[1]).toMatchObject({ kind: 'image', fit: 'contain', asset: badge });
+    expect(issues).toEqual([
+      expect.objectContaining({ code: 'VALUE_MISSING', severity: 'warning', layerId: 'away-badge' }),
+    ]);
+  });
+
+  it('reports a missing required value as an error and an optional one as a warning', () => {
+    const background = {
+      id: '00000000-0000-4000-8000-000000000090',
+      sha256: 'ab'.repeat(32),
+      mime: 'image/png' as const,
+    };
+    const optional: VisualTemplateLayer = {
+      ...BOX,
+      id: 'stage',
+      name: 'stage',
+      type: 'sports_data',
+      binding: 'stage.name',
+      required: false,
+      style: STYLE,
+    };
+    const { items, issues } = composeItems(
+      { background, layers: [...TEAMS, optional] },
+      { text: () => null, badge: () => null, asset: () => null },
+    );
+    expect(items).toHaveLength(1);
+    expect(issues.map((issue) => `${issue.layerId ?? ''}:${issue.severity}`)).toEqual([
+      'home:error',
+      'away:error',
+      'stage:warning',
+    ]);
   });
 });

@@ -1,7 +1,16 @@
 /** Locally managed competition foundation, separate from provider catalogue identifiers and manual import records. */
 import { z } from 'zod';
 
-import { ContractPatterns, DateTimeSchema, DisplayNameSchema, TeamNameSchema, UuidSchema, SourceIdSchema } from './primitives.js';
+import {
+  ContractPatterns,
+  DateTimeSchema,
+  DisplayNameSchema,
+  LabelSchema,
+  Sha256Schema,
+  TeamNameSchema,
+  UuidSchema,
+  SourceIdSchema,
+} from './primitives.js';
 
 export const ManagedCompetitionCreateSchema = z.strictObject({ name: DisplayNameSchema });
 export const ManagedCompetitionSchema = z.strictObject({
@@ -172,12 +181,36 @@ export const ManagedTeamUpdateSchema = z.strictObject({
   name: TeamNameSchema,
   region: DisplayNameSchema.nullable(),
 });
+/**
+ * The active badge of a team (PD-ARCH-01G-D, PD-28): uploaded manually by the operator as a PNG or JPEG file, with the
+ * declared source and a confirmed authorization. Never downloaded from a provider or a URL. Its image is served by
+ * getTeamBadgeFile; no file path is exposed.
+ */
+export const TeamBadgeSchema = z.strictObject({
+  id: UuidSchema,
+  origin: z.enum(['manual', 'provider']),
+  source: LabelSchema,
+  mime: z.enum(['image/png', 'image/jpeg']),
+  width: z.int().min(1).max(4096),
+  height: z.int().min(1).max(4096),
+  sha256: Sha256Schema,
+  uploadedAt: DateTimeSchema,
+});
+
 export const ManagedTeamSchema = z.strictObject({
   id: UuidSchema,
   name: TeamNameSchema,
   region: DisplayNameSchema.nullable(),
+  /** The active badge, or null when the team has none (no badge is ever invented). */
+  badge: TeamBadgeSchema.nullable(),
   createdAt: DateTimeSchema,
   updatedAt: DateTimeSchema,
+});
+
+/** Query of uploadTeamBadge: the declared source of the image and the confirmed authorization to use it (PD-28). */
+export const TeamBadgeUploadQuerySchema = z.object({
+  source: LabelSchema,
+  authorized: z.literal('true'),
 });
 export const ManagedTeamListResponseSchema = z.strictObject({ teams: z.array(ManagedTeamSchema) });
 
@@ -219,6 +252,8 @@ export type ManagedSeason = z.infer<typeof ManagedSeasonSchema>;
 export type ManagedTeamCreate = z.infer<typeof ManagedTeamCreateSchema>;
 export type ManagedTeamUpdate = z.infer<typeof ManagedTeamUpdateSchema>;
 export type ManagedTeam = z.infer<typeof ManagedTeamSchema>;
+export type TeamBadge = z.infer<typeof TeamBadgeSchema>;
+export type TeamBadgeUploadQuery = z.infer<typeof TeamBadgeUploadQuerySchema>;
 export type CompetitionTeam = z.infer<typeof CompetitionTeamSchema>;
 export type CompetitionTeamAdd = z.infer<typeof CompetitionTeamAddSchema>;
 export type SeasonParticipant = z.infer<typeof SeasonParticipantSchema>;

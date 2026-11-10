@@ -104,6 +104,9 @@ const EXPECTED_COLUMNS: Readonly<Record<string, readonly string[]>> = {
     'updated_at',
     'deleted_at',
     'content_kind',
+    'visual_template_id',
+    'visual_template_version_id',
+    'badge_snapshot_json',
   ],
   workflow_runs: [
     'id',
@@ -361,6 +364,23 @@ const EXPECTED_COLUMNS: Readonly<Record<string, readonly string[]>> = {
     'archived_at',
     'deleted_at',
   ],
+  project_visual_templates: ['project_id', 'slide_type', 'visual_template_id', 'visual_template_version_id'],
+  team_badges: [
+    'id',
+    'team_id',
+    'file_path',
+    'sha256',
+    'mime',
+    'width',
+    'height',
+    'byte_size',
+    'origin',
+    'source_note',
+    'authorization_confirmed',
+    'status',
+    'created_at',
+    'retired_at',
+  ],
   visual_template_versions: [
     'id',
     'template_id',
@@ -601,7 +621,11 @@ const EXPECTED_COLUMNS: Readonly<Record<string, readonly string[]>> = {
 
 /** Foreign keys of data-model.md section 3 as `column -> table`. */
 const EXPECTED_FOREIGN_KEYS: Readonly<Record<string, readonly string[]>> = {
-  projects: ['source_id -> sources'],
+  projects: [
+    'source_id -> sources',
+    'visual_template_id -> visual_templates',
+    'visual_template_version_id -> visual_template_versions',
+  ],
   workflow_runs: ['base_run_id -> workflow_runs', 'project_id -> projects'],
   stage_runs: ['run_id -> workflow_runs'],
   imports: ['source_id -> sources'],
@@ -707,6 +731,12 @@ const EXPECTED_FOREIGN_KEYS: Readonly<Record<string, readonly string[]>> = {
   design_proposal_decisions: ['proposal_id -> design_proposals'],
   visual_templates: ['source_proposal_id -> design_proposals'],
   visual_template_versions: ['template_id -> visual_templates'],
+  team_badges: ['team_id -> managed_teams'],
+  project_visual_templates: [
+    'project_id -> projects',
+    'visual_template_id -> visual_templates',
+    'visual_template_version_id -> visual_template_versions',
+  ],
 };
 
 /** Indexes of data-model.md section 4 as `table (columns)`. */
@@ -736,6 +766,9 @@ const EXPECTED_INDEXES = [
   'visual_templates (source_proposal_id)',
   'visual_template_versions (template_id)',
   'visual_template_versions (background_source, background_id)',
+  'team_badges (team_id)',
+  'team_badges (team_id, created_at)',
+  'project_visual_templates (visual_template_id)',
   'imports (received_at)',
   'manual_selection_versions (competition_id, season_id, stage_id, matchday_key, superseded_at)',
   'competitions (created_at, id)',
@@ -871,6 +904,9 @@ describe('structure of the migrated schema', () => {
       { version: 27, name: 'design_generation_modes' },
       { version: 28, name: 'design_decision_notes' },
       { version: 29, name: 'visual_templates' },
+      { version: 30, name: 'team_badges_and_project_templates' },
+      { version: 31, name: 'reconcile_field_provenance_references' },
+      { version: 32, name: 'engine_slide_type_templates' },
     ]);
   });
 

@@ -172,6 +172,13 @@ export interface CompetitionsApi {
   createTeam(input: ManagedTeamCreate): Promise<ManagedTeam>;
   updateTeam(teamId: string, input: ManagedTeamUpdate): Promise<ManagedTeam>;
   getTeam(teamId: string, signal?: AbortSignal): Promise<ManagedTeam>;
+  /**
+   * uploadTeamBadge (PD-ARCH-01G-D, PD-28): the PNG or JPEG file of a team's badge, its declared source and the
+   * confirmed authorization; the previous badge is retired. Answers the team with its new badge.
+   */
+  uploadTeamBadge(teamId: string, input: { file: File; source: string }): Promise<ManagedTeam>;
+  /** deleteTeamBadge: retires the team's badge (the file is kept); answers the team without a badge. */
+  deleteTeamBadge(teamId: string): Promise<ManagedTeam>;
   listCompetitionTeams(competitionId: string, signal?: AbortSignal): Promise<CompetitionTeam[]>;
   addCompetitionTeam(competitionId: string, input: CompetitionTeamAdd): Promise<CompetitionTeam>;
   removeCompetitionTeam(competitionId: string, teamId: string): Promise<void>;
@@ -433,6 +440,21 @@ export function createCompetitionsApi(client: ApiClient): CompetitionsApi {
       return client.patch(path('updateManagedTeam', params), ManagedTeamUpdateSchema.parse(input), {
         schema: ManagedTeamSchema,
       });
+    },
+    async uploadTeamBadge(teamId, input) {
+      const params = ManagedTeamParamsSchema.parse({ teamId });
+      if (input.file.type !== 'image/png' && input.file.type !== 'image/jpeg') {
+        throw new TypeError('Team badges must be PNG or JPEG images');
+      }
+      const query = new URLSearchParams({ source: input.source, authorized: 'true' });
+      return client.request('PUT', `${path('uploadTeamBadge', params)}?${query.toString()}`, {
+        file: input.file,
+        schema: ManagedTeamSchema,
+      });
+    },
+    async deleteTeamBadge(teamId) {
+      const params = ManagedTeamParamsSchema.parse({ teamId });
+      return client.delete(path('deleteTeamBadge', params), { schema: ManagedTeamSchema });
     },
     getTeam(teamId, signal) {
       const params = ManagedTeamParamsSchema.parse({ teamId });

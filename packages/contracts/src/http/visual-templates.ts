@@ -13,7 +13,7 @@
 import { z } from 'zod';
 
 import { BrandAssetKindSchema, BrandAssetUsagePolicySchema, BrandColorRoleSchema, BrandFontRoleSchema, noteSchema } from './brand.js';
-import { DesignContentTypeSchema, DesignFormatSchema } from './design.js';
+import { DesignFormatSchema } from './design.js';
 import { DateTimeSchema, LabelSchema, LanguageSchema, Sha256Schema, UuidSchema, contractRegExp } from './primitives.js';
 
 export const VisualTemplateStatusSchema = z.enum(['draft', 'published', 'archived']);
@@ -42,10 +42,31 @@ export const VisualTemplateBindingSchema = z.enum([
 ]);
 
 export type VisualTemplateBinding = z.infer<typeof VisualTemplateBindingSchema>;
-export type VisualTemplateContentType = z.infer<typeof DesignContentTypeSchema>;
+
+/**
+ * The image fields a `team_badge` layer can show (PD-ARCH-01G-D): the badge of the home or away team, resolved through
+ * the team's internal identity, never its name. A team without a badge leaves the layer empty (a warning).
+ */
+export const VisualTemplateBadgeBindingSchema = z.enum(['match.homeTeam.badge', 'match.awayTeam.badge']);
+export type VisualTemplateBadgeBinding = z.infer<typeof VisualTemplateBadgeBindingSchema>;
+
+/**
+ * What a template draws: one of the slide types of the engine's carousels (Product Owner decision 01G-D-3,
+ * 2026-11-09), the same names as the engine templates. Standings are left out: no content kind generates them from the
+ * local data. A design proposal's content type (`DesignContentType`) is one of these.
+ */
+export const VisualTemplateContentTypeSchema = z.enum([
+  'cover',
+  'match_result',
+  'round_overview',
+  'fixture',
+  'match_preview',
+  'closing',
+]);
+export type VisualTemplateContentType = z.infer<typeof VisualTemplateContentTypeSchema>;
 
 const MATCH_TYPES: readonly VisualTemplateContentType[] = ['match_preview', 'fixture', 'match_result'];
-const ALL_TYPES: readonly VisualTemplateContentType[] = ['match_preview', 'fixture', 'match_result', 'round_overview'];
+const ALL_TYPES: readonly VisualTemplateContentType[] = VisualTemplateContentTypeSchema.options;
 
 /**
  * The catalogue: the content types where each binding is available, and the slide text field that carries the same
@@ -71,7 +92,8 @@ export const VISUAL_TEMPLATE_BINDINGS: Readonly<
 
 /**
  * The values a template of each content type must show. A requirement is met when every binding of one of its
- * alternatives is used by a sports-data layer (the score as one value, or both team scores).
+ * alternatives is used by a sports-data layer (the score as one value, or both team scores). A cover and a closing
+ * require nothing: a variant may be only a background, a fixed text or the brand (Product Owner, 01G-D-3).
  */
 export const VISUAL_TEMPLATE_REQUIRED_BINDINGS: Readonly<
   Record<VisualTemplateContentType, readonly { readonly anyOf: readonly (readonly VisualTemplateBinding[])[] }[]>
@@ -84,6 +106,8 @@ export const VISUAL_TEMPLATE_REQUIRED_BINDINGS: Readonly<
     { anyOf: [['match.score'], ['match.homeScore', 'match.awayScore']] },
   ],
   round_overview: [{ anyOf: [['round.fixtures']] }],
+  cover: [],
+  closing: [],
 });
 
 /** Canvas of each format, in pixels (width 1080, as the carousel format). */
@@ -198,14 +222,22 @@ export const VisualTemplateBrandAssetLayerSchema = z.strictObject({
   assetId: UuidSchema,
 });
 
+/** A team badge (PD-28), drawn from its original file and only scaled proportionally (`contain`). */
+export const VisualTemplateTeamBadgeLayerSchema = z.strictObject({
+  ...LayerBaseShape,
+  type: z.literal('team_badge'),
+  binding: VisualTemplateBadgeBindingSchema,
+});
+
 export const VisualTemplateLayerSchema = z.discriminatedUnion('type', [
   VisualTemplateTextLayerSchema,
   VisualTemplateSportsDataLayerSchema,
   VisualTemplateImageLayerSchema,
   VisualTemplateBrandAssetLayerSchema,
+  VisualTemplateTeamBadgeLayerSchema,
 ]);
 
-export const VisualTemplateLayerTypeSchema = z.enum(['text', 'sports_data', 'image', 'brand_asset']);
+export const VisualTemplateLayerTypeSchema = z.enum(['text', 'sports_data', 'image', 'brand_asset', 'team_badge']);
 
 /** Where the background comes from: the clean background of a design proposal, or a background of Mi marca. */
 export const VisualTemplateBackgroundSourceSchema = z.enum(['design_proposal', 'brand_asset']);
@@ -282,7 +314,7 @@ export const VisualTemplateSchema = z.strictObject({
   name: LabelSchema,
   description: noteSchema(500).nullable(),
   category: LabelSchema.nullable(),
-  contentType: DesignContentTypeSchema,
+  contentType: VisualTemplateContentTypeSchema,
   /** Aspect ratio of the canvas. */
   format: DesignFormatSchema,
   status: VisualTemplateStatusSchema,
@@ -335,10 +367,7 @@ export const VisualTemplateVersionSchema = z.strictObject({
   publishedAt: DateTimeSchema.nullable(),
 });
 
-/**
- * The version a project used (PD-ARCH-01G-D will record it on each project; defined here so that the reference is
- * stable before the wizard uses it).
- */
+/** The version a project uses (PD-ARCH-01G-D): recorded when the project is created, never the latest one later. */
 export const VisualTemplateVersionRefSchema = z.strictObject({
   templateId: UuidSchema,
   versionId: UuidSchema,
@@ -346,6 +375,13 @@ export const VisualTemplateVersionRefSchema = z.strictObject({
 });
 
 const VisualTemplateDescriptionSchema = noteSchema(500);
+
+/** The visual template of a project, as shown with it. */
+export const VisualTemplateUsageSchema = z.strictObject({
+  ...VisualTemplateVersionRefSchema.shape,
+  name: LabelSchema,
+  contentType: VisualTemplateContentTypeSchema,
+});
 
 export const VisualTemplateCreateSchema = z.strictObject({
   /** An approved, not deleted design proposal. */
@@ -355,9 +391,10 @@ export const VisualTemplateCreateSchema = z.strictObject({
   category: LabelSchema.optional(),
   /**
    * What the template is for; the proposal's content type when absent. The proposal is only the background, so a
-   * template of another content type may use it (Product Owner decision 01G-C-1, 2026-11-06). It cannot change later.
+   * template of another content type may use it (Product Owner decision 01G-C-1, 2026-11-06), a cover or a closing
+   * included (01G-D-3). It cannot change later.
    */
-  contentType: DesignContentTypeSchema.optional(),
+  contentType: VisualTemplateContentTypeSchema.optional(),
   /**
    * The operator read the warnings about the background. Required for an own-prompt proposal, whose image may contain
    * generated text, people, logos or a generated mascot.
@@ -386,7 +423,10 @@ export const VisualTemplateVersionCreateSchema = z.strictObject({
 
 export const VisualTemplatePublishSchema = z.strictObject({ revision: z.int().min(1) });
 
-/** Local sports data for a preview: a match for match content types, a round for a round calendar. */
+/**
+ * Local sports data for a preview: a match for match content types, a round for a round calendar; a cover or a closing
+ * needs only the competition and season (the round is optional).
+ */
 export const VisualTemplatePreviewSelectionSchema = z.strictObject({
   competitionId: UuidSchema,
   seasonId: UuidSchema,
@@ -405,6 +445,10 @@ export const VisualTemplatePreviewSchema = z.strictObject({
   values: z
     .array(z.strictObject({ binding: VisualTemplateBindingSchema, value: z.string().max(4000).nullable() }))
     .max(MAX_VISUAL_TEMPLATE_LAYERS),
+  /** The badge of each team badge binding of the version; null when the team has none. */
+  badges: z
+    .array(z.strictObject({ binding: VisualTemplateBadgeBindingSchema, badgeId: UuidSchema.nullable() }))
+    .max(2),
   /** Issues of this rendering (missing values, overflowing text); the version's own issues are in its validation. */
   issues: z.array(VisualTemplateIssueSchema).max(400),
   /** Relative API path of the PNG rendered by the slide engine for the same selection. */
@@ -439,6 +483,8 @@ export type VisualTemplateVersionSummary = z.infer<typeof VisualTemplateVersionS
 export type VisualTemplateDetail = z.infer<typeof VisualTemplateDetailSchema>;
 export type VisualTemplateVersion = z.infer<typeof VisualTemplateVersionSchema>;
 export type VisualTemplateVersionRef = z.infer<typeof VisualTemplateVersionRefSchema>;
+export type VisualTemplateUsage = z.infer<typeof VisualTemplateUsageSchema>;
+export type VisualTemplateTeamBadgeLayer = z.infer<typeof VisualTemplateTeamBadgeLayerSchema>;
 export type VisualTemplateCreate = z.infer<typeof VisualTemplateCreateSchema>;
 export type VisualTemplateUpdate = z.infer<typeof VisualTemplateUpdateSchema>;
 export type VisualTemplateVersionSave = z.infer<typeof VisualTemplateVersionSaveSchema>;

@@ -1,3 +1,4 @@
+export { ActionMenu, type ActionMenuItem, type ActionMenuTrigger } from './ActionMenu';
 export { Alert, type AlertProps, type AlertTone } from './Alert';
 export { Badge, type BadgeProps, type BadgeVariant } from './Badge';
 export { Button, buttonClassName, type ButtonProps, type ButtonSize, type ButtonVariant } from './Button';

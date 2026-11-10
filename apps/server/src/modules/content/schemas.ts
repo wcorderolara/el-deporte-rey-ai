@@ -193,6 +193,11 @@ export const ContentInputSchema = z.strictObject({
   matchday: z.int().min(1).nullable(),
   /** The structure of the project's carousels (PD-ARCH-01E-B). */
   contentKind: ContentKindSchema,
+  /**
+   * True when the project uses a visual template (PD-ARCH-01G-D): the match slides also store each team's goals, the
+   * kickoff time and, on results, the status, as fact segments the template can draw independently.
+   */
+  templateFields: z.boolean().optional(),
   brand: z.strictObject({ name: z.string().min(1).max(80), handle: BrandHandleSchema }),
   utcOffsetMinutes: z.int(),
   maxSlidesPerCarousel: z.int().min(3).max(100),

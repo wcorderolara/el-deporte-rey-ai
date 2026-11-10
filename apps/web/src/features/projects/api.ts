@@ -19,6 +19,8 @@ import {
   RunSchema,
   SeasonListSchema,
   StageListSchema,
+  VisualTemplateListSchema,
+  VisualTemplatePreviewSchema,
   type Catalogue,
   type CompetitionMatch,
   type CompetitionRound,
@@ -38,9 +40,12 @@ import {
   type RunStart,
   type SeasonList,
   type StageList,
+  type VisualTemplate,
+  type VisualTemplatePreview,
+  type VisualTemplatePreviewRequest,
 } from '@edr/contracts';
 
-import { apiClient, type ApiClient } from '../../api/client';
+import { API_BASE_PATH, apiClient, type ApiClient } from '../../api/client';
 
 export interface ProjectsApi {
   /** listProjects: project list and history, newest first. */
@@ -79,6 +84,20 @@ export interface ProjectsApi {
   createContentBatch(body: ContentBatchCreate): Promise<ContentBatch>;
   /** getContentBatch: real state of every piece, polled while pieces are pending. */
   getContentBatch(batchId: string, signal?: AbortSignal): Promise<ContentBatch>;
+  /** listVisualTemplates: the visual templates a generation can use (PD-ARCH-01G-D). */
+  listVisualTemplates(signal?: AbortSignal): Promise<VisualTemplate[]>;
+  /** previewVisualTemplate: the values and issues of a template version for local sports data (no OpenAI). */
+  previewVisualTemplate(
+    templateId: string,
+    versionId: string,
+    body: VisualTemplatePreviewRequest,
+    signal?: AbortSignal,
+  ): Promise<VisualTemplatePreview>;
+}
+
+/** Address of the background image of a visual template version (getVisualTemplateBackground). */
+export function visualTemplateBackgroundUrl(templateId: string, versionId: string): string {
+  return `${API_BASE_PATH}${operationPath('getVisualTemplateBackground', { templateId, versionId })}`;
 }
 
 /** Builds the path of a contract operation, encoding every path parameter. */
@@ -193,6 +212,19 @@ export function createProjectsApi(client: ApiClient): ProjectsApi {
     },
     createContentBatch(body) {
       return client.post(operationPath('createContentBatch'), body, { schema: ContentBatchSchema });
+    },
+    async listVisualTemplates(signal) {
+      const body = await client.get(operationPath('listVisualTemplates'), {
+        schema: VisualTemplateListSchema,
+        ...withSignal(signal),
+      });
+      return body.templates;
+    },
+    previewVisualTemplate(templateId, versionId, body, signal) {
+      return client.post(operationPath('previewVisualTemplate', { templateId, versionId }), body, {
+        schema: VisualTemplatePreviewSchema,
+        ...withSignal(signal),
+      });
     },
     getContentBatch(batchId, signal) {
       return client.get(operationPath('getContentBatch', { batchId }), {

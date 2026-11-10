@@ -39,6 +39,8 @@ export const featurePaths = {
   history: (projectId: string): string => `/projects/${encodeURIComponent(projectId)}/exports`,
   exportHistory: '/exports',
   brand: '/brand',
+  brandResources: '/brand/resources',
+  brandIdentity: '/brand/identity',
   templates: '/templates',
   templatesCreate: '/templates/create',
   templatesEngine: '/templates/engine',

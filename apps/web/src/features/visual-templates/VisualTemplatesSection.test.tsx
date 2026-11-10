@@ -91,8 +91,14 @@ describe('Plantillas visuales: list', () => {
     renderPage();
     const region = await section();
 
+    // The templates are the first tab; the proposals are in the second one.
+    const tabs = screen.getAllByRole('tab').map((tab) => [tab.textContent, tab.getAttribute('aria-selected')]);
+    expect(tabs).toEqual([
+      ['Plantillas visuales', 'true'],
+      ['Propuestas visuales con IA', 'false'],
+    ]);
     const headings = screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent);
-    expect(headings).toEqual(['Plantillas visuales', 'Propuestas visuales con IA']);
+    expect(headings).toEqual(['Plantillas visuales']);
     const rows = within(region).getAllByRole('row').slice(1);
     expect(rows).toHaveLength(2);
     expect(rows[0]?.textContent).toContain('Previa dorada');
@@ -104,12 +110,16 @@ describe('Plantillas visuales: list', () => {
       within(rows[1] as HTMLElement)
         .getByRole('img')
         .getAttribute('src'),
-    ).toBe(`/api/v1/visual-templates/${PUBLISHED.id}/versions/${PUBLISHED_ID}/background`);
+    ).toBe(
+      `/api/v1/visual-templates/${PUBLISHED.id}/versions/${PUBLISHED_ID}/background?v=${encodeURIComponent(PUBLISHED.updatedAt)}`,
+    );
     expect(
       within(rows[0] as HTMLElement)
         .getByRole('img')
         .getAttribute('src'),
-    ).toBe(`/api/v1/visual-templates/${TEMPLATE_ID}/versions/${DRAFT_ID}/background`);
+    ).toBe(
+      `/api/v1/visual-templates/${TEMPLATE_ID}/versions/${DRAFT_ID}/background?v=${encodeURIComponent(DRAFT.updatedAt)}`,
+    );
   });
 
   it('switches to cards and filters by search, status, content type and format', async () => {
@@ -138,30 +148,66 @@ describe('Plantillas visuales: list', () => {
     expect(within(region).getByText('1 de 2 plantillas')).toBeTruthy();
   });
 
-  it('offers the actions of each state: delete only when never published, archive, new version', async () => {
+  it('offers a view or edit icon and the other actions of each state in a menu (delete when never published or archived)', async () => {
     const user = userEvent.setup();
     const { fake, router } = renderPage({
       [`POST /visual-templates/${PUBLISHED.id}/archive`]: () =>
         jsonResponse({ ...PUBLISHED, status: 'archived', archivedAt: T }),
-      [`POST /visual-templates/${PUBLISHED.id}/versions`]: () =>
-        jsonResponse(version({ id: uuid(0x300), templateId: PUBLISHED.id, version: 3 }), 201),
     });
     const region = await section();
     const [draftRow, publishedRow] = within(region).getAllByRole('row').slice(1) as [HTMLElement, HTMLElement];
+    const menuOf = async (row: HTMLElement, name: string) => {
+      await user.click(within(row).getByRole('button', { name: `Más acciones de «${name}»` }));
+      return screen.getByRole('menu', { name: `Más acciones de «${name}»` });
+    };
+    const labels = (menu: HTMLElement) =>
+      within(menu)
+        .getAllByRole('menuitem')
+        .map((item) => item.textContent);
 
-    expect(within(draftRow).getByRole('button', { name: 'Eliminar «Previa dorada»' })).toBeTruthy();
-    expect(within(draftRow).getByRole('button', { name: 'Publicar' })).toBeTruthy();
-    expect(within(draftRow).queryByRole('button', { name: 'Archivar' })).toBeNull();
-    expect(within(publishedRow).queryByRole('button', { name: /Eliminar/ })).toBeNull();
+    expect(within(draftRow).getByRole('button', { name: 'Editar «Previa dorada»' })).toBeTruthy();
+    expect(within(publishedRow).getByRole('button', { name: 'Ver «Resultado clásico»' })).toBeTruthy();
+    // Only the icon and the menu button stay in the row.
+    expect(within(draftRow).queryByRole('button', { name: 'Publicar' })).toBeNull();
 
-    await user.click(within(publishedRow).getByRole('button', { name: 'Archivar' }));
+    const draftMenu = await menuOf(draftRow, 'Previa dorada');
+    expect(labels(draftMenu)).toEqual(['Previsualizar', 'Publicar', 'Eliminar']);
+    expect(document.activeElement).toBe(within(draftMenu).getAllByRole('menuitem')[0]);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(document.activeElement).toBe(
+      within(draftRow).getByRole('button', { name: 'Más acciones de «Previa dorada»' }),
+    );
+
+    const publishedMenu = await menuOf(publishedRow, 'Resultado clásico');
+    expect(labels(publishedMenu)).toEqual(['Previsualizar', 'Crear nueva versión', 'Archivar']);
+    await user.click(within(publishedMenu).getByRole('menuitem', { name: 'Archivar' }));
     expect(await within(publishedRow).findByText('Archivada')).toBeTruthy();
-    expect(within(publishedRow).getByRole('button', { name: 'Restaurar' })).toBeTruthy();
-    expect(within(publishedRow).queryByRole('button', { name: 'Crear nueva versión' })).toBeNull();
     expect(fake.requests.at(-1)?.headers['X-EDR-Client']).toBe('web');
+    // An archived template can be restored or deleted (decision 01G-D-4); no new version.
+    expect(labels(await menuOf(publishedRow, 'Resultado clásico'))).toEqual(['Previsualizar', 'Restaurar', 'Eliminar']);
+    await user.keyboard('{Escape}');
 
-    await user.click(within(draftRow).getByRole('button', { name: 'Abrir «Previa dorada» en el editor' }));
+    await user.click(within(draftRow).getByRole('button', { name: 'Editar «Previa dorada»' }));
     await waitFor(() => expect(router.state.location.pathname).toBe(`/templates/visual/${TEMPLATE_ID}`));
+  });
+
+  it('moves through the menu with the arrows and opens the preview panel', async () => {
+    const user = userEvent.setup();
+    const { router } = renderPage();
+    const region = await section();
+    const draftRow = within(region).getAllByRole('row')[1] as HTMLElement;
+    await user.click(within(draftRow).getByRole('button', { name: 'Más acciones de «Previa dorada»' }));
+    const menu = screen.getByRole('menu');
+    const items = within(menu).getAllByRole('menuitem');
+    await user.keyboard('{ArrowDown}');
+    expect(document.activeElement).toBe(items[1]);
+    await user.keyboard('{End}');
+    expect(document.activeElement).toBe(items[2]);
+    await user.keyboard('{ArrowDown}');
+    expect(document.activeElement).toBe(items[0]);
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(router.state.location.search).toBe('?panel=preview'));
   });
 
   it('creates a new version of a published template and opens it', async () => {
@@ -173,7 +219,8 @@ describe('Plantillas visuales: list', () => {
     const region = await section();
     const publishedRow = within(region).getAllByRole('row')[2] as HTMLElement;
 
-    await user.click(within(publishedRow).getByRole('button', { name: 'Crear nueva versión' }));
+    await user.click(within(publishedRow).getByRole('button', { name: 'Más acciones de «Resultado clásico»' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Crear nueva versión' }));
     await waitFor(() => expect(router.state.location.search).toBe(`?version=${uuid(0x300)}`));
     expect(JSON.parse(String(fake.requests.at(-1)?.body))).toEqual({});
   });
@@ -183,7 +230,8 @@ describe('Plantillas visuales: list', () => {
     renderPage({ [`DELETE /visual-templates/${TEMPLATE_ID}`]: () => problemResponse(409, 'TEMPLATE_IN_USE') });
     const region = await section();
 
-    await user.click(within(region).getByRole('button', { name: 'Eliminar «Previa dorada»' }));
+    await user.click(within(region).getByRole('button', { name: 'Más acciones de «Previa dorada»' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Eliminar' }));
     const dialog = screen.getByRole('dialog', { name: 'Eliminar plantilla' });
     await user.click(within(dialog).getByRole('button', { name: 'Eliminar' }));
     expect(await within(dialog).findByText(/no se puede eliminar\. Puedes archivarla/)).toBeTruthy();
@@ -255,6 +303,34 @@ describe('Crear plantilla', () => {
     expect(body).toMatchObject({ sourceProposalId: GUIDED.id, contentType: 'match_result' });
   });
 
+  it('offers the six slide types of the engine templates, a cover and a closing included (01G-D-3)', async () => {
+    const user = userEvent.setup();
+    const { fake } = renderPage({ 'POST /visual-templates': () => jsonResponse(detail(), 201) });
+    const region = await section();
+    await user.click(within(region).getByRole('button', { name: /Crear plantilla/ }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(await within(dialog).findByRole('radio', { name: /Previa individual · 4:5 · 1\/1/ }));
+    const type = within(dialog).getByRole('combobox', { name: /Tipo de contenido de la plantilla/ });
+    expect(
+      within(type)
+        .getAllByRole('option')
+        .map((option) => option.textContent),
+    ).toEqual([
+      'Portada',
+      'Resultado de partido',
+      'Calendario de jornada',
+      'Partido programado',
+      'Previa de partido',
+      'Cierre',
+    ]);
+    expect((type as HTMLSelectElement).value).toBe('match_preview');
+    await user.selectOptions(type, 'cover');
+    await user.click(within(dialog).getByRole('button', { name: 'Crear borrador' }));
+    await waitFor(() => expect(fake.requests.some((request) => request.method === 'POST')).toBe(true));
+    const body = JSON.parse(String(fake.requests.find((request) => request.method === 'POST')?.body)) as object;
+    expect(body).toMatchObject({ sourceProposalId: GUIDED.id, contentType: 'cover' });
+  });
+
   it('requires the acknowledgement for an own-prompt proposal and sends it', async () => {
     const user = userEvent.setup();
     const { fake } = renderPage({ 'POST /visual-templates': () => jsonResponse(detail(), 201) });
@@ -323,6 +399,7 @@ describe('Crear plantilla', () => {
           hasBackground: true,
         }),
     });
+    await user.click(await screen.findByRole('tab', { name: 'Propuestas visuales con IA' }));
     const proposals = await screen.findByRole('region', { name: 'Propuestas visuales con IA' });
     const rows = await within(proposals).findAllByRole('row');
     const row = rows.find((item) => item.textContent?.includes(GUIDED.name)) as HTMLElement;

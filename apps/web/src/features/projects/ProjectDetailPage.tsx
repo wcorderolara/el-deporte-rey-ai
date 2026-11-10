@@ -6,6 +6,7 @@ import { featurePaths } from '../../app/routes';
 import { Badge, buttonClassName, Card, dataModeLabel, ErrorBanner, featureCopy, formatDateTime } from '../../ui';
 import { createCopy, detailCopy, languageLabel, runCopy } from './copy';
 import { contentTypeLabel } from './dashboardModel';
+import { templateContentTypeLabel } from '../visual-templates/copy';
 import { pieceKindCopy } from './generationCopy';
 import { contentBatchPath, isProjectId } from './paths';
 import styles from './Projects.module.css';
@@ -63,7 +64,9 @@ function SelectionSummary({ project }: { project: Project }) {
           )}
         </span>
       </div>
-      {project.sportsContext === null ? null : <SportsContext context={project.sportsContext} />}
+      {project.sportsContext === null ? null : (
+        <SportsContext context={project.sportsContext} visualTemplates={project.visualTemplates} />
+      )}
       {project.demonstration || project.dataMode === 'DEMO_DATA' ? (
         <p role="note" className="m-0 border-l-2 border-demo px-3 py-1 text-caption text-demo">
           Datos sintéticos · no verificados ni publicables.
@@ -97,8 +100,17 @@ function SelectionSummary({ project }: { project: Project }) {
   );
 }
 
-/** The local sports context of a project generated from a competition (PD-ARCH-01E-A). */
-function SportsContext({ context }: { context: NonNullable<Project['sportsContext']> }) {
+/**
+ * The local sports context of a project generated from a competition (PD-ARCH-01E-A), with the visual template
+ * version of each slide type it uses (PD-ARCH-01G-D, decision 01G-D-3; the other slides use the engine templates).
+ */
+function SportsContext({
+  context,
+  visualTemplates,
+}: {
+  context: NonNullable<Project['sportsContext']>;
+  visualTemplates: Project['visualTemplates'];
+}) {
   return (
     <section
       aria-labelledby="project-sports-context-title"
@@ -136,6 +148,25 @@ function SportsContext({ context }: { context: NonNullable<Project['sportsContex
             </Link>
           </dd>
         </div>
+        {visualTemplates.length === 0 ? (
+          <div>
+            <dt className="font-bold">Plantilla</dt>
+            <dd className="m-0">Plantillas del motor</dd>
+          </div>
+        ) : (
+          <div>
+            <dt className="font-bold">Plantillas visuales</dt>
+            <dd className="m-0">
+              <ul className="m-0 grid list-none gap-0.5 p-0">
+                {visualTemplates.map((usage) => (
+                  <li key={usage.contentType}>
+                    {templateContentTypeLabel[usage.contentType]}: {usage.name} · versión {usage.version}
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        )}
       </dl>
     </section>
   );

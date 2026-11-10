@@ -60,6 +60,8 @@ export interface DraftContext {
   readonly stageLabel: string;
   readonly matchday: number | null;
   readonly brand: { readonly name: string; readonly handle: string };
+  /** Store the values a visual template draws independently (PD-ARCH-01G-D); false when absent. */
+  readonly templateFields?: boolean;
 }
 
 function fact(placeholder: string, kind: string, text: string, factId: string): PlaceholderBinding {

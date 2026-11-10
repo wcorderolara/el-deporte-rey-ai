@@ -6,8 +6,8 @@
  *   hash-pinned assets and fit, and text layers with their run, style and box. Boxes are fractions of the canvas;
  *   font sizes are pixels of the design canvas and are scaled by the smaller of the two canvas factors, as the
  *   built-in templates scale their reference layout.
- * - Text uses `fitText` (`shrink`: the largest size from the maximum down to the minimum that fits) or `layoutText` at
- *   the maximum size (`fixed`). Nothing is cut: a text that still does not fit keeps `overflow` set and its layer is
+ * - Text uses `layoutText` at the largest size from the maximum down to the minimum whose lines fit the box width and
+ *   height (`shrink`), or at the maximum size (`fixed`). Nothing is cut: a text that still does not fit keeps `overflow` set and its layer is
  *   reported. An empty text adds nothing.
  * - Colours are palette roles and fonts are the three font roles: nothing else can reach the model. A text effect is a
  *   name of the closed list the renderer draws (decision 01G-C-2); capital letters change only the drawn lines, the
@@ -16,7 +16,7 @@
 import type { Language, SlideType, TextFieldName } from '@edr/contracts';
 
 import type { FontRole, FontSet } from './fonts.js';
-import { LINE_HEIGHT_FACTOR, fitText, layoutText } from './layout.js';
+import { FIT_STEP, LINE_HEIGHT_FACTOR, layoutText } from './layout.js';
 import {
   type Box,
   type ImageFit,
@@ -125,10 +125,22 @@ export function layoutTextBox(
   const shown = displayText(text, style);
   const maxSize = Math.max(1, Math.round(style.maxFontSize * scale));
   const minSize = Math.max(1, Math.round(style.minFontSize * scale));
-  const fitted =
-    style.overflow === 'shrink'
-      ? fitText(shown, face.font, { maxSize, minSize }, box.width, style.maxLines)
-      : { ...layoutText(shown, face.font, maxSize, box.width, style.maxLines), fontSize: maxSize };
+  let fitted = { ...layoutText(shown, face.font, maxSize, box.width, style.maxLines), fontSize: maxSize };
+  if (style.overflow === 'shrink') {
+    // The largest size whose lines fit both the width and the height of the box (fitText checks the width only).
+    const fits = (layout: { overflow: boolean; lines: readonly string[] }, size: number) =>
+      !layout.overflow && layout.lines.length * size * LINE_HEIGHT_FACTOR <= box.height + 0.5;
+    const bottom = Math.min(minSize, maxSize);
+    for (let size = maxSize; size >= bottom; size -= FIT_STEP) {
+      fitted = { ...layoutText(shown, face.font, size, box.width, style.maxLines), fontSize: size };
+      if (fits(fitted, size)) {
+        break;
+      }
+    }
+    if (!fits(fitted, fitted.fontSize)) {
+      fitted = { ...layoutText(shown, face.font, bottom, box.width, style.maxLines), fontSize: bottom };
+    }
+  }
   const lineHeight = fitted.fontSize * LINE_HEIGHT_FACTOR;
   return {
     fontSize: fitted.fontSize,

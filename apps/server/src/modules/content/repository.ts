@@ -33,7 +33,10 @@ const ExcludedKeysSchema = uniquePrimitives(z.array(MatchKeySchema).max(64));
 
 const SQL = {
   project:
-    'SELECT id, competition_name, season_label, stage_label, matchday, language, content_kind FROM projects ' +
+    'SELECT id, competition_name, season_label, stage_label, matchday, language, content_kind, ' +
+    // A visual template draws the match slides (PD-ARCH-01G-D; one per slide type, decision 01G-D-3).
+    '(EXISTS (SELECT 1 FROM project_visual_templates pt WHERE pt.project_id = projects.id AND ' +
+    "pt.slide_type IN ('match_result', 'fixture', 'match_preview'))) AS templated FROM projects " +
     'WHERE id = ? AND deleted_at IS NULL',
   facts:
     'SELECT f.id AS id, f.fact_key AS fact_key, f.kind AS kind, f.subject AS subject, f.status AS status, ' +
@@ -95,6 +98,7 @@ interface ProjectRow {
   matchday: number | null;
   language: string;
   content_kind: string;
+  templated: number;
 }
 
 interface FactRow {
@@ -119,6 +123,8 @@ export interface ProjectLabels {
   readonly language: string;
   /** The structure of the project's carousels (PD-ARCH-01E-B; `results` for every earlier project). */
   readonly contentKind: string;
+  /** True when a visual template draws the project's match slides (PD-ARCH-01G-D, decision 01G-D-3). */
+  readonly templated: boolean;
 }
 
 /** An element with its carousel and draft, as a regeneration needs it. */
@@ -211,6 +217,7 @@ export class ContentRepository {
           matchday: row.matchday,
           language: row.language,
           contentKind: row.content_kind,
+          templated: row.templated === 1,
         };
   }
 

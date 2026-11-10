@@ -42,6 +42,12 @@ export function shellContext(pathname: string): ShellContext {
     };
   }
   if (pathname === '/brand' || pathname === '/brand/') return { title: 'Mi marca' };
+  if (pathname === '/brand/resources' || pathname === '/brand/resources/') {
+    return { title: 'Recursos', parent: { label: 'Mi marca', to: '/brand' } };
+  }
+  if (pathname === '/brand/identity' || pathname === '/brand/identity/') {
+    return { title: 'Identidad visual', parent: { label: 'Mi marca', to: '/brand' } };
+  }
   if (pathname === '/templates' || pathname === '/templates/') return { title: 'Plantillas' };
   if (pathname === '/templates/create' || pathname === '/templates/create/') {
     return { title: 'Crear plantilla', parent: { label: 'Plantillas', to: '/templates' } };
@@ -50,7 +56,12 @@ export function shellContext(pathname: string): ShellContext {
     return { title: 'Plantillas del motor', parent: { label: 'Plantillas', to: '/templates' } };
   }
   if (/^\/templates\/visual\/[^/]+\/?$/.test(pathname)) {
-    return { title: 'Editor de plantilla', parent: { label: 'Crear plantilla', to: '/templates/create' } };
+    // The editor toolbar names the template: the page header is left out to give the canvas the height.
+    return {
+      title: 'Editor de plantilla',
+      hideHeaderTitle: true,
+      parent: { label: 'Crear plantilla', to: '/templates/create' },
+    };
   }
   if (pathname === '/imports' || pathname === '/imports/') return { title: 'Datos' };
   if (pathname === '/competitions' || pathname === '/competitions/') {

@@ -5,37 +5,52 @@ import {
   type VisualTemplateBackgroundInput,
   type VisualTemplateDetail,
   type VisualTemplateLayer,
+  type VisualTemplatePreview,
   type VisualTemplateVersion,
 } from '@edr/contracts';
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 
 import { ApiError } from '../../api/client';
 import {
+  ActionMenu,
   Alert,
-  Badge,
   Button,
   ErrorBanner,
+  Icon,
   Input,
   LoadingState,
   Modal,
   ModalFooter,
-  Select,
+  Tabs,
   Textarea,
-  formatDateTime,
+  tabPanelId,
+  type ActionMenuItem,
 } from '../../ui';
 import type { BrandApi } from '../brand/brandApi';
 import { useResource } from '../brand/useResource';
-import { contentTypeLabel, formatLabel } from '../design/copy';
+import { formatLabel } from '../design/copy';
 import type { DesignApi } from '../design/designApi';
-import { editorCopy, previewCopy, templateStatusLabel, templateStatusTone, versionStatusLabel } from './copy';
+import { editorCopy } from './copy';
 import { BackgroundDialog, type BackgroundChoice } from './editor/BackgroundDialog';
+import { CanvasProperties } from './editor/CanvasProperties';
 import { EditorCanvas } from './editor/EditorCanvas';
+import { EditorToolbar, type EditorMode } from './editor/EditorToolbar';
 import { LayerList } from './editor/LayerList';
 import { LayerProperties } from './editor/LayerProperties';
 import { PreviewPanel, type PreviewSportsApi } from './editor/PreviewPanel';
-import { ValidationPanel } from './editor/ValidationPanel';
-import { imageAssets, moveLayer, newLayer, officialMark, replaceLayer, type NewLayerRequest } from './layers';
+import { ResourcesPanel } from './editor/ResourcesPanel';
+import { useFillHeight, wideEnough } from './editor/layout';
+import { Workspace } from './editor/Workspace';
+import {
+  hasTeamBadges,
+  imageAssets,
+  moveLayer,
+  newLayer,
+  officialMark,
+  replaceLayer,
+  type NewLayerRequest,
+} from './layers';
 import type { VisualTemplatesApi } from './visualTemplatesApi';
 
 export interface TemplateEditorPageProps {
@@ -82,13 +97,26 @@ export function TemplateEditorPage({ api, brandApi, designApi, sportsApi }: Temp
     setParams(next);
   };
 
+  /** The mode is in the address (`?panel=preview`), so the list can open a template in the preview directly. */
+  const setMode = (mode: EditorMode) => {
+    const next = new URLSearchParams(params);
+    if (mode === 'preview') next.set('panel', 'preview');
+    else next.delete('panel');
+    setParams(next, { replace: true });
+  };
+
   return (
-    <section aria-labelledby="template-editor-title" className="grid min-w-0 gap-6">
-      <p className="m-0">
-        <Link to="/templates/create" className="focus-studio text-body-sm text-text-link underline underline-offset-2">
-          {editorCopy.back}
-        </Link>
-      </p>
+    <section aria-labelledby="template-editor-title" className="grid min-w-0 gap-3">
+      {detail.state.status === 'ready' ? null : (
+        <p className="m-0">
+          <Link
+            to="/templates/create"
+            className="focus-studio text-body-sm text-text-link underline underline-offset-2"
+          >
+            {editorCopy.back}
+          </Link>
+        </p>
+      )}
       {detail.state.status === 'loading' ? <LoadingState layout="panel" label={editorCopy.loading} /> : null}
       {detail.state.status === 'error' ? (
         <>
@@ -113,7 +141,8 @@ export function TemplateEditorPage({ api, brandApi, designApi, sportsApi }: Temp
                 versionId={versionId}
                 assets={assets.state.status === 'ready' ? assets.state.data : []}
                 identity={identity.state.status === 'ready' ? identity.state.data : null}
-                showPreview={params.get('panel') === 'preview'}
+                mode={params.get('panel') === 'preview' ? 'preview' : 'design'}
+                onMode={setMode}
                 onOpenVersion={open}
                 onDetailChanged={refresh}
                 onReload={() => {
@@ -133,7 +162,8 @@ interface VersionEditorProps extends TemplateEditorPageProps {
   versionId: string;
   assets: readonly BrandAsset[];
   identity: BrandIdentity | null;
-  showPreview: boolean;
+  mode: EditorMode;
+  onMode: (mode: EditorMode) => void;
   onOpenVersion: (versionId: string) => void;
   onDetailChanged: () => void;
   onReload: () => void;
@@ -174,7 +204,8 @@ function VersionEditor({
   versionId,
   assets,
   identity,
-  showPreview,
+  mode,
+  onMode,
   onOpenVersion,
   onDetailChanged,
   onReload,
@@ -194,16 +225,20 @@ function VersionEditor({
   const [conflict, setConflict] = useState(false);
   const [announcement, setAnnouncement] = useState('');
   const [dialog, setDialog] = useState<'publish' | 'background' | 'metadata' | 'discard' | null>(null);
-  const previewRef = useRef<HTMLElement>(null);
+  /** Layers locked in this editing session: an aid against moving them by mistake, not saved in the template. */
+  const [locked, setLocked] = useState<ReadonlySet<string>>(() => new Set());
+  const [sidebarTab, setSidebarTab] = useState<'layers' | 'resources'>('layers');
+  const [leftOpen, setLeftOpen] = useState(() => wideEnough(1280));
+  const [rightOpen, setRightOpen] = useState(true);
+  /** The last preview with local data: the design mode shows the value of a bound layer from it. */
+  const [preview, setPreview] = useState<VisualTemplatePreview | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const height = useFillHeight(rootRef, saved !== null);
 
   if (loaded.state.status === 'ready' && saved === null) {
     setSaved(loaded.state.data);
     setDraft(draftOf(loaded.state.data));
   }
-
-  useEffect(() => {
-    if (showPreview && saved !== null) previewRef.current?.scrollIntoView?.({ block: 'start' });
-  }, [showPreview, saved]);
 
   const layerNames = useMemo(
     () => new Map((draft?.layers ?? []).map((layer) => [layer.id, layer.name] as const)),
@@ -224,7 +259,7 @@ function VersionEditor({
   const canPublish = !readOnly && !dirty && saved.validation.publishable && busy === null;
   const backgroundUrl =
     draft.background.source === saved.background.source && draft.background.id === saved.background.id
-      ? api.backgroundUrl(template.id, saved.id)
+      ? api.backgroundUrl(template.id, saved.id, saved.background.sha256)
       : draft.background.source === 'design_proposal'
         ? designApi.proposalBackgroundUrl(draft.background.id)
         : brandApi.assetFileUrl(draft.background.id);
@@ -343,94 +378,101 @@ function VersionEditor({
     setDialog(null);
   }
 
+  function toggleLock(id: string) {
+    setLocked((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const addItems: ActionMenuItem[] = [
+    { label: editorCopy.addText, icon: 'text', onSelect: () => add({ type: 'text' }) },
+    { label: editorCopy.addSportsData, icon: 'data', onSelect: () => add({ type: 'sports_data' }) },
+    {
+      label: editorCopy.addImage,
+      icon: 'image',
+      disabled: firstImage === undefined,
+      hint: firstImage === undefined ? editorCopy.noImageAsset : undefined,
+      onSelect: () => firstImage !== undefined && add({ type: 'image', asset: firstImage }),
+    },
+    {
+      label: editorCopy.addLogo,
+      icon: 'mark',
+      disabled: logo === undefined,
+      hint: logo === undefined ? editorCopy.noLogo : undefined,
+      onSelect: () => logo !== undefined && add({ type: 'brand_asset', asset: logo }),
+    },
+    {
+      label: editorCopy.addMascot,
+      icon: 'mark',
+      disabled: mascot === undefined,
+      hint: mascot === undefined ? editorCopy.noMascot : undefined,
+      onSelect: () => mascot !== undefined && add({ type: 'brand_asset', asset: mascot }),
+    },
+    ...(hasTeamBadges(template.contentType)
+      ? ([
+          {
+            label: editorCopy.addHomeBadge,
+            icon: 'shield',
+            onSelect: () => add({ type: 'team_badge', binding: 'match.homeTeam.badge' }),
+          },
+          {
+            label: editorCopy.addAwayBadge,
+            icon: 'shield',
+            onSelect: () => add({ type: 'team_badge', binding: 'match.awayTeam.badge' }),
+          },
+        ] satisfies ActionMenuItem[])
+      : []),
+  ];
+  const publishBlocked =
+    readOnly || canPublish || busy !== null
+      ? null
+      : dirty
+        ? editorCopy.publishBlockedDirty
+        : errors > 0
+          ? editorCopy.publishBlockedErrors
+          : null;
+  const format = formatLabel[template.format];
+  const columns = [leftOpen ? '17.5rem' : '3rem', 'minmax(0,1fr)', rightOpen ? 'clamp(18rem,26vw,21rem)' : '3rem'];
+  const modeTabsId = `${baseId}-mode`;
+  const sidebarTabsId = `${baseId}-sidebar`;
+
   return (
-    <>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="grid max-w-reading gap-2">
-          <p className="m-0 text-caption font-bold tracking-label text-brand-gold uppercase">
-            {contentTypeLabel[template.contentType]} · {formatLabel[template.format]}
-          </p>
-          <h1
-            id="template-editor-title"
-            className="m-0 font-display text-heading-md font-extrabold tracking-display break-words text-text-primary"
-          >
-            {template.name}
-          </h1>
-          <p className="m-0 flex flex-wrap items-center gap-2">
-            <Badge tone={templateStatusTone[template.status]}>{templateStatusLabel[template.status]}</Badge>
-            <Badge tone={saved.status === 'published' ? 'success' : 'info'}>
-              {editorCopy.versionHeading(saved.version, versionStatusLabel[saved.status])}
-            </Badge>
-            {dirty ? <Badge tone="warning">{editorCopy.unsaved}</Badge> : null}
-            {template.category === null ? null : <Badge tone="neutral">{template.category}</Badge>}
-          </p>
-          {template.description === null ? null : (
-            <p className="m-0 text-body-sm text-text-secondary">{template.description}</p>
-          )}
-        </div>
-        <div className="flex flex-wrap items-end gap-3">
-          {detail.versions.length > 1 ? (
-            <Select
-              id={`${baseId}-version`}
-              label={editorCopy.versionSelect}
-              value={saved.id}
-              disabled={dirty}
-              onChange={(event) => onOpenVersion(event.target.value)}
-            >
-              {detail.versions.map((version) => (
-                <option key={version.id} value={version.id}>
-                  {editorCopy.versionHeading(version.version, versionStatusLabel[version.status])}
-                </option>
-              ))}
-            </Select>
-          ) : null}
-          {archived ? null : (
-            <Button variant="secondary" disabled={busy !== null} onClick={() => setDialog('metadata')}>
-              {editorCopy.editMetadata}
-            </Button>
-          )}
-          {readOnly ? null : (
-            <>
-              <Button
-                variant="secondary"
-                isLoading={busy === 'save'}
-                loadingLabel={editorCopy.saving}
-                disabled={!dirty || busy !== null}
-                onClick={() => void save()}
-              >
-                {editorCopy.save}
-              </Button>
-              <Button disabled={!canPublish} onClick={() => setDialog('publish')}>
-                {editorCopy.publish}
-              </Button>
-            </>
-          )}
-          {saved.status === 'published' && !archived && template.draftVersionId === null ? (
-            <Button
-              isLoading={busy === 'version'}
-              loadingLabel={editorCopy.creatingVersion}
-              disabled={busy !== null}
-              onClick={() => void newVersion()}
-            >
-              {editorCopy.newVersion}
-            </Button>
-          ) : null}
-          {saved.status === 'draft' && !archived && template.publishedVersion !== null ? (
-            <Button variant="danger" disabled={busy !== null} onClick={() => setDialog('discard')}>
-              {editorCopy.discardDraft}
-            </Button>
-          ) : null}
-        </div>
-      </div>
+    <div ref={rootRef} className="flex min-h-0 min-w-0 flex-col gap-3" style={height === null ? undefined : { height }}>
+      <EditorToolbar
+        modeTabsId={modeTabsId}
+        detail={detail}
+        saved={saved}
+        dirty={dirty}
+        readOnly={readOnly}
+        busy={busy}
+        canPublish={canPublish}
+        publishBlocked={publishBlocked}
+        mode={mode}
+        issues={saved.validation.issues}
+        layerNames={layerNames}
+        onMode={onMode}
+        onOpenVersion={onOpenVersion}
+        onSave={() => void save()}
+        onPublish={() => setDialog('publish')}
+        onNewVersion={() => void newVersion()}
+        onDiscard={() => setDialog('discard')}
+        onMetadata={() => setDialog('metadata')}
+        onSelectLayer={(layerId) => {
+          setSelectedId(layerId);
+          onMode('design');
+        }}
+      />
 
       <p className="sr-only" role="status" aria-live="polite">
         {announcement}
       </p>
-      {archived ? <Alert tone="info">{editorCopy.readOnlyArchived}</Alert> : null}
-      {!archived && saved.status === 'published' ? <Alert tone="info">{editorCopy.readOnlyPublished}</Alert> : null}
-      {!readOnly && !canPublish && busy === null ? (
-        <p className="m-0 text-caption text-text-subtle">
-          {dirty ? editorCopy.publishBlockedDirty : errors > 0 ? editorCopy.publishBlockedErrors : ''}
+      {readOnly ? (
+        <p className="m-0 flex items-center gap-2 rounded-control border border-info/30 bg-info-surface px-3 py-1.5 text-caption text-info">
+          <Icon name="lock" size={14} />
+          {archived ? editorCopy.readOnlyArchived : editorCopy.readOnlyPublished}
         </p>
       ) : null}
       {conflict ? (
@@ -447,125 +489,170 @@ function VersionEditor({
       ) : null}
       {failure === null ? null : <ErrorBanner error={failure.error} title={failure.title} />}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(20rem,1fr)]">
-        <div className="grid content-start gap-4">
-          <EditorCanvas
-            canvasWidth={saved.canvasWidth}
-            canvasHeight={saved.canvasHeight}
-            backgroundUrl={backgroundUrl}
-            layers={draft.layers}
-            selectedId={selectedId}
-            readOnly={readOnly}
-            assetUrl={(assetId) => brandApi.assetFileUrl(assetId)}
-            palette={palette}
-            fonts={fonts}
-            onSelect={setSelectedId}
-            onMove={(id, box) => setLayers((layers) => replaceLayer(layers, id, (layer) => ({ ...layer, ...box })))}
-          />
-          <section aria-labelledby={`${baseId}-validation`} className="grid gap-3">
-            <h2 id={`${baseId}-validation`} className="m-0 font-display text-heading-sm font-bold text-text-primary">
-              {editorCopy.validation}
-            </h2>
-            <ValidationPanel
-              issues={saved.validation.issues}
-              stale={dirty}
-              layerNames={layerNames}
-              onSelect={setSelectedId}
-            />
-          </section>
-        </div>
-
-        <div className="grid content-start gap-5">
-          <section aria-labelledby={`${baseId}-layers`} className="grid gap-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 id={`${baseId}-layers`} className="m-0 font-display text-heading-sm font-bold text-text-primary">
-                {editorCopy.layers}
-              </h2>
-              {readOnly ? null : (
-                <Button size="sm" variant="secondary" onClick={() => setDialog('background')}>
-                  {editorCopy.changeBackground}
-                </Button>
-              )}
-            </div>
-            <p className="m-0 text-caption text-text-secondary">{editorCopy.backgroundSource(draft.backgroundLabel)}</p>
-            {readOnly ? null : (
-              <div role="group" aria-label={editorCopy.addLayer} className="flex flex-wrap gap-2">
-                <Button size="sm" variant="secondary" onClick={() => add({ type: 'text' })}>
-                  ＋ {editorCopy.addText}
-                </Button>
-                <Button size="sm" variant="secondary" onClick={() => add({ type: 'sports_data' })}>
-                  ＋ {editorCopy.addSportsData}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={firstImage === undefined}
-                  title={firstImage === undefined ? editorCopy.noImageAsset : undefined}
-                  onClick={() => firstImage !== undefined && add({ type: 'image', asset: firstImage })}
-                >
-                  ＋ {editorCopy.addImage}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={logo === undefined}
-                  title={logo === undefined ? editorCopy.noLogo : undefined}
-                  onClick={() => logo !== undefined && add({ type: 'brand_asset', asset: logo })}
-                >
-                  ＋ {editorCopy.addLogo}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={mascot === undefined}
-                  title={mascot === undefined ? editorCopy.noMascot : undefined}
-                  onClick={() => mascot !== undefined && add({ type: 'brand_asset', asset: mascot })}
-                >
-                  ＋ {editorCopy.addMascot}
-                </Button>
+      {mode === 'design' ? (
+        <div
+          id={tabPanelId(modeTabsId, 'design')}
+          role="tabpanel"
+          aria-labelledby={`${modeTabsId}-tab-design`}
+          className="grid min-h-0 flex-1 gap-3"
+          style={{ gridTemplateColumns: columns.join(' '), gridTemplateRows: 'minmax(0, 1fr)' }}
+        >
+          {leftOpen ? (
+            <aside
+              aria-label={editorCopy.layersAndResources}
+              className="flex min-h-0 min-w-0 flex-col gap-3 overflow-hidden rounded-xl border border-border-subtle bg-surface-raised p-3"
+            >
+              <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <Tabs<'layers' | 'resources'>
+                    id={sidebarTabsId}
+                    label={editorCopy.layersAndResources}
+                    options={[
+                      { value: 'layers', label: editorCopy.layers },
+                      { value: 'resources', label: editorCopy.resources },
+                    ]}
+                    value={sidebarTab}
+                    onChange={setSidebarTab}
+                  />
+                </div>
+                <PanelToggle label={editorCopy.collapseLeft} icon="chevron-left" onClick={() => setLeftOpen(false)} />
               </div>
-            )}
-            <LayerList
-              layers={draft.layers}
-              selectedId={selectedId}
-              readOnly={readOnly}
-              backgroundLabel={draft.backgroundLabel}
-              onSelect={setSelectedId}
-              onMove={(id, direction) => setLayers((layers) => moveLayer(layers, id, direction))}
-              onToggle={(id) =>
-                setLayers((layers) => replaceLayer(layers, id, (layer) => ({ ...layer, visible: !layer.visible })))
-              }
-              onRemove={(id) => {
-                setLayers((layers) => layers.filter((layer) => layer.id !== id));
-                if (selectedId === id) setSelectedId(null);
-              }}
-            />
-          </section>
-          <section aria-labelledby={`${baseId}-properties`} className="grid gap-3">
-            <h2 id={`${baseId}-properties`} className="m-0 font-display text-heading-sm font-bold text-text-primary">
-              {editorCopy.properties}
-            </h2>
-            {selected === null ? (
-              <p className="m-0 text-body-sm text-text-secondary">{editorCopy.noSelection}</p>
-            ) : (
-              <LayerProperties
-                key={selected.id}
-                layer={selected}
-                contentType={template.contentType}
+              <div
+                id={tabPanelId(sidebarTabsId, sidebarTab)}
+                role="tabpanel"
+                aria-labelledby={`${sidebarTabsId}-tab-${sidebarTab}`}
+                className="grid min-h-0 flex-1 content-start gap-3 overflow-y-auto pr-1"
+              >
+                {sidebarTab === 'layers' ? (
+                  <>
+                    {readOnly ? null : (
+                      <ActionMenu
+                        label={editorCopy.addLayer}
+                        trigger={{ text: editorCopy.addLayer, icon: 'plus' }}
+                        align="start"
+                        items={addItems}
+                      />
+                    )}
+                    <LayerList
+                      layers={draft.layers}
+                      selectedId={selectedId}
+                      locked={locked}
+                      readOnly={readOnly}
+                      backgroundLabel={draft.backgroundLabel}
+                      onSelect={setSelectedId}
+                      onMove={(id, direction) => setLayers((layers) => moveLayer(layers, id, direction))}
+                      onToggle={(id) =>
+                        setLayers((layers) =>
+                          replaceLayer(layers, id, (layer) => ({ ...layer, visible: !layer.visible })),
+                        )
+                      }
+                      onLock={toggleLock}
+                      onRemove={(id) => {
+                        setLayers((layers) => layers.filter((layer) => layer.id !== id));
+                        if (selectedId === id) setSelectedId(null);
+                      }}
+                    />
+                  </>
+                ) : (
+                  <ResourcesPanel
+                    assets={assets}
+                    contentType={template.contentType}
+                    readOnly={readOnly}
+                    background={draft.background}
+                    assetUrl={(assetId) => brandApi.assetFileUrl(assetId)}
+                    onAddImage={(asset) => add({ type: 'image', asset })}
+                    onAddMark={(asset) => add({ type: 'brand_asset', asset })}
+                    onUseBackground={(asset) =>
+                      chooseBackground({ background: { source: 'brand_asset', id: asset.id }, label: asset.label })
+                    }
+                    onMoreBackgrounds={() => setDialog('background')}
+                  />
+                )}
+              </div>
+            </aside>
+          ) : (
+            <Rail label={editorCopy.expandLeft} icon="chevron-right" onClick={() => setLeftOpen(true)} />
+          )}
+
+          <Workspace canvasWidth={saved.canvasWidth} canvasHeight={saved.canvasHeight} formatLabel={format}>
+            {(width, guides) => (
+              <EditorCanvas
+                canvasWidth={saved.canvasWidth}
+                canvasHeight={saved.canvasHeight}
+                backgroundUrl={backgroundUrl}
+                layers={draft.layers}
+                selectedId={selectedId}
                 readOnly={readOnly}
-                assets={assets}
-                identity={identity}
-                onChange={(layer) => setLayers((layers) => replaceLayer(layers, layer.id, () => layer))}
+                locked={locked}
+                width={width}
+                guides={guides}
+                assetUrl={(assetId) => brandApi.assetFileUrl(assetId)}
+                palette={palette}
+                fonts={fonts}
+                onSelect={setSelectedId}
+                onMove={(id, box) => setLayers((layers) => replaceLayer(layers, id, (layer) => ({ ...layer, ...box })))}
               />
             )}
-          </section>
-        </div>
-      </div>
+          </Workspace>
 
-      <section ref={previewRef} aria-labelledby={`${baseId}-preview`} className="grid gap-3">
-        <h2 id={`${baseId}-preview`} className="m-0 font-display text-heading-sm font-bold text-text-primary">
-          {previewCopy.heading}
-        </h2>
+          {rightOpen ? (
+            <aside
+              aria-labelledby={`${baseId}-properties`}
+              className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface-raised"
+            >
+              <div className="flex items-center justify-between gap-2 border-b border-border-subtle px-3 py-2">
+                <h2 id={`${baseId}-properties`} className="m-0 font-display text-body-md font-bold text-text-primary">
+                  {editorCopy.properties}
+                </h2>
+                <PanelToggle
+                  label={editorCopy.collapseRight}
+                  icon="chevron-right"
+                  onClick={() => setRightOpen(false)}
+                />
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto p-3">
+                {selected === null ? (
+                  <CanvasProperties
+                    contentType={template.contentType}
+                    formatLabel={format}
+                    canvasWidth={saved.canvasWidth}
+                    canvasHeight={saved.canvasHeight}
+                    background={draft.background}
+                    backgroundLabel={draft.backgroundLabel}
+                    readOnly={readOnly}
+                    onChangeBackground={() => setDialog('background')}
+                  />
+                ) : (
+                  <LayerProperties
+                    key={selected.id}
+                    layer={selected}
+                    contentType={template.contentType}
+                    readOnly={readOnly}
+                    locked={locked.has(selected.id)}
+                    assets={assets}
+                    identity={identity}
+                    canvasWidth={saved.canvasWidth}
+                    canvasHeight={saved.canvasHeight}
+                    preview={preview}
+                    onChange={(layer) => setLayers((layers) => replaceLayer(layers, layer.id, () => layer))}
+                    onUnlock={() => toggleLock(selected.id)}
+                  />
+                )}
+              </div>
+            </aside>
+          ) : (
+            <Rail label={editorCopy.expandRight} icon="chevron-left" onClick={() => setRightOpen(true)} />
+          )}
+        </div>
+      ) : null}
+
+      {/* Kept mounted in the design mode, so the chosen sports data and the last image survive a change of mode. */}
+      <div
+        id={tabPanelId(modeTabsId, 'preview')}
+        role="tabpanel"
+        aria-labelledby={`${modeTabsId}-tab-preview`}
+        className={mode === 'preview' ? 'min-h-0 flex-1' : 'hidden'}
+      >
         <PreviewPanel
           api={api}
           sportsApi={sportsApi}
@@ -574,14 +661,13 @@ function VersionEditor({
           dirty={dirty}
           prepare={prepare}
           layerNames={layerNames}
-          onSelectLayer={setSelectedId}
+          onResult={setPreview}
+          onSelectLayer={(layerId) => {
+            setSelectedId(layerId);
+            onMode('design');
+          }}
         />
-      </section>
-
-      <p className="m-0 text-caption text-text-subtle">
-        {saved.publishedAt === null ? null : <>{formatDateTime(saved.publishedAt)} · </>}
-        {formatDateTime(saved.updatedAt)}
-      </p>
+      </div>
 
       {dialog === 'publish' ? (
         <Modal title={editorCopy.publishTitle} onClose={() => setDialog(null)} closeDisabled={busy !== null}>
@@ -637,7 +723,44 @@ function VersionEditor({
           }}
         />
       ) : null}
-    </>
+    </div>
+  );
+}
+
+const PANEL_TOGGLE =
+  'focus-studio m-0 inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-control border-0 bg-transparent p-0 text-text-secondary hover:bg-surface-overlay hover:text-text-primary';
+
+/** Collapses a side panel, to give the canvas more room. */
+function PanelToggle({
+  label,
+  icon,
+  onClick,
+}: {
+  label: string;
+  icon: 'chevron-left' | 'chevron-right';
+  onClick: () => void;
+}) {
+  return (
+    <button type="button" aria-label={label} title={label} className={PANEL_TOGGLE} onClick={onClick}>
+      <Icon name={icon} size={18} />
+    </button>
+  );
+}
+
+/** A collapsed side panel: a narrow rail with the button that opens it again. */
+function Rail({
+  label,
+  icon,
+  onClick,
+}: {
+  label: string;
+  icon: 'chevron-left' | 'chevron-right';
+  onClick: () => void;
+}) {
+  return (
+    <div className="flex min-h-0 flex-col items-center rounded-xl border border-border-subtle bg-surface-raised py-2">
+      <PanelToggle label={label} icon={icon} onClick={onClick} />
+    </div>
   );
 }
 

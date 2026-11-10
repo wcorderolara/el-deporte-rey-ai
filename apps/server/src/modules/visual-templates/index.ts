@@ -11,6 +11,7 @@
  */
 import type { AppContainer } from '../../container.js';
 import { createBrandAssetService } from '../brand/index.js';
+import { teamBadgeServiceOf } from '../competitions/badges/index.js';
 import { designServiceOf } from '../design/index.js';
 import type { ServerModule } from '../module-kit.js';
 import { type FontSet, fontSetFor, loadBundledFaces } from '../rendering/index.js';
@@ -21,7 +22,8 @@ import { VisualTemplateService } from './service.js';
 
 export { BINDING_ELEMENT, STRESS_VALUES, bindingAllowed, readSelection, resolveBinding } from './catalog.js';
 export { PREVIEW_CACHE_ENTRIES, VisualTemplateService } from './service.js';
-export { issueOf, validateVersion } from './validation.js';
+export { issueOf } from './issues.js';
+export { validateVersion } from './validation.js';
 
 export interface VisualTemplateModuleOptions {
   /** ID generator; default `crypto.randomUUID`. */
@@ -45,6 +47,7 @@ export function visualTemplateServiceOf(
       db: container.db,
       design: designServiceOf(container),
       brandAssets: createBrandAssetService(container),
+      badges: teamBadgeServiceOf(container),
       fonts: () => fonts(container),
       palette: { ...container.config.brand.palette },
       utcOffsetMinutes: container.config.display.utcOffsetMinutes,

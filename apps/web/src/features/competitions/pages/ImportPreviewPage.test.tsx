@@ -14,6 +14,8 @@ import { cleanup, render, screen, waitFor, within } from '@testing-library/react
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ApiError, parseProblem } from '../../../api/client';
+import type { Problem } from '../../../api/types';
 import type { CompetitionsApi } from '../api';
 import { CompetitionsProvider } from '../CompetitionsContext';
 import { ImportPreviewPage } from './ImportPreviewPage';
@@ -522,6 +524,36 @@ describe('ImportPreviewPage async operations', () => {
     await screen.findByRole('heading', { name: 'Vista previa preparada correctamente' });
     expect(api.startImportOperation).not.toHaveBeenCalled();
     expect(api.listExternalSeasons).not.toHaveBeenCalled();
+  });
+  it('returns to selection when the saved operation lost its expired preview', async () => {
+    sessionStorage.setItem(`import-operation:${competitionId}`, operationId);
+    const api = renderPage({ getImportOperation: vi.fn().mockResolvedValue({ ...completed, previewId: null }) });
+    expect(await screen.findByLabelText('Temporada externa')).toBeTruthy();
+    expect(api.listExternalSeasons).toHaveBeenCalled();
+    expect(api.getImportPreview).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem(`import-operation:${competitionId}`)).toBeNull();
+  });
+  it('returns to selection when the saved preview no longer exists', async () => {
+    sessionStorage.setItem(`import-operation:${competitionId}`, operationId);
+    const status = 404;
+    const problem = parseProblem(
+      {
+        type: 'about:blank',
+        title: 'Not found',
+        status,
+        code: 'NOT_FOUND',
+        detail: 'No encontramos esta vista previa.',
+      },
+      status,
+    ) as Problem;
+    const api = renderPage({
+      getImportOperation: vi.fn().mockResolvedValue(completed),
+      getImportPreview: vi.fn().mockRejectedValue(new ApiError('problem', { status, problem })),
+    });
+    expect(await screen.findByLabelText('Temporada externa')).toBeTruthy();
+    expect(api.listExternalSeasons).toHaveBeenCalled();
+    expect(sessionStorage.getItem(`import-operation:${competitionId}`)).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 });
 

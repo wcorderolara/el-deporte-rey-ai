@@ -111,6 +111,9 @@ const COMMITTED = [
   { version: 27, name: 'design_generation_modes' },
   { version: 28, name: 'design_decision_notes' },
   { version: 29, name: 'visual_templates' },
+  { version: 30, name: 'team_badges_and_project_templates' },
+  { version: 31, name: 'reconcile_field_provenance_references' },
+  { version: 32, name: 'engine_slide_type_templates' },
 ];
 
 describe('committed migrations', () => {
@@ -161,6 +164,17 @@ describe('committed migrations', () => {
       { version: 27, name: 'design_generation_modes', fileName: '0027_design_generation_modes.sql' },
       { version: 28, name: 'design_decision_notes', fileName: '0028_design_decision_notes.sql' },
       { version: 29, name: 'visual_templates', fileName: '0029_visual_templates.sql' },
+      {
+        version: 30,
+        name: 'team_badges_and_project_templates',
+        fileName: '0030_team_badges_and_project_templates.sql',
+      },
+      {
+        version: 31,
+        name: 'reconcile_field_provenance_references',
+        fileName: '0031_reconcile_field_provenance_references.sql',
+      },
+      { version: 32, name: 'engine_slide_type_templates', fileName: '0032_engine_slide_type_templates.sql' },
     ]);
   });
 
@@ -230,8 +244,11 @@ describe('committed migrations', () => {
           { version: 27, name: 'design_generation_modes' },
           { version: 28, name: 'design_decision_notes' },
           { version: 29, name: 'visual_templates' },
+          { version: 30, name: 'team_badges_and_project_templates' },
+          { version: 31, name: 'reconcile_field_provenance_references' },
+          { version: 32, name: 'engine_slide_type_templates' },
         ],
-        currentVersion: 29,
+        currentVersion: 32,
       });
       expect(
         db
@@ -293,8 +310,11 @@ describe('committed migrations', () => {
           { version: 27, name: 'design_generation_modes' },
           { version: 28, name: 'design_decision_notes' },
           { version: 29, name: 'visual_templates' },
+          { version: 30, name: 'team_badges_and_project_templates' },
+          { version: 31, name: 'reconcile_field_provenance_references' },
+          { version: 32, name: 'engine_slide_type_templates' },
         ],
-        currentVersion: 29,
+        currentVersion: 32,
       });
       expect(JSON.stringify(snapshot())).toBe(before);
       for (const table of [
@@ -353,8 +373,11 @@ CREATE INDEX idx_content_generation_item_matches_match ON content_generation_ite
           { version: 27, name: 'design_generation_modes' },
           { version: 28, name: 'design_decision_notes' },
           { version: 29, name: 'visual_templates' },
+          { version: 30, name: 'team_badges_and_project_templates' },
+          { version: 31, name: 'reconcile_field_provenance_references' },
+          { version: 32, name: 'engine_slide_type_templates' },
         ],
-        currentVersion: 29,
+        currentVersion: 32,
       });
       expect(columns(empty.db)).toContain('import_id');
       expect(empty.db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
@@ -435,8 +458,11 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga', 's1', '2026/27', NU
           { version: 27, name: 'design_generation_modes' },
           { version: 28, name: 'design_decision_notes' },
           { version: 29, name: 'visual_templates' },
+          { version: 30, name: 'team_badges_and_project_templates' },
+          { version: 31, name: 'reconcile_field_provenance_references' },
+          { version: 32, name: 'engine_slide_type_templates' },
         ],
-        currentVersion: 29,
+        currentVersion: 32,
       });
       expect(
         JSON.stringify(reconciled.db.prepare('SELECT rowid, * FROM content_generation_items ORDER BY rowid, id').all()),
@@ -466,20 +492,20 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga', 's1', '2026/27', NU
     const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
     const first = openMigratedDatabase({ location, now: () => FIXED_NOW });
     try {
-      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 29 });
+      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 32 });
       expect(first.db.prepare('PRAGMA journal_mode').get()).toEqual({ journal_mode: 'wal' });
       expect(first.db.prepare('PRAGMA foreign_keys').get()).toEqual({ foreign_keys: 1 });
       expect(appliedMigrations(first.db)).toEqual(
         COMMITTED.map((record) => ({ ...record, appliedAt: '2026-10-27T16:32:21.123Z' })),
       );
-      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 29 });
+      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 32 });
     } finally {
       first.db.close();
     }
 
     const second = openMigratedDatabase({ location });
     try {
-      expect(second.report).toEqual({ applied: [], currentVersion: 29 });
+      expect(second.report).toEqual({ applied: [], currentVersion: 32 });
       expect(tableExists(second.db, 'competition_teams')).toBe(true);
       expect(tableExists(second.db, 'facts')).toBe(true);
       expect(tableExists(second.db, 'competitions')).toBe(true);
@@ -574,8 +600,11 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga', 's1', '2026/27', NU
           { version: 27, name: 'design_generation_modes' },
           { version: 28, name: 'design_decision_notes' },
           { version: 29, name: 'visual_templates' },
+          { version: 30, name: 'team_badges_and_project_templates' },
+          { version: 31, name: 'reconcile_field_provenance_references' },
+          { version: 32, name: 'engine_slide_type_templates' },
         ],
-        currentVersion: 29,
+        currentVersion: 32,
       });
       expect(db.prepare('SELECT competition_id, team_id FROM competition_teams ORDER BY team_id').all()).toEqual([
         { competition_id: 'c1', team_id: 't1' },
@@ -932,15 +961,24 @@ describe('migrations 0021 and 0022 upgrade a database at version 20 (PD-ARCH-01E
           { version: 27, name: 'design_generation_modes' },
           { version: 28, name: 'design_decision_notes' },
           { version: 29, name: 'visual_templates' },
+          { version: 30, name: 'team_badges_and_project_templates' },
+          { version: 31, name: 'reconcile_field_provenance_references' },
+          { version: 32, name: 'engine_slide_type_templates' },
         ],
-        currentVersion: 29,
+        currentVersion: 32,
       });
 
       expect(JSON.stringify(snapshot())).toBe(before);
-      // Existing projects are results projects; every other value is unchanged.
+      // Existing projects are results projects without a visual template (0030); every other value is unchanged.
       // A new statement text: a statement prepared before the migration keeps its former column list.
       expect(db.prepare<Record<string, unknown>>('SELECT * FROM projects ORDER BY id').all()).toEqual(
-        projectBefore.map((row) => ({ ...row, content_kind: 'results' })),
+        projectBefore.map((row) => ({
+          ...row,
+          content_kind: 'results',
+          visual_template_id: null,
+          visual_template_version_id: null,
+          badge_snapshot_json: null,
+        })),
       );
       for (const slideType of ['round_overview', 'fixture', 'match_preview', 'cover']) {
         db.prepare("UPDATE elements SET slide_type = ? WHERE kind = 'slide'").run([slideType]);
@@ -1017,8 +1055,11 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
           { version: 27, name: 'design_generation_modes' },
           { version: 28, name: 'design_decision_notes' },
           { version: 29, name: 'visual_templates' },
+          { version: 30, name: 'team_badges_and_project_templates' },
+          { version: 31, name: 'reconcile_field_provenance_references' },
+          { version: 32, name: 'engine_slide_type_templates' },
         ],
-        currentVersion: 29,
+        currentVersion: 32,
       });
 
       expect(db.prepare(QA_RESULT_BYTES).all()).toEqual(bytesBefore);
@@ -1053,7 +1094,7 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
     // Reopening applies nothing more.
     const reopened = openMigratedDatabase({ location });
     try {
-      expect(reopened.report).toEqual({ applied: [], currentVersion: 29 });
+      expect(reopened.report).toEqual({ applied: [], currentVersion: 32 });
     } finally {
       reopened.db.close();
     }
@@ -1117,6 +1158,202 @@ describe('BEGIN IMMEDIATE on a file database (T10-F15)', () => {
     } finally {
       second.close();
       first.close();
+    }
+  });
+});
+
+describe('migration 0031_reconcile_field_provenance_references.sql', () => {
+  /** Migrations 1–30 with the earlier draft of 0016 that declared the application ids as foreign keys. */
+  function draftDirectory(): string {
+    const committed = defaultMigrationsDirectory();
+    return migrationDir(
+      Object.fromEntries(
+        readMigrations(committed)
+          .filter(({ version }) => version <= 30)
+          .map(({ version, fileName }) => {
+            const sql = readFileSync(path.join(committed, fileName), 'utf8');
+            return [
+              fileName,
+              version === 16
+                ? sql
+                    .replace(
+                      /last_application_id TEXT NULL,/,
+                      'last_application_id TEXT NULL REFERENCES competition_import_applications(id) ON DELETE RESTRICT,',
+                    )
+                    .replace(
+                      /application_id TEXT NULL,\n {2}recorded_at/,
+                      'application_id TEXT NULL REFERENCES competition_import_applications(id) ON DELETE RESTRICT,\n  recorded_at',
+                    )
+                : sql,
+            ];
+          }),
+      ),
+    );
+  }
+  const references = (db: SqliteDatabase, table: string) =>
+    db
+      .prepare<{ table: string; from: string }>(
+        `SELECT "table", "from" FROM pragma_foreign_key_list(?) ORDER BY "from"`,
+      )
+      .all([table]);
+
+  it('drops the draft application foreign keys, keeps every row and accepts a provenance write before its application row', () => {
+    const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
+    const { db } = openMigratedDatabase({ location, directory: draftDirectory(), now: () => FIXED_NOW });
+    try {
+      const at = FIXED_NOW.toISOString();
+      db.prepare('INSERT INTO competitions (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)').run([
+        'c1',
+        'Liga',
+        at,
+        at,
+      ]);
+      db.prepare(
+        `INSERT INTO sports_field_provenance (competition_id, entity_type, entity_id, field_name, origin, updated_at)
+         VALUES ('c1', 'round', 'r1', 'name', 'manual', ?)`,
+      ).run([at]);
+      db.prepare(
+        `INSERT INTO sports_field_provenance_events (id, competition_id, entity_type, entity_id, field_name, action, next_origin, recorded_at)
+         VALUES ('e1', 'c1', 'round', 'r1', 'name', 'manual_edit', 'manual', ?)`,
+      ).run([at]);
+      const pending = `UPDATE sports_field_provenance SET last_application_id = 'pending-application' WHERE entity_id = 'r1'`;
+      expect(references(db, 'sports_field_provenance').map((row) => row.from)).toEqual([
+        'competition_id',
+        'last_application_id',
+      ]);
+      expect(() => db.prepare(pending).run()).toThrow(/FOREIGN KEY constraint failed/);
+      const provenance = db.prepare('SELECT * FROM sports_field_provenance').all();
+      const events = db.prepare('SELECT * FROM sports_field_provenance_events').all();
+
+      expect(runMigrations(db, { now: () => FIXED_NOW })).toEqual({
+        applied: [
+          { version: 31, name: 'reconcile_field_provenance_references' },
+          { version: 32, name: 'engine_slide_type_templates' },
+        ],
+        currentVersion: 32,
+      });
+      for (const table of ['sports_field_provenance', 'sports_field_provenance_events'])
+        expect(references(db, table)).toEqual([{ table: 'competitions', from: 'competition_id' }]);
+      expect(db.prepare('SELECT * FROM sports_field_provenance').all()).toEqual(provenance);
+      expect(db.prepare('SELECT * FROM sports_field_provenance_events').all()).toEqual(events);
+      expect(
+        db
+          .prepare<{ name: string }>(
+            "SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name LIKE 'sports_field_provenance%' AND name NOT LIKE 'sqlite_%' ORDER BY name",
+          )
+          .all()
+          .map((row) => row.name),
+      ).toEqual([
+        'idx_sports_field_provenance_entity',
+        'idx_sports_field_provenance_events_entity',
+        'idx_sports_field_provenance_protected',
+      ]);
+      expect(() => db.prepare(pending).run()).not.toThrow();
+    } finally {
+      db.close();
+    }
+  });
+
+  it('leaves a database migrated with the final 0016 with the same definition as a fresh one', () => {
+    const schema = (db: SqliteDatabase) =>
+      db
+        .prepare<{ sql: string }>(
+          "SELECT sql FROM sqlite_master WHERE tbl_name LIKE 'sports_field_provenance%' AND sql IS NOT NULL ORDER BY name",
+        )
+        .all()
+        .map((row) => row.sql);
+    const reconciled = openMigratedDatabase({ location: path.join(freshDir('data'), DATABASE_FILE_NAME) });
+    const draft = openMigratedDatabase({
+      location: path.join(freshDir('data'), DATABASE_FILE_NAME),
+      directory: draftDirectory(),
+    });
+    try {
+      runMigrations(draft.db);
+      expect(schema(draft.db)).toEqual(schema(reconciled.db));
+      expect(schema(reconciled.db).join('\n')).not.toMatch(/competition_import_applications/);
+    } finally {
+      reconciled.db.close();
+      draft.db.close();
+    }
+  });
+});
+
+describe('migration 0032_engine_slide_type_templates.sql (decision 01G-D-3)', () => {
+  it('keeps every template row, moves the project template into one pin per slide type and accepts a cover', () => {
+    const committed = defaultMigrationsDirectory();
+    const throughThirtyOne = migrationDir(
+      Object.fromEntries(
+        readMigrations(committed)
+          .filter(({ version }) => version <= 31)
+          .map(({ fileName }) => [fileName, readFileSync(path.join(committed, fileName), 'utf8')]),
+      ),
+    );
+    const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
+    const { db } = openMigratedDatabase({ location, directory: throughThirtyOne, now: () => FIXED_NOW });
+    try {
+      const at = FIXED_NOW.toISOString();
+      const insertTemplate = (id: string, contentType: string) =>
+        db
+          .prepare(
+            'INSERT INTO visual_templates (id, name, content_type, format, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+          )
+          .run([id, `Plantilla ${id}`, contentType, '4:5', at, at]);
+      insertTemplate('t-result', 'match_result');
+      expect(() => insertTemplate('t-cover-early', 'cover')).toThrow(/CHECK constraint failed/);
+      db.prepare(
+        `INSERT INTO visual_template_versions (id, template_id, version, status, revision, canvas_width, canvas_height,
+           background_source, background_id, background_sha256, background_mime, background_width, background_height,
+           layers_json, assets_json, created_at, updated_at, published_at)
+         VALUES ('v-result', 't-result', 1, 'published', 1, 1080, 1350, 'brand_asset', ?, ?, 'image/png', 1080, 1350,
+           '[]', '[]', ?, ?, ?)`,
+      ).run(['b'.repeat(36), 'c'.repeat(64), at, at, at]);
+      db.prepare(
+        `INSERT INTO sources (id, name, mode, role, official_publication, accepted, independence_group,
+           publication_permission, adapter, first_seen_at, last_seen_at)
+         VALUES ('local-a', 'Synthetic local source', 'MANUAL_DATA', 'primary', 0, 0, 'group-a', 'not_applicable',
+           'manual', ?, ?)`,
+      ).run([at, at]);
+      db.prepare(
+        `INSERT INTO projects (id, competition_id, competition_name, source_id, data_mode, season_id, season_label,
+           stage_id, stage_label, selection_ref, standings_expected, language, created_at, updated_at)
+         VALUES ('p1', 'c1', 'Liga', 'local-a', 'MANUAL_DATA', 's1', '2026/27', 'r1', 'Jornada 1', '{}',
+           'not_expected', 'es', ?, ?)`,
+      ).run([at, at]);
+      db.prepare(
+        "UPDATE projects SET visual_template_id = 't-result', visual_template_version_id = 'v-result', badge_snapshot_json = '{}' WHERE id = 'p1'",
+      ).run();
+      const templates = db.prepare('SELECT * FROM visual_templates ORDER BY id').all();
+      const versions = db.prepare('SELECT * FROM visual_template_versions ORDER BY id').all();
+
+      expect(runMigrations(db, { now: () => FIXED_NOW })).toEqual({
+        applied: [{ version: 32, name: 'engine_slide_type_templates' }],
+        currentVersion: 32,
+      });
+      expect(db.prepare('SELECT * FROM visual_templates ORDER BY id').all()).toEqual(templates);
+      expect(db.prepare('SELECT * FROM visual_template_versions ORDER BY id').all()).toEqual(versions);
+      expect(db.prepare('SELECT * FROM project_visual_templates').all()).toEqual([
+        {
+          project_id: 'p1',
+          slide_type: 'match_result',
+          visual_template_id: 't-result',
+          visual_template_version_id: 'v-result',
+        },
+      ]);
+      expect(
+        db.prepare('SELECT visual_template_id, visual_template_version_id, badge_snapshot_json FROM projects').all(),
+      ).toEqual([{ visual_template_id: null, visual_template_version_id: null, badge_snapshot_json: '{}' }]);
+      for (const contentType of ['cover', 'closing']) {
+        expect(() => insertTemplate(`t-${contentType}`, contentType)).not.toThrow();
+      }
+      expect(() => insertTemplate('t-standings', 'standings')).toThrow(/CHECK constraint failed/);
+      // The published version stays immutable and still references the rebuilt table.
+      expect(() => db.prepare("DELETE FROM visual_template_versions WHERE id = 'v-result'").run()).toThrow(/immutable/);
+      expect(() => db.prepare("DELETE FROM visual_templates WHERE id = 't-result'").run()).toThrow(
+        /FOREIGN KEY constraint failed/,
+      );
+      expect(db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
+    } finally {
+      db.close();
     }
   });
 });
