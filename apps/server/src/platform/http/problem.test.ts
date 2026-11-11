@@ -91,7 +91,7 @@ describe('HttpProblem', () => {
   });
 
   it('lists the contract problem codes and refusal reasons', () => {
-    expect(PROBLEM_CODES).toHaveLength(50);
+    expect(PROBLEM_CODES).toHaveLength(53);
     expect(PROBLEM_CODES).toContain('MISDIRECTED_HOST');
     expect(PROBLEM_CODES).toContain('FORBIDDEN_ORIGIN');
     expect(PROBLEM_CODES).toContain('PROVIDER_BINDING_EXISTS');

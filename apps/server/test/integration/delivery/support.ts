@@ -2,8 +2,8 @@
  * Support of the T42 delivery suites (content, rendering, visual QA, approval, export, history and traceability). It
  * builds on the T41 test support and the T52 ingestion support (both read only, reused by import) and adds:
  * - API helpers for the review and export routes of the contract (getActiveDraft, approveElement,
- *   acknowledgeQaWarnings, approveCarousel, regenerateElement, setExcludedMatches, exportCarousel, getExport,
- *   listProjectExports, traceExportedSlide) that work on the T41 test app and on the T52 rooted app alike;
+ *   acknowledgeQaWarnings, approveCarousel, regenerateElement, exportCarousel, getExport, listProjectExports,
+ *   traceExportedSlide) that work on the T41 test app and on the T52 rooted app alike;
  * - read-only views of the stored rows (element versions with their text and render model, final approvals);
  * - stage wrappers for the workflow test seam (`stageOverrides`): a stage that runs a seeding step before the real
  *   registered stage loads its input (used to seed visual QA defects into the stored drafts and renders), and a stage
@@ -329,13 +329,6 @@ export function exportFile(c: Client, written: Pick<Export, 'directory'>, name: 
 /** The parsed `manifest.json` of an export (format `edr-export-manifest/1`). */
 export function manifestOf(c: Client, written: Pick<Export, 'directory'>): Manifest {
   return ManifestSchema.parse(JSON.parse(exportFile(c, written, 'manifest.json').toString('utf8')));
-}
-
-/** setExcludedMatches; waits for the redraft run it starts and returns it. */
-export async function excludeMatches(c: Client, projectId: string, matchKeys: readonly string[]): Promise<Run> {
-  const response = await c.send('PUT', `/projects/${projectId}/draft/exclusions`, { excludedMatchKeys: matchKeys });
-  expect(response.statusCode, response.body).toBe(202);
-  return waitForRun(c, projectId, RunSchema.parse(response.json()).id);
 }
 
 // ---------------------------------------------------------------------------------------------------------------

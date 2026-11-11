@@ -20,6 +20,9 @@ import { join } from 'node:path';
 
 import type {
   Draft,
+  EditorialGenerationResult,
+  EditorialPackage,
+  EditorialVersion,
   Element,
   Export,
   ExportDetail,
@@ -642,16 +645,55 @@ describe('DEMO_DATA and MANUAL_DATA operations on the running app', { timeout: R
     );
   });
 
-  it('sets excluded matches, which starts a redraft run (202)', async () => {
+  it('writes, edits and approves the editorial copy with the stub writer, without any outbound request (PD-ARCH-01H)', async () => {
     const project = required(state.project, 'project');
-    const facts = required(state.facts, 'facts');
-    const matchKey = facts.facts.find((fact) => fact.subject.matchKey !== undefined)?.subject.matchKey;
-    const run = await ok<Run>(d, 'setExcludedMatches', {
-      params: { projectId: project.id },
-      json: { excludedMatchKeys: [required(matchKey, 'match key')] },
+    const egress = demo.egress.requests.length;
+    const params = { projectId: project.id };
+    const before = await ok<EditorialPackage>(d, 'getEditorialPackage', { params });
+    expect(before.available).toBe(true);
+    expect(before.writer.kind).toBe('test');
+    expect(before.research.mode).toBe('local_context');
+    const requestKey = '00000000-0000-4000-8000-0000000e0001';
+    const generated = await ok<EditorialGenerationResult>(d, 'createEditorialGeneration', {
+      params,
+      json: { requestKey },
     });
-    expect(run.kind).toBe('redraft');
-    await settle(demo, run.id);
+    expect(generated.generation.promptVersion).toBe('edr-editorial-v1');
+    await problem(
+      d,
+      'createEditorialGeneration',
+      { params, json: { requestKey, deliverable: 'youtube' } },
+      409,
+      'REQUEST_KEY_REUSED',
+    );
+    const tiktok = required(
+      generated.package.deliverables.find((entry) => entry.deliverable === 'tiktok_reels')?.current ?? undefined,
+      'tiktok version',
+    );
+    const deliverableParams = { projectId: project.id, deliverable: 'tiktok_reels' };
+    const edited = await ok<EditorialVersion>(d, 'editEditorialDeliverable', {
+      params: deliverableParams,
+      json: {
+        baseVersionId: tiktok.id,
+        fields: [{ name: 'copy', text: 'Jornada con tela que cortar. ¿Tú qué opinas?' }],
+      },
+    });
+    expect(edited.origin).toBe('edited');
+    await problem(
+      d,
+      'approveEditorialDeliverable',
+      { params: deliverableParams, json: { versionId: tiktok.id } },
+      409,
+      'VERSION_CONFLICT',
+    );
+    const approved = await ok<EditorialVersion>(d, 'approveEditorialDeliverable', {
+      params: deliverableParams,
+      json: { versionId: edited.id },
+    });
+    expect(approved.state).toBe('approved');
+    const withdrawn = await ok<EditorialVersion>(d, 'withdrawEditorialApproval', { params: deliverableParams });
+    expect(withdrawn.state).toBe('ready');
+    expect(demo.egress.requests.length).toBe(egress);
   });
 
   it('applies JSON, CSV (BOM and CRLF, NFD file name) and form imports and serves them (T11H-F01, F11, V-49)', async () => {

@@ -27,6 +27,7 @@ import {
   fakeServer,
   json,
   modeDraft,
+  openCaption,
   PASSING_QA,
   problem,
   PROJECT_ID,
@@ -48,9 +49,11 @@ async function card(name = SLIDE): Promise<HTMLElement> {
 
 function button(container: HTMLElement, name: string | RegExp): HTMLButtonElement {
   if (name === 'Aprobar esta versión') {
-    name = container.textContent?.includes('Texto de publicación y hashtags') ? 'Aprobar copy' : 'Aprobar diapositiva';
+    name = container.textContent?.includes('Texto de publicación y hashtags')
+      ? 'Aprobar texto del carrusel'
+      : 'Aprobar diapositiva';
   }
-  if (name === 'Regenerar este elemento') name = /^Regenerar (diapositiva|copy)$/;
+  if (name === 'Regenerar este elemento') name = /^Regenerar (diapositiva|texto del carrusel)$/;
   return within(container).getByRole('button', { name }) as HTMLButtonElement;
 }
 
@@ -155,7 +158,7 @@ describe('Blocked content (R-206): approval refused naming the fact, other conte
     const description = document.getElementById(approve.getAttribute('aria-describedby') ?? '');
     expect(description?.textContent).toContain('usa datos que no son publicables');
 
-    const captionCard = await card('Texto de publicación y hashtags');
+    const captionCard = await openCaption();
     expect(within(captionCard).queryByText('Bloqueada')).toBeNull();
     await userEvent.click(button(captionCard, 'Aprobar esta versión'));
     expect(await within(captionCard).findByText('Versión 1 aprobada.')).toBeTruthy();
@@ -449,11 +452,12 @@ describe('Caption review (PD-ARCH-01E-B)', () => {
       [`POST ${elementPath(CAROUSEL_ID, elementId(2), 'qa-acknowledgements')}`]: () => json(acknowledged),
     });
     renderApp(REVIEW, server);
-    const captionCard = await screen.findByRole('article', { name: CAPTION });
+    await card('Diapositiva 1: Resultado');
+    const captionCard = await openCaption();
     const section = captionCard.closest<HTMLElement>('section[aria-label]') ?? captionCard;
     expect(within(section).getAllByRole('heading', { name: CAPTION })).toHaveLength(1);
     expect(within(captionCard).queryByText('Detalles y verificaciones')).toBeNull();
-    expect(button(captionCard, 'Aprobar copy').disabled).toBe(true);
+    expect(button(captionCard, 'Aprobar texto del carrusel').disabled).toBe(true);
 
     const pending = within(captionCard).getByRole('region', { name: `Control visual: ${CAPTION}` });
     expect(pending.textContent).toContain('Palabras con mayúscula no reconocidas');
@@ -462,7 +466,7 @@ describe('Caption review (PD-ARCH-01E-B)', () => {
     expect(await within(captionCard).findByText('Advertencia confirmada.')).toBeTruthy();
     expect(server.callsTo('POST', elementPath(CAROUSEL_ID, elementId(2), 'qa-acknowledgements'))).toHaveLength(1);
     expect(within(captionCard).queryByRole('region', { name: `Control visual: ${CAPTION}` })).toBeNull();
-    expect(button(captionCard, 'Aprobar copy').disabled).toBe(false);
+    expect(button(captionCard, 'Aprobar texto del carrusel').disabled).toBe(false);
   });
 });
 
@@ -502,7 +506,7 @@ describe('Regeneration of one element (R-217, R-040)', () => {
     expect(call?.body).toBeUndefined();
     expect(call?.headers['X-EDR-Client']).toBe('web');
 
-    await userEvent.click(screen.getByRole('button', { name: /Diapositiva 2: Cierre/ }));
+    await userEvent.click(screen.getByRole('button', { name: /^Diapositiva 2: Cierre/ }));
     const otherCard = await card('Diapositiva 2: Cierre');
     expect(within(otherCard).getAllByText('Aprobada').length).toBeGreaterThan(0);
     expect(server.callsTo('POST', elementPath(CAROUSEL_ID, elementId(2), 'regenerate'))).toHaveLength(0);

@@ -1,6 +1,6 @@
 /**
  * Projects module (architecture.md sections 4, 6 and 15.2; contracts/provider-ports.md section 3): settings and
- * catalogue routes, projects, runs and exclusions routes, and the workflow runner of the container.
+ * catalogue routes, projects and runs routes, and the workflow runner of the container.
  *
  * - `onStartup` (registry order, after migrations, before listen) upserts the configured sources into `sources` and
  *   fails runs left `pending` or `running` by a stopped process with `interrupted` (AD-10).

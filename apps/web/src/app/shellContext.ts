@@ -4,6 +4,8 @@ export interface ShellContext {
   projectPath?: string;
   projectSection?: string;
   parent?: { label: string; to: string };
+  /** The page shows its own breadcrumb (with the real names), so the header leaves it out. */
+  ownBreadcrumbs?: boolean;
 }
 
 /** Presentation metadata derived from existing URLs; no project fetch or domain state is duplicated here. */
@@ -17,7 +19,7 @@ export function shellContext(pathname: string): ShellContext {
     return { title: 'Resultado de la generación', parent: { label: 'Mis proyectos', to: '/projects' } };
   }
   if (pathname === '/exports' || pathname === '/exports/') {
-    return { title: 'Exportaciones', parent: { label: 'Mis proyectos', to: '/' } };
+    return { title: 'Exportaciones', parent: { label: 'Mis proyectos', to: '/projects' } };
   }
   const project = /^\/projects\/([^/]+)(\/.*)?$/.exec(pathname);
   if (project) {
@@ -65,14 +67,18 @@ export function shellContext(pathname: string): ShellContext {
   }
   if (pathname === '/imports' || pathname === '/imports/') return { title: 'Datos' };
   if (pathname === '/competitions' || pathname === '/competitions/') {
-    return { title: 'Competiciones', parent: { label: 'Inicio', to: '/' } };
+    return { title: 'Competiciones' };
   }
   const season = /^\/competitions\/([^/]+)\/seasons\/[^/]+/.exec(pathname);
   if (season) {
-    return { title: 'Temporada', parent: { label: 'Competición', to: `/competitions/${season[1]}` } };
+    return {
+      title: 'Temporada',
+      parent: { label: 'Competición', to: `/competitions/${season[1]}` },
+      ownBreadcrumbs: true,
+    };
   }
   if (pathname.startsWith('/competitions/')) {
-    return { title: 'Competición', parent: { label: 'Competiciones', to: '/competitions' } };
+    return { title: 'Competición', parent: { label: 'Competiciones', to: '/competitions' }, ownBreadcrumbs: true };
   }
   if (pathname.startsWith('/imports/'))
     return { title: 'Detalle de datos', parent: { label: 'Datos', to: '/imports' } };

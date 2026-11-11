@@ -29,8 +29,9 @@ const SnapshotSourceSchema = z.strictObject({
 });
 
 /**
- * Parameters of one run. `excludedMatchKeys` is the operator's exclusion list of a redraft started by
- * `setExcludedMatches` (OD-03); null when the run does not change the exclusions.
+ * Parameters of one run. `excludedMatchKeys` is the operator's exclusion list of a redraft started by the
+ * `setExcludedMatches` operation (OD-03), retired by UX-REVIEW-01: no route sets it any more, and it stays so that
+ * stored snapshots still parse; null when the run does not change the exclusions.
  */
 export const RunParametersSchema = z.strictObject({
   excludedMatchKeys: uniquePrimitives(z.array(MatchKeySchema).max(64)).nullable(),

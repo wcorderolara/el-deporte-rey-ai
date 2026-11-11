@@ -4,7 +4,7 @@
  * approval invalidated by a later change.
  */
 import type { FinalApproval } from '@edr/contracts';
-import { cleanup, screen, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -85,12 +85,13 @@ describe('Final approval control (R-240)', () => {
       'Diapositiva 2: Resultado: no aprobado, bloqueado por datos no publicables',
       'Diapositiva 3: Cierre: no aprobado, con advertencias del control visual sin confirmar',
     ]);
-    // The caption is not required for the final approval (PD-ARCH-01E-PD-02); the panel says what that means.
-    expect(panel.textContent).toContain('Copy sin aprobar: puedes descargar las diapositivas ahora');
+    expect(panel.textContent).toContain('Faltan 2 diapositivas por aprobar o corregir.');
     expect(panel.textContent).toContain('La exportación necesita una aprobación final válida.');
+    // There is no page of its own for the final approval (UX-REVIEW-01): nothing opens while it is disabled.
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('records the final approval when the carousel is ready, then offers the download and the history', async () => {
+  it('confirms in a dialog with the real state, then offers the download in the review', async () => {
     const ready = draft({ carousels: [carousel(allApproved(), { readyForFinalApproval: true })] });
     const after = draft({
       carousels: [carousel(allApproved(), { readyForFinalApproval: true, finalApproval: APPROVAL })],
@@ -99,27 +100,68 @@ describe('Final approval control (R-240)', () => {
       [DRAFT_PATH]: [draftResponse(ready), draftResponse(after)],
       [`PUT ${FINAL}`]: () => json(APPROVAL),
     });
-    renderApp(REVIEW, server);
+    const router = renderApp(REVIEW, server);
     const panel = await finalPanel();
-    expect(panel.textContent).toContain('2 de 2 diapositivas aprobadas');
-    expect(panel.textContent).toContain('Copy aprobado: la descarga incluye el texto de publicación.');
     expect(panel.textContent).toContain('Todas las diapositivas están aprobadas y ninguna está bloqueada.');
     const control = finalButton(panel);
     expect(control.disabled).toBe(false);
 
     await userEvent.click(control);
+    const dialog = await screen.findByRole('dialog', { name: 'Aprobar carrusel completo' });
+    expect(dialog.textContent).toContain('Diapositivas aprobadas2 de 2');
+    expect(dialog.textContent).toContain('Aprobado: se incluye en la descarga (caption.txt).');
+    expect(dialog.textContent).toContain('Sin generar. No forma parte del carrusel');
+    expect(dialog.textContent).toContain('Errores bloqueantesNinguno');
+    // Nothing is approved before the confirmation.
+    expect(server.callsTo('PUT', FINAL)).toHaveLength(0);
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Confirmar aprobación final' }));
 
     expect(await within(panel).findByText('Aprobación final registrada.')).toBeTruthy();
+    expect(screen.queryByRole('dialog')).toBeNull();
     expect(panel.textContent).toContain('La aprobación final es válida. El carrusel se puede exportar.');
-    // PD-ARCH-01F: the carousel is downloaded from the review; the history is a secondary link to the project.
+    // PD-ARCH-01F: the carousel is downloaded from the review. The export history is not linked from the review
+    // (Product Owner, 2026-11-10); it stays on the project page and in «Exportaciones».
     expect(await within(panel).findByRole('button', { name: 'Descargar carrusel' })).toBeTruthy();
-    expect(within(panel).getByRole('link', { name: 'Historial de exportaciones' }).getAttribute('href')).toBe(
-      `/projects/${PROJECT_ID}#project-exports`,
-    );
-    expect(within(panel).queryByRole('button', { name: 'Dar la aprobación final' })).toBeNull();
+    expect(within(panel).queryByRole('link', { name: 'Historial de exportaciones' })).toBeNull();
+    expect(within(panel).queryByRole('button', { name: 'Aprobar carrusel completo' })).toBeNull();
+    // The operator stays in the review (no navigation to the exports or to a page of the approved project).
+    expect(router.state.location.pathname).toBe(REVIEW);
+    expect(screen.getByRole('heading', { level: 3, name: 'Diapositiva 1: Portada' })).toBeTruthy();
     const [call] = server.callsTo('PUT', FINAL);
     expect(call?.body).toBeUndefined();
     expect(call?.headers['X-EDR-Client']).toBe('web');
+  });
+
+  it('cancels without any request, and shows the pending state while the server answers', async () => {
+    const ready = draft({ carousels: [carousel(allApproved(), { readyForFinalApproval: true })] });
+    let answer: ((response: Response) => void) | undefined;
+    const server = fakeServer({
+      [DRAFT_PATH]: draftResponse(ready),
+      [`PUT ${FINAL}`]: () =>
+        new Promise<Response>((resolve) => {
+          answer = resolve;
+        }),
+    });
+    renderApp(REVIEW, server);
+    const panel = await finalPanel();
+    await userEvent.click(finalButton(panel));
+    let dialog = await screen.findByRole('dialog', { name: 'Aprobar carrusel completo' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(server.callsTo('PUT', FINAL)).toHaveLength(0);
+
+    await userEvent.click(finalButton(panel));
+    dialog = await screen.findByRole('dialog', { name: 'Aprobar carrusel completo' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Confirmar aprobación final' }));
+    const pending = within(dialog).getByRole('button', { name: 'Registrando la aprobación final…' });
+    expect((pending as HTMLButtonElement).disabled).toBe(true);
+    expect((within(dialog).getByRole('button', { name: 'Cancelar' }) as HTMLButtonElement).disabled).toBe(true);
+    await userEvent.keyboard('{Escape}');
+    expect(screen.getByRole('dialog', { name: 'Aprobar carrusel completo' })).toBeTruthy();
+    answer?.(json(APPROVAL));
+    expect(await within(panel).findByText('Aprobación final registrada.')).toBeTruthy();
+    expect(server.callsTo('PUT', FINAL)).toHaveLength(1);
   });
 
   it('lists the elements named by a FINAL_APPROVAL_REFUSED answer and refreshes the view', async () => {
@@ -140,13 +182,49 @@ describe('Final approval control (R-240)', () => {
     renderApp(REVIEW, server);
     const panel = await finalPanel();
     await userEvent.click(finalButton(panel));
-    const alert = await within(panel).findByRole('alert');
+    const dialog = await screen.findByRole('dialog', { name: 'Aprobar carrusel completo' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Confirmar aprobación final' }));
+    const alert = await within(dialog).findByRole('alert');
     expect(alert.textContent).toContain('No se pudo dar la aprobación final');
     expect(alert.textContent).toContain('hay elementos pendientes');
-    expect(panel.textContent).toContain('Elementos que impiden la aprobación final:');
-    expect(panel.textContent).toContain('Diapositiva 2: Resultado: bloqueado por datos no publicables');
-    expect(panel.textContent).toContain('Texto de publicación y hashtags: no aprobado');
+    expect(dialog.textContent).toContain('Elementos que impiden la aprobación final:');
+    expect(dialog.textContent).toContain('Diapositiva 2: Resultado: bloqueado por datos no publicables');
+    expect(dialog.textContent).toContain('Texto de publicación y hashtags: no aprobado');
     expect(server.callsTo('GET', `${API}/projects/${PROJECT_ID}/draft`).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('disables the confirmation when a concurrent change leaves the carousel not ready', async () => {
+    const ready = draft({ carousels: [carousel(allApproved(), { readyForFinalApproval: true })] });
+    const changed = draft({
+      carousels: [
+        carousel([slide(1, 1, 'cover', { state: 'approved' }), slide(2, 2, 'match_result'), caption(3, 3)], {
+          readyForFinalApproval: false,
+        }),
+      ],
+    });
+    const server = fakeServer({
+      [DRAFT_PATH]: [draftResponse(ready), draftResponse(changed)],
+      [`PUT ${FINAL}`]: () =>
+        problem({
+          status: 409,
+          code: 'FINAL_APPROVAL_REFUSED',
+          items: [{ elementId: elementId(2), reason: 'not_approved' }],
+        }),
+    });
+    renderApp(REVIEW, server);
+    const panel = await finalPanel();
+    await userEvent.click(finalButton(panel));
+    const dialog = await screen.findByRole('dialog', { name: 'Aprobar carrusel completo' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Confirmar aprobación final' }));
+    // The refusal names the slide, and the refreshed draft lists it as blocking too.
+    expect((await within(dialog).findAllByText(/Diapositiva 2: Resultado: no aprobado/)).length).toBe(2);
+    await waitFor(() =>
+      expect(
+        (within(dialog).getByRole('button', { name: 'Confirmar aprobación final' }) as HTMLButtonElement).disabled,
+      ).toBe(true),
+    );
+    expect(dialog.textContent).toContain('Diapositivas aprobadas1 de 2');
+    expect(server.callsTo('PUT', FINAL)).toHaveLength(1);
   });
 
   it('shows a final approval invalidated by a later change and offers it again once ready', async () => {

@@ -34,7 +34,12 @@ import type { StageName } from '../../src/modules/module-kit.js';
 import { type ProjectsModule, createProjectsModule } from '../../src/modules/projects/index.js';
 import { serverModules } from '../../src/modules/registry.js';
 import type { EgressClient } from '../../src/platform/net/index.js';
-import { type AiTextProvider, type DraftRequest, createAiProvider } from '../../src/providers/ai/index.js';
+import {
+  type AiTextProvider,
+  type DraftRequest,
+  createAiProvider,
+  createEditorialWriter,
+} from '../../src/providers/ai/index.js';
 import { createImageProvider } from '../../src/providers/images/index.js';
 import { type AdapterRegistration, createSportsSources } from '../../src/providers/sports/index.js';
 import type { AnyStage } from '../../src/workflow/index.js';
@@ -221,6 +226,9 @@ export async function startTestApp(options: TestAppOptions = {}): Promise<TestAp
         recordingAi(createAiProvider(appConfig, { ...deps, egress: egressFor(deps.egress) }), aiRequests),
       createImageProvider: (appConfig, deps) =>
         createImageProvider(appConfig, { ...deps, egress: options.imageEgress ?? deps.egress }),
+      // The editorial writer (PD-ARCH-01H) shares the providers' recorded egress client, like the draft writer.
+      createEditorialWriter: (appConfig, deps) =>
+        createEditorialWriter(appConfig, { ...deps, egress: egressFor(deps.egress) }),
     };
 
     const stages = workflowStages(serverModules, options.stageOverrides);

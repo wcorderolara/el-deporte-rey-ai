@@ -130,6 +130,21 @@ export function buildEgressAllowList(config: AppConfig): EgressAllowList {
     }
     origins.push(origin);
   }
+
+  // The editorial writer (PD-ARCH-01H) is reached through the same egress client and rules as the draft writer.
+  const editorialBaseUrl = optionBaseUrl(config.providers.editorial.options);
+  if (editorialBaseUrl !== undefined) {
+    const origin = httpsOrigin(editorialBaseUrl) ?? loopbackHttpOrigin(editorialBaseUrl);
+    if (origin === null) {
+      throw new ConfigError(
+        'providers.editorial.options.baseUrl',
+        'must be an https: URL, or an http: URL on a loopback host, without user information',
+      );
+    }
+    if (!origins.includes(origin)) {
+      origins.push(origin);
+    }
+  }
   return new EgressAllowList(origins);
 }
 

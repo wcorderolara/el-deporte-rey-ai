@@ -54,21 +54,26 @@ describe('App shell (R-235)', () => {
       '#main-content',
     );
     const navigation = screen.getByRole('navigation', { name: 'Navegación principal' });
-    const links = navigation.querySelectorAll('a');
-    expect([...links].map((link) => link.querySelector('span:last-child')?.textContent)).toEqual([
-      'Inicio',
-      'Crear contenido',
-      'Mis proyectos',
-      'Competiciones',
-      'Exportaciones',
-      'Mi marca',
-      'Recursos',
-      'Identidad visual',
-      'Plantillas',
-      'Crear plantilla',
-      'Plantillas del motor',
-      'Datos',
-    ]);
+    const entries = navigation.querySelectorAll(':scope > ul > li > :is(a, button)');
+    expect([...entries].map((entry) => [entry.tagName, entry.querySelector('span:nth-child(2)')?.textContent])).toEqual(
+      [
+        ['A', 'Inicio'],
+        ['A', 'Crear contenido'],
+        ['A', 'Mis proyectos'],
+        ['A', 'Competiciones'],
+        ['A', 'Exportaciones'],
+        ['BUTTON', 'Mi marca'],
+        ['BUTTON', 'Plantillas'],
+        ['A', 'Datos'],
+      ],
+    );
+    // The groups start collapsed: their sub-items stay out of the page until the group is opened.
+    for (const name of ['Mi marca', 'Plantillas']) {
+      expect(within(navigation).getByRole('button', { name }).getAttribute('aria-expanded')).toBe('false');
+    }
+    for (const name of ['Recursos', 'Identidad visual', 'Crear plantilla', 'Plantillas del motor']) {
+      expect(within(navigation).queryByRole('link', { name })).toBeNull();
+    }
     expect(within(navigation).getByRole('link', { name: 'Inicio' }).getAttribute('aria-current')).toBe('page');
     expect(within(navigation).queryByRole('link', { name: /Configuración/ })).toBeNull();
     expect(within(navigation).getByText('No disponible')).toBeTruthy();
@@ -110,6 +115,9 @@ describe('App shell (R-235)', () => {
     // The visual template editor uses the full width of the workspace; the template lists stay on the studio surface.
     expect(contentVariantOf('/templates/visual/e078c8d3-ef1f-4e0b-8558-485974ba4f6d')).toBe('workspace');
     expect(contentVariantOf('/templates/create')).toBe('studio');
+    // UX-REVIEW-01: the content review is a full-width workspace that uses the height of the viewport.
+    expect(contentVariantOf('/projects/p1/review')).toBe('workspace');
+    expect(contentVariantOf('/projects/p1/exports')).toBe('studio');
   });
 
   it('opens Mi marca and Plantillas as separate pages on the studio surface (PD-ARCH-01G-A)', async () => {
@@ -117,14 +125,21 @@ describe('App shell (R-235)', () => {
     const router = renderAt('/');
     await screen.findByRole('heading', { level: 1, name: 'Tu próximo contenido empieza aquí' });
     const navigation = screen.getByRole('navigation', { name: 'Navegación principal' });
+    const brand = within(navigation).getByRole('button', { name: 'Mi marca' });
+    const templates = within(navigation).getByRole('button', { name: 'Plantillas' });
 
-    // Mi marca opens its first view, «Recursos»; the sub-item is the current page.
-    await user.click(within(navigation).getByRole('link', { name: 'Mi marca' }));
+    // Opening a group shows its sub-items without leaving the page.
+    await user.click(brand);
+    expect(brand.getAttribute('aria-expanded')).toBe('true');
+    expect(router.state.location.pathname).toBe('/');
+    expect(templates.getAttribute('aria-expanded')).toBe('false');
+    expect(within(navigation).queryByRole('link', { name: 'Crear plantilla' })).toBeNull();
+
+    await user.click(within(navigation).getByRole('link', { name: 'Recursos' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Recursos' })).toBeTruthy();
     expect(router.state.location.pathname).toBe('/brand/resources');
     expect(within(navigation).getByRole('link', { name: 'Recursos' }).getAttribute('aria-current')).toBe('page');
-    expect(within(navigation).getByRole('link', { name: 'Mi marca' }).getAttribute('aria-current')).toBeNull();
-    expect(within(navigation).getByRole('link', { name: 'Plantillas' }).getAttribute('aria-current')).toBeNull();
+    expect(brand.getAttribute('aria-expanded')).toBe('true');
     expect(screen.queryByRole('heading', { name: 'Plantillas' })).toBeNull();
     expect(screen.getByRole('main').className).not.toContain('bg-legacy-canvas');
 
@@ -137,13 +152,18 @@ describe('App shell (R-235)', () => {
     expect(within(navigation).getByRole('link', { name: 'Recursos' }).getAttribute('aria-current')).toBeNull();
     expect(screen.getByRole('main').className).not.toContain('bg-legacy-canvas');
 
-    // Plantillas opens its first view, «Crear plantilla»; the sub-item is the current page.
-    await user.click(within(navigation).getByRole('link', { name: 'Plantillas' }));
+    // A second click closes the group; the current page stays where it is.
+    await user.click(brand);
+    expect(brand.getAttribute('aria-expanded')).toBe('false');
+    expect(within(navigation).queryByRole('link', { name: 'Identidad visual' })).toBeNull();
+    expect(router.state.location.pathname).toBe('/brand/identity');
+
+    await user.click(templates);
+    expect(templates.getAttribute('aria-expanded')).toBe('true');
+    await user.click(within(navigation).getByRole('link', { name: 'Crear plantilla' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Crear plantilla' })).toBeTruthy();
     expect(router.state.location.pathname).toBe('/templates/create');
     expect(within(navigation).getByRole('link', { name: 'Crear plantilla' }).getAttribute('aria-current')).toBe('page');
-    expect(within(navigation).getByRole('link', { name: 'Plantillas' }).getAttribute('aria-current')).toBeNull();
-    expect(within(navigation).getByRole('link', { name: 'Mi marca' }).getAttribute('aria-current')).toBeNull();
     expect(screen.getByRole('main').className).not.toContain('bg-legacy-canvas');
 
     await user.click(within(navigation).getByRole('link', { name: 'Plantillas del motor' }));
@@ -153,6 +173,18 @@ describe('App shell (R-235)', () => {
       'page',
     );
     expect(within(navigation).getByRole('link', { name: 'Crear plantilla' }).getAttribute('aria-current')).toBeNull();
+  });
+
+  it('opens the group of the current page when the page is reached outside the navigation', async () => {
+    renderAt('/brand/identity');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Identidad visual' })).toBeTruthy();
+    const navigation = screen.getByRole('navigation', { name: 'Navegación principal' });
+
+    expect(within(navigation).getByRole('button', { name: 'Mi marca' }).getAttribute('aria-expanded')).toBe('true');
+    expect(within(navigation).getByRole('link', { name: 'Identidad visual' }).getAttribute('aria-current')).toBe(
+      'page',
+    );
+    expect(within(navigation).getByRole('button', { name: 'Plantillas' }).getAttribute('aria-expanded')).toBe('false');
   });
 
   it('sends the former templates anchor of the brand page to the engine templates', async () => {
@@ -184,14 +216,43 @@ describe('App shell (R-235)', () => {
     expect(router.state.location.pathname).toBe('/projects/generate');
   });
 
-  it('shows project breadcrumbs without exposing internal IDs as labels', async () => {
+  it('shows project breadcrumbs under the page title without exposing internal IDs as labels', async () => {
     const id = '00000000-0000-4000-8000-000000000001';
-    renderAt(`/projects/${id}/review`);
-    await screen.findByRole('heading', { name: 'Revisión del contenido' });
-    const crumbs = screen.getByRole('navigation', { name: 'Ruta de navegación' });
-    expect(within(crumbs).getByRole('link', { name: 'Proyecto' }).getAttribute('href')).toBe(`/projects/${id}`);
+    renderAt(`/projects/${id}`);
+    const header = await screen.findByRole('banner');
+    const crumbs = within(header).getByRole('navigation', { name: 'Ruta de navegación' });
+    // The way back to the project list from the project page.
+    expect(within(crumbs).getByRole('link', { name: 'Mis proyectos' }).getAttribute('href')).toBe('/projects');
+    expect(within(crumbs).getByText('Proyecto').getAttribute('aria-current')).toBe('page');
+    const title = within(header).getByText('Proyecto', { selector: 'p' });
+    expect(title.compareDocumentPosition(crumbs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(crumbs.textContent).not.toContain(id);
-    expect(within(screen.getByRole('banner')).queryByText('Proyecto actual · Revisión del contenido')).toBeNull();
+    cleanup();
+
+    renderAt(`/projects/${id}/runs/00000000-0000-4000-8000-000000000002/facts`);
+    const sectionCrumbs = within(await screen.findByRole('banner')).getByRole('navigation', {
+      name: 'Ruta de navegación',
+    });
+    expect(within(sectionCrumbs).getByRole('link', { name: 'Proyecto' }).getAttribute('href')).toBe(`/projects/${id}`);
+    expect(sectionCrumbs.textContent).not.toContain(id);
+  });
+
+  it('leaves the header breadcrumb out on Inicio, on the review and on pages with their own breadcrumb', async () => {
+    renderAt('/');
+    await screen.findByRole('heading', { level: 1, name: 'Tu próximo contenido empieza aquí' });
+    expect(within(screen.getByRole('banner')).queryByRole('navigation', { name: 'Ruta de navegación' })).toBeNull();
+    cleanup();
+
+    // The review is a workspace without the page header; its own header links back to the project.
+    renderAt('/projects/00000000-0000-4000-8000-000000000001/review');
+    await screen.findByRole('heading', { name: 'Revisión del contenido' });
+    expect(screen.queryByText('Proyecto actual · Revisión del contenido')).toBeNull();
+    expect(screen.queryByRole('navigation', { name: 'Ruta de navegación' })).toBeNull();
+    cleanup();
+
+    renderAt('/competitions/liga-demo');
+    const header = await screen.findByRole('banner');
+    expect(within(header).queryByRole('navigation', { name: 'Ruta de navegación' })).toBeNull();
   });
 
   it('closes disclosure with Escape and restores focus to its trigger', async () => {

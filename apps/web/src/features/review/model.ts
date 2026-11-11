@@ -12,6 +12,8 @@ import {
   UuidSchema,
   type Carousel,
   type Draft,
+  type EditorialPackage,
+  type EditorialVersion,
   type Element,
   type ElementVersion,
   type FactRef,
@@ -170,16 +172,92 @@ export function hasValidFinalApproval(carousel: Carousel): boolean {
   return carousel.finalApproval !== null && carousel.finalApproval.valid;
 }
 
-/** True when any fact segment or blocking fact of the draft is MANUALLY_APPROVED (operator-attested, OD-28). */
-export function usesManuallyApprovedFacts(draft: Draft): boolean {
-  return draft.carousels.some((carousel) =>
-    carousel.elements.some(
-      (element) =>
-        element.currentVersion.blockingFacts.some((fact) => fact.status === 'manually_approved') ||
-        element.currentVersion.fields.some((field) =>
-          field.segments.some((segment) => segment.factStatus === 'manually_approved'),
-        ),
-    ),
+/**
+ * What an element needs from the operator, from its shown version (UX-REVIEW-01): `blocking` when it cannot be
+ * approved without a correction (non-publishable data, content flags, a failed QA, also on an approved version with
+ * a blocked overlay), `warning` when a QA warning waits for confirmation, otherwise none.
+ */
+export type ElementIssue = 'blocking' | 'warning' | null;
+
+export interface ElementStatus {
+  label: string;
+  tone: 'neutral' | 'info' | 'success' | 'warning' | 'danger';
+  symbol: string;
+  issue: ElementIssue;
+}
+
+export function elementStatus(element: Element): ElementStatus {
+  const version = element.currentVersion;
+  if (version.blocked) {
+    return { label: elementCopy.statusBlocked, tone: 'danger', symbol: '!', issue: 'blocking' };
+  }
+  if (version.contentFlags.length > 0 || version.state === 'qa_failed' || version.qa.some(isBlockingFailure)) {
+    return { label: elementCopy.statusRegenerate, tone: 'danger', symbol: '!', issue: 'blocking' };
+  }
+  if (version.state === 'approved') {
+    return { label: elementCopy.approvedStatus, tone: 'success', symbol: '✓', issue: null };
+  }
+  if (version.qa.some(needsAcknowledgement)) {
+    return { label: elementCopy.statusWarning, tone: 'warning', symbol: '!', issue: 'warning' };
+  }
+  if (version.state === 'pending_qa') {
+    return { label: elementCopy.statusPendingQa, tone: 'neutral', symbol: '…', issue: null };
+  }
+  if (version.state === 'superseded') {
+    return { label: elementCopy.statusSuperseded, tone: 'neutral', symbol: '↻', issue: null };
+  }
+  return { label: elementCopy.statusReady, tone: 'info', symbol: '•', issue: null };
+}
+
+/** The editorial versions that exist (PD-ARCH-01H), in contract order; `null` while the package is not loaded. */
+export function currentEditorialVersions(pkg: EditorialPackage | null): EditorialVersion[] {
+  return pkg === null ? [] : pkg.deliverables.flatMap((entry) => (entry.current === null ? [] : [entry.current]));
+}
+
+export interface ReviewIndicators {
+  slidesApproved: number;
+  slidesTotal: number;
+  /** The carousel caption plus every editorial deliverable that has a version. */
+  copyApproved: number;
+  copyTotal: number;
+  /** True once the editorial copy has at least one version. */
+  editorialGenerated: boolean;
+  /** Items that cannot be approved without a correction: elements and flagged editorial deliverables. */
+  blocking: number;
+  /** Elements with a QA warning to confirm. */
+  warnings: number;
+}
+
+/**
+ * The compact indicators of the review (UX-REVIEW-01), all derived from the shown draft and editorial package: no
+ * state of their own. The caption counts as copy, never as a slide (it is not required by the final approval).
+ */
+export function reviewIndicators(carousel: Carousel | undefined, pkg: EditorialPackage | null): ReviewIndicators {
+  const elements = carousel?.elements ?? [];
+  const slides = elements.filter((element) => element.kind === 'slide');
+  const caption = elements.find((element) => element.kind === 'caption');
+  const editorial = currentEditorialVersions(pkg);
+  const statuses = elements.map(elementStatus);
+  return {
+    slidesApproved: slides.filter((element) => element.currentVersion.state === 'approved').length,
+    slidesTotal: slides.length,
+    copyApproved:
+      (caption?.currentVersion.state === 'approved' ? 1 : 0) +
+      editorial.filter((version) => version.state === 'approved').length,
+    copyTotal: (caption === undefined ? 0 : 1) + editorial.length,
+    editorialGenerated: editorial.length > 0,
+    blocking:
+      statuses.filter((status) => status.issue === 'blocking').length +
+      editorial.filter((version) => version.state === 'flagged').length,
+    warnings: statuses.filter((status) => status.issue === 'warning').length,
+  };
+}
+
+/** The next slide after `currentId` (wrapping around) that is not approved yet, or undefined. */
+export function nextPendingSlide(slides: readonly Element[], currentId: string): Element | undefined {
+  const index = slides.findIndex((slide) => slide.id === currentId);
+  return [...slides.slice(index + 1), ...slides.slice(0, Math.max(index, 0))].find(
+    (slide) => slide.currentVersion.state !== 'approved',
   );
 }
 

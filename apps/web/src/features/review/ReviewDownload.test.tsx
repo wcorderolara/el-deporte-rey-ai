@@ -101,7 +101,8 @@ describe('download from the review (PD-ARCH-01F)', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Descargar carrusel' }));
 
-    expect(await screen.findByText('La descarga está lista.')).toBeTruthy();
+    // The success is announced to assistive technology only (Product Owner, 2026-11-10).
+    expect((await screen.findByText('La descarga está lista.')).className).toBe('sr-only');
     expect(server.callsTo('GET', `${API}/exports/${existing.id}/download`)).toHaveLength(1);
     expect(server.callsTo('POST', `${API}/carousels/${CAROUSEL_ID}/exports`)).toHaveLength(0);
   });

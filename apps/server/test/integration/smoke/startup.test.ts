@@ -423,6 +423,7 @@ describe('injected environment and the provider token (AD-30, T11H-F03)', () => 
         'clock',
         'config',
         'db',
+        'editorialWriter',
         'egress',
         'imageProvider',
         'logger',

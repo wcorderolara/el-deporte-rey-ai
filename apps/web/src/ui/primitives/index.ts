@@ -10,5 +10,5 @@ export { LoadingState, type LoadingStateProps } from './LoadingState';
 export { Modal, ModalFooter, ViewModeToggle } from './Modal';
 export { Icon, type StudioIconName } from './Icon';
 export { Select, type SelectProps } from './Select';
-export { Tabs, tabPanelId, type TabOption } from './Tabs';
+export { Tabs, tabId, tabPanelId, type TabBadgeTone, type TabOption } from './Tabs';
 export { Textarea, type TextareaProps } from './Textarea';

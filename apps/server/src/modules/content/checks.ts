@@ -77,6 +77,12 @@ export interface CheckContext {
    * prediction word is flagged `UNPLAYED_RESULT_CLAIM`. Absent for results carousels.
    */
   readonly unplayed?: boolean;
+  /**
+   * Folded number words that are not flagged (PD-ARCH-01H, editorial copy only): the Spanish indefinite articles and
+   * pronoun "un", "una", "uno" and the English "one" and "once", which a narrative text cannot avoid. Digits and every
+   * other number word are still flagged. Absent for slides and captions, whose rule is unchanged (T10-F06).
+   */
+  readonly numberWordExemptions?: ReadonlySet<string>;
 }
 
 const INVISIBLE = /[\p{Cc}\p{Cf}\p{Cs}\p{Co}]/u;
@@ -211,7 +217,12 @@ function preCheck(field: CheckedField, text: string, flags: FlagList): PreCheck 
 // 3. Numbers
 // ---------------------------------------------------------------------------------------------------------------
 
-function checkNumbers(field: CheckedField, text: string, flags: FlagList): void {
+function checkNumbers(
+  field: CheckedField,
+  text: string,
+  flags: FlagList,
+  exemptions: ReadonlySet<string> = NO_EXEMPTIONS,
+): void {
   for (const copy of [text, text.normalize('NFKC')]) {
     let index = 0;
     for (const character of copy) {
@@ -222,9 +233,13 @@ function checkNumbers(field: CheckedField, text: string, flags: FlagList): void 
     }
   }
   for (const word of findNumberWords(text)) {
-    flags.add('UNVERIFIED_NUMBER', field, word);
+    if (!exemptions.has(word)) {
+      flags.add('UNVERIFIED_NUMBER', field, word);
+    }
   }
 }
+
+const NO_EXEMPTIONS: ReadonlySet<string> = new Set();
 
 // ---------------------------------------------------------------------------------------------------------------
 // 4. Team names and scripts
@@ -379,7 +394,7 @@ export function checkText(
     flags.add('UNKNOWN_FACT_REFERENCE', field, wordAround(stripped, brace.index));
   }
 
-  checkNumbers(field, stripped, flags);
+  checkNumbers(field, stripped, flags, context.numberWordExemptions);
   checkTeamNames(field, stripped, context.teams, flags);
   checkForbidden(field, stripped, context.brandHandle, flags);
   if (context.unplayed === true) {

@@ -879,9 +879,153 @@ const visualTemplateSave = {
   layers: [visualBrandLayer, visualSportsLayer],
 };
 
+// PD-ARCH-01H: editorial copy (synthetic).
+const editorialField = { name: 'headline', text: 'LA JORNADA QUE NADIE ESPERABA', words: 5, characters: 29 };
+const editorialFlag = { code: 'UNVERIFIED_NUMBER', field: 'copy', excerpt: '7-0' };
+const editorialEvidence = {
+  id: 'ev-m1',
+  factType: 'match_result',
+  description: 'Equipo Norte 3-0 Equipo Sur',
+  competitionId: uuid(61),
+  seasonId: uuid(62),
+  roundId: uuid(63),
+  matchKey: 'liga-demo-1-a',
+  factIds: [uuid(64)],
+  source: { kind: 'local', name: 'Datos locales de la competición', url: null },
+  publishedAt: null,
+  retrievedAt: T1,
+  verification: 'CONFIRMED',
+  conflicts: [],
+};
+const editorialEvent = {
+  id: 'evt-m1-thrashing',
+  kind: 'thrashing',
+  description: 'Goleada: Equipo Norte 3-0 Equipo Sur',
+  matchKey: 'liga-demo-1-a',
+  evidenceIds: ['ev-m1'],
+};
+const editorialContext = {
+  competitionName: 'Liga Demo',
+  seasonLabel: '2026/27',
+  stageLabel: 'Temporada Regular · Jornada 1',
+  roundLabel: 'Jornada 1',
+  contentKind: 'results',
+  language: 'es',
+  matchCount: 2,
+  confirmedMatchCount: 2,
+  standingsAvailable: false,
+  roundState: {
+    status: 'incomplete',
+    basis: 'local_round',
+    total: 5,
+    finished: 3,
+    inProgress: 1,
+    pending: 1,
+    postponed: 0,
+    cancelled: 0,
+  },
+};
+const editorialWriter = {
+  adapter: 'openai-compatible',
+  kind: 'hosted_ai',
+  model: 'gpt-test-mini',
+  status: 'ready',
+  requiresCostConfirmation: true,
+  pricing: {
+    currency: 'USD',
+    inputPerMillionTokens: 2,
+    outputPerMillionTokens: 10,
+    source: 'https://ai.example.test/pricing',
+    checkedOn: '2026-11-10',
+  },
+  maxGenerationsPerDay: 30,
+  generationsToday: 2,
+  monthlySpendLimit: 5,
+  spentThisMonth: 0.03,
+  estimate: { status: 'estimated', total: 0.06 },
+};
+const editorialVersion = {
+  id: uuid(65),
+  deliverable: 'tiktok_reels',
+  versionNumber: 2,
+  origin: 'regenerated',
+  state: 'flagged',
+  fields: [{ ...editorialField, name: 'copy' }],
+  flags: [editorialFlag],
+  generationId: uuid(66),
+  instructions: 'Reduce el sarcasmo',
+  eventIds: ['evt-m1-thrashing'],
+  evidenceIds: ['ev-m1'],
+  createdAt: T1,
+  approvedAt: null,
+};
+const editorialGeneration = {
+  id: uuid(66),
+  status: 'failed',
+  deliverables: ['tiktok_reels'],
+  instructions: 'Reduce el sarcasmo',
+  adapter: 'openai-compatible',
+  writerKind: 'hosted_ai',
+  model: 'gpt-test-mini',
+  promptVersion: 'edr-editorial-v1',
+  researchMode: 'local_context',
+  errorCode: 'timeout',
+  errorMessage: 'El proveedor de IA no respondió a tiempo.',
+  estimatedCost: 0.06,
+  computedCost: null,
+  createdAt: T1,
+  completedAt: T2,
+};
+const editorialPackage = {
+  projectId: uuid(67),
+  draftId: uuid(68),
+  available: true,
+  unavailableReason: null,
+  context: editorialContext,
+  research: {
+    mode: 'local_context',
+    retrievedAt: T1,
+    keyEvents: [editorialEvent],
+    evidence: [editorialEvidence],
+    unverified: [{ ...editorialEvidence, id: 'ev-out-1', verification: 'UNVERIFIED' }],
+    conflicts: [
+      { ...editorialEvidence, id: 'ev-out-2', verification: 'CONFLICTING', conflicts: ['Las fuentes no coinciden.'] },
+    ],
+  },
+  writer: editorialWriter,
+  deliverables: [
+    { deliverable: 'tiktok_reels', current: editorialVersion, versionCount: 2 },
+    { deliverable: 'youtube', current: null, versionCount: 0 },
+  ],
+  lastGeneration: editorialGeneration,
+};
+const editorialGenerationCreate = {
+  requestKey: uuid(69),
+  deliverable: 'tiktok_reels',
+  instructions: 'Reduce el sarcasmo',
+  confirmCost: true,
+};
+const editorialEditCreate = {
+  baseVersionId: uuid(65),
+  fields: [{ name: 'copy', text: 'Texto editado.\nSegunda línea.' }],
+};
+
 export const componentSamples: Record<ComponentName, unknown> = {
   Uuid: uuid(1),
   Slug: 'liga-demo',
+  EditorialDeliverable: 'viral_headlines',
+  EditorialField: editorialField,
+  EditorialFlag: editorialFlag,
+  EditorialEvidence: editorialEvidence,
+  EditorialEvent: editorialEvent,
+  EditorialContext: editorialContext,
+  EditorialWriter: editorialWriter,
+  EditorialVersion: editorialVersion,
+  EditorialGeneration: editorialGeneration,
+  EditorialPackage: editorialPackage,
+  EditorialGenerationCreate: editorialGenerationCreate,
+  EditorialGenerationResult: { generation: editorialGeneration, package: editorialPackage },
+  EditorialEditCreate: editorialEditCreate,
   SourceId: 'demo-a',
   MatchKey: 'liga-demo:2026-27:m1',
   Label: 'Logo principal',
@@ -1477,6 +1621,9 @@ export const componentSamples: Record<ComponentName, unknown> = {
 
 /** Samples of the JSON request bodies (inline or by reference) of the operations that have one. */
 export const requestSamples: Partial<Record<OperationId, unknown>> = {
+  createEditorialGeneration: editorialGenerationCreate,
+  editEditorialDeliverable: editorialEditCreate,
+  approveEditorialDeliverable: { versionId: uuid(65) },
   startCompetitionImportOperation: { externalSeasonId: '2026', destinationSeasonId: null, resources: ['season'] },
   createCompetitionImportPreview: { externalSeasonId: '2026', destinationSeasonId: null, resources: ['season'] },
   planCompetitionImportApplication: { decisions: [] },
@@ -1507,7 +1654,6 @@ export const requestSamples: Partial<Record<OperationId, unknown>> = {
   createContentBatch: componentSamples.ContentBatchCreate,
   updateProject: componentSamples.ProjectUpdate,
   startRun: componentSamples.RunStart,
-  setExcludedMatches: { excludedMatchKeys: ['liga-demo:2026-27:m1', 'liga-demo:2026-27:m2'] },
   approveElement: componentSamples.VersionRef,
   acknowledgeQaWarnings: { versionId: uuid(20), checks: ['capitalized_tokens'] },
   createImport: componentSamples.ImportFormCreate,
@@ -1538,6 +1684,11 @@ export const requestSamples: Partial<Record<OperationId, unknown>> = {
 
 /** Samples of the JSON success responses of every operation that returns JSON. */
 export const responseSamples: Partial<Record<OperationId, unknown>> = {
+  getEditorialPackage: editorialPackage,
+  createEditorialGeneration: { generation: editorialGeneration, package: editorialPackage },
+  editEditorialDeliverable: editorialVersion,
+  approveEditorialDeliverable: { ...editorialVersion, state: 'approved', flags: [], approvedAt: T1 },
+  withdrawEditorialApproval: { ...editorialVersion, state: 'ready', flags: [] },
   listCompetitionExternalSeasons: {
     seasons: [
       {
@@ -1731,7 +1882,6 @@ export const responseSamples: Partial<Record<OperationId, unknown>> = {
   },
   revokeManualFactApproval: fact,
   getActiveDraft: draft,
-  setExcludedMatches: run,
   regenerateElement: element,
   approveElement: element,
   withdrawElementApproval: element,

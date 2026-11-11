@@ -1,6 +1,6 @@
 /**
  * Projects service (architecture.md sections 6 and 15.2; contract operations createProject, listProjects,
- * getProject, updateProject, listRuns, startRun, getRun, setExcludedMatches).
+ * getProject, updateProject, listRuns, startRun, getRun).
  *
  * - Creation resolves the selection (competition, source, season, stage, matchday or whole stage) through the
  *   catalogue service and stores the source, the data mode, the opaque selection reference and the label snapshots
@@ -275,26 +275,11 @@ export class ProjectsService {
   }
 
   startRun(projectId: string, kind: RunKind): Run {
-    return this.#start(projectId, kind, null);
-  }
-
-  /** Sets the matches to leave out: supersedes the active draft and starts a redraft run with them (OD-03). */
-  setExcludedMatches(projectId: string, excludedMatchKeys: readonly string[]): Run {
-    return this.#start(projectId, 'redraft', [...excludedMatchKeys]);
-  }
-
-  #start(projectId: string, kind: RunKind, excludedMatchKeys: string[] | null): Run {
     try {
       return this.#runner.start(projectId, kind, {
-        parameters: { excludedMatchKeys },
         before: () => {
           if (!this.#projects.exists(projectId)) {
             throw projectNotFound();
-          }
-        },
-        afterGuards: () => {
-          if (excludedMatchKeys !== null) {
-            this.#projects.supersedeActiveDraft(projectId, this.#now());
           }
         },
       });

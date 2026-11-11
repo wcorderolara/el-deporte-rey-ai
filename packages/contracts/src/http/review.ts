@@ -1,6 +1,6 @@
 /**
- * Contract schemas of drafts, review and visual QA (operations getActiveDraft, setExcludedMatches, regenerateElement,
- * approveElement, withdrawElementApproval, acknowledgeQaWarnings, approveCarousel): Draft, Carousel, Element,
+ * Contract schemas of drafts, review and visual QA (operations getActiveDraft, regenerateElement, approveElement,
+ * withdrawElementApproval, acknowledgeQaWarnings, approveCarousel): Draft, Carousel, Element,
  * ElementVersion, TextField, ContentFlag, QaResult (closed details per check, T10-F17), QaOutcome, QaMismatch,
  * VersionRef, FinalApproval.
  */

@@ -22,6 +22,7 @@ export {
   checkHashtags,
   checkLength,
   checkText,
+  excerptOf,
 } from './checks.js';
 export { type SlideTexts, composeCaption, composeSlide, fieldText, standingRowCells, substitute } from './compose.js';
 export { checkContextOf, draftContent, draftContextOf } from './core.js';
@@ -31,6 +32,7 @@ export {
   type PublishabilityFunction,
   type PublishabilityVerdict,
   blockedOverlay,
+  blockingFactRefs,
   verificationPublishability,
 } from './publishability.js';
 export {
@@ -48,7 +50,12 @@ export {
   type PlaceholderBinding,
   buildDraftRequest,
   captionBindings,
+  fixtureBindings,
+  labelBindings,
+  matchBindings,
+  rowBindings,
   slideBindings,
+  teamPlaceholder,
 } from './request.js';
 export {
   type ContentFact,
@@ -69,14 +76,19 @@ export {
   LeftOutMatchListSchema,
   type Segment,
   SegmentSchema,
+  type TeamAlias,
 } from './schemas.js';
 export { type ContentStageOptions, buildContentInput, contentStage, createContentStage } from './stage.js';
 export {
   CAPTION_KEY,
   type CarouselPlan,
+  type ContentKind,
   type DraftPlan,
   FactIndex,
+  type FixturePlan,
+  type MatchPlan,
   type SlidePlan,
+  type StandingsRowPlan,
   matchSlideKey,
   planDraft,
   standingsSlideKey,

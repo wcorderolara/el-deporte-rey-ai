@@ -21,6 +21,7 @@ describe('module registry', () => {
       'rendering',
       'visual-qa',
       'review',
+      'editorial',
       'export',
     ]);
   });

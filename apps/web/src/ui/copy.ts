@@ -183,13 +183,17 @@ export const problemCodeMessage: Record<ProblemCode, string> = {
     'El recurso aparece en diapositivas ya generadas o en plantillas visuales, así que no se puede eliminar. Puedes desactivarlo para que no se use en contenido nuevo.',
   IMAGE_PROVIDER_UNAVAILABLE: 'La generación de imágenes no está disponible en el servidor.',
   DESIGN_REFERENCE_REFUSED: 'Un recurso de marca seleccionado no se puede usar de esa forma.',
-  GENERATION_LIMIT_REACHED: 'Se alcanzó un límite de generación de imágenes.',
+  GENERATION_LIMIT_REACHED: 'Se alcanzó un límite de generación.',
   TEMPLATE_SOURCE_REFUSED:
     'No se puede usar ese origen para la plantilla: la propuesta debe estar aprobada y el fondo debe ser válido.',
   TEMPLATE_VERSION_PUBLISHED: 'Esta versión ya está publicada y no se puede modificar. Crea una nueva versión.',
   TEMPLATE_NOT_PUBLISHABLE: 'La versión tiene errores de validación. Corrígelos antes de publicar.',
   TEMPLATE_IN_USE: 'La plantilla tiene versiones publicadas, así que no se puede eliminar. Puedes archivarla.',
   PROPOSAL_IN_USE: 'Una plantilla visual usa esta propuesta, así que no se puede eliminar.',
+  EDITORIAL_NOT_GENERATABLE:
+    'No se puede generar el copy editorial con los datos deportivos confirmados de este proyecto.',
+  COST_CONFIRMATION_REQUIRED: 'Esta generación tiene costo: confírmalo antes de continuar.',
+  AI_PROVIDER_UNAVAILABLE: 'El proveedor de IA de texto no está listo. Revisa la configuración y la clave.',
   PROVIDER_RATE_LIMITED: 'Se alcanzó el límite de solicitudes de la fuente de datos.',
   SELECTION_UNAVAILABLE: 'La selección no está disponible en la fuente elegida.',
   IMPORT_REJECTED: 'La importación fue rechazada. No se guardó ningún dato.',

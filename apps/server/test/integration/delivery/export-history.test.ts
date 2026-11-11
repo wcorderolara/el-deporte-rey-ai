@@ -62,7 +62,6 @@ import {
   completedRun,
   draftOf,
   elementPath,
-  excludeMatches,
   expectProblem,
   exportCarousel,
   exportDetail,
@@ -396,12 +395,10 @@ describe('nothing stale is exportable (OD-57, T58, T38)', { timeout: WORKFLOW_TE
 
   it('the carousel of a draft superseded by a redraft is not exportable; its earlier export stays in the history', async () => {
     const t = await start(cleanup, { base: 'demo-only', scenario: 'default' });
-    const { project, run } = await projectWithDraft(t, ligaDemo(1));
+    const { project } = await projectWithDraft(t, ligaDemo(1));
     const carousel = firstCarousel(await approveDraft(t, project.id));
     const before = await exported(t, carousel.id);
-    const match = (await factsOf(t, project.id, run.id)).facts.find((fact) => fact.kind === 'match_score') as Fact;
-    const redraft = await excludeMatches(t, project.id, [String(match.subject.matchKey)]);
-    expect(redraft.status).toBe('completed');
+    await completedRun(t, project.id, 'redraft');
     expect(firstCarousel(await draftOf(t, project.id)).id).not.toBe(carousel.id);
     const refused = await exportCarousel(t, carousel.id);
     expectProblem(refused, 409, 'FINAL_APPROVAL_REQUIRED');

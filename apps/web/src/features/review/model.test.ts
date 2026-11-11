@@ -6,21 +6,22 @@ import {
   approvalObstacles,
   blockReasonText,
   bulkApprovalSummary,
+  elementStatus,
   finalApprovalObstacles,
   finalApprovalReasons,
+  nextPendingSlide,
   orderedElements,
   problemFacts,
   problemItems,
-  usesManuallyApprovedFacts,
+  reviewIndicators,
 } from './model';
 import {
   blockingFact,
   caption,
   carousel,
-  draft,
+  editorialPackage,
   elementId,
   factId,
-  factSegment,
   PASSING_QA,
   slide,
   version,
@@ -192,12 +193,96 @@ describe('problem details', () => {
   });
 });
 
-describe('usesManuallyApprovedFacts (OD-28)', () => {
-  it('detects a manually approved fact segment', () => {
-    expect(usesManuallyApprovedFacts(draft())).toBe(false);
-    const attested = slide(1, 1, 'match_result', {
-      fields: [{ field: 'team_home', segments: [factSegment('Equipo', factId(5), 'manually_approved')] }],
+describe('elementStatus (UX-REVIEW-01)', () => {
+  const warning = PASSING_QA.map((result) =>
+    result.check === 'capitalized_tokens' ? { ...result, outcome: 'fail' as const } : result,
+  );
+
+  it('names what each slide needs, as text with a symbol', () => {
+    expect(elementStatus(slide(1, 1, 'cover', { state: 'approved' }))).toMatchObject({
+      label: 'Aprobada',
+      issue: null,
+      symbol: '✓',
     });
-    expect(usesManuallyApprovedFacts(draft({ carousels: [carousel([attested])] }))).toBe(true);
+    expect(elementStatus(slide(1, 1, 'cover'))).toMatchObject({ label: 'Lista para aprobar', issue: null });
+    expect(elementStatus(slide(1, 1, 'cover', { qa: warning }))).toMatchObject({
+      label: 'Advertencia por confirmar',
+      issue: 'warning',
+    });
+    expect(elementStatus(slide(1, 1, 'cover', { state: 'pending_qa', qa: [] }))).toMatchObject({ issue: null });
+    expect(elementStatus(slide(1, 1, 'cover', { state: 'qa_failed' }))).toMatchObject({
+      label: 'Requiere regenerar',
+      issue: 'blocking',
+    });
+    expect(
+      elementStatus(
+        slide(1, 1, 'cover', { contentFlags: [{ code: 'FORBIDDEN_CONTENT', field: 'title', excerpt: 'x' }] }),
+      ),
+    ).toMatchObject({ issue: 'blocking' });
+  });
+
+  it('reports a blocked overlay even on an approved version', () => {
+    expect(elementStatus(slide(1, 1, 'cover', { state: 'approved', blocked: true }))).toMatchObject({
+      label: 'Bloqueada por datos',
+      issue: 'blocking',
+    });
+  });
+});
+
+describe('reviewIndicators (UX-REVIEW-01)', () => {
+  it('counts slides apart from the caption, and the caption with the editorial deliverables as copy', () => {
+    const shown = carousel([
+      slide(1, 1, 'cover', { state: 'approved' }),
+      slide(2, 2, 'match_result', { blocked: true }),
+      slide(3, 3, 'closing', {
+        qa: PASSING_QA.map((result) =>
+          result.check === 'style_consistency' ? { ...result, outcome: 'fail' as const } : result,
+        ),
+      }),
+      caption(4, 4, { state: 'approved' }),
+    ]);
+    const base = editorialPackage();
+    const flagged = {
+      id: 'b0000000-0000-4000-8000-000000000001',
+      deliverable: 'tiktok_reels' as const,
+      versionNumber: 1,
+      origin: 'generated' as const,
+      state: 'flagged' as const,
+      flags: [{ code: 'FORMAT_RULE' as const, field: 'copy', excerpt: 'x' }],
+      generationId: null,
+      instructions: null,
+      eventIds: [],
+      evidenceIds: [],
+      fields: [{ name: 'copy' as const, text: 'x', words: 1, characters: 1 }],
+      createdAt: '2026-11-10T10:00:00Z',
+      approvedAt: null,
+    };
+    const pkg = {
+      ...base,
+      deliverables: base.deliverables.map((entry) =>
+        entry.deliverable === 'tiktok_reels' ? { ...entry, current: flagged, versionCount: 1 } : entry,
+      ),
+    };
+    expect(reviewIndicators(shown, pkg)).toEqual({
+      slidesApproved: 1,
+      slidesTotal: 3,
+      copyApproved: 1,
+      copyTotal: 2,
+      editorialGenerated: true,
+      blocking: 2,
+      warnings: 1,
+    });
+    // Before the editorial package is read, only the caption counts as copy.
+    expect(reviewIndicators(shown, null)).toMatchObject({ copyApproved: 1, copyTotal: 1, editorialGenerated: false });
+    expect(reviewIndicators(undefined, null)).toMatchObject({ slidesTotal: 0, copyTotal: 0, blocking: 0 });
+  });
+});
+
+describe('nextPendingSlide (UX-REVIEW-01)', () => {
+  it('finds the next slide that is not approved, wrapping around and skipping approved ones', () => {
+    const slides = [slide(1, 1, 'cover'), slide(2, 2, 'match_result', { state: 'approved' }), slide(3, 3, 'closing')];
+    expect(nextPendingSlide(slides, elementId(1))?.id).toBe(elementId(3));
+    expect(nextPendingSlide(slides, elementId(3))?.id).toBe(elementId(1));
+    expect(nextPendingSlide([slides[1]!], elementId(2))).toBeUndefined();
   });
 });

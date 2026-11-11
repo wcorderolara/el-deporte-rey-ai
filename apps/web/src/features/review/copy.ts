@@ -13,9 +13,6 @@ import type {
   ElementVersionState,
   FactKind,
   FinalApprovalRefusalReason,
-  Language,
-  LeftOutMatch,
-  MatchStatus,
   QaCheck,
   SlideType,
   TextFieldName,
@@ -23,15 +20,9 @@ import type {
 
 export const reviewCopy = {
   title: 'Revisión del contenido',
-  eyebrow: 'REVISA Y APRUEBA',
-  intro: 'Revisa las diapositivas, confirma el texto y aprueba el carrusel para preparar la descarga.',
-  progressLabel: 'Progreso del carrusel seleccionado',
   carouselPosition: (sequence: number, total: number): string => `Carrusel ${sequence} de ${total}`,
   slideProgress: (approved: number, total: number): string => `${approved} de ${total} diapositivas aprobadas`,
-  captionApproved: 'Copy aprobado',
-  captionPending: 'Copy pendiente de aprobación',
   carouselPicker: 'Elegir carrusel para revisar',
-  draftDetails: 'Datos y trazabilidad del borrador',
   loading: 'Cargando el borrador…',
   loadError: 'No se pudo cargar el borrador',
   notFound: 'La dirección no corresponde a ningún proyecto.',
@@ -41,76 +32,7 @@ export const reviewCopy = {
   refreshing: 'Actualizando la vista…',
   refresh: 'Actualizar la vista',
   refreshError: 'No se pudo actualizar la vista',
-  summaryTitle: 'Borrador',
-  dataMode: 'Modo de datos',
-  language: 'Idioma del contenido',
-  createdAt: 'Creado',
-  carousels: 'Carruseles',
-  carouselCount: (count: number): string => (count === 1 ? '1 carrusel' : `${count} carruseles`),
   noCarousels: 'El borrador no tiene carruseles.',
-  attestedNote:
-    'Este borrador usa datos aprobados manualmente (atestiguados por el operador). No son datos verificados.',
-  noStandings:
-    'Este borrador no incluye diapositivas de clasificación porque la selección no tiene clasificación. La clasificación no se calcula a partir de los resultados.',
-  provenanceIntro:
-    'Cada fragmento de texto indica su procedencia: dato (con el estado actual del dato), comentario o texto de plantilla.',
-} as const;
-
-export const languageLabel: Record<Language, string> = {
-  es: 'Español',
-  en: 'Inglés',
-};
-
-export const leftOutCopy = {
-  title: 'Partidos que no están en el borrador',
-  none: 'Todos los partidos de la selección están en el borrador.',
-  caption: 'Partidos fuera del borrador',
-  match: 'Partido',
-  status: 'Estado del partido',
-  reason: 'Motivo',
-  unknownStatus: 'Estado no informado',
-} as const;
-
-export const matchStatusLabel: Record<MatchStatus, string> = {
-  scheduled: 'Programado',
-  in_play: 'En juego',
-  finished: 'Finalizado',
-  postponed: 'Aplazado',
-  suspended: 'Suspendido',
-  cancelled: 'Cancelado',
-  abandoned: 'Abandonado',
-  awarded: 'Resultado administrativo',
-};
-
-export const leftOutReasonLabel: Record<LeftOutMatch['reason'], string> = {
-  not_finished: 'El partido no ha finalizado.',
-  not_verified: 'Los datos del partido no tienen un valor utilizable.',
-  excluded_by_operator: 'Excluido por el operador.',
-  already_finished: 'El partido ya finalizó; no es un partido por jugar.',
-  not_upcoming: 'El estado del partido no es programado ni aplazado.',
-};
-
-export const exclusionsCopy = {
-  title: 'Exclusión de partidos',
-  open: 'Editar partidos excluidos',
-  close: 'Cerrar la edición de exclusiones',
-  intro:
-    'Marque los partidos que no deben aparecer en el contenido. Al guardar se crea un borrador nuevo: las aprobaciones actuales no se conservan.',
-  loading: 'Cargando los partidos…',
-  loadError: 'No se pudieron cargar los partidos',
-  legend: 'Partidos de la selección',
-  exclude: (label: string): string => `Excluir ${label}`,
-  empty: 'No hay partidos que se puedan excluir.',
-  tooMany: (max: number): string => `Se pueden excluir como máximo ${max} partidos.`,
-  unchanged: 'No hay cambios que guardar.',
-  submit: 'Guardar exclusiones y crear un borrador nuevo',
-  submitting: 'Guardando exclusiones…',
-  submitError: 'No se pudieron guardar las exclusiones',
-  started: (runNumber: number): string =>
-    `Se inició un borrador nuevo (ejecución ${runNumber}). Cuando termine, actualice esta vista para revisarlo.`,
-  followRun: 'Ver el progreso en la página del proyecto',
-  count: (count: number): string =>
-    count === 0 ? 'Ningún partido excluido.' : count === 1 ? '1 partido excluido.' : `${count} partidos excluidos.`,
 } as const;
 
 export const carouselCopy = {
@@ -149,8 +71,104 @@ export const carouselCopy = {
   dismiss: 'Listo',
   allSlidesApproved: 'Todas las diapositivas están aprobadas. Revise el copy o continúe con la aprobación final.',
   noNextPending: 'No quedan diapositivas pendientes. Revise el copy o continúe con la aprobación final.',
+  movedToNext: (approved: string, next: string): string => `${approved} aprobada. Ahora: ${next}.`,
+  bulkReasons: 'Ver motivos',
   bulkDialogLabel: 'Confirmar aprobación de diapositivas',
   finalAction: 'Aprobar carrusel completo',
+} as const;
+
+/** The review workspace (UX-REVIEW-01): header, indicators, modes, slide workspace and downloads. */
+export const workspaceCopy = {
+  modesLabel: 'Modo de revisión',
+  designTab: 'Diseño visual',
+  copyTab: 'Copy editorial',
+  pending: (count: number): string => (count === 1 ? '1 pendiente' : `${count} pendientes`),
+  approved: 'Aprobado',
+  notGenerated: 'Sin generar',
+  unsaved: 'Sin guardar',
+  indicatorsLabel: 'Estado de la revisión',
+  slidesIndicator: 'Diapositivas',
+  slidesValue: (approved: number, total: number): string => `${approved}/${total} aprobadas`,
+  copyIndicator: 'Copy',
+  copyValue: (approved: number, total: number): string => `${approved}/${total} aprobados`,
+  copyNotGenerated: 'editorial sin generar',
+  blockingIndicator: 'Bloqueos',
+  blockingValue: (count: number): string => (count === 0 ? 'ninguno' : String(count)),
+  warningsIndicator: 'Advertencias',
+  format: (width: number, height: number): string => `${width} × ${height} px`,
+  demoNote: 'Datos sintéticos: no se consideran verificados ni listos para publicación.',
+  railCollapse: 'Contraer la lista de diapositivas',
+  railExpand: 'Mostrar la lista de diapositivas',
+  bulkTitle: 'Aprobación masiva',
+  bulkEligible: (count: number): string =>
+    count === 1 ? '1 diapositiva lista para aprobar' : `${count} diapositivas listas para aprobar`,
+  bulkHeld: (count: number): string =>
+    count === 1 ? '1 no se puede aprobar todavía' : `${count} no se pueden aprobar todavía`,
+  bulkNone: 'Ninguna diapositiva está lista para la aprobación masiva.',
+  bulkCopyNote: 'No aprueba el copy editorial ni el texto del carrusel.',
+  approveAllCount: (count: number): string => `Aprobar todas (${count})`,
+  previewLabel: (name: string): string => `Vista previa: ${name}`,
+  previewPosition: (position: number, total: number): string =>
+    `Diapositiva ${String(position).padStart(2, '0')} de ${String(total).padStart(2, '0')}`,
+  previous: 'Anterior',
+  next: 'Siguiente',
+  zoomOut: 'Alejar',
+  zoomIn: 'Acercar',
+  zoomFit: 'Ajustar al espacio',
+  zoomFitted: 'Ajustada',
+  zoomLevel: (percent: number): string => `${percent} %`,
+  fullscreen: 'Pantalla completa',
+  exitFullscreen: 'Salir de pantalla completa',
+  previewTools: 'Navegación y zoom de la vista previa',
+} as const;
+
+/** The final approval of the selected carousel (UX-REVIEW-01): a header action and a confirmation dialog. */
+export const finalDialogCopy = {
+  title: 'Aprobar carrusel completo',
+  intro:
+    'Registra la aprobación final de las versiones que ves ahora. Si después cambias una diapositiva o el texto del carrusel, la aprobación deja de ser válida.',
+  slides: 'Diapositivas aprobadas',
+  slidesValue: (approved: number, total: number): string => `${approved} de ${total}`,
+  caption: 'Texto del carrusel',
+  captionApproved: 'Aprobado: se incluye en la descarga (caption.txt).',
+  captionPending: 'Sin aprobar: la descarga tendrá solo las diapositivas.',
+  captionMissing: 'Este carrusel no tiene texto de publicación.',
+  editorial: 'Copy editorial',
+  editorialValue: (approved: number, total: number): string =>
+    `${approved} de ${total} textos aprobados. No forma parte del carrusel: se descarga aparte (.txt).`,
+  editorialNone: 'Sin generar. No forma parte del carrusel: se descarga aparte (.txt).',
+  editorialUnknown: 'No se pudo leer su estado. No forma parte del carrusel.',
+  blocking: 'Errores bloqueantes',
+  blockingNone: 'Ninguno',
+  notReadyAnymore:
+    'El carrusel cambió y ya no está listo para la aprobación final. Revisa los elementos pendientes antes de confirmar.',
+  confirm: 'Confirmar aprobación final',
+  cancel: 'Cancelar',
+  notReadyReason: (pending: number): string =>
+    pending === 1
+      ? 'Falta 1 diapositiva por aprobar o corregir.'
+      : `Faltan ${pending} diapositivas por aprobar o corregir.`,
+} as const;
+
+/** The protection of unsaved edits of the editorial copy (UX-REVIEW-01). */
+export const unsavedCopy = {
+  title: 'Cambios sin guardar',
+  body: 'Tienes cambios sin guardar en el copy editorial. Si sales de la revisión ahora, se pierden.',
+  leave: 'Salir sin guardar',
+} as const;
+
+/** Downloads offered from the review once the carousel has a valid final approval (UX-REVIEW-01). */
+export const downloadCopy = {
+  more: 'Más opciones',
+  slide: (position: number): string => `Descargar diapositiva ${position} (PNG)`,
+  slideUnavailable: 'La diapositiva seleccionada no tiene imagen',
+  editorialFile: 'Descargar copy editorial (.txt)',
+  editorialCopy: 'Copiar copy editorial',
+  editorialUnavailable: 'Todavía no hay copy editorial',
+  slideStarted: (position: number): string => `Descarga de la diapositiva ${position} iniciada.`,
+  editorialDownloaded: 'Copy editorial descargado.',
+  copied: 'Copy editorial copiado al portapapeles.',
+  copyFailed: 'No se pudo copiar. Abre el copy editorial y cópialo desde allí.',
 } as const;
 
 export const slideTypeLabel: Record<SlideType, string> = {
@@ -167,24 +185,65 @@ export const elementCopy = {
   slide: (position: number, type: SlideType | null): string =>
     type === null ? `Diapositiva ${position}` : `Diapositiva ${position}: ${slideTypeLabel[type]}`,
   caption: 'Texto de publicación y hashtags',
-  slideEyebrow: 'DIAPOSITIVA DEL CARRUSEL',
-  captionEyebrow: 'COPY PARA PUBLICACIÓN',
+  slideEyebrow: 'Inspector de revisión',
+  captionEyebrow: 'Texto del carrusel',
   captionReadable: 'Texto de publicación y hashtags',
+  captionIntro:
+    'Acompaña la descarga del carrusel (caption.txt) solo si está aprobado cuando das la aprobación final. Aprobarlo o retirar su aprobación después invalida la aprobación final.',
   approveSlide: 'Aprobar diapositiva',
-  approveAndNext: 'Aprobar y siguiente',
-  approveCaption: 'Aprobar copy',
+  approveAndNextHint: 'Al aprobar pasa a la siguiente diapositiva pendiente.',
+  approveCaption: 'Aprobar texto del carrusel',
   approvedStatus: 'Aprobada',
+  statusBlocked: 'Bloqueada por datos',
+  statusRegenerate: 'Requiere regenerar',
+  statusWarning: 'Advertencia por confirmar',
+  statusPendingQa: 'Pendiente del control visual',
+  statusSuperseded: 'Reemplazada',
+  statusReady: 'Lista para aprobar',
   needsAttention: 'Requiere atención antes de aprobar',
   noIssues: 'Sin problemas detectados',
   warningSummary: (count: number): string =>
     count === 1 ? 'Hay una advertencia del control visual.' : `Hay ${count} advertencias del control visual.`,
   regenerateLabel: (kind: 'slide' | 'caption'): string =>
-    kind === 'slide' ? 'Regenerar diapositiva' : 'Regenerar copy',
+    kind === 'slide' ? 'Regenerar diapositiva' : 'Regenerar texto del carrusel',
+  regenerateHint: 'Crea una versión nueva: pasa otra vez por el control visual y necesita una aprobación nueva.',
+  nextPending: 'Siguiente pendiente',
+  copyField: (label: string): string => `Copiar ${label}`,
+  validationsTitle: 'Validaciones',
+  detailsTitle: 'Detalles de la versión',
+  versionLine: (version: number): string => `Versión ${version}`,
+  versionLabel: 'Versión',
+  sizeLabel: 'Tamaño',
+  templateLabel: 'Plantilla',
+  copy: 'Copiar',
+  copyAll: 'Copiar texto',
+  copied: 'Copiado al portapapeles.',
+  copyFailed: 'No se pudo copiar. Selecciona el texto y cópialo a mano.',
+  createdAt: 'Creada',
+  textTitle: 'Texto de la diapositiva',
   imageAlt: (name: string, version: number): string => `Imagen de ${name}, versión ${version}`,
   noImage: 'Imagen todavía no disponible.',
   dimensions: (width: number, height: number): string => `${width} × ${height} px`,
   noText: 'Sin texto.',
   blocked: 'Bloqueada',
+  validationSummary: (blocking: number, warnings: number, pending: boolean): string =>
+    blocking === 0 && warnings === 0
+      ? pending
+        ? 'Control visual en curso'
+        : 'Sin errores'
+      : [
+          blocking === 0 ? '' : blocking === 1 ? '1 bloqueo' : `${blocking} bloqueos`,
+          warnings === 0 ? '' : warnings === 1 ? '1 advertencia' : `${warnings} advertencias`,
+        ]
+          .filter((part) => part !== '')
+          .join(' · '),
+  severityBlocking: 'Bloqueo',
+  blockedAction:
+    'Corrección: confirma o corrige el dato en la página del proyecto, o excluye el partido en «Datos y trazabilidad del borrador».',
+  flagsAction: 'Corrección: regenera el elemento hasta que una versión nueva no tenga observaciones.',
+  affects: (name: string): string => `Elemento afectado: ${name}.`,
+  qaPassed: (count: number): string =>
+    count === 1 ? '1 control visual superado' : `${count} controles visuales superados`,
   blockedTitle: 'Datos que bloquean la aprobación',
   blockedIntro: 'No se puede aprobar mientras estos datos no sean publicables:',
   flagsTitle: 'Observaciones del contenido',
@@ -320,17 +379,11 @@ export const qaCopy = {
 } as const;
 
 export const finalCopy = {
-  title: 'Aprobación final',
-  slideProgress: (approved: number, total: number): string => `${approved} de ${total} diapositivas aprobadas`,
-  captionApproved: 'Copy aprobado: la descarga incluye el texto de publicación.',
-  captionPending:
-    'Copy sin aprobar: puedes descargar las diapositivas ahora; el texto de publicación se incluye cuando apruebes el copy y vuelvas a aprobar el carrusel.',
   pendingDetails: 'Ver elementos pendientes y motivos',
   approve: carouselCopy.finalAction,
   approving: 'Registrando la aprobación final…',
   approvedAt: 'Aprobación final registrada',
   valid: 'La aprobación final es válida. El carrusel se puede exportar.',
-  goToExports: 'Historial de exportaciones',
   invalid:
     'La aprobación final anterior ya no es válida porque el contenido cambió. Revise los elementos y vuelva a dar la aprobación final.',
   ready: 'Todas las diapositivas están aprobadas y ninguna está bloqueada.',

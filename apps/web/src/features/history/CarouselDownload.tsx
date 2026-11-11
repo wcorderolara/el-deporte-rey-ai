@@ -23,6 +23,8 @@ export interface CarouselDownloadProps {
   /** Called when the server reports the final approval as no longer valid (to reload the draft). */
   onStale?: () => void;
   className?: string;
+  /** The success message is only announced to assistive technology, not shown (the review, UX-REVIEW-01). */
+  quietSuccess?: boolean;
 }
 
 /** The export of the carousel made from its current valid final approval, newest first; null when there is none. */
@@ -36,7 +38,14 @@ export function currentExport(exports: readonly Export[], carousel: Carousel): E
 
 const STALE_CODES = new Set(['FINAL_APPROVAL_REQUIRED', 'VERSION_CONFLICT']);
 
-export function CarouselDownload({ projectId, carousel, onExported, onStale, className }: CarouselDownloadProps) {
+export function CarouselDownload({
+  projectId,
+  carousel,
+  onExported,
+  onStale,
+  className,
+  quietSuccess = false,
+}: CarouselDownloadProps) {
   const client = useHistoryApi();
   const approval = carousel.finalApproval;
   const exports = useLoad(
@@ -45,6 +54,7 @@ export function CarouselDownload({ projectId, carousel, onExported, onStale, cla
   );
   const [step, setStep] = useState<'idle' | 'exporting' | 'downloading'>('idle');
   const [message, setMessage] = useState('');
+  const [succeeded, setSucceeded] = useState(false);
 
   if (approval === null || !approval.valid) {
     return null;
@@ -55,6 +65,7 @@ export function CarouselDownload({ projectId, carousel, onExported, onStale, cla
       return;
     }
     setMessage('');
+    setSucceeded(false);
     try {
       let target = currentExport(exports.latest ?? [], carousel);
       if (target === null) {
@@ -66,6 +77,7 @@ export function CarouselDownload({ projectId, carousel, onExported, onStale, cla
       setStep('downloading');
       saveExportZip(await downloadExport(client, target.id), target.id);
       setMessage('La descarga está lista.');
+      setSucceeded(true);
     } catch (error) {
       const code = error instanceof ApiError ? error.problem?.code : undefined;
       if (code !== undefined && STALE_CODES.has(code)) {
@@ -99,7 +111,11 @@ export function CarouselDownload({ projectId, carousel, onExported, onStale, cla
               ? `Descargar carrusel ${String(carousel.sequence)} de ${String(carousel.total)}`
               : 'Descargar carrusel'}
       </button>
-      <span role="status" aria-live="polite" className="text-body-sm text-text-secondary">
+      <span
+        role="status"
+        aria-live="polite"
+        className={quietSuccess && succeeded ? 'sr-only' : 'text-body-sm text-text-secondary'}
+      >
         {message}
       </span>
     </span>

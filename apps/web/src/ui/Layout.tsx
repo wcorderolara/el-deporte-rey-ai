@@ -15,6 +15,7 @@ export interface LayoutProps {
   title?: string;
   hideHeaderTitle?: boolean;
   hideHeaderDescription?: boolean;
+  /** The breadcrumb, shown in its own block under the page title and description. */
   breadcrumbs?: ReactNode;
   primaryAction?: ReactNode;
   projectContext?: string;
@@ -34,6 +35,7 @@ export function Layout({
   title = appCopy.name,
   hideHeaderTitle = false,
   hideHeaderDescription = false,
+  breadcrumbs,
   primaryAction,
   projectContext,
   navigationKey,
@@ -101,21 +103,24 @@ export function Layout({
         {/* A workspace without a title or a description (the template editor) has no page header at all. */}
         {contentVariant === 'workspace' && hideHeaderTitle && hideHeaderDescription ? null : (
           <header className="border-b border-border-subtle bg-surface-raised px-gutter-mobile py-4 sm:px-gutter-tablet lg:px-gutter-desktop">
-            <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-5 gap-y-2">
+            <div className="min-w-0">
               {hideHeaderTitle ? null : (
                 <p className="m-0 min-w-0 break-normal text-pretty font-display text-heading-sm font-extrabold tracking-heading sm:text-heading-md">
                   {title}
                 </p>
               )}
-              {/* {breadcrumbs ? <div className="ml-auto min-w-0">{breadcrumbs}</div> : null} */}
+              {hideHeaderDescription ? null : projectContext ? (
+                <p className="m-0 mt-2 text-body-sm text-info">{projectContext}</p>
+              ) : (
+                <p className="m-0 mt-2 text-body-sm text-text-secondary">
+                  De la información deportiva a tu próxima creación.
+                </p>
+              )}
             </div>
-            {hideHeaderDescription ? null : projectContext ? (
-              <p className="m-0 mt-2 text-body-sm text-info">{projectContext}</p>
-            ) : (
-              <p className="m-0 mt-2 text-body-sm text-text-secondary">
-                De la información deportiva a tu próxima creación.
-              </p>
-            )}
+            {/* The breadcrumb goes in its own block, under the title and the description. */}
+            {breadcrumbs ? (
+              <div className={hideHeaderTitle && hideHeaderDescription ? 'min-w-0' : 'mt-3 min-w-0'}>{breadcrumbs}</div>
+            ) : null}
           </header>
         )}
         <div

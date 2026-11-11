@@ -248,6 +248,10 @@ export const appDocumentSchema = z.strictObject({
     images: z
       .strictObject({ adapter: pattern(ADAPTER_KIND_PATTERN, 41), options: adapterOptions.default({}) })
       .prefault({ adapter: 'disabled' }),
+    /** Editorial copy writer (PD-ARCH-01H); the free deterministic `stub` unless configured (PD-30). */
+    editorial: z
+      .strictObject({ adapter: pattern(ADAPTER_KIND_PATTERN, 41), options: adapterOptions.default({}) })
+      .prefault({ adapter: 'stub' }),
   }),
   verificationPolicy: verificationPolicySchema.prefault({}),
   catalogue: z.strictObject({ linksFile: filePath }).optional(),

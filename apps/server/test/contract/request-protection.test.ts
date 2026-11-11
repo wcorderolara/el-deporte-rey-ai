@@ -362,13 +362,6 @@ describe('request bodies (R-224)', () => {
     ],
     updateProject: [{}, { language: 'fr' }, { language: 'es', title: 'x' }],
     startRun: [{}, { kind: 'publish' }, { kind: 'full', extra: true }],
-    setExcludedMatches: [
-      {},
-      { excludedMatchKeys: ['../m1'] },
-      { excludedMatchKeys: ['m1', 'm1'] },
-      { excludedMatchKeys: Array.from({ length: 65 }, (_, index) => `m${String(index)}`) },
-      { excludedMatchKeys: ['M1'] },
-    ],
     approveElement: [{}, { versionId: '00000000-0000-4000-8000-00000000000A' }, { versionId: '..%2F..' }],
     acknowledgeQaWarnings: [
       { versionId: '00000000-0000-4000-8000-000000000001', checks: [] },

@@ -33,6 +33,14 @@ import {
   DesignProposalSchema,
 } from './design.js';
 import {
+  EditorialDeliverableParamsSchema,
+  EditorialEditCreateSchema,
+  EditorialGenerationCreateSchema,
+  EditorialGenerationResultSchema,
+  EditorialPackageSchema,
+  EditorialVersionSchema,
+} from './editorial.js';
+import {
   VisualTemplateCreateSchema,
   VisualTemplateDetailSchema,
   VisualTemplateListSchema,
@@ -132,7 +140,6 @@ import {
   DataModeSchema,
   LabelSchema,
   LanguageSchema,
-  MatchKeySchema,
   SlugSchema,
   SourceIdSchema,
   UuidSchema,
@@ -169,11 +176,6 @@ export const FactListResponseSchema = z.strictObject({
   facts: z.array(FactSchema),
   leftOutMatches: z.array(LeftOutMatchSchema),
   standings: StandingsAvailabilitySchema,
-});
-
-/** Request of setExcludedMatches (OD-03). */
-export const ExcludedMatchesUpdateSchema = z.strictObject({
-  excludedMatchKeys: uniquePrimitives(z.array(MatchKeySchema).max(64)),
 });
 
 /** Request of acknowledgeQaWarnings (OD-09, OD-26): one warning check per request. */
@@ -889,18 +891,6 @@ export const operations = {
     success: json(200, DraftSchema),
     problemStatuses: READ_BY_ID,
   },
-  setExcludedMatches: {
-    operationId: 'setExcludedMatches',
-    method: 'put',
-    path: '/projects/{projectId}/draft/exclusions',
-    tag: 'drafts',
-    params: ProjectParamsSchema,
-    query: null,
-    clientHeader: true,
-    body: jsonBody(ExcludedMatchesUpdateSchema),
-    success: json(202, RunSchema),
-    problemStatuses: WRITE_BODY,
-  },
   getSlideImage: {
     operationId: 'getSlideImage',
     method: 'get',
@@ -1549,6 +1539,67 @@ export const operations = {
     success: { status: 200, mediaTypes: PNG, schema: null },
     problemStatuses: [400, 403, 404, 409, 421],
   },
+  // PD-ARCH-01H: editorial copy.
+  getEditorialPackage: {
+    operationId: 'getEditorialPackage',
+    method: 'get',
+    path: '/projects/{projectId}/editorial',
+    tag: 'editorial',
+    params: ProjectParamsSchema,
+    query: null,
+    clientHeader: false,
+    body: null,
+    success: json(200, EditorialPackageSchema),
+    problemStatuses: READ_BY_ID,
+  },
+  createEditorialGeneration: {
+    operationId: 'createEditorialGeneration',
+    method: 'post',
+    path: '/projects/{projectId}/editorial/generations',
+    tag: 'editorial',
+    params: ProjectParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: jsonBody(EditorialGenerationCreateSchema),
+    success: json(201, EditorialGenerationResultSchema),
+    problemStatuses: [400, 403, 404, 409, 413, 415, 421, 429, 502, 503],
+  },
+  editEditorialDeliverable: {
+    operationId: 'editEditorialDeliverable',
+    method: 'post',
+    path: '/projects/{projectId}/editorial/deliverables/{deliverable}/edits',
+    tag: 'editorial',
+    params: EditorialDeliverableParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: jsonBody(EditorialEditCreateSchema),
+    success: json(201, EditorialVersionSchema),
+    problemStatuses: WRITE_BODY,
+  },
+  approveEditorialDeliverable: {
+    operationId: 'approveEditorialDeliverable',
+    method: 'put',
+    path: '/projects/{projectId}/editorial/deliverables/{deliverable}/approval',
+    tag: 'editorial',
+    params: EditorialDeliverableParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: jsonBody(VersionRefSchema),
+    success: json(200, EditorialVersionSchema),
+    problemStatuses: WRITE_BODY,
+  },
+  withdrawEditorialApproval: {
+    operationId: 'withdrawEditorialApproval',
+    method: 'delete',
+    path: '/projects/{projectId}/editorial/deliverables/{deliverable}/approval',
+    tag: 'editorial',
+    params: EditorialDeliverableParamsSchema,
+    query: null,
+    clientHeader: true,
+    body: null,
+    success: json(200, EditorialVersionSchema),
+    problemStatuses: WRITE_NO_BODY,
+  },
 } as const satisfies Record<string, OperationDefinition>;
 
 export type OperationId = keyof typeof operations;
@@ -1559,7 +1610,6 @@ export const operationList: readonly OperationDefinition[] = Object.values(opera
 export type ProjectListResponse = z.infer<typeof ProjectListResponseSchema>;
 export type RunListResponse = z.infer<typeof RunListResponseSchema>;
 export type FactListResponse = z.infer<typeof FactListResponseSchema>;
-export type ExcludedMatchesUpdate = z.infer<typeof ExcludedMatchesUpdateSchema>;
 export type QaAcknowledgement = z.infer<typeof QaAcknowledgementSchema>;
 export type ExportListResponse = z.infer<typeof ExportListResponseSchema>;
 export type ImportListResponse = z.infer<typeof ImportListResponseSchema>;

@@ -1,17 +1,20 @@
-import { contractRegExp, type Draft, type Project } from '@edr/contracts';
+import { contractRegExp, type Element, type Project } from '@edr/contracts';
 import { Link, useParams } from 'react-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import { ApiError } from '../../api/client';
 import { featurePaths } from '../../app/routes';
-import { Badge, buttonClassName, DataModeBadge, ErrorBanner, formatDateTime } from '../../ui';
-import { contentTypeLabel, projectStatus, sportsContextSummary } from '../projects/dashboardModel';
+import { ErrorBanner, Tabs, tabId, tabPanelId, type TabOption } from '../../ui';
 import { CarouselReview } from './CarouselReview';
-import { languageLabel, leftOutCopy, leftOutReasonLabel, matchStatusLabel, reviewCopy } from './copy';
-import { ExclusionsEditor } from './ExclusionsEditor';
-import { usesManuallyApprovedFacts } from './model';
+import { EditorialCopy } from './editorial/EditorialCopy';
+import { useEditorialPackage } from './editorial/useEditorialPackage';
+import { finalCopy, reviewCopy, workspaceCopy } from './copy';
+import { FinalApprovalAction } from './FinalApproval';
+import { orderedElements, reviewIndicators } from './model';
 import styles from './Review.module.css';
 import { useReviewDependencies } from './ReviewContext';
+import { ReviewDownloads, ReviewMenu, type ReviewMenuMessage } from './ReviewDownloads';
+import { ReviewHeader } from './ReviewHeader';
 import { useDraft } from './useDraft';
 
 const UUID = contractRegExp('Uuid');
@@ -22,72 +25,6 @@ function projectPath(projectId: string): string {
 
 function isNoDraft(error: unknown): boolean {
   return error instanceof ApiError && error.kind === 'problem' && error.problem?.code === 'NOT_FOUND';
-}
-
-function DraftSummary({ draft }: { draft: Draft }) {
-  return (
-    <section aria-labelledby="review-summary-title">
-      <h2 id="review-summary-title">{reviewCopy.summaryTitle}</h2>
-      <dl className={styles.details}>
-        <dt>{reviewCopy.dataMode}</dt>
-        <dd>{draft.dataMode === 'DEMO_DATA' ? 'Datos de demostración' : <DataModeBadge mode={draft.dataMode} />}</dd>
-        <dt>{reviewCopy.language}</dt>
-        <dd>{languageLabel[draft.language]}</dd>
-        <dt>{reviewCopy.createdAt}</dt>
-        <dd>
-          <time dateTime={draft.createdAt}>{formatDateTime(draft.createdAt)}</time>
-        </dd>
-        <dt>{reviewCopy.carousels}</dt>
-        <dd>{reviewCopy.carouselCount(draft.carousels.length)}</dd>
-      </dl>
-      {usesManuallyApprovedFacts(draft) ? (
-        <p className={styles.attestedNote}>
-          <span aria-hidden="true">✎ </span>
-          {reviewCopy.attestedNote}
-        </p>
-      ) : null}
-      {draft.standingsIncluded ? null : (
-        <p className={styles.note}>
-          <span aria-hidden="true">ℹ </span>
-          {reviewCopy.noStandings}
-        </p>
-      )}
-      <p className={styles.hint}>{reviewCopy.provenanceIntro}</p>
-    </section>
-  );
-}
-
-function LeftOutMatches({ draft }: { draft: Draft }) {
-  return (
-    <section aria-labelledby="review-left-out-title">
-      <h2 id="review-left-out-title">{leftOutCopy.title}</h2>
-      {draft.leftOutMatches.length === 0 ? (
-        <p>{leftOutCopy.none}</p>
-      ) : (
-        <div className={styles.tableWrapper}>
-          <table className={styles.table}>
-            <caption>{leftOutCopy.caption}</caption>
-            <thead>
-              <tr>
-                <th scope="col">{leftOutCopy.match}</th>
-                <th scope="col">{leftOutCopy.status}</th>
-                <th scope="col">{leftOutCopy.reason}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {draft.leftOutMatches.map((match) => (
-                <tr key={match.matchKey}>
-                  <th scope="row">{match.label}</th>
-                  <td>{match.status === null ? leftOutCopy.unknownStatus : matchStatusLabel[match.status]}</td>
-                  <td>{leftOutReasonLabel[match.reason]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
-  );
 }
 
 /** The project the review belongs to (PD-ARCH-01F); omitted, without blocking the review, if it cannot be read. */
@@ -107,33 +44,37 @@ function useReviewProject(projectId: string, refreshKey: string): Project | null
   return project;
 }
 
-function ReviewProjectContext({ project }: { project: Project }) {
-  const status = projectStatus(project);
-  return (
-    <div className="grid gap-1" data-testid="review-project-context">
-      <p className="m-0 font-display text-heading-sm font-extrabold text-text-primary">{project.title}</p>
-      <p className="m-0 flex flex-wrap items-center gap-2 text-body-sm text-text-secondary">
-        <span>{contentTypeLabel(project)}</span>
-        <span aria-hidden="true">·</span>
-        <span>{sportsContextSummary(project)}</span>
-        <Badge tone={status.tone}>{status.label}</Badge>
-      </p>
-    </div>
-  );
-}
+type ReviewMode = 'design' | 'copy';
 
 function ProjectReview({ projectId }: { projectId: string }) {
   const { api } = useReviewDependencies();
   const request = useDraft(api, projectId);
   const [selectedCarouselId, setSelectedCarouselId] = useState<string | null>(null);
+  // The selected slide of each carousel, kept here so that it survives a change of mode.
+  const [selectedSlides, setSelectedSlides] = useState<Readonly<Record<string, string>>>({});
+  const [mode, setMode] = useState<ReviewMode>('design');
+  const [copyDirty, setCopyDirty] = useState(false);
+  const [exportsWritten, setExportsWritten] = useState(0);
+  const [finalMessage, setFinalMessage] = useState('');
+  const [menuMessage, setMenuMessage] = useState<ReviewMenuMessage>({ text: '', failed: false });
+  const [focusDownload, setFocusDownload] = useState(false);
+  const actionsRef = useRef<HTMLDivElement>(null);
+  const modesId = useId();
   const state = request.state;
-  // The header status follows the final approvals shown in the review.
+  const draft = state.status === 'success' ? state.draft : null;
+  const editorial = useEditorialPackage(projectId, draft?.id ?? null);
+  // The header status follows the final approvals shown in the review and the exports written from it.
   const project = useReviewProject(
     projectId,
-    state.status === 'success'
-      ? state.draft.carousels.map((item) => `${item.id}:${item.finalApproval?.id ?? ''}`).join(',')
-      : '',
+    `${draft === null ? '' : draft.carousels.map((item) => `${item.id}:${item.finalApproval?.id ?? ''}`).join(',')}#${exportsWritten}`,
   );
+
+  // After the final approval the download becomes the main action: the focus moves to it.
+  useEffect(() => {
+    if (!focusDownload) return;
+    actionsRef.current?.focus();
+    setFocusDownload(false);
+  });
 
   if (state.status !== 'success') {
     return (
@@ -153,96 +94,183 @@ function ProjectReview({ projectId }: { projectId: string }) {
     );
   }
 
-  const draft = state.draft;
-  const carousels = [...draft.carousels].sort((a, b) => a.sequence - b.sequence);
+  const loaded = state.draft;
+  const carousels = [...loaded.carousels].sort((a, b) => a.sequence - b.sequence);
   const carousel = carousels.find((item) => item.id === selectedCarouselId) ?? carousels[0];
-  const slides = carousel?.elements.filter((element) => element.kind === 'slide') ?? [];
-  const approvedSlides = slides.filter((element) => element.currentVersion.state === 'approved').length;
+  const slides = carousel === undefined ? [] : orderedElements(carousel).filter((element) => element.kind === 'slide');
+  const selectedSlide = slides.find((element) => element.id === selectedSlides[carousel?.id ?? '']) ?? slides[0];
   const caption = carousel?.elements.find((element) => element.kind === 'caption');
-  return (
-    <article aria-labelledby="review-title" className={styles.page}>
-      <header className={styles.reviewHeader}>
-        <div>
-          <p className={styles.eyebrow}>{reviewCopy.eyebrow}</p>
-          <h1 id="review-title">{reviewCopy.title}</h1>
-          {project === null ? null : <ReviewProjectContext project={project} />}
-          <p className={styles.reviewIntro}>{reviewCopy.intro}</p>
-        </div>
-        {carousel ? (
-          <div className={styles.progressCard} role="group" aria-label={reviewCopy.progressLabel}>
-            <span>{reviewCopy.carouselPosition(carousel.sequence, carousel.total)}</span>
-            <strong>{reviewCopy.slideProgress(approvedSlides, slides.length)}</strong>
-            <span>
-              {caption?.currentVersion.state === 'approved' ? reviewCopy.captionApproved : reviewCopy.captionPending}
-            </span>
-          </div>
-        ) : null}
-      </header>
-      {draft.demonstration || draft.dataMode === 'DEMO_DATA' ? (
-        <p role="note" className={styles.note}>
-          Datos sintéticos: no se consideran verificados ni listos para publicación.
-        </p>
-      ) : null}
-      <div className={styles.toolbar}>
-        <Link className={buttonClassName('secondary', 'sm')} to={projectPath(projectId)}>
-          {reviewCopy.backToProject}
-        </Link>
-        <button
-          type="button"
-          className={styles.secondaryButton}
-          onClick={request.refresh}
-          disabled={request.refreshing}
-        >
-          {reviewCopy.refresh}
-        </button>
-        <p role="status" aria-live="polite" className={styles.status}>
-          {request.refreshing ? reviewCopy.refreshing : ''}
-        </p>
-      </div>
-      {request.refreshError === null ? null : (
-        <ErrorBanner title={reviewCopy.refreshError} error={request.refreshError} onRetry={request.refresh} />
-      )}
+  const indicators = reviewIndicators(carousel, editorial.pkg);
+  const firstVersion = slides[0]?.currentVersion;
+  const format =
+    firstVersion === undefined || firstVersion.width === null || firstVersion.height === null
+      ? null
+      : { width: firstVersion.width, height: firstVersion.height };
+  const slidesPending = indicators.slidesTotal - indicators.slidesApproved;
+  const copyPending = indicators.copyTotal - indicators.copyApproved;
+
+  const handleElementChanged = (element: Element) => {
+    request.showElement(element);
+    void request.refresh();
+  };
+
+  const modes: TabOption<ReviewMode>[] = [
+    {
+      value: 'design',
+      label: workspaceCopy.designTab,
+      ...(slidesPending > 0
+        ? { badge: workspaceCopy.pending(slidesPending), badgeTone: 'warning' as const }
+        : indicators.slidesTotal > 0
+          ? { badge: workspaceCopy.approved, badgeTone: 'success' as const }
+          : {}),
+    },
+    {
+      value: 'copy',
+      label: workspaceCopy.copyTab,
+      ...(copyDirty
+        ? { badge: workspaceCopy.unsaved, badgeTone: 'warning' as const }
+        : copyPending > 0
+          ? { badge: workspaceCopy.pending(copyPending), badgeTone: 'warning' as const }
+          : indicators.editorialGenerated
+            ? { badge: workspaceCopy.approved, badgeTone: 'success' as const }
+            : { badge: workspaceCopy.notGenerated, badgeTone: 'neutral' as const }),
+    },
+  ];
+
+  const menu = (
+    <ReviewMenu
+      carousel={carousel}
+      selectedSlide={selectedSlide}
+      editorial={editorial.pkg}
+      refreshing={request.refreshing}
+      onRefresh={() => void request.refresh()}
+      onMessage={setMenuMessage}
+    />
+  );
+
+  const actions = (
+    <div ref={actionsRef} tabIndex={-1} className="focus-studio grid gap-1 rounded-control">
       {carousel === undefined ? (
-        <p className={styles.emptyState}>{reviewCopy.noCarousels}</p>
+        <div className="flex justify-end">{menu}</div>
       ) : (
         <>
-          {carousels.length > 1 ? (
-            <nav className={styles.carouselPicker} aria-label={reviewCopy.carouselPicker}>
-              {carousels.map((item) => {
-                const itemSlides = item.elements.filter((element) => element.kind === 'slide');
-                const count = itemSlides.filter((element) => element.currentVersion.state === 'approved').length;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    aria-current={item.id === carousel.id ? 'true' : undefined}
-                    aria-pressed={item.id === carousel.id}
-                    className={styles.carouselChoice}
-                    onClick={() => setSelectedCarouselId(item.id)}
-                  >
-                    {reviewCopy.carouselPosition(item.sequence, item.total)}
-                    <span>{reviewCopy.slideProgress(count, itemSlides.length)}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          ) : null}
-          <CarouselReview
-            key={carousel.id}
+          <FinalApprovalAction
+            carousel={carousel}
+            editorial={editorial.pkg}
+            menu={menu}
+            onApproved={(approval) => {
+              request.showFinalApproval(approval);
+              setFinalMessage(finalCopy.recorded);
+              setFocusDownload(true);
+              void request.refresh();
+            }}
+            onRefused={() => void request.refresh()}
+          />
+          <ReviewDownloads
             projectId={projectId}
             carousel={carousel}
-            onElementChanged={request.showElement}
-            onFinalApproved={request.showFinalApproval}
-            onRefresh={request.refresh}
+            menu={menu}
+            onExported={() => setExportsWritten((count) => count + 1)}
+            onStale={() => void request.refresh()}
           />
         </>
       )}
-      <details className={styles.draftDetails}>
-        <summary>{reviewCopy.draftDetails}</summary>
-        <DraftSummary draft={draft} />
-        <LeftOutMatches draft={draft} />
-        <ExclusionsEditor key={draft.id} projectId={projectId} draft={draft} />
-      </details>
+      <p role="status" aria-live="polite" className="m-0 text-caption font-bold text-success lg:text-right">
+        {finalMessage}
+      </p>
+      {/* Menu results: a failure is shown, a success is only announced. */}
+      <p
+        role="status"
+        aria-live="polite"
+        className={menuMessage.failed ? 'm-0 text-caption text-danger lg:text-right' : 'sr-only'}
+      >
+        {menuMessage.text}
+      </p>
+    </div>
+  );
+
+  return (
+    <article aria-labelledby="review-title" className={`${styles.theme} grid gap-4`}>
+      <div className="flex min-w-0 flex-col gap-3 lg:h-[calc(100dvh-1.5rem)] lg:min-h-[44rem]">
+        <ReviewHeader
+          projectId={projectId}
+          project={project}
+          carousels={carousels}
+          carousel={carousel}
+          onSelectCarousel={(id) => {
+            setSelectedCarouselId(id);
+            setFinalMessage('');
+          }}
+          indicators={indicators}
+          format={format}
+          actions={actions}
+        />
+        {loaded.demonstration || loaded.dataMode === 'DEMO_DATA' ? (
+          <p
+            role="note"
+            className="m-0 rounded-control border-alert border-demo bg-demo-surface px-3 py-2 text-body-sm text-demo"
+          >
+            {workspaceCopy.demoNote}
+          </p>
+        ) : null}
+        <p role="status" aria-live="polite" className={styles.visuallyHidden}>
+          {request.refreshing ? reviewCopy.refreshing : ''}
+        </p>
+        {request.refreshError === null ? null : (
+          <ErrorBanner title={reviewCopy.refreshError} error={request.refreshError} onRetry={request.refresh} />
+        )}
+        {carousel === undefined ? (
+          <p className="m-0 rounded-panel border border-dashed border-border-strong p-6 text-text-secondary">
+            {reviewCopy.noCarousels}
+          </p>
+        ) : (
+          <>
+            <Tabs
+              id={modesId}
+              label={workspaceCopy.modesLabel}
+              size="lg"
+              options={modes}
+              value={mode}
+              onChange={setMode}
+              className="self-start"
+            />
+            {/* Both modes stay mounted: the selected slide, open edits and messages survive a change of mode. */}
+            <div
+              role="tabpanel"
+              id={tabPanelId(modesId, 'design')}
+              aria-labelledby={tabId(modesId, 'design')}
+              hidden={mode !== 'design'}
+              className={mode === 'design' ? 'min-h-0 min-w-0 flex-1' : 'hidden'}
+            >
+              <CarouselReview
+                key={carousel.id}
+                carousel={carousel}
+                selectedSlideId={selectedSlide?.id ?? null}
+                onSelectSlide={(id) => setSelectedSlides((current) => ({ ...current, [carousel.id]: id }))}
+                onElementChanged={request.showElement}
+                onRefresh={request.refresh}
+              />
+            </div>
+            <div
+              role="tabpanel"
+              id={tabPanelId(modesId, 'copy')}
+              aria-labelledby={tabId(modesId, 'copy')}
+              hidden={mode !== 'copy'}
+              className={mode === 'copy' ? 'min-h-0 min-w-0 flex-1' : 'hidden'}
+            >
+              <EditorialCopy
+                key={loaded.id}
+                projectId={projectId}
+                editorial={editorial}
+                caption={caption}
+                onCaptionChanged={handleElementChanged}
+                onCaptionRefused={() => void request.refresh()}
+                onDirtyChange={setCopyDirty}
+              />
+            </div>
+          </>
+        )}
+      </div>
     </article>
   );
 }
@@ -261,11 +289,14 @@ export function ReviewNotFound() {
 }
 
 /**
- * Focused review of one selected carousel, with the full draft and exclusions retained in a details section.
- * Review of the active draft of a project (R-206, R-208, R-215, R-217, R-240, R-269, R-271, R-272): demonstration
- * banner, data mode, numbered carousels with the preview of every slide, caption and hashtags in order, per-element
- * provenance, state, blocked facts, flags, QA, acknowledgement, approval, withdrawal and regeneration, the final
- * approval of each carousel, left-out matches and the exclusions editor.
+ * Review of the active draft of a project (layout UX-REVIEW-01): a persistent header with the project, the compact
+ * indicators and the final approval or downloads; two modes, «Diseño visual» (slides) and «Copy editorial» (the
+ * editorial deliverables and the carousel text). It keeps the requirements of the review (R-206, R-208, R-215,
+ * R-217, R-240, R-269, R-271, R-272): demonstration banner, numbered carousels
+ * with the preview of every slide, the caption, state, blocked facts, flags, QA, acknowledgement, approval,
+ * withdrawal and regeneration, and the final approval of each carousel. The draft details and the left-out matches
+ * are no longer part of the review, and the exclusions editor was removed (Product Owner, 2026-11-10); the left-out
+ * matches stay in «Datos y verificación».
  */
 export function ReviewPage() {
   const { projectId } = useParams();

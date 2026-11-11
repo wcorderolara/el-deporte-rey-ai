@@ -27,14 +27,12 @@ import {
   acknowledgeWarnings,
   allElements,
   approve,
-  approveCarousel,
   approveDraft,
   approveFactsManually,
   approveOne,
   captionOf,
   draftOf,
   elementPath,
-  excludeMatches,
   expectProblem,
   exportCarousel,
   exported,
@@ -132,19 +130,6 @@ describe('blocked facts and explicit approval (R-206, R-216, R-240)', { timeout:
     );
     expect(refused.items?.map((item) => item.reason)).toContain('blocked');
     expectProblem(await exportCarousel(t, carousel.id), 409, 'FINAL_APPROVAL_REQUIRED');
-
-    // Leaving the match out (redraft): the new draft has no blocked element and can be approved and exported;
-    // approvals of the superseded draft do not carry over.
-    const matchKey = String(unverified.find((fact) => fact.kind === 'match_score')?.subject.matchKey);
-    const redraft = await excludeMatches(t, project.id, [matchKey]);
-    expect(redraft).toMatchObject({ kind: 'redraft', status: 'completed' });
-    const next = await draftOf(t, project.id);
-    expect(next.leftOutMatches).toContainEqual(expect.objectContaining({ matchKey, reason: 'excluded_by_operator' }));
-    expect(allElements(next).every((element) => element.currentVersion.state === 'ready')).toBe(true);
-    expect(allElements(next).some((element) => element.currentVersion.blocked)).toBe(false);
-    const nextCarousel = firstCarousel(next);
-    await approveCarousel(t, nextCarousel);
-    await exported(t, nextCarousel.id);
   });
 
   it('final approval and export need every slide; the caption is exported once approved; withdrawal undoes it', async () => {

@@ -133,6 +133,8 @@ export interface AppConfig {
     ai: AiProviderConfig;
     /** Image generation provider of the design proposals (PD-ARCH-01G-B); adapter `disabled` by default. */
     images: AiProviderConfig;
+    /** Editorial copy writer (PD-ARCH-01H). */
+    editorial: AiProviderConfig;
   }>;
   readonly verificationPolicy: VerificationPolicy;
   readonly catalogue: CatalogueConfig;

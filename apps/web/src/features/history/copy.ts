@@ -98,6 +98,7 @@ export const detailCopy = {
   contentTitle: 'Contenido exportado',
   contentIntro: 'Diapositivas y texto de la publicación exactamente como se exportaron, en el orden del carrusel.',
   noElements: 'La exportación no tiene elementos.',
+  previewTitle: 'Vista previa del carrusel exportado',
   slide: (position: number): string => `Diapositiva ${position}`,
   caption: 'Texto de la publicación',
   version: (versionNumber: number): string => `versión ${versionNumber}`,

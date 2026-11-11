@@ -73,3 +73,65 @@ export {
   requestedSlideKeys,
 } from './schemas.js';
 export { MAX_STUB_FIXTURE_BYTES, type StubAiTextProvider, createStubAiProvider } from './stub-adapter.js';
+export {
+  EDITORIAL_DATA_HEADER,
+  EDITORIAL_PROMPT_VERSION,
+  EDITORIAL_SYSTEM_MESSAGE,
+  type EditorialPrompt,
+  buildEditorialDataBlock,
+  buildEditorialPrompt,
+  editorialOutputJsonSchema,
+} from './editorial-prompt.js';
+export {
+  EDITORIAL_ADAPTER_KINDS,
+  EDITORIAL_REASONING_EFFORTS,
+  EDITORIAL_STUB_SCENARIOS,
+  type AiEditorialWriter,
+  type EditorialAdapterKind,
+  type EditorialOpenAiOptions,
+  type EditorialPricing,
+  type EditorialReasoningEffort,
+  type EditorialStubOptions,
+  type EditorialWriteContext,
+  type EditorialWriterDescription,
+  type EditorialWriterKind,
+  type EditorialWriterLimits,
+  isHostedBaseUrl,
+  parseEditorialOpenAiOptions,
+  parseEditorialStubOptions,
+} from './editorial-port.js';
+export {
+  EDITORIAL_CONTENT_KINDS,
+  EDITORIAL_EVENT_KINDS,
+  EVENT_ID_PATTERN,
+  EVIDENCE_ID_PATTERN,
+  MATCH_REF_PATTERN,
+  RESPONSE_KEY,
+  type EditorialContentKind,
+  type EditorialEventKind,
+  type EditorialEvidenceRef,
+  type EditorialFact,
+  type EditorialFacebookInstagram,
+  type EditorialKeyEvent,
+  type EditorialLimits,
+  type EditorialMatch,
+  type EditorialRequest,
+  type EditorialResponse,
+  type EditorialResult,
+  type EditorialRound,
+  type EditorialTeamHashtag,
+  type EditorialUsage,
+  parseEditorialRequest,
+  parseEditorialResponse,
+  parseEditorialResponseText,
+} from './editorial-schemas.js';
+export {
+  EDITORIAL_RESPONSE_FORMAT_NAME,
+  EDITORIAL_SYSTEM_MESSAGE_BYTES,
+  EditorialWriteError,
+  type EditorialOpenAiDeps,
+  buildEditorialChatBody,
+  createOpenAiEditorialWriter,
+} from './editorial-openai.js';
+export { type StubEditorialWriter, createStubEditorialWriter, stubEditorialAnswer } from './editorial-stub.js';
+export { createEditorialWriter } from './editorial-factory.js';

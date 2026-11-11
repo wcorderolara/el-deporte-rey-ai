@@ -27,6 +27,21 @@ import {
   TemplateSchema,
 } from './brand.js';
 import {
+  EditorialContextSchema,
+  EditorialDeliverableSchema,
+  EditorialEditCreateSchema,
+  EditorialEventSchema,
+  EditorialEvidenceSchema,
+  EditorialFieldSchema,
+  EditorialFlagSchema,
+  EditorialGenerationCreateSchema,
+  EditorialGenerationResultSchema,
+  EditorialGenerationSchema,
+  EditorialPackageSchema,
+  EditorialVersionSchema,
+  EditorialWriterSchema,
+} from './editorial.js';
+import {
   DesignCapabilitiesSchema,
   DesignContentTypeSchema,
   DesignModeSchema,
@@ -423,6 +438,20 @@ export const componentSchemas = {
   VisualTemplatePreviewSelection: VisualTemplatePreviewSelectionSchema,
   VisualTemplatePreviewRequest: VisualTemplatePreviewRequestSchema,
   VisualTemplatePreview: VisualTemplatePreviewSchema,
+  // PD-ARCH-01H: editorial copy.
+  EditorialDeliverable: EditorialDeliverableSchema,
+  EditorialField: EditorialFieldSchema,
+  EditorialFlag: EditorialFlagSchema,
+  EditorialEvidence: EditorialEvidenceSchema,
+  EditorialEvent: EditorialEventSchema,
+  EditorialContext: EditorialContextSchema,
+  EditorialWriter: EditorialWriterSchema,
+  EditorialVersion: EditorialVersionSchema,
+  EditorialGeneration: EditorialGenerationSchema,
+  EditorialPackage: EditorialPackageSchema,
+  EditorialGenerationCreate: EditorialGenerationCreateSchema,
+  EditorialGenerationResult: EditorialGenerationResultSchema,
+  EditorialEditCreate: EditorialEditCreateSchema,
 } as const satisfies Record<string, z.ZodType>;
 
 export type ComponentName = keyof typeof componentSchemas;

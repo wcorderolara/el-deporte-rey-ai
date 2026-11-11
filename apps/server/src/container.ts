@@ -19,7 +19,12 @@ import {
   buildImageEgressAllowList,
   createEgressClient,
 } from './platform/net/index.js';
-import { type AiTextProvider, createAiProvider } from './providers/ai/index.js';
+import {
+  type AiEditorialWriter,
+  type AiTextProvider,
+  createAiProvider,
+  createEditorialWriter,
+} from './providers/ai/index.js';
 import { type ImageGenerationProvider, createImageProvider } from './providers/images/index.js';
 import { type SourceRegistry, createSportsSources } from './providers/sports/index.js';
 
@@ -45,9 +50,13 @@ export const PROVIDER_ENVIRONMENT_VARIABLES = [
 
 /**
  * Variables deleted from `process.env` once the injected environment exists (T11H-F03; the image provider key since
- * PD-ARCH-01G-B).
+ * PD-ARCH-01G-B; the AI text key since PD-ARCH-01H, when it may hold a billed hosted key).
  */
-export const DELETED_ENVIRONMENT_VARIABLES = ['FOOTBALL_DATA_API_TOKEN', 'EDR_IMAGE_API_KEY'] as const;
+export const DELETED_ENVIRONMENT_VARIABLES = [
+  'FOOTBALL_DATA_API_TOKEN',
+  'EDR_IMAGE_API_KEY',
+  'EDR_AI_API_KEY',
+] as const;
 
 /**
  * Builds the injected environment: a frozen, null-prototype snapshot of `PROVIDER_ENVIRONMENT_VARIABLES` whose
@@ -106,6 +115,8 @@ export interface ProviderFactories {
   readonly createAiProvider: (config: AppConfig, deps: AiProviderDeps) => AiTextProvider;
   /** Image generation (PD-ARCH-01G-B); the production factory when absent. */
   readonly createImageProvider?: (config: AppConfig, deps: ImageProviderDeps) => ImageGenerationProvider;
+  /** Editorial copy writer (PD-ARCH-01H); the production factory when absent. */
+  readonly createEditorialWriter?: (config: AppConfig, deps: ImageProviderDeps) => AiEditorialWriter;
 }
 
 /** The production provider entry points (`providers/sports`, `providers/ai` and `providers/images`). */
@@ -113,6 +124,7 @@ export const DEFAULT_PROVIDER_FACTORIES: ProviderFactories = Object.freeze({
   createSportsSources,
   createAiProvider,
   createImageProvider,
+  createEditorialWriter,
 });
 
 /**
@@ -149,6 +161,8 @@ export interface AppContainer {
   readonly aiProvider: AiTextProvider;
   /** Image generation for design proposals (PD-ARCH-01G-B), with its own egress client and allow-list. */
   readonly imageProvider: ImageGenerationProvider;
+  /** Editorial copy writer (PD-ARCH-01H); only the editorial module calls it, after the operator's confirmation. */
+  readonly editorialWriter: AiEditorialWriter;
   readonly paths: Paths;
 }
 
@@ -183,6 +197,7 @@ export function createContainer(options: ContainerOptions): AppContainer {
   const aiProvider = providers.createAiProvider(config, { egress, env, paths });
   const imageEgress = createEgressClient(buildImageEgressAllowList(config), IMAGE_EGRESS_LIMITS);
   const imageProvider = (providers.createImageProvider ?? createImageProvider)(config, { egress: imageEgress, env });
+  const editorialWriter = (providers.createEditorialWriter ?? createEditorialWriter)(config, { egress, env });
 
   return Object.freeze({
     config,
@@ -194,6 +209,7 @@ export function createContainer(options: ContainerOptions): AppContainer {
     catalogue: catalogueOf(sources),
     aiProvider,
     imageProvider,
+    editorialWriter,
     paths,
   });
 }

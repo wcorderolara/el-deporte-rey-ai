@@ -210,6 +210,27 @@
           "maxConcurrentRequests": 1
         }
       }
+    },
+    "editorial": {
+      "adapter": "openai-compatible",
+      "options": {
+        "baseUrl": "https://api.openai.com/v1",
+        "model": "gpt-6.1-sol",
+        "timeoutMs": 60000,
+        "maxOutputTokens": 16000,
+        "reasoningEffort": "medium",
+        "pricing": {
+          "currency": "USD",
+          "inputPerMillionTokens": 2,
+          "outputPerMillionTokens": 10,
+          "source": "https://developers.openai.com/api/docs/pricing",
+          "checkedOn": "2026-11-10"
+        },
+        "limits": {
+          "maxGenerationsPerDay": 30,
+          "monthlySpendLimit": 5
+        }
+      }
     }
   },
   "verificationPolicy": {

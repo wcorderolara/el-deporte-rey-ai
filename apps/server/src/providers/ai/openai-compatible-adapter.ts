@@ -34,7 +34,7 @@ export const CHAT_COMPLETIONS_PATH = '/chat/completions';
 export const RESPONSE_FORMAT_NAME = 'carousel_draft';
 
 /** A key that can be sent in an HTTP header: printable ASCII without spaces. */
-const SENDABLE_KEY = /^[\x21-\x7e]{1,4096}$/;
+export const SENDABLE_KEY = /^[\x21-\x7e]{1,4096}$/;
 
 /** Finish reasons that mean the answer is incomplete or not a plain message. */
 const REFUSED_FINISH_REASONS = new Set(['length', 'tool_calls', 'function_call', 'content_filter']);
@@ -92,7 +92,7 @@ function isNonEmpty(value: unknown): boolean {
 }
 
 /** Extracts the message content of a 2xx response; anything unexpected is `ai_response_invalid`. */
-function messageContent(text: string, status: number): string {
+export function messageContent(text: string, status: number): string {
   let value: unknown;
   try {
     value = JSON.parse(text);
@@ -114,7 +114,7 @@ function messageContent(text: string, status: number): string {
 }
 
 /** Maps an egress failure to a closed code; the original error is dropped. */
-function egressFailure(error: unknown): AiProviderError {
+export function egressFailure(error: unknown): AiProviderError {
   if (error instanceof AiProviderError) {
     return error;
   }

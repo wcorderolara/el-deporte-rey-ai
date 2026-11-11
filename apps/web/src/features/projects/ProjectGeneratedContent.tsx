@@ -1,18 +1,18 @@
-import type { Carousel, Element, Project } from '@edr/contracts';
+import type { Carousel, Element, Project, TextFieldName } from '@edr/contracts';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
 
 import { featurePaths } from '../../app/routes';
 import { ApiError } from '../../api/client';
-import { Badge, buttonClassName, ErrorBanner, LoadingState } from '../../ui';
+import { buttonClassName, ErrorBanner, LoadingState, StatusBadge } from '../../ui';
 import { CarouselDownload } from '../history/CarouselDownload';
 import { ProjectExportHistory } from '../history/ProjectExportHistory';
 import { useReviewDependencies } from '../review/ReviewContext';
 import { useDraft } from '../review/useDraft';
 import { ReviewThumbnailRail, type ReviewThumbnail } from '../review/ReviewThumbnailRail';
-import { ReviewWorkspace } from '../review/ReviewWorkspace';
+import { SlidePanel, SlideWorkspace } from '../review/SlideWorkspace';
 import { slideTypeLabel, textFieldLabel, versionStateLabel } from '../review/copy';
-import reviewStyles from '../review/Review.module.css';
+import { elementName, elementStatus } from '../review/model';
 
 function fieldText(element: Element, field: string): string | null {
   const item = element.currentVersion.fields.find((entry) => entry.field === field);
@@ -23,6 +23,18 @@ function fieldText(element: Element, field: string): string | null {
       .trim() || null
   );
 }
+
+/** The text fields of a slide shown in the side panel, in this order. */
+const DETAIL_FIELDS = [
+  'title',
+  'headline',
+  'match_status',
+  'kickoff',
+  'team_home',
+  'score',
+  'team_away',
+  'fixtures',
+] as const satisfies readonly TextFieldName[];
 
 function carouselSlides(carousel: Carousel): Element[] {
   return carousel.elements.filter((element) => element.kind === 'slide').sort((a, b) => a.position - b.position);
@@ -48,9 +60,18 @@ function ProjectPreviewActions({
   return (
     <div className="grid gap-2">
       {approved ? (
-        <CarouselDownload projectId={project.id} carousel={carousel} onExported={onExported} onStale={onStale} />
+        <CarouselDownload
+          projectId={project.id}
+          carousel={carousel}
+          onExported={onExported}
+          onStale={onStale}
+          className={buttonClassName('primary', 'md', 'w-full')}
+        />
       ) : null}
-      <Link className={buttonClassName(approved ? 'secondary' : 'primary', 'md')} to={featurePaths.review(project.id)}>
+      <Link
+        className={buttonClassName(approved ? 'secondary' : 'primary', 'md', 'w-full')}
+        to={featurePaths.review(project.id)}
+      >
         {started && !approved ? 'Continuar revisión' : 'Revisar contenido'}
       </Link>
     </div>
@@ -73,6 +94,10 @@ function ProjectEmptyContent({ project }: { project: Project }) {
   );
 }
 
+/**
+ * The selected carousel in the slide workspace of the review (UX-REVIEW-01): the slide list with each slide's state,
+ * the selected slide with its tools, and a side panel with the slide's content and the project actions.
+ */
 function ProjectCarouselPreview({
   project,
   carousel,
@@ -87,28 +112,38 @@ function ProjectCarouselPreview({
   const { api } = useReviewDependencies();
   const slides = carouselSlides(carousel);
   const [selectedId, setSelectedId] = useState<string | undefined>(slides[0]?.id);
-  const selectedSlide = slides.find((slide) => slide.id === selectedId) ?? slides[0];
-  const items: ReviewThumbnail[] = slides.map((slide) => ({
-    id: slide.id,
-    position: slide.position,
-    imageUrl: slide.currentVersion.imageUrl,
-    imageSource: slide.currentVersion.imageUrl ? api.slideImageUrl(slide.currentVersion.id) : null,
-    title: slide.slideType ? slideTypeLabel[slide.slideType] : 'Diapositiva',
-    subtitle: versionStateLabel[slide.currentVersion.state],
-  }));
+  const selectedIndex = Math.max(
+    0,
+    slides.findIndex((slide) => slide.id === selectedId),
+  );
+  const selectedSlide = slides[selectedIndex];
+  const previousSlide = slides[selectedIndex - 1];
+  const nextSlide = slides[selectedIndex + 1];
+  const items: ReviewThumbnail[] = slides.map((slide) => {
+    const status = elementStatus(slide);
+    return {
+      id: slide.id,
+      position: slide.position,
+      imageUrl: slide.currentVersion.imageUrl,
+      imageSource: slide.currentVersion.imageUrl ? api.slideImageUrl(slide.currentVersion.id) : null,
+      title: slide.slideType ? slideTypeLabel[slide.slideType] : 'Diapositiva',
+      status: { label: status.label, tone: status.tone, symbol: status.symbol },
+    };
+  });
 
   if (!selectedSlide) {
     return <p className="m-0 text-body-sm text-text-secondary">El carrusel aún no contiene diapositivas.</p>;
   }
 
-  const title = fieldText(selectedSlide, 'title') ?? fieldText(selectedSlide, 'headline');
-  const detailFields = ['match_status', 'kickoff', 'team_home', 'score', 'team_away', 'fixtures']
-    .map((field) => ({ field, value: fieldText(selectedSlide, field) }))
-    .filter((item): item is { field: string; value: string } => item.value !== null);
+  const version = selectedSlide.currentVersion;
+  const name = elementName(selectedSlide);
+  const detailFields = DETAIL_FIELDS.map((field) => ({ field, value: fieldText(selectedSlide, field) })).filter(
+    (item): item is { field: (typeof DETAIL_FIELDS)[number]; value: string } => item.value !== null,
+  );
 
   return (
-    <ReviewWorkspace
-      labelledBy="project-content-heading"
+    <SlideWorkspace
+      aria-labelledby="project-content-heading"
       navigation={
         <ReviewThumbnailRail
           label={`Miniaturas de ${project.title}`}
@@ -116,54 +151,51 @@ function ProjectCarouselPreview({
           items={items}
           selectedId={selectedSlide.id}
           onSelect={setSelectedId}
+          fill
         />
       }
-    >
-      <section className={reviewStyles.elementPreview} aria-label="Vista previa de la diapositiva">
-        <header className={reviewStyles.elementHeader}>
-          <div>
-            <p className={reviewStyles.elementEyebrow}>Contenido del carrusel</p>
-            <h3>{title ?? `Diapositiva ${selectedSlide.position}`}</h3>
-          </div>
-        </header>
-        <figure className={reviewStyles.figure}>
-          {selectedSlide.currentVersion.imageUrl ? (
-            <img
-              className={reviewStyles.slideImage}
-              src={api.slideImageUrl(selectedSlide.currentVersion.id)}
-              alt={`Diapositiva ${selectedSlide.position}${title ? `: ${title}` : ''}`}
-              width={selectedSlide.currentVersion.width ?? undefined}
-              height={selectedSlide.currentVersion.height ?? undefined}
+      preview={{
+        name,
+        typeLabel: selectedSlide.slideType ? slideTypeLabel[selectedSlide.slideType] : null,
+        version,
+        imageSource: version.imageUrl ? api.slideImageUrl(version.id) : null,
+        noImageText: 'La vista previa no está disponible.',
+        pager: {
+          position: selectedSlide.position,
+          total: slides.length,
+          ...(previousSlide ? { onPrevious: () => setSelectedId(previousSlide.id) } : {}),
+          ...(nextSlide ? { onNext: () => setSelectedId(nextSlide.id) } : {}),
+        },
+      }}
+      panel={
+        <SlidePanel
+          label="Contexto del contenido"
+          eyebrow="Contenido del carrusel"
+          badges={
+            <StatusBadge
+              label={versionStateLabel[version.state]}
+              tone={version.state === 'approved' ? 'positive' : version.state === 'qa_failed' ? 'caution' : 'neutral'}
+              symbol={version.state === 'approved' ? '✓' : version.state === 'qa_failed' ? '!' : '•'}
             />
+          }
+          title={name}
+        >
+          {detailFields.length ? (
+            <dl className="m-0 grid gap-3">
+              {detailFields.map(({ field, value }) => (
+                <div key={field} className="min-w-0">
+                  <dt className="text-caption font-bold text-text-secondary">{textFieldLabel[field]}</dt>
+                  <dd className="m-0 whitespace-pre-line break-words text-body-md text-text-primary">{value}</dd>
+                </div>
+              ))}
+            </dl>
           ) : (
-            <p className="m-0 text-text-secondary">La vista previa no está disponible.</p>
+            <p className="m-0 text-body-sm text-text-secondary">Vista previa del contenido generado.</p>
           )}
-        </figure>
-      </section>
-      <section className={reviewStyles.reviewPanel} aria-label="Contexto del contenido">
-        <div className={reviewStyles.reviewStatus}>
-          <Badge tone="info">{versionStateLabel[selectedSlide.currentVersion.state]}</Badge>
-          <span className="text-caption text-text-secondary">
-            Diapositiva {selectedSlide.position} de {slides.length}
-          </span>
-        </div>
-        {detailFields.length ? (
-          <dl className="m-0 grid gap-3">
-            {detailFields.map(({ field, value }) => (
-              <div key={field}>
-                <dt className="text-caption font-bold text-text-secondary">
-                  {textFieldLabel[field as keyof typeof textFieldLabel]}
-                </dt>
-                <dd className="m-0 whitespace-pre-line break-words text-body-md text-text-primary">{value}</dd>
-              </div>
-            ))}
-          </dl>
-        ) : (
-          <p className="m-0 text-body-sm text-text-secondary">Vista previa del contenido generado.</p>
-        )}
-        <ProjectPreviewActions project={project} carousel={carousel} onExported={onExported} onStale={onStale} />
-      </section>
-    </ReviewWorkspace>
+          <ProjectPreviewActions project={project} carousel={carousel} onExported={onExported} onStale={onStale} />
+        </SlidePanel>
+      }
+    />
   );
 }
 

@@ -35,7 +35,7 @@ Always install with `npm ci` from the committed `package-lock.json`.
 | Development | `npm run dev` | API `http://127.0.0.1:4300` (watch mode) and Vite `http://127.0.0.1:5173` with `/api` proxied to the API |
 | Development with football-data.org | `EDR_CONFIG=config/dev-live.config.json npm run dev` | Same separate API + Vite workflow; uses the existing `data/` database |
 | Development with AI design proposals (OpenAI) | `EDR_CONFIG=config/dev-images.config.json npm run dev` | Same workflow; adds the OpenAI image adapter (`EDR_IMAGE_API_KEY` in `.env.local`) |
-| Full development (football-data.org and OpenAI together) | `EDR_CONFIG=config/dev-full.config.json npm run dev` | Same workflow; both providers (`FOOTBALL_DATA_API_TOKEN` and `EDR_IMAGE_API_KEY` in `.env.local`) |
+| Full development (football-data.org and OpenAI together) | `EDR_CONFIG=config/dev-full.config.json npm run dev` | Same workflow; football-data.org, the OpenAI images and the OpenAI editorial copy (`FOOTBALL_DATA_API_TOKEN`, `EDR_IMAGE_API_KEY` and `EDR_AI_API_KEY` in `.env.local`) |
 | Local use | `npm run build`, then `npm start` | UI and API on `http://127.0.0.1:4300` |
 | Verification runs (gates, verify worktree) | started by the end-to-end runner | `http://127.0.0.1:4310` |
 | Product Owner demonstration (demo worktree) | started for the demonstration only | `http://127.0.0.1:4320` |
@@ -98,6 +98,21 @@ precedence.
   the token. No project script enables them.
 - The token is sent only in the `X-Auth-Token` header to `https://api.football-data.org`, from the server; it never
   reaches the browser, the database, the logs or an API response.
+
+**AI editorial copy with the OpenAI text API (PD-ARCH-01H, PD-30):**
+
+- `config/dev-full.config.json` configures the `openai-compatible` editorial writer (`providers.editorial`): the base
+  URL, the model, the reasoning effort (`reasoningEffort: medium`, sent as `reasoning_effort`), a 60-second deadline,
+  the output bound (`maxOutputTokens`, which includes the reasoning tokens), the prices copied from the provider's
+  published list with the date they were checked, and the PD-30 limits (30 generations a day, USD 5 a month). Every
+  other configuration keeps the free deterministic `stub` writer («Texto de prueba (sin IA)», no network request); a
+  test checks that only `dev-full` configures another writer. The slide commentary of the content stage (`providers.ai`) stays `stub`: only the editorial copy can call the
+  hosted writer, and only after the operator confirms the cost of each generation.
+- Put the key in `.env.local` as `EDR_AI_API_KEY=` followed by the key (mode 0600) and restart. The key is read at
+  call time, sent only in the `Authorization` header and removed from `process.env` at startup; it never reaches the
+  database, the logs or an API response. Without it the review shows that the writer is not ready.
+- Check the model and the prices against the provider's pricing page before the first run, and change them only in
+  the configuration.
 
 **AI design proposals with the OpenAI Image API (PD-ARCH-01G-B):**
 

@@ -77,8 +77,21 @@ describe('Project detail: selection and links (R-200, R-269)', () => {
 
     expect(await screen.findByRole('navigation', { name: /Miniaturas de/ })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Contenido generado' })).toBeTruthy();
-    expect(screen.getByRole('region', { name: 'Vista previa de la diapositiva' })).toBeTruthy();
-    expect(screen.getByRole('region', { name: 'Contexto del contenido' })).toBeTruthy();
+    // UX-REVIEW-01: the same slide workspace as the review (list with states, preview with its tools, side panel).
+    const preview = screen.getByRole('region', { name: /^Vista previa: Diapositiva 1/ });
+    expect(within(preview).getByText('Diapositiva 01 de 03')).toBeTruthy();
+    expect(within(preview).getByRole('button', { name: 'Anterior' }).hasAttribute('disabled')).toBe(true);
+    await userEvent.setup().click(within(preview).getByRole('button', { name: 'Siguiente' }));
+    expect(
+      within(screen.getByRole('region', { name: /^Vista previa: Diapositiva 2/ })).getByText('Diapositiva 02 de 03'),
+    ).toBeTruthy();
+    const panel = screen.getByRole('region', { name: 'Contexto del contenido' });
+    expect(within(panel).getByRole('heading', { level: 3, name: /^Diapositiva 2/ })).toBeTruthy();
+    expect(
+      within(screen.getByRole('navigation', { name: /Miniaturas de/ }))
+        .getAllByRole('button')[1]
+        ?.getAttribute('aria-current'),
+    ).toBe('true');
     expect(screen.getByRole('link', { name: 'Revisar contenido' }).getAttribute('href')).toBe(
       `/projects/${PROJECT_ID}/review`,
     );

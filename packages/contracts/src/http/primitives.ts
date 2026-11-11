@@ -43,6 +43,14 @@ export const ContractPatterns = {
   VisualTemplateUrl: '^/api/v1/visual-templates/',
   /** A revision number written in a query string. */
   RevisionParam: '^[1-9][0-9]{0,8}$',
+  /** Evidence item of the editorial research panel (PD-ARCH-01H). */
+  EditorialEvidenceId: '^ev-[a-z0-9][a-z0-9-]{0,59}$',
+  /** Deterministic key event of the editorial context (PD-ARCH-01H). */
+  EditorialEventId: '^evt-[a-z0-9][a-z0-9-]{0,59}$',
+  /** Configured AI text model identifier (PD-ARCH-01H). */
+  AiModelId: '^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$',
+  /** Operator instruction for an editorial generation: one printable line. */
+  EditorialInstructions: '^[^\\p{Cc}\\p{Cf}]{1,500}$',
 } as const;
 
 export type ContractPatternName = keyof typeof ContractPatterns;

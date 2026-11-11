@@ -64,16 +64,16 @@ describe('contract document', () => {
     );
   });
 
-  it('has 133 operations on 98 paths, 64 of them mutating, with unique operation IDs', () => {
-    expect(Object.keys(child(document, 'paths'))).toHaveLength(98);
-    expect(operations).toHaveLength(133);
-    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(64);
+  it('has 137 operations on 101 paths, 67 of them mutating, with unique operation IDs', () => {
+    expect(Object.keys(child(document, 'paths'))).toHaveLength(101);
+    expect(operations).toHaveLength(137);
+    expect(operations.filter((operation) => MUTATING.has(operation.method))).toHaveLength(67);
     const ids = operations.map((operation) => operation.operation.operationId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('has 198 component schemas', () => {
-    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(198);
+  it('has 211 component schemas', () => {
+    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(211);
   });
 });
 
@@ -122,6 +122,18 @@ describe('local request protection declared on every operation (AD-14, T10-F17, 
 
   it('constrains every server-ID path parameter with the Uuid schema and every other with a pattern schema', () => {
     const unconstrained: string[] = [];
+    /** A component schema that is a closed list of strings (an enum is tighter than a pattern; PD-ARCH-01H). */
+    const enumerated = (ref: string): boolean => {
+      const name = ref.startsWith('#/components/schemas/') ? ref.slice('#/components/schemas/'.length) : null;
+      const target = name === null ? undefined : child(document, 'components', 'schemas')[name];
+      return (
+        isObject(target) &&
+        target.type === 'string' &&
+        Array.isArray(target.enum) &&
+        target.enum.length > 0 &&
+        target.enum.every((value) => typeof value === 'string')
+      );
+    };
     for (const operation of operations) {
       for (const parameter of operation.parameters.filter((entry) => entry.in === 'path')) {
         const schema = child(parameter, 'schema');
@@ -130,7 +142,8 @@ describe('local request protection declared on every operation (AD-14, T10-F17, 
           ref.endsWith('/Uuid') ||
           ref.endsWith('/Slug') ||
           ref.endsWith('/SourceId') ||
-          ref.endsWith('/ExternalSeasonId');
+          ref.endsWith('/ExternalSeasonId') ||
+          enumerated(ref);
         const patterned = typeof schema.pattern === 'string' && schema.pattern.length > 0;
         if (!bounded && !patterned && !(schema.type === 'integer' && schema.maximum !== undefined)) {
           unconstrained.push(`${label(operation)} ${String(parameter.name)}`);
@@ -267,7 +280,11 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/tags/12: added',
       '/tags/13: added',
       '/tags/14: added',
+      // PD-ARCH-01H: editorial copy.
+      '/tags/15: added',
       '/paths/~1projects~1{projectId}/delete: added',
+      // UX-REVIEW-01: setExcludedMatches retired (Product Owner, 2026-11-10).
+      '/paths/~1projects~1{projectId}~1draft~1exclusions: removed',
       `${ack}/requestBody/content/application~1json/schema/properties/checks/items/enum/1: added`,
       '/paths/~1brand~1assets/post/parameters/3: added',
       '/paths/~1brand~1assets/post/parameters/4: added',
@@ -332,6 +349,10 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/paths/~1content-batches~1previews: added',
       '/paths/~1content-batches: added',
       '/paths/~1content-batches~1{batchId}: added',
+      '/paths/~1projects~1{projectId}~1editorial: added',
+      '/paths/~1projects~1{projectId}~1editorial~1generations: added',
+      '/paths/~1projects~1{projectId}~1editorial~1deliverables~1{deliverable}~1edits: added',
+      '/paths/~1projects~1{projectId}~1editorial~1deliverables~1{deliverable}~1approval: added',
       '/paths/~1exports~1{exportId}~1download: added',
       '/paths/~1brand~1identity: added',
       '/paths/~1design~1capabilities: added',
@@ -355,6 +376,7 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/paths/~1visual-templates~1{templateId}~1versions~1{versionId}~1background: added',
       '/paths/~1visual-templates~1{templateId}~1versions~1{versionId}~1previews: added',
       '/paths/~1visual-templates~1{templateId}~1versions~1{versionId}~1preview: added',
+      '/components/parameters/EditorialDeliverable: added',
       '/components/parameters/GenerationId: added',
       '/components/parameters/ProposalId: added',
       '/components/parameters/VisualTemplateId: added',
@@ -392,6 +414,9 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/Problem/properties/code/enum/46: added',
       '/components/schemas/Problem/properties/code/enum/47: added',
       '/components/schemas/Problem/properties/code/enum/48: added',
+      '/components/schemas/Problem/properties/code/enum/49: added',
+      '/components/schemas/Problem/properties/code/enum/50: added',
+      '/components/schemas/Problem/properties/code/enum/51: added',
       '/components/schemas/ProjectSummaryFields/required/13: added',
       '/components/schemas/ProjectSummaryFields/required/14: added',
       '/components/schemas/ProjectSummaryFields/properties/latestRunStatus: added',
@@ -507,6 +532,19 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/DesignGenerationStatus: added',
       '/components/schemas/DesignProposalStatus: added',
       '/components/schemas/DesignGenerationErrorCode: added',
+      '/components/schemas/EditorialDeliverable: added',
+      '/components/schemas/EditorialField: added',
+      '/components/schemas/EditorialFlag: added',
+      '/components/schemas/EditorialEvidence: added',
+      '/components/schemas/EditorialEvent: added',
+      '/components/schemas/EditorialContext: added',
+      '/components/schemas/EditorialWriter: added',
+      '/components/schemas/EditorialVersion: added',
+      '/components/schemas/EditorialGeneration: added',
+      '/components/schemas/EditorialPackage: added',
+      '/components/schemas/EditorialGenerationCreate: added',
+      '/components/schemas/EditorialGenerationResult: added',
+      '/components/schemas/EditorialEditCreate: added',
       '/components/schemas/DesignPricing: added',
       '/components/schemas/DesignModel: added',
       '/components/schemas/DesignCapabilities: added',

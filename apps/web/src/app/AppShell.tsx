@@ -1,16 +1,29 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigation } from 'react-router';
 
-import { appCopy, buttonClassName, classNames, Layout } from '../ui';
+import { appCopy, buttonClassName, classNames, Icon, Layout } from '../ui';
 import { shellContext } from './shellContext';
 
-interface NavItem {
+interface NavLinkItem {
   to: string;
   label: string;
   isCurrent: (pathname: string) => boolean;
   symbol: string;
-  /** Sub-items shown under the item; the item is highlighted while one of them is the current page. */
-  children?: readonly NavItem[];
+}
+
+/**
+ * A collapsible group: its entry is a toggle (not a link) with a caret, and its sub-items are hidden until it is
+ * opened. The entry is highlighted while one of its sub-items is the current page.
+ */
+interface NavGroupItem extends Omit<NavLinkItem, 'to'> {
+  id: string;
+  children: readonly NavLinkItem[];
+}
+
+type NavItem = NavLinkItem | NavGroupItem;
+
+function isNavGroup(item: NavItem): item is NavGroupItem {
+  return 'children' in item;
 }
 
 /** The creation page: the sports wizard. */
@@ -49,7 +62,7 @@ const NAV_ITEMS: readonly NavItem[] = [
     isCurrent: (pathname) => pathname === '/exports' || pathname.startsWith('/exports/'),
   },
   {
-    to: '/brand',
+    id: 'brand',
     label: 'Mi marca',
     symbol: '◇',
     isCurrent: (pathname) => pathname === '/brand' || pathname.startsWith('/brand/'),
@@ -70,7 +83,7 @@ const NAV_ITEMS: readonly NavItem[] = [
     ],
   },
   {
-    to: '/templates',
+    id: 'templates',
     label: 'Plantillas',
     symbol: '▥',
     isCurrent: (pathname) => pathname === '/templates' || pathname.startsWith('/templates/'),
@@ -93,53 +106,118 @@ const NAV_ITEMS: readonly NavItem[] = [
   { to: '/imports', label: 'Datos', symbol: '≡', isCurrent: (pathname) => pathname.startsWith('/imports') },
 ];
 
+/** The group holding the current page, if any. */
+function currentGroupOf(pathname: string): string | undefined {
+  return NAV_ITEMS.filter(isNavGroup).find((group) => group.isCurrent(pathname))?.id;
+}
+
+const NAV_ENTRY_CLASS =
+  'focus-studio flex min-h-touch items-center gap-3 rounded-control border-l-4 px-3 py-2 font-sans text-body-sm no-underline transition-colors';
+
+function navEntryClassName(current: boolean): string {
+  return classNames(
+    NAV_ENTRY_CLASS,
+    current
+      ? 'border-brand-gold bg-surface-overlay font-bold text-brand-gold'
+      : 'border-transparent text-text-secondary hover:bg-surface-card hover:text-text-primary',
+  );
+}
+
 function MainNavigation({ pathname }: { pathname: string }) {
+  // Groups start collapsed and open on click. The group holding the current page opens when that page is reached
+  // (a direct address, a reload or a link inside a page), so the current sub-item is never hidden on arrival.
+  const currentGroup = currentGroupOf(pathname);
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(
+    () => new Set(currentGroup === undefined ? [] : [currentGroup]),
+  );
+  const [lastGroup, setLastGroup] = useState(currentGroup);
+  if (currentGroup !== lastGroup) {
+    setLastGroup(currentGroup);
+    if (currentGroup !== undefined && !expanded.has(currentGroup)) setExpanded(new Set(expanded).add(currentGroup));
+  }
+
+  const toggle = (id: string) => {
+    setExpanded((previous) => {
+      const next = new Set(previous);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  };
+
   return (
     <ul className="m-0 grid list-none gap-1 p-0">
       {NAV_ITEMS.map((item) => {
         const current = item.isCurrent(pathname);
-        const child = item.children?.find((entry) => entry.isCurrent(pathname));
+        if (!isNavGroup(item)) {
+          return (
+            <li key={item.to}>
+              <Link className={navEntryClassName(current)} to={item.to} aria-current={current ? 'page' : undefined}>
+                <span aria-hidden="true" className="inline-flex w-5 shrink-0 justify-center text-body-lg">
+                  {item.symbol}
+                </span>
+                <span>{item.label}</span>
+              </Link>
+            </li>
+          );
+        }
+        const open = expanded.has(item.id);
+        const submenuId = `main-navigation-${item.id}`;
         return (
-          <li key={item.to}>
-            <Link
+          <li key={item.id}>
+            <button
+              type="button"
+              // Preflight is not loaded: the native button background, border and margin are reset here.
               className={classNames(
-                'focus-studio flex min-h-touch items-center gap-3 rounded-control border-l-4 px-3 py-2 font-sans text-body-sm no-underline transition-colors',
-                current
-                  ? 'border-brand-gold bg-surface-overlay font-bold text-brand-gold'
-                  : 'border-transparent text-text-secondary hover:bg-surface-card hover:text-text-primary',
+                navEntryClassName(current),
+                'm-0 w-full cursor-pointer border-y-0 border-r-0 text-left',
+                current ? undefined : 'bg-transparent',
               )}
-              to={item.to}
-              // With a current sub-item, the sub-item is the page; the parent only stays highlighted.
-              aria-current={current && child === undefined ? 'page' : undefined}
+              aria-expanded={open}
+              aria-controls={submenuId}
+              onClick={() => toggle(item.id)}
             >
               <span aria-hidden="true" className="inline-flex w-5 shrink-0 justify-center text-body-lg">
                 {item.symbol}
               </span>
-              <span>{item.label}</span>
-            </Link>
-            {item.children === undefined ? null : (
-              <ul aria-label={item.label} className="m-0 mt-1 grid list-none gap-1 py-0 pr-0 pl-6">
-                {item.children.map((entry) => (
-                  <li key={entry.to}>
-                    <Link
-                      className={classNames(
-                        'focus-studio flex min-h-touch items-center gap-3 rounded-control border-l-2 px-3 py-1.5 font-sans text-body-sm no-underline transition-colors',
-                        entry.isCurrent(pathname)
-                          ? 'border-brand-gold font-bold text-text-primary'
-                          : 'border-border-subtle text-text-secondary hover:bg-surface-card hover:text-text-primary',
-                      )}
-                      to={entry.to}
-                      aria-current={entry.isCurrent(pathname) ? 'page' : undefined}
-                    >
-                      <span aria-hidden="true" className="inline-flex w-5 shrink-0 justify-center text-body-sm">
-                        {entry.symbol}
-                      </span>
-                      <span>{entry.label}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
+              {/* The unlayered global `button { font: inherit }` overrides the button's font utilities: set them here. */}
+              <span className={classNames('flex-1 text-body-sm', current ? 'font-bold' : undefined)}>{item.label}</span>
+              <span
+                aria-hidden="true"
+                className={classNames(
+                  'inline-flex shrink-0 motion-safe:transition-transform motion-safe:duration-200',
+                  open ? 'rotate-180' : undefined,
+                )}
+              >
+                <Icon name="chevron-down" size={16} />
+              </span>
+            </button>
+            <ul
+              id={submenuId}
+              aria-label={item.label}
+              hidden={!open}
+              // Without preflight the `hidden` attribute loses to a display utility, so the class hides it too.
+              className={classNames('m-0 mt-1 list-none gap-1 py-0 pr-0 pl-6', open ? 'grid' : 'hidden')}
+            >
+              {item.children.map((entry) => (
+                <li key={entry.to}>
+                  <Link
+                    className={classNames(
+                      'focus-studio flex min-h-touch items-center gap-3 rounded-control border-l-2 px-3 py-1.5 font-sans text-body-sm no-underline transition-colors',
+                      entry.isCurrent(pathname)
+                        ? 'border-brand-gold font-bold text-text-primary'
+                        : 'border-border-subtle text-text-secondary hover:bg-surface-card hover:text-text-primary',
+                    )}
+                    to={entry.to}
+                    aria-current={entry.isCurrent(pathname) ? 'page' : undefined}
+                  >
+                    <span aria-hidden="true" className="inline-flex w-5 shrink-0 justify-center text-body-sm">
+                      {entry.symbol}
+                    </span>
+                    <span>{entry.label}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </li>
         );
       })}
@@ -158,8 +236,9 @@ function MainNavigation({ pathname }: { pathname: string }) {
 /** Routes on the studio surface; every other route keeps the legacy content panel. */
 export function contentVariantOf(pathname: string): 'studio' | 'legacy' | 'workspace' {
   if (/^\/templates\/visual\/[^/]+\/?$/.test(pathname)) return 'workspace';
+  // UX-REVIEW-01: the content review is a full-width workspace that uses the height of the viewport.
+  if (/^\/projects\/[^/]+\/review(?:\/.*)?$/.test(pathname)) return 'workspace';
   return ['/', '/projects', '/projects/', '/exports', '/exports/'].includes(pathname) ||
-    /^\/projects\/[^/]+\/review(?:\/.*)?$/.test(pathname) ||
     /^\/projects\/batches\/[^/]+\/?$/.test(pathname) ||
     /^\/competitions(?:\/.*)?$/.test(pathname) ||
     /^\/(?:brand|templates)(?:\/.*)?$/.test(pathname) ||
@@ -202,62 +281,65 @@ export function AppShell() {
         </Link>
       }
       breadcrumbs={
-        <nav aria-label="Ruta de navegación">
-          <ol className="m-0 flex list-none flex-wrap items-center gap-1.5 p-0 text-caption text-text-subtle">
-            <li>
-              <Link
-                className="focus-studio text-text-link underline decoration-border-strong underline-offset-2 hover:text-text-primary"
-                to="/"
-              >
-                Inicio
-              </Link>
-            </li>
-            {context.projectPath ? (
-              <>
-                <li aria-hidden="true">/</li>
-                <li>
-                  <Link
-                    className="focus-studio text-text-link underline decoration-border-strong underline-offset-2 hover:text-text-primary"
-                    to="/projects"
-                  >
-                    Mis proyectos
-                  </Link>
-                </li>
-                <li aria-hidden="true">/</li>
-                <li>
-                  {context.title === 'Proyecto' ? (
-                    <span aria-current="page">Proyecto</span>
-                  ) : (
+        // Not on Inicio (it would only name itself) nor on pages that show their own breadcrumb.
+        context.title === 'Inicio' || context.ownBreadcrumbs ? undefined : (
+          <nav aria-label="Ruta de navegación">
+            <ol className="m-0 flex list-none flex-wrap items-center gap-1.5 p-0 text-caption text-text-subtle">
+              <li>
+                <Link
+                  className="focus-studio text-text-link underline decoration-border-strong underline-offset-2 hover:text-text-primary"
+                  to="/"
+                >
+                  Inicio
+                </Link>
+              </li>
+              {context.projectPath ? (
+                <>
+                  <li aria-hidden="true">/</li>
+                  <li>
                     <Link
                       className="focus-studio text-text-link underline decoration-border-strong underline-offset-2 hover:text-text-primary"
-                      to={context.projectPath}
+                      to="/projects"
                     >
-                      Proyecto
+                      Mis proyectos
                     </Link>
-                  )}
-                </li>
-              </>
-            ) : context.parent ? (
-              <>
-                <li aria-hidden="true">/</li>
-                <li>
-                  <Link
-                    className="focus-studio text-text-link underline decoration-border-strong underline-offset-2 hover:text-text-primary"
-                    to={context.parent.to}
-                  >
-                    {context.parent.label}
-                  </Link>
-                </li>
-              </>
-            ) : null}
-            {context.title !== 'Inicio' && context.title !== 'Proyecto' ? (
-              <>
-                <li aria-hidden="true">/</li>
-                <li aria-current="page">{context.title}</li>
-              </>
-            ) : null}
-          </ol>
-        </nav>
+                  </li>
+                  <li aria-hidden="true">/</li>
+                  <li>
+                    {context.title === 'Proyecto' ? (
+                      <span aria-current="page">Proyecto</span>
+                    ) : (
+                      <Link
+                        className="focus-studio text-text-link underline decoration-border-strong underline-offset-2 hover:text-text-primary"
+                        to={context.projectPath}
+                      >
+                        Proyecto
+                      </Link>
+                    )}
+                  </li>
+                </>
+              ) : context.parent ? (
+                <>
+                  <li aria-hidden="true">/</li>
+                  <li>
+                    <Link
+                      className="focus-studio text-text-link underline decoration-border-strong underline-offset-2 hover:text-text-primary"
+                      to={context.parent.to}
+                    >
+                      {context.parent.label}
+                    </Link>
+                  </li>
+                </>
+              ) : null}
+              {context.title !== 'Inicio' && context.title !== 'Proyecto' ? (
+                <>
+                  <li aria-hidden="true">/</li>
+                  <li aria-current="page">{context.title}</li>
+                </>
+              ) : null}
+            </ol>
+          </nav>
+        )
       }
       projectContext={
         context.projectPath && context.projectSection ? `Proyecto actual · ${context.projectSection}` : undefined

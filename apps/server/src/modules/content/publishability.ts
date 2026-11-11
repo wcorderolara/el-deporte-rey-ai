@@ -187,7 +187,7 @@ export function blockedOverlay(
   versionId: string,
   decide: PublishabilityFunction = verificationPublishability,
 ): BlockedOverlay | null {
-  const { db, config } = context;
+  const { db } = context;
   const owner = db.prepare<{ project_id: string; language: string }>(SQL.versionProject).get([versionId]);
   if (owner === undefined) {
     return null;
@@ -197,7 +197,23 @@ export function blockedOverlay(
     .prepare<{ fact_id: string }>(SQL.versionRefs)
     .all([versionId])
     .map((row) => row.fact_id);
-  const verdicts = decide(context, owner.project_id, factIds);
+  const blockingFacts = blockingFactRefs(context, owner.project_id, language, factIds, decide);
+  return { blocked: blockingFacts.length > 0, blockingFacts };
+}
+
+/**
+ * The facts of a project that are not publishable, as contract `FactRef`s, in the order given (the element overlay
+ * above and the editorial copy of PD-ARCH-01H use the same rule).
+ */
+export function blockingFactRefs(
+  context: PublishabilityContext,
+  projectId: string,
+  language: z.infer<typeof LanguageSchema>,
+  factIds: readonly string[],
+  decide: PublishabilityFunction = verificationPublishability,
+): FactRef[] {
+  const { db, config } = context;
+  const verdicts = decide(context, projectId, factIds);
   const blockingFacts: FactRef[] = [];
   for (const factId of factIds) {
     const decision = verdicts.get(factId);
@@ -222,5 +238,5 @@ export function blockedOverlay(
     }
     blockingFacts.push(reference);
   }
-  return { blocked: blockingFacts.length > 0, blockingFacts };
+  return blockingFacts;
 }

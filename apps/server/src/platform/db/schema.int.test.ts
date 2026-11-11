@@ -617,6 +617,51 @@ const EXPECTED_COLUMNS: Readonly<Record<string, readonly string[]>> = {
     'round_id',
   ],
   competition_teams: ['competition_id', 'team_id', 'associated_at'],
+  // PD-ARCH-01H (0033): editorial copy.
+  editorial_generations: [
+    'id',
+    'project_id',
+    'draft_id',
+    'request_key',
+    'request_hash',
+    'deliverables',
+    'instructions',
+    'adapter',
+    'writer_kind',
+    'model',
+    'prompt_version',
+    'research_mode',
+    'context',
+    'billed',
+    'status',
+    'error_code',
+    'usage_input',
+    'usage_output',
+    'estimated_cost',
+    'computed_cost',
+    'created_at',
+    'completed_at',
+  ],
+  editorial_versions: [
+    'id',
+    'project_id',
+    'draft_id',
+    'deliverable',
+    'version_number',
+    'origin',
+    'generation_id',
+    'base_version_id',
+    'instructions',
+    'raw',
+    'fields',
+    'flags',
+    'fact_ids',
+    'event_ids',
+    'evidence_ids',
+    'created_at',
+    'approved_at',
+    'superseded_at',
+  ],
 };
 
 /** Foreign keys of data-model.md section 3 as `column -> table`. */
@@ -737,6 +782,13 @@ const EXPECTED_FOREIGN_KEYS: Readonly<Record<string, readonly string[]>> = {
     'visual_template_id -> visual_templates',
     'visual_template_version_id -> visual_template_versions',
   ],
+  editorial_generations: ['draft_id -> content_drafts', 'project_id -> projects'],
+  editorial_versions: [
+    'base_version_id -> editorial_versions',
+    'draft_id -> content_drafts',
+    'generation_id -> editorial_generations',
+    'project_id -> projects',
+  ],
 };
 
 /** Indexes of data-model.md section 4 as `table (columns)`. */
@@ -769,6 +821,9 @@ const EXPECTED_INDEXES = [
   'team_badges (team_id)',
   'team_badges (team_id, created_at)',
   'project_visual_templates (visual_template_id)',
+  'editorial_generations (project_id, created_at, id)',
+  'editorial_generations (created_at)',
+  'editorial_versions (draft_id, deliverable, version_number)',
   'imports (received_at)',
   'manual_selection_versions (competition_id, season_id, stage_id, matchday_key, superseded_at)',
   'competitions (created_at, id)',
@@ -907,6 +962,8 @@ describe('structure of the migrated schema', () => {
       { version: 30, name: 'team_badges_and_project_templates' },
       { version: 31, name: 'reconcile_field_provenance_references' },
       { version: 32, name: 'engine_slide_type_templates' },
+      { version: 33, name: 'editorial_copy' },
+      { version: 34, name: 'editorial_naming_reconcile' },
     ]);
   });
 

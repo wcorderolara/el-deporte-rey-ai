@@ -11,6 +11,7 @@ import {
   jsonResponse,
   OTHER_PROJECT_ID,
   problemResponse,
+  PROJECT_ID,
   urls,
   version,
   VERSION_IDS,
@@ -25,6 +26,11 @@ function server(detail: unknown = exportDetail()) {
 
 async function waitForDetail(): Promise<void> {
   await screen.findByTestId('export-summary');
+}
+
+/** The selected slide, shown with the preview of the content review (UX-REVIEW-01). */
+function preview(): HTMLElement {
+  return screen.getByRole('region', { name: /^Vista previa: Diapositiva \d+$/ });
 }
 
 describe('export detail', () => {
@@ -79,7 +85,7 @@ describe('export detail', () => {
     renderHistory(fetch, DETAIL_PATH);
     await waitForDetail();
 
-    const image = within(screen.getByTestId('selected-slide-preview')).getByRole('img', {
+    const image = within(preview()).getByRole('img', {
       name: 'Imagen exportada de la diapositiva 1',
     });
     expect(image.getAttribute('src')).toBe(urls.image(VERSION_IDS[0]));
@@ -87,12 +93,33 @@ describe('export detail', () => {
     expect(image.getAttribute('height')).toBe('1350');
     await userEvent.setup().click(screen.getByRole('button', { name: 'Diapositiva 2' }));
     expect(
-      within(screen.getByTestId('selected-slide-preview'))
+      within(preview())
         .getByRole('img', {
           name: 'Imagen exportada de la diapositiva 2',
         })
         .getAttribute('src'),
     ).toBe(urls.image(VERSION_IDS[1]));
+  });
+
+  it('uses the review layout: pager, styled download button and the way back to the project', async () => {
+    const { fetch } = server();
+    renderHistory(fetch, DETAIL_PATH);
+    await waitForDetail();
+
+    expect(within(preview()).getByText('Diapositiva 01 de 02')).toBeTruthy();
+    const previous = within(preview()).getByRole('button', { name: 'Anterior' });
+    expect((previous as HTMLButtonElement).disabled).toBe(true);
+    await userEvent.setup().click(within(preview()).getByRole('button', { name: 'Siguiente' }));
+    expect(within(preview()).getByText('Diapositiva 02 de 02')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Diapositiva 2' }).getAttribute('aria-current')).toBe('true');
+
+    const panel = screen.getByRole('region', { name: 'Resumen de la diapositiva' });
+    expect(within(panel).getByRole('heading', { name: 'Diapositiva 2' })).toBeTruthy();
+    const download = within(panel).getByRole('button', { name: 'Descargar carrusel' });
+    expect(download.className).toContain('bg-button-primary-bg');
+    const back = within(panel).getByRole('link', { name: 'Volver al proyecto' });
+    expect(back.getAttribute('href')).toBe(`/projects/${PROJECT_ID}`);
+    expect(back.className).toContain('bg-button-secondary-bg');
   });
 
   it('never loads a server-provided external image URL and handles a slide with no image', async () => {
@@ -103,18 +130,16 @@ describe('export detail', () => {
     renderHistory(fetch, DETAIL_PATH);
     await waitForDetail();
 
-    const image = within(screen.getByTestId('selected-slide-preview')).getByRole('img', {
+    const image = within(preview()).getByRole('img', {
       name: 'Imagen exportada de la diapositiva 1',
     });
     expect(image.getAttribute('src')).toBe(urls.image(VERSION_IDS[0]));
     expect(document.body.innerHTML).not.toContain('example.invalid');
     await userEvent.setup().click(screen.getByRole('button', { name: 'Diapositiva 2' }));
-    expect(
-      within(screen.getByTestId('selected-slide-preview')).getByText('No hay imagen registrada para esta versión.'),
-    ).toBeTruthy();
+    expect(within(preview()).getByText('No hay imagen registrada para esta versión.')).toBeTruthy();
   });
 
-  it('keeps demo and operator-attested safety information without technical clutter', async () => {
+  it('keeps the demo label without the operator-attested banner or technical clutter', async () => {
     const { fetch } = server();
     renderHistory(fetch, DETAIL_PATH);
     await waitForDetail();
@@ -130,7 +155,10 @@ describe('export detail', () => {
     cleanup();
     renderHistory(manualServer.fetch, DETAIL_PATH);
     await waitForDetail();
-    expect(screen.getByTestId('attested-note').textContent).toContain('Contenido atestiguado por el operador');
+    // The Product Owner removed the operator-attested banner from this view (UX-REVIEW-01, 2026-11-11).
+    expect(screen.queryByTestId('attested-note')).toBeNull();
+    expect(screen.queryByText('Contenido atestiguado por el operador')).toBeNull();
+    expect(screen.queryByRole('note')).toBeNull();
     await userEvent.setup().click(screen.getByRole('button', { name: 'Diapositiva 2' }));
     expect(
       screen.getAllByTestId('export-summary-field').find((field) => field.getAttribute('data-field') === 'score')

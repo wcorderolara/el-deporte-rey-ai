@@ -65,6 +65,9 @@ export const PROBLEM_CODES = [
   'TEMPLATE_NOT_PUBLISHABLE',
   'TEMPLATE_IN_USE',
   'PROPOSAL_IN_USE',
+  'EDITORIAL_NOT_GENERATABLE',
+  'COST_CONFIRMATION_REQUIRED',
+  'AI_PROVIDER_UNAVAILABLE',
 ] as const;
 export type ProblemCode = (typeof PROBLEM_CODES)[number];
 
@@ -207,12 +210,15 @@ const TITLES: Readonly<Record<ProblemCode, string>> = {
   ASSET_IN_USE: 'The brand asset is used by rendered content',
   IMAGE_PROVIDER_UNAVAILABLE: 'The image generation provider is not ready',
   DESIGN_REFERENCE_REFUSED: 'A selected brand asset cannot be used this way',
-  GENERATION_LIMIT_REACHED: 'An image generation limit is reached',
+  GENERATION_LIMIT_REACHED: 'A generation limit is reached',
   TEMPLATE_SOURCE_REFUSED: 'The template source cannot be used',
   TEMPLATE_VERSION_PUBLISHED: 'A published template version cannot be changed',
   TEMPLATE_NOT_PUBLISHABLE: 'The template version has validation errors',
   TEMPLATE_IN_USE: 'The template has published versions',
   PROPOSAL_IN_USE: 'The design proposal is used by a visual template',
+  EDITORIAL_NOT_GENERATABLE: 'The editorial copy cannot be generated from the confirmed sports data',
+  COST_CONFIRMATION_REQUIRED: 'The cost of the request must be confirmed',
+  AI_PROVIDER_UNAVAILABLE: 'The AI text provider is not ready',
   INTERNAL: 'Internal error',
 };
 

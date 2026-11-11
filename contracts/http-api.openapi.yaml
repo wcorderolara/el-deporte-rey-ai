@@ -54,6 +54,7 @@ tags:
   - name: templates
   - name: design
   - name: visual-templates
+  - name: editorial
   - name: system
 paths:
   /health:
@@ -1888,40 +1889,142 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
-  /projects/{projectId}/draft/exclusions:
+  /projects/{projectId}/editorial:
     parameters:
       - $ref: '#/components/parameters/ProjectId'
-    put:
-      tags: [drafts]
-      operationId: setExcludedMatches
-      description: Set the matches to leave out (OD-03). Starts a redraft run; the active draft is superseded and approvals do not carry over.
+    get:
+      tags: [editorial]
+      operationId: getEditorialPackage
+      description: |
+        Editorial copy of the project's active draft (PD-ARCH-01H): the confirmed sports context, the deterministic key
+        events and the evidence they rest on (unverified and conflicting facts listed apart, never used in the copy),
+        the writer (adapter, kind, model, limits and cost estimate) and the current version of each of the five
+        deliverables. The research mode is `local_context`: no external research exists.
+      responses:
+        '200':
+          description: The editorial package.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EditorialPackage' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /projects/{projectId}/editorial/generations:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    post:
+      tags: [editorial]
+      operationId: createEditorialGeneration
+      description: |
+        Write the five deliverables (or regenerate one) from the confirmed context, with an optional operator
+        instruction sent as a preference that cannot change a fact. A billed writer needs `confirmCost: true`
+        (`COST_CONFIRMATION_REQUIRED`), a key (`AI_PROVIDER_UNAVAILABLE`) and room in the daily count and the monthly
+        spend (`GENERATION_LIMIT_REACHED`); one generation at a time; never retried. A repeated request key returns the
+        stored generation; the same key with another request is `REQUEST_KEY_REUSED`. Without a draft or confirmed
+        facts nothing is sent (`EDITORIAL_NOT_GENERATABLE`). A writer failure is recorded and answered with
+        `PROVIDER_FAILED`. Each new version supersedes the previous one of its deliverable; the others keep theirs.
       parameters:
         - $ref: '#/components/parameters/ClientHeader'
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              type: object
-              required: [excludedMatchKeys]
-              additionalProperties: false
-              properties:
-                excludedMatchKeys:
-                  type: array
-                  maxItems: 64
-                  uniqueItems: true
-                  items: { $ref: '#/components/schemas/MatchKey' }
+            schema: { $ref: '#/components/schemas/EditorialGenerationCreate' }
       responses:
-        '202':
-          description: Redraft run started.
+        '201':
+          description: The generation and the updated package (or the stored ones of a repeated request key).
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Run' }
+              schema: { $ref: '#/components/schemas/EditorialGenerationResult' }
         '400': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+        '502': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /projects/{projectId}/editorial/deliverables/{deliverable}/edits:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/EditorialDeliverable'
+    post:
+      tags: [editorial]
+      operationId: editEditorialDeliverable
+      description: |
+        Store the operator's edit of the current version as a new version (origin `edited`). The final text is checked
+        like the writer's: confirmed values are recognized, any other number or claim is flagged. `VERSION_CONFLICT`
+        when `baseVersionId` is not the current version.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EditorialEditCreate' }
+      responses:
+        '201':
+          description: The new version.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EditorialVersion' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+  /projects/{projectId}/editorial/deliverables/{deliverable}/approval:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/EditorialDeliverable'
+    put:
+      tags: [editorial]
+      operationId: approveEditorialDeliverable
+      description: |
+        Approve the exact current version of a deliverable. Refused with `VERSION_CONFLICT` when `versionId` is not
+        current, `CONTENT_FLAGGED` when it has flags, and `APPROVAL_BLOCKED` (with `facts`) when a fact it rests on is
+        not publishable. Approving an approved version changes nothing.
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VersionRef' }
+      responses:
+        '200':
+          description: The approved version.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EditorialVersion' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '421': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [editorial]
+      operationId: withdrawEditorialApproval
+      description: Withdraw the approval of the current version of a deliverable (the version itself is kept).
+      parameters:
+        - $ref: '#/components/parameters/ClientHeader'
+      responses:
+        '200':
+          description: The version without approval.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EditorialVersion' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
         '415': { $ref: '#/components/responses/Problem' }
         '421': { $ref: '#/components/responses/Problem' }
   /element-versions/{versionId}/image:
@@ -3268,6 +3371,11 @@ components:
       in: path
       required: true
       schema: { $ref: '#/components/schemas/Uuid' }
+    EditorialDeliverable:
+      name: deliverable
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/EditorialDeliverable' }
     RunId:
       name: runId
       in: path
@@ -3998,6 +4106,9 @@ components:
             - TEMPLATE_NOT_PUBLISHABLE
             - TEMPLATE_IN_USE
             - PROPOSAL_IN_USE
+            - EDITORIAL_NOT_GENERATABLE
+            - COST_CONFIRMATION_REQUIRED
+            - AI_PROVIDER_UNAVAILABLE
         detail: { type: string, maxLength: 500, description: 'Fixed text plus sanitized parameters only (T10-F10)' }
         errors:
           type: array
@@ -5435,6 +5546,328 @@ components:
         - REFERENCE_UNAVAILABLE
         - INTERRUPTED
         - INTERNAL
+    EditorialDeliverable:
+      description: The five editorial deliverables (PD-ARCH-01H).
+      type: string
+      enum: [facebook_instagram, tiktok_reels, viral_headlines, youtube, debate_question]
+    EditorialField:
+      description: One named field of a deliverable, with its final text (placeholders already replaced).
+      type: object
+      required: [name, text, words, characters]
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          enum: [headline, body, question, hashtags, copy, headline_1, headline_2, headline_3, title, description]
+        text: { type: string, maxLength: 5000 }
+        words: { type: integer, minimum: 0, maximum: 1000000 }
+        characters: { type: integer, minimum: 0, maximum: 1000000 }
+    EditorialFlag:
+      description: A deterministic check that failed on a version; a flagged version cannot be approved.
+      type: object
+      required: [code, field, excerpt]
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          enum:
+            - UNKNOWN_FACT_REFERENCE
+            - UNVERIFIED_NUMBER
+            - NON_OFFICIAL_TEAM_NAME
+            - FORBIDDEN_CONTENT
+            - UNPLAYED_RESULT_CLAIM
+            - LENGTH_OUT_OF_RANGE
+            - FORMAT_RULE
+            - UNKNOWN_EVENT_REFERENCE
+            - UNKNOWN_EVIDENCE_REFERENCE
+            - INCOMPLETE_ROUND_CLAIM
+            - STANDINGS_CLAIM_WITHOUT_DATA
+        field: { type: string, maxLength: 40 }
+        excerpt: { type: string, maxLength: 120 }
+    EditorialEvidence:
+      description: |
+        One fact the copy may rest on, with its verification status (never a confidence score). CONFIRMED comes from
+        the local sports data; VERIFIED_EXTERNAL only from an authorized research adapter (none in PD-ARCH-01H);
+        UNVERIFIED and CONFLICTING facts are never used in the copy. No URL is produced by the writer.
+      type: object
+      required:
+        [id, factType, description, competitionId, seasonId, roundId, matchKey, factIds, source, publishedAt, retrievedAt, verification, conflicts]
+      additionalProperties: false
+      properties:
+        id: { type: string, minLength: 4, maxLength: 64, pattern: '^ev-[a-z0-9][a-z0-9-]{0,59}$' }
+        factType: { type: string, enum: [match_result, match_fixture, standing_row] }
+        description: { type: string, minLength: 1, maxLength: 300 }
+        competitionId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        seasonId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        roundId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        matchKey: { type: [string, 'null'], minLength: 1, maxLength: 128 }
+        factIds:
+          type: array
+          maxItems: 20
+          items: { $ref: '#/components/schemas/Uuid' }
+        source:
+          type: object
+          required: [kind, name, url]
+          additionalProperties: false
+          properties:
+            kind: { type: string, enum: [local, external] }
+            name: { type: string, minLength: 1, maxLength: 120 }
+            url: { type: [string, 'null'], minLength: 1, maxLength: 2048 }
+        publishedAt: { type: [string, 'null'], format: date-time }
+        retrievedAt: { type: string, format: date-time }
+        verification: { type: string, enum: [CONFIRMED, VERIFIED_EXTERNAL, UNVERIFIED, CONFLICTING] }
+        conflicts:
+          type: array
+          maxItems: 10
+          items: { type: string, minLength: 1, maxLength: 300 }
+    EditorialEvent:
+      description: A key event computed deterministically from confirmed scores and statuses.
+      type: object
+      required: [id, kind, description, matchKey, evidenceIds]
+      additionalProperties: false
+      properties:
+        id: { type: string, minLength: 5, maxLength: 64, pattern: '^evt-[a-z0-9][a-z0-9-]{0,59}$' }
+        kind:
+          type: string
+          enum:
+            [thrashing, high_scoring, away_win, home_win, goalless_draw, scoring_draw, round_incomplete, postponed_matches, upcoming_matches]
+        description: { type: string, minLength: 1, maxLength: 300 }
+        matchKey: { type: [string, 'null'], minLength: 1, maxLength: 128 }
+        evidenceIds:
+          type: array
+          maxItems: 40
+          items: { type: string, minLength: 4, maxLength: 64, pattern: '^ev-[a-z0-9][a-z0-9-]{0,59}$' }
+    EditorialContext:
+      description: The confirmed sports context of the draft, with the round state read from local statuses only.
+      type: object
+      required:
+        [competitionName, seasonLabel, stageLabel, roundLabel, contentKind, language, matchCount, confirmedMatchCount, standingsAvailable, roundState]
+      additionalProperties: false
+      properties:
+        competitionName: { type: string, minLength: 1, maxLength: 80 }
+        seasonLabel: { type: string, minLength: 1, maxLength: 80 }
+        stageLabel: { type: string, minLength: 1, maxLength: 120 }
+        roundLabel: { type: [string, 'null'], minLength: 1, maxLength: 120 }
+        contentKind: { type: string, enum: [results, calendar, upcoming, preview] }
+        language: { $ref: '#/components/schemas/Language' }
+        matchCount: { type: integer, minimum: 0, maximum: 1000000 }
+        confirmedMatchCount: { type: integer, minimum: 0, maximum: 1000000 }
+        standingsAvailable: { type: boolean }
+        roundState:
+          type: object
+          required: [status, basis, total, finished, inProgress, pending, postponed, cancelled]
+          additionalProperties: false
+          properties:
+            status: { type: string, enum: [complete, incomplete, unknown] }
+            basis: { type: string, enum: [local_round, selection, none] }
+            total: { type: [integer, 'null'], minimum: 0, maximum: 1000000 }
+            finished: { type: integer, minimum: 0, maximum: 1000000 }
+            inProgress: { type: integer, minimum: 0, maximum: 1000000 }
+            pending: { type: integer, minimum: 0, maximum: 1000000 }
+            postponed: { type: integer, minimum: 0, maximum: 1000000 }
+            cancelled: { type: integer, minimum: 0, maximum: 1000000 }
+    EditorialWriter:
+      description: |
+        The configured editorial writer: `test` is the deterministic stub (no AI), `hosted_ai` a billed hosted model
+        (cost confirmation, limits and prices are mandatory, PD-30), `local_ai` a model server on loopback.
+      type: object
+      required:
+        [adapter, kind, model, status, requiresCostConfirmation, pricing, maxGenerationsPerDay, generationsToday, monthlySpendLimit, spentThisMonth, estimate]
+      additionalProperties: false
+      properties:
+        adapter: { type: string, minLength: 1, maxLength: 41, pattern: '^[a-z0-9][a-z0-9-]{1,40}$' }
+        kind: { type: string, enum: [test, hosted_ai, local_ai] }
+        model: { type: [string, 'null'], minLength: 1, maxLength: 100, pattern: '^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$' }
+        status: { type: string, enum: [ready, missing_api_key] }
+        requiresCostConfirmation: { type: boolean }
+        pricing:
+          oneOf:
+            - type: object
+              required: [currency, inputPerMillionTokens, outputPerMillionTokens, source, checkedOn]
+              additionalProperties: false
+              properties:
+                currency: { type: string, const: USD }
+                inputPerMillionTokens: { type: number, minimum: 0, maximum: 100000 }
+                outputPerMillionTokens: { type: number, minimum: 0, maximum: 100000 }
+                source: { type: string, minLength: 1, maxLength: 300 }
+                checkedOn: { type: string, format: date }
+            - type: 'null'
+        maxGenerationsPerDay: { type: integer, minimum: 0, maximum: 1000000 }
+        generationsToday: { type: integer, minimum: 0, maximum: 1000000 }
+        monthlySpendLimit: { type: [number, 'null'], minimum: 0, maximum: 100000 }
+        spentThisMonth: { type: [number, 'null'], minimum: 0, maximum: 100000 }
+        estimate:
+          type: object
+          required: [status, total]
+          additionalProperties: false
+          properties:
+            status: { type: string, enum: [free, estimated, unavailable] }
+            total: { type: [number, 'null'], minimum: 0, maximum: 100000 }
+    EditorialVersion:
+      description: One version of a deliverable. A new version supersedes the previous one; versions are never deleted.
+      type: object
+      required:
+        [id, deliverable, versionNumber, origin, state, fields, flags, generationId, instructions, eventIds, evidenceIds, createdAt, approvedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        deliverable: { $ref: '#/components/schemas/EditorialDeliverable' }
+        versionNumber: { type: integer, minimum: 1, maximum: 100000 }
+        origin: { type: string, enum: [generated, regenerated, edited] }
+        state: { type: string, enum: [ready, flagged, approved, superseded] }
+        fields:
+          type: array
+          minItems: 1
+          maxItems: 4
+          items: { $ref: '#/components/schemas/EditorialField' }
+        flags:
+          type: array
+          maxItems: 40
+          items: { $ref: '#/components/schemas/EditorialFlag' }
+        generationId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        instructions: { type: [string, 'null'], minLength: 1, maxLength: 500, pattern: '^[^\p{Cc}\p{Cf}]{1,500}$' }
+        eventIds:
+          type: array
+          maxItems: 40
+          items: { type: string, minLength: 5, maxLength: 64, pattern: '^evt-[a-z0-9][a-z0-9-]{0,59}$' }
+        evidenceIds:
+          type: array
+          maxItems: 400
+          items: { type: string, minLength: 4, maxLength: 64, pattern: '^ev-[a-z0-9][a-z0-9-]{0,59}$' }
+        createdAt: { type: string, format: date-time }
+        approvedAt: { type: [string, 'null'], format: date-time }
+    EditorialGeneration:
+      description: One request to the editorial writer, successful or not, with its writer, prompt version and cost.
+      type: object
+      required:
+        [id, status, deliverables, instructions, adapter, writerKind, model, promptVersion, researchMode, errorCode, errorMessage, estimatedCost, computedCost, createdAt, completedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        status: { type: string, enum: [running, succeeded, failed] }
+        deliverables:
+          type: array
+          minItems: 1
+          maxItems: 5
+          items: { $ref: '#/components/schemas/EditorialDeliverable' }
+        instructions: { type: [string, 'null'], minLength: 1, maxLength: 500, pattern: '^[^\p{Cc}\p{Cf}]{1,500}$' }
+        adapter: { type: string, minLength: 1, maxLength: 41, pattern: '^[a-z0-9][a-z0-9-]{1,40}$' }
+        writerKind: { type: string, enum: [test, hosted_ai, local_ai] }
+        model: { type: [string, 'null'], minLength: 1, maxLength: 100, pattern: '^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$' }
+        promptVersion: { type: string, minLength: 1, maxLength: 60 }
+        researchMode: { type: string, enum: [local_context, verified_research] }
+        errorCode: { type: [string, 'null'], enum: [unavailable, rate_limited, timeout, ai_response_invalid, interrupted, null] }
+        errorMessage: { type: [string, 'null'], minLength: 1, maxLength: 300 }
+        estimatedCost: { type: [number, 'null'], minimum: 0, maximum: 100000 }
+        computedCost: { type: [number, 'null'], minimum: 0, maximum: 100000 }
+        createdAt: { type: string, format: date-time }
+        completedAt: { type: [string, 'null'], format: date-time }
+    EditorialPackage:
+      description: The editorial copy of a project's active draft (PD-ARCH-01H).
+      type: object
+      required: [projectId, draftId, available, unavailableReason, context, research, writer, deliverables, lastGeneration]
+      additionalProperties: false
+      properties:
+        projectId: { $ref: '#/components/schemas/Uuid' }
+        draftId:
+          oneOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        available: { type: boolean }
+        unavailableReason: { type: [string, 'null'], enum: [no_draft, no_confirmed_facts, null] }
+        context:
+          oneOf:
+            - $ref: '#/components/schemas/EditorialContext'
+            - type: 'null'
+        research:
+          type: object
+          required: [mode, retrievedAt, keyEvents, evidence, unverified, conflicts]
+          additionalProperties: false
+          properties:
+            mode: { type: string, enum: [local_context, verified_research] }
+            retrievedAt: { type: [string, 'null'], format: date-time }
+            keyEvents:
+              type: array
+              maxItems: 40
+              items: { $ref: '#/components/schemas/EditorialEvent' }
+            evidence:
+              type: array
+              maxItems: 400
+              items: { $ref: '#/components/schemas/EditorialEvidence' }
+            unverified:
+              type: array
+              maxItems: 400
+              items: { $ref: '#/components/schemas/EditorialEvidence' }
+            conflicts:
+              type: array
+              maxItems: 400
+              items: { $ref: '#/components/schemas/EditorialEvidence' }
+        writer: { $ref: '#/components/schemas/EditorialWriter' }
+        deliverables:
+          type: array
+          maxItems: 5
+          items:
+            type: object
+            required: [deliverable, current, versionCount]
+            additionalProperties: false
+            properties:
+              deliverable: { $ref: '#/components/schemas/EditorialDeliverable' }
+              current:
+                oneOf:
+                  - $ref: '#/components/schemas/EditorialVersion'
+                  - type: 'null'
+              versionCount: { type: integer, minimum: 0, maximum: 1000000 }
+        lastGeneration:
+          oneOf:
+            - $ref: '#/components/schemas/EditorialGeneration'
+            - type: 'null'
+    EditorialGenerationCreate:
+      type: object
+      required: [requestKey]
+      additionalProperties: false
+      properties:
+        requestKey: { $ref: '#/components/schemas/Uuid' }
+        deliverable: { $ref: '#/components/schemas/EditorialDeliverable' }
+        instructions: { type: string, minLength: 1, maxLength: 500, pattern: '^[^\p{Cc}\p{Cf}]{1,500}$' }
+        confirmCost: { type: boolean }
+    EditorialGenerationResult:
+      type: object
+      required: [generation, package]
+      additionalProperties: false
+      properties:
+        generation: { $ref: '#/components/schemas/EditorialGeneration' }
+        package: { $ref: '#/components/schemas/EditorialPackage' }
+    EditorialEditCreate:
+      type: object
+      required: [baseVersionId, fields]
+      additionalProperties: false
+      properties:
+        baseVersionId: { $ref: '#/components/schemas/Uuid' }
+        fields:
+          type: array
+          minItems: 1
+          maxItems: 4
+          items:
+            type: object
+            required: [name, text]
+            additionalProperties: false
+            properties:
+              name:
+                type: string
+                enum: [headline, body, question, hashtags, copy, headline_1, headline_2, headline_3, title, description]
+              text: { type: string, minLength: 1, maxLength: 5000, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }
     DesignPricing:
       description: Prices per million tokens as configured from the provider's published price list, with its source and date.
       type: object
