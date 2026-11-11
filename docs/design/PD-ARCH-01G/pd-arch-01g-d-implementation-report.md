@@ -3,7 +3,9 @@
 ## Estado
 
 Implementada en `work/PD-ARCH-01G-D`, creada desde el cierre de 01G-C (`cc3559093d80d39fb842c9d755d72c3932d9c89c`).
-Está **sin commit** y **pendiente de aceptación del Product Owner**. No se hizo merge, push ni deploy.
+**Aceptada funcionalmente por el Product Owner el 2026-11-11** y cerrada. La implementación está en el commit
+`a6b90cf560a373eb40151bc4749330a4b1c1238c`. Las verificaciones de cierre están en la sección 13.4 y el estado Git en la
+sección 14. No se hizo merge, push ni deploy.
 
 Nada de 01G-D llama a OpenAI ni a la red: subir escudos, generar, dibujar, revisar y exportar son operaciones locales.
 Las pruebas no hicieron ninguna llamada real. La única propuesta de diseño de las pruebas viene del cliente de salida
@@ -208,6 +210,11 @@ Resultados: ver la sección 13.
 
 - **Calendarios:** `round.fixtures` es un bloque de texto, así que no hay escudos por partido dentro de una plantilla de
   calendario. Requiere un diseño de filas repetidas en una fase posterior. Los escudos sí se ven en Competiciones.
+- **Plantillas del motor** (registrado al cierre, 2026-11-11): sus espacios `team-badge-home` y `team-badge-away`
+  (Previa de partido, Partido programado y Resultado de partido) siguen reservados y vacíos (R-231). El renderizador no
+  dibuja nada en ellos (`rendering/render-model.ts`, `empty: true`). Los escudos solo se dibujan con una plantilla
+  visual, y el snapshot de escudos solo se guarda en los proyectos con plantilla visual. Esta parte del punto 5 de
+  PD-28 no se implementó y pasa, con los calendarios, al assessment de 01G-E.
 - **Autorización de los escudos:** la plataforma no la verifica; queda declarada y registrada (PD-28).
 - **Escudos de proveedores:** no se usan (PD-28).
 - **Formato:** solo plantillas 4:5 en proyectos (01G-D-1).
@@ -462,13 +469,55 @@ El menú es una primitiva nueva, `ActionMenu`, con el patrón WAI-ARIA de botón
 **Pruebas.** Servicio, que permite eliminar una plantilla archivada y conserva sus versiones; flujo de proyecto;
 direcciones del fondo en la web; botón de eliminar en una plantilla archivada.
 
+## 13.4 Verificación de cierre (2026-11-11)
+
+Se repitió sobre una copia limpia del commit de implementación (`a6b90cf`), en un worktree aparte con `npm ci`. Así no
+entran los cambios sin commit de otras fases que tiene el árbol de trabajo.
+
+| Comprobación | Resultado |
+| --- | --- |
+| `npm ci` | Correcto. |
+| `npm run typecheck` | Correcto. |
+| ESLint (`--max-warnings 0`) | Correcto. |
+| Prettier (`--check .`) | Solo los 3 archivos que ya venían así antes de 01G-B (`errors.ts`, `respond.ts`, `import-preview.int.test.ts`). |
+| `vitest --project unit` | 1767 pruebas, todas correctas. |
+| `vitest --project unit-web` | 680 pruebas: 678 correctas y las mismas 2 fallas de breadcrumbs anteriores a 01G-B (`App.test.tsx`, `ReviewPage.test.tsx`). |
+| `vitest --project integration` | 676 pruebas, todas correctas. |
+| `vitest --project contract` | 2314 pruebas, todas correctas. |
+| `npm run build` | Correcto. |
+| `npm audit --audit-level=high` | Correcto. |
+| `scripts/security-checks.mjs secret-scan` y `hygiene` | PASS. |
+| `git diff --check cc35590 a6b90cf` | Sin observaciones. |
+| E2E y accesibilidad | No se ejecutaron, por la misma razón de la sección 13. |
+
+Las cifras son mayores que las de la sección 13 por las pruebas de 13.1 a 13.3, del refinamiento del editor y de los
+submenús de Mi marca. No apareció ninguna falla nueva.
+
 ## 14. Estado Git
 
 - Rama `work/PD-ARCH-01G-D`, creada desde `cc3559093d80d39fb842c9d755d72c3932d9c89c` (cierre de 01G-C).
-- Cambios sin commit, pendientes de aceptación del Product Owner. Sin merge, push ni deploy.
+- **Implementación:** commit `a6b90cf560a373eb40151bc4749330a4b1c1238c` («adding changes», 2026-11-10). Su árbol es
+  igual al de `b5bfb99`: la instantánea del trabajo de 01G-D (`4e1831b`) más los submenús de Mi marca. Contiene 01G-D
+  con sus correcciones y decisiones 01G-D-2 a 01G-D-4 (secciones 13.1 a 13.3) y los dos refinamientos que siguen.
+- **Cierre:** un commit solo de documentación sobre `a6b90cf`, con este informe y el índice de la fase. Su hash se
+  registra en el índice al crear `work/PD-ARCH-01G-E`, porque un commit no puede contener su propio hash.
+- **Fuera del cierre:** los cambios sin commit de PD-ARCH-01H, de UX-REVIEW-01 y del menú lateral colapsable no
+  pertenecen a 01G-D. Siguen sin commit en el árbol de trabajo, pendientes de su propia aceptación.
+- Sin merge, push ni deploy.
 
 ### Refinamiento UX/UI del editor (2026-11-09)
 
-En el árbol de trabajo de esta rama también está, sin commit, el refinamiento visual del editor de plantillas de 01G-C
-y las pestañas de «Crear plantilla». Es un cambio solo de frontend y no altera el alcance de 01G-D. Está documentado en
-la [sección 15 del informe de 01G-C](./pd-arch-01g-c-implementation-report.md#15-refinamiento-uxui-del-editor-de-plantillas-2026-11-09).
+Incluido en `a6b90cf`: el refinamiento visual del editor de plantillas de 01G-C y las pestañas de «Crear plantilla». Es
+un cambio solo de frontend y no altera el alcance de 01G-D. Está documentado en la
+[sección 15 del informe de 01G-C](./pd-arch-01g-c-implementation-report.md#15-refinamiento-uxui-del-editor-de-plantillas-2026-11-09).
+
+### Submenús de Mi marca (2026-11-10)
+
+Incluido en `a6b90cf` (`b5bfb99`, pedido del Product Owner). Mi marca pasa a ser un menú padre con dos vistas, como
+Plantillas:
+
+- `/brand/resources` (Recursos): la biblioteca, con sus reglas y la acción de subir en la cabecera de la vista;
+- `/brand/identity` (Identidad visual): paleta, tipografía y notas.
+
+`/brand` abre Recursos y el ancla antigua de plantillas sigue llevando a `/templates/engine`. Es un cambio solo de
+frontend.

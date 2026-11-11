@@ -10,8 +10,11 @@
   el Product Owner el 2026-11-09** y cerrada en `work/PD-ARCH-01G-C` con el commit
   `cc3559093d80d39fb842c9d755d72c3932d9c89c`.
 - **PD-ARCH-01G-D** — integración de plantillas en la generación de contenido y escudos de equipo subidos a mano
-  (PD-28; la fase 01G-E prevista se integra aquí por decisión del 2026-11-09). Implementada en `work/PD-ARCH-01G-D`,
-  sin commit, **pendiente de aceptación del Product Owner**.
+  (PD-28; la fase 01G-E prevista se integró aquí por decisión del 2026-11-09). **Aceptada funcionalmente por el Product
+  Owner el 2026-11-11** y cerrada en `work/PD-ARCH-01G-D`. La implementación está en el commit
+  `a6b90cf560a373eb40151bc4749330a4b1c1238c` (2026-11-10), que incluye también los refinamientos del editor de
+  plantillas y los submenús de Mi marca. El commit de cierre documental se registra al abrir la fase siguiente
+  (informe de 01G-D, sección 14).
 
 ## Documentos
 
@@ -31,12 +34,13 @@
   riesgos y migración.
 - [Informe de implementación de 01G-D](./pd-arch-01g-d-implementation-report.md): escudos de equipo, integración con
   el wizard y la generación, versionado y reproducibilidad, QA de plantillas, contratos, migración 0030, pruebas,
-  limitaciones y validación manual.
+  limitaciones, validación manual y verificación de cierre.
 
 ## Decisiones del Product Owner
 
 | ID | Decisión | Fecha |
 | --- | --- | --- |
+| 01G-D (cierre) | Aceptación funcional de 01G-D y autorización de su cierre técnico, sujeta a que el commit contenga solo 01G-D y sus refinamientos aprobados, a preservar los cambios ajenos, a que las verificaciones finales sigan siendo válidas y a la consistencia con la fuente de verdad. Comprobado el 2026-11-11 (informe de 01G-D, secciones 13.4 y 14). | 2026-11-11 |
 | 01G-D-1 | Para 01G-D: los escudos se suben solo a mano (PD-28 sin cambios): se descarta cualquier referencia, URL o importación de escudos de proveedores, también como dato. Los escudos se implementan dentro de 01G-D (enmienda del punto 5 de PD-28; no hay fase 01G-E). En los proyectos solo se ofrecen plantillas 4:5 (BR-08 sin cambios). El binding de escudo es `badge`. | 2026-11-09 |
 | 01G-D-2 | Corrección: la base real conservaba claves foráneas de un borrador de la migración 0016 que impedían confirmar cualquier importación. Se agrega la migración de reconciliación 0031 (sin editar 0016), probada antes sobre una copia de la base. Ver el informe de 01G-D, sección 13.1. | 2026-11-09 |
 | 01G-D-3 | Las plantillas visuales usan los tipos de diapositiva del motor: Portada, Resultado de partido, Calendario de jornada, Partido programado, Previa de partido y Cierre. Clasificación queda fuera. En el asistente se elige una plantilla por tipo de diapositiva (portada, partidos, cierre), y el proyecto fija la versión de cada una. La portada y el cierre no tienen campos obligatorios y pueden tener varias variantes. Migración 0032. Se implementa dentro de 01G-D, antes de crear plantillas desde un fondo de Mi marca. Ver el informe de 01G-D, sección 13.2. | 2026-11-09 |
@@ -57,3 +61,8 @@
 `.orchestrate/source-of-truth.md` registra el estado de WI-1 y no se ha actualizado en las fases PD-ARCH, salvo PD-27
 (01G-B), PD-28 (escudos, enmienda de PD-03) y PD-29 (mayúsculas de visualización, enmienda de BR-05); cada fase registra sus decisiones en su índice y en su informe (como PD-ARCH-01 y PD-ARCH-01E). Las de 01G
 quedan aquí.
+
+Discrepancia registrada al cierre de 01G-D (2026-11-11): según la enmienda del punto 5 de PD-28, ese punto se
+implementó en 01G-D. Dos partes no se implementaron: los espacios de escudo de las plantillas del motor y los escudos
+por partido de los calendarios de jornada (informe de 01G-D, sección 11). La fuente de verdad no se cambió en el cierre:
+el texto de PD-28 se corrige con la decisión del Product Owner sobre 01G-E.
