@@ -13,8 +13,12 @@
   (PD-28; la fase 01G-E prevista se integró aquí por decisión del 2026-11-09). **Aceptada funcionalmente por el Product
   Owner el 2026-11-11** y cerrada en `work/PD-ARCH-01G-D`. La implementación está en el commit
   `a6b90cf560a373eb40151bc4749330a4b1c1238c` (2026-11-10), que incluye también los refinamientos del editor de
-  plantillas y los submenús de Mi marca. El commit de cierre documental se registra al abrir la fase siguiente
-  (informe de 01G-D, sección 14).
+  plantillas y los submenús de Mi marca. Commit de cierre (documental): `3538af1deb3140e6c601c85793ec787528f6ac50`.
+- **PD-ARCH-01G-E** — escudos pendientes del punto 5 de PD-28 (plantillas del motor y calendarios de jornada). La
+  enmienda de PD-28 y 01G-D-1 la habían integrado en 01G-D. El Product Owner pidió su rama y su assessment el
+  2026-11-11. `work/PD-ARCH-01G-E` se creó desde `3538af1`. **Assessment entregado, pendiente de las decisiones del
+  Product Owner** (DE-E1 a DE-E7). No hay nada implementado. En la misma rama tienen commit 01H, UX-REVIEW-01 y el
+  menú lateral colapsable (`3359476`, aceptados el 2026-11-11).
 
 ## Documentos
 
@@ -35,6 +39,9 @@
 - [Informe de implementación de 01G-D](./pd-arch-01g-d-implementation-report.md): escudos de equipo, integración con
   el wizard y la generación, versionado y reproducibilidad, QA de plantillas, contratos, migración 0030, pruebas,
   limitaciones, validación manual y verificación de cierre.
+- [Assessment de 01G-E](./pd-arch-01g-e-assessment.md): discrepancia entre la fuente de verdad, el plan y la
+  implementación; objetivo original; lo ya hecho en 01G-D; dependencias y decisiones DE-E1 a DE-E7; alcance funcional y
+  técnico (E-1 y E-2); criterios de aceptación; riesgos de compatibilidad y seguridad.
 
 ## Decisiones del Product Owner
 
