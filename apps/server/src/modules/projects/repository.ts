@@ -98,7 +98,7 @@ const SQL = {
     'content_kind) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
   project: `${PROJECT_SELECT} WHERE p.id = ? AND p.deleted_at IS NULL`,
   // PD-ARCH-01G-D: the visual template version of each slide type of a generated project (decision 01G-D-3) and
-  // the badge of each of its teams.
+  // the badge of each of its teams (PD-ARCH-01G-E.1: for every generated project).
   assignVisualTemplate:
     'INSERT INTO project_visual_templates (project_id, slide_type, visual_template_id, visual_template_version_id) ' +
     'VALUES (?, ?, ?, ?)',
@@ -237,20 +237,26 @@ export class ProjectRepository {
   }
 
   /**
-   * Records the visual template version of each slide type of a project (decision 01G-D-3) and the badge of each of
-   * its teams, as they are when the project is created (PD-ARCH-01G-D).
+   * Records the visual template version of each slide type of a project (decision 01G-D-3), as it is when the project
+   * is created (PD-ARCH-01G-D).
    */
   assignVisualTemplates(
     projectId: string,
     templates: readonly { readonly templateId: string; readonly versionId: string; readonly contentType: string }[],
-    badges: Readonly<Record<string, string | null>>,
   ): void {
     for (const template of templates) {
       this.#db
         .prepare(SQL.assignVisualTemplate)
         .run([projectId, template.contentType, template.templateId, template.versionId]);
     }
-    this.#db.prepare(SQL.assignBadges).run([JSON.stringify(badges), projectId]);
+  }
+
+  /**
+   * Records the badge of each team of a project as it is when the project is created (PD-ARCH-01G-D; version 2 of the
+   * snapshot since PD-ARCH-01G-E.1, `badge-snapshot.ts`).
+   */
+  recordBadgeSnapshot(projectId: string, snapshotJson: string): void {
+    this.#db.prepare(SQL.assignBadges).run([snapshotJson, projectId]);
   }
 
   /** The visual template versions a project uses, one per slide type: cover, match slides, closing (PD-ARCH-01G-D). */

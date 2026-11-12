@@ -28,7 +28,7 @@ import {
   slideImageUrl,
 } from './stage.js';
 import type { TemplateDefinition } from './templates/common.js';
-import { matchResultTemplate } from './templates/match-result.js';
+import { matchResultTemplateV1 } from './templates/match-result.js';
 import { BUILT_IN_TEMPLATES, TemplateRegistry } from './templates/registry.js';
 import {
   MATCH_A,
@@ -217,10 +217,11 @@ describe('rendering stage', () => {
     await runStage();
     const earlier = version(uuid(404));
 
+    // A later version without badges: the version of a project whose badges do not cover the engine templates.
     const version2: TemplateDefinition = {
-      ...matchResultTemplate,
-      version: '1.1.0',
-      build: (slide, context) => ({ ...matchResultTemplate.build(slide, context), templateVersion: '1.1.0' }),
+      ...matchResultTemplateV1,
+      version: '1.2.0',
+      build: (slide, context) => ({ ...matchResultTemplateV1.build(slide, context), templateVersion: '1.2.0' }),
     };
     const registry = new TemplateRegistry([...BUILT_IN_TEMPLATES, version2]);
     const run2 = uuid(450);
@@ -233,7 +234,7 @@ describe('rendering stage', () => {
       slides: fullCarousel(460),
     });
     await runStage({ ...baseOptions, registry }, ctx(run2));
-    expect(version(uuid(464)).template_version).toBe('1.1.0');
+    expect(version(uuid(464)).template_version).toBe('1.2.0');
     expect(version(uuid(462)).template_version).toBe('1.0.0');
     // The earlier version keeps the template version and the render it was made with.
     expect(version(uuid(404))).toEqual(earlier);

@@ -6,7 +6,7 @@ info:
     HTTP contract v1 of the local El Deporte Rey GT API, version 1.0.0 (contract ID http-api). Promoted by WI-1-T20
     from the proposal accepted by the Orchestrator (OD-23; 1.0.0-proposed.2 as designed in WI-1-T09 and WI-1-T11G and
     corrected for the security design reviews T10 and T11H), with the visual-QA warning check capitalized_tokens added
-    by OD-26. The OpenAPI document is authoritative; packages/contracts mirrors it with Zod schemas and the contract
+    by OD-26 and the visual-QA warning check team_badges added by PD-ARCH-01G-E.1. The OpenAPI document is authoritative; packages/contracts mirrors it with Zod schemas and the contract
     tests check the parity (AD-04).
     Contract evolution (PD-11): within v1 only additive changes are allowed. A breaking change needs a new major path
     and a Product Owner decision. Every change follows the contract-change process with a Contract Safety assessment.
@@ -2127,7 +2127,7 @@ paths:
     post:
       tags: [review]
       operationId: acknowledgeQaWarnings
-      description: Acknowledge the warnings of the current version (OD-09), style_consistency and capitalized_tokens (OD-26). Blocking failures cannot be acknowledged.
+      description: Acknowledge the warnings of the current version (OD-09), style_consistency, capitalized_tokens (OD-26) and team_badges (PD-ARCH-01G-E.1). Blocking failures cannot be acknowledged.
       parameters:
         - $ref: '#/components/parameters/ClientHeader'
       requestBody:
@@ -2145,7 +2145,7 @@ paths:
                   minItems: 1
                   maxItems: 1
                   uniqueItems: true
-                  items: { type: string, enum: [style_consistency, capitalized_tokens] }
+                  items: { type: string, enum: [style_consistency, capitalized_tokens, team_badges] }
       responses:
         '200':
           description: Acknowledged.
@@ -5062,6 +5062,23 @@ components:
                   type: array
                   items: { type: string, maxLength: 64 }
             acknowledgedAt: { type: [string, 'null'], format: date-time }
+        - description: Badge slots of an engine match template left empty because the team has no badge in the project's badge snapshot (PD-28 point 4; PD-ARCH-01G-E.1, decision DE-E4). Nothing is substituted. Warning, acknowledged like style_consistency.
+          type: object
+          required: [check, outcome, severity, details, acknowledgedAt]
+          additionalProperties: false
+          properties:
+            check: { const: team_badges }
+            outcome: { $ref: '#/components/schemas/QaOutcome' }
+            severity: { const: warning }
+            details:
+              type: object
+              required: [emptyBadgeSlots]
+              additionalProperties: false
+              properties:
+                emptyBadgeSlots:
+                  type: array
+                  items: { type: string, enum: [team-badge-home, team-badge-away] }
+            acknowledgedAt: { type: [string, 'null'], format: date-time }
     QaOutcome:
       type: string
       enum: [pass, fail]
@@ -5494,7 +5511,7 @@ components:
         version: { type: string, maxLength: 32 }
         slideType: { type: string, enum: [cover, match_result, standings, closing, round_overview, fixture, match_preview] }
         label: { type: string }
-        badgeSlots: { type: integer, description: 'Reserved badge slots; empty while no authorized badge exists (R-050)' }
+        badgeSlots: { type: integer, description: 'Badge slots of the template. From PD-ARCH-01G-E.1 they draw the manually uploaded badge of each team recorded with the project (PD-28); a team without a badge leaves its slot empty (R-050)' }
         imageSlots:
           type: array
           items: { $ref: '#/components/schemas/BrandAssetKind' }

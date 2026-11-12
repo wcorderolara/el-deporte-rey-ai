@@ -63,6 +63,15 @@ function QaDetails({ result }: { result: QaResult }) {
           <p className={styles.hint}>{qaCopy.tokensHint}</p>
         </div>
       );
+    case 'team_badges':
+      return result.details.emptyBadgeSlots.length === 0 ? null : (
+        <div className={styles.detailText}>
+          <p>
+            {qaCopy.emptyBadgeSlots}: {result.details.emptyBadgeSlots.map((slot) => qaCopy.badgeSide[slot]).join(', ')}
+          </p>
+          <p className={styles.hint}>{qaCopy.badgesHint}</p>
+        </div>
+      );
   }
 }
 
@@ -77,8 +86,8 @@ export interface QaResultsProps {
 /**
  * Visual-QA results of a version (AD-12, OD-09): every check with its outcome and severity as text and symbol, its
  * closed details (mismatches, overflowing texts, colours, fonts, dimensions, flagged capitalized tokens as text), and
- * an acknowledgement control for each failed warning not yet acknowledged (style_consistency, capitalized_tokens;
- * one check per request, OD-38). Blocking failures cannot be acknowledged.
+ * an acknowledgement control for each failed warning not yet acknowledged (style_consistency, capitalized_tokens,
+ * team_badges; one check per request, OD-38). Blocking failures cannot be acknowledged.
  */
 export function QaResults({ results, onAcknowledge, acknowledging }: QaResultsProps) {
   if (results.length === 0) {

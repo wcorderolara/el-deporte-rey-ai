@@ -355,6 +355,7 @@ export const qaCheckLabel: Record<QaCheck, string> = {
   style_consistency: 'Coherencia visual',
   dimensions: 'Dimensiones',
   capitalized_tokens: 'Palabras con mayúscula no reconocidas',
+  team_badges: 'Escudos de equipo',
 };
 
 export const qaCopy = {
@@ -376,6 +377,9 @@ export const qaCopy = {
     `esperado ${expectedWidth} × ${expectedHeight} px, obtenido ${actualWidth} × ${actualHeight} px`,
   none: 'ninguno',
   blockingHint: 'Un fallo bloqueante solo se resuelve regenerando el elemento.',
+  emptyBadgeSlots: 'Sin escudo',
+  badgeSide: { 'team-badge-home': 'equipo local', 'team-badge-away': 'equipo visitante' },
+  badgesHint: 'El espacio queda vacío. Sube el escudo del equipo en Competiciones; se usa en los proyectos nuevos.',
 } as const;
 
 export const finalCopy = {

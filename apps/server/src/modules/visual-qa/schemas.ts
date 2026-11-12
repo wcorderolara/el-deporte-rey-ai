@@ -12,6 +12,7 @@
 import {
   DisplayNameSchema,
   LanguageSchema,
+  QA_CHECKS,
   QaCheckSchema,
   QaResultSchema,
   SlideTypeSchema,
@@ -100,7 +101,7 @@ export const VisualQaInputSchema = z.strictObject({
   facts: ContentInputSchema.shape.facts,
   teamAliases: ContentInputSchema.shape.teamAliases,
   /** The checks whose results the database accepts (`qa_results.check_name`). */
-  checks: z.array(QaCheckSchema).max(6),
+  checks: z.array(QaCheckSchema).max(QA_CHECKS.length),
   carouselTemplates: z.array(CarouselTemplateSchema).max(MAX_VERSIONS),
   versions: z.array(VersionToCheckSchema).max(MAX_VERSIONS),
 });
@@ -113,7 +114,7 @@ export type QaStatus = z.infer<typeof QaStatusSchema>;
 export const VersionResultSchema = z.strictObject({
   versionId: UuidSchema,
   qaStatus: QaStatusSchema,
-  results: z.array(QaResultSchema).max(6),
+  results: z.array(QaResultSchema).max(QA_CHECKS.length),
 });
 export type VersionResult = z.infer<typeof VersionResultSchema>;
 

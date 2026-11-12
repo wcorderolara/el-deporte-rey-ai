@@ -10,8 +10,12 @@
  * - Image elements carry the asset ID and SHA-256 only; the bytes are embedded as a `data:` URI at render time. A
  *   structured visual template (PD-ARCH-01G-C) also draws its `background` and its image `layer`s, with a `fit`
  *   (`contain` when absent, as before), and its text may carry an effect and be shown in capital letters.
- * - Badge slots are reserved boxes, always empty in the MVP (PD-03, R-050, R-231): the model has no asset field for
- *   them and the renderer draws nothing there.
+ * - Badge slots are reserved boxes of the engine match templates. Until PD-ARCH-01G-E.1 they were always empty
+ *   (PD-03, R-050, R-231), and stored models of that time have only `empty: true`. From version 1.1.0 of the match
+ *   templates, in a project whose badge snapshot covers the engine templates (PD-28, decision DE-E3), a slot also
+ *   records its `team`: the team's local ID (null when the slide's team could not be identified) and the badge drawn
+ *   from the snapshot, or null when the team has no badge. The renderer draws the badge from its stored file, scaled
+ *   to fit the slot without distortion; an empty slot draws nothing, and visual QA warns about it (`team_badges`).
  */
 import { LanguageSchema, SlideTypeSchema, SlugSchema, TextFieldNameSchema, UuidSchema } from '@edr/contracts';
 import { z } from 'zod';
@@ -160,14 +164,44 @@ export const ImageElementSchema = z.strictObject({
 });
 export type ImageElement = z.infer<typeof ImageElementSchema>;
 
-export const BadgeSlotElementSchema = z.strictObject({
-  kind: z.literal('badge_slot'),
-  id: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
-  slot: BadgeSlotSchema,
-  box: BoxSchema,
-  /** Always true in the MVP: no authorized badge asset exists (PD-03, R-231). */
-  empty: z.literal(true),
+/** A team badge drawn in a badge slot: a manually uploaded PNG or JPEG of the project's snapshot (PD-28). */
+export const SlotBadgeSchema = z.strictObject({
+  /** The badge ID (`team_badges.id`). */
+  assetId: UuidSchema,
+  sha256: Sha256Schema,
+  mime: z.enum(['image/png', 'image/jpeg']),
 });
+export type SlotBadge = z.infer<typeof SlotBadgeSchema>;
+
+export const BadgeSlotElementSchema = z
+  .strictObject({
+    kind: z.literal('badge_slot'),
+    id: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
+    slot: BadgeSlotSchema,
+    box: BoxSchema,
+    /** True when nothing is drawn in the slot (always, before PD-ARCH-01G-E.1). */
+    empty: z.boolean(),
+    /**
+     * PD-ARCH-01G-E.1: the slot's team and its badge (see the module notes). Absent when the project's badges do not
+     * cover the engine templates, and in every model stored before.
+     */
+    team: z
+      .strictObject({
+        teamId: z.string().min(1).max(64).nullable(),
+        badge: SlotBadgeSchema.nullable(),
+      })
+      .optional(),
+  })
+  // A slot is empty exactly when it has no badge, and a badge always belongs to an identified team.
+  .refine((element) => element.empty === (element.team?.badge === undefined || element.team.badge === null), {
+    message: 'a badge slot is empty exactly when it has no badge',
+  })
+  .refine(
+    (element) => element.team?.badge === undefined || element.team.badge === null || element.team.teamId !== null,
+    {
+      message: 'a badge belongs to an identified team',
+    },
+  );
 export type BadgeSlotElement = z.infer<typeof BadgeSlotElementSchema>;
 
 export const RenderElementSchema = z.discriminatedUnion('kind', [

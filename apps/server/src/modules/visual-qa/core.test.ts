@@ -587,6 +587,13 @@ describe('each seeded defect fails its check by name (R-214)', () => {
     }),
     dimensions: slideVersion(2, 'match_result', matchText(MATCH_A), { image: { width: 1080, height: 1920 } }),
     capitalized_tokens: match(2, matchTextWith(MATCH_A, { description: [commentary('Figura: Ezequiel')] })),
+    // PD-ARCH-01G-E.1: a badge slot that records its team without a badge.
+    team_badges: withModel(match(), (model) => {
+      const slot = model.elements.find((element) => element.id === 'team-badge-away');
+      if (slot?.kind === 'badge_slot') {
+        slot.team = { teamId: uuid(70), badge: null };
+      }
+    }),
   } as const;
 
   it.each(QA_CHECKS)('%s', (name) => {
@@ -598,6 +605,62 @@ describe('each seeded defect fails its check by name (R-214)', () => {
 
   it('the same slide without the defect passes all', () => {
     expect(failedChecks(check(match(), qaInput([match()], FACTS)))).toEqual([]);
+  });
+});
+
+describe('team_badges (warning; PD-ARCH-01G-E.1, decision DE-E4)', () => {
+  /** A match slide whose badge slots record their teams, with a badge or without (null). */
+  function withSlots(badges: { home: string | null; away: string | null }) {
+    return withModel(match(), (model) => {
+      for (const element of model.elements) {
+        if (element.kind === 'badge_slot') {
+          const badgeId = element.slot === 'team-badge-home' ? badges.home : badges.away;
+          element.empty = badgeId === null;
+          element.team = {
+            teamId: uuid(element.slot === 'team-badge-home' ? 71 : 72),
+            badge: badgeId === null ? null : { assetId: badgeId, sha256: 'a'.repeat(64), mime: 'image/png' },
+          };
+        }
+      }
+    });
+  }
+
+  it('passes when both teams have their badge, and on slides whose slots record no team (DE-E3)', () => {
+    const both = check(withSlots({ home: uuid(81), away: uuid(82) }), qaInput([match()], FACTS));
+    expect(resultOf(both, 'team_badges')).toMatchObject({ outcome: 'pass', details: { emptyBadgeSlots: [] } });
+    // A model rendered before 01G-E.1, or of a project whose badges do not cover the engine templates.
+    const legacy = check(match(), qaInput([match()], FACTS));
+    expect(resultOf(legacy, 'team_badges')).toMatchObject({ outcome: 'pass', details: { emptyBadgeSlots: [] } });
+    // Slides without badge slots pass too.
+    expect(resultOf(check(cover(), qaInput([cover()], FACTS)), 'team_badges').outcome).toBe('pass');
+  });
+
+  it('warns about one team without a badge, without blocking: the slide is ready once acknowledged', () => {
+    const result = check(withSlots({ home: uuid(81), away: null }), qaInput([match()], FACTS));
+    expect(failedChecks(result)).toEqual(['team_badges']);
+    expect(result.qaStatus).toBe('warnings');
+    const warning = resultOf(result, 'team_badges');
+    expect(warning).toEqual({
+      check: 'team_badges',
+      outcome: 'fail',
+      severity: 'warning',
+      details: { emptyBadgeSlots: ['team-badge-away'] },
+      acknowledgedAt: null,
+    });
+    expect(QaResultSchema.parse(warning)).toEqual(warning);
+  });
+
+  it('lists both slots when neither team has a badge', () => {
+    const result = check(withSlots({ home: null, away: null }), qaInput([match()], FACTS));
+    expect(failedChecks(result)).toEqual(['team_badges']);
+    expect(resultOf(result, 'team_badges').details).toEqual({
+      emptyBadgeSlots: ['team-badge-home', 'team-badge-away'],
+    });
+  });
+
+  it('is not run on a caption', () => {
+    const caption = runVisualQa(qaInput([captionVersion(5, 'Resumen')], FACTS), FONTS).versions[0];
+    expect(caption?.results.map((item) => item.check)).toEqual(['capitalized_tokens']);
   });
 });
 

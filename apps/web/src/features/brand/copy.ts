@@ -3,8 +3,9 @@
  * tables of `src/ui`; this module holds only the feature's own strings and the labels of the brand contract values.
  *
  * Wording rules (PD-03, OD-27, R-049, R-050, R-231): only authorized El Deporte Rey GT assets are registered; there is
- * no option for club badges or competition marks; badge slots stay empty. OD-07: no substitute logo or mascot is
- * suggested. OD-13: templates are versioned code and are not edited here.
+ * no option for club badges or competition marks in Mi marca. Team badges are uploaded in Competiciones (PD-28) and,
+ * since PD-ARCH-01G-E.1, fill the badge slots of the engine templates; a team without a badge leaves its slot empty.
+ * OD-07: no substitute logo or mascot is suggested. OD-13: templates are versioned code and are not edited here.
  */
 import type {
   BrandAssetKind,
@@ -290,8 +291,8 @@ export const templatesCopy = {
   badgeSlotsNone: 'Ninguno',
   badgeSlotsValue: (count: number): string =>
     count === 1
-      ? '1 espacio reservado; queda vacío porque no hay escudos autorizados.'
-      : `${count} espacios reservados; quedan vacíos porque no hay escudos autorizados.`,
+      ? '1 espacio con el escudo subido en Competiciones; sin escudo, queda vacío.'
+      : `${count} espacios con los escudos subidos en Competiciones; un equipo sin escudo deja su espacio vacío.`,
   imageSlots: 'Espacios de imagen',
   imageSlotsNone: 'Ninguno',
   imageSlotsNote: 'Se usan solo cuando hay un recurso activo de ese tipo.',

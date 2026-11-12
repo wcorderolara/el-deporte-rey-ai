@@ -3,6 +3,12 @@
 Hecho el 2026-11-11 sobre `work/PD-ARCH-01G-E`, creada desde el cierre de 01G-D
 (`3538af1deb3140e6c601c85793ec787528f6ac50`), antes de implementar. No se implementó nada de 01G-E.
 
+**Decisiones del 2026-11-12:** el Product Owner aprobó DE-E1 a DE-E7 tal como se recomiendan en la sección 4, con dos
+precisiones: DE-E5 fija seis partidos por diapositiva como criterio inicial de E.2, y DE-E6 define el contenido de cada
+fila. Registro: PD-32 en la fuente de verdad. Los cambios de la sección 9 se aplicaron. E.1 está implementado (ver el
+[informe de E.1](./pd-arch-01g-e1-implementation-report.md)), y E.2 espera la aceptación de E.1. Este assessment no se
+reescribe.
+
 ## 1. Discrepancia previa
 
 El encargo pide crear y evaluar 01G-E. Las fuentes vigentes dicen que esa fase ya no existe:
@@ -204,3 +210,6 @@ Recomendación: 01G-E completa el punto 5 de PD-28, en dos incrementos.
 - **R-231:** nota de que PD-28 lo supera para los espacios que llena un escudo autorizado.
 
 Los aplica el arquitecto con la decisión del Product Owner, como en PD-28 a PD-31.
+
+**Aplicados el 2026-11-12** con PD-32: segunda enmienda de PD-28, BR-06 actualizado y la nota sobre R-231 dentro de
+PD-32 (R-231 es un requisito de WI-1 y su documento no se edita).

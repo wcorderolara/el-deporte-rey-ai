@@ -12,8 +12,9 @@
  *   meantime fails the stage with `run_superseded` and nothing is recorded.
  *
  * The checks run and stored are those the `qa_results.check_name` constraint accepts (`storableChecks`): every
- * contract check, `capitalized_tokens` included, since migration 0002 (OD-56). A contract check the constraint does
- * not accept is logged (check name and run ID, no text) and neither run nor stored.
+ * contract check, `capitalized_tokens` included since migration 0002 (OD-56) and `team_badges` since migration 0035
+ * (PD-ARCH-01G-E.1). A contract check the constraint does not accept is logged (check name and run ID, no text) and
+ * neither run nor stored.
  *
  * QA findings are results, not stage failures: a slide that fails a blocking check stays blocked until a regenerated
  * version passes (OD-09); a warning is acknowledged by the operator (review module, T37).

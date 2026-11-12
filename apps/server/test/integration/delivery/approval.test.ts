@@ -210,6 +210,7 @@ describe('regeneration of one slide (R-217)', { timeout: WORKFLOW_TEST_TIMEOUT }
       'data_match',
       'dimensions',
       'style_consistency',
+      'team_badges',
       'team_names',
       'text_fit',
     ]);

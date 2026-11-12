@@ -186,11 +186,20 @@ describe('OD-26 visual-QA warning check', () => {
       'style_consistency',
       'dimensions',
       'capitalized_tokens',
+      'team_badges',
     ]);
-    const added = (variants as JsonObject[])[5] as JsonObject;
-    expect(child(added, 'properties', 'severity').const).toBe('warning');
-    expect(child(added, 'properties', 'details').additionalProperties).toBe(false);
-    expect(added.additionalProperties).toBe(false);
+    // capitalized_tokens (OD-26) and team_badges (PD-ARCH-01G-E.1) are warnings with closed details.
+    for (const added of (variants as JsonObject[]).slice(5)) {
+      expect(child(added, 'properties', 'severity').const).toBe('warning');
+      expect(child(added, 'properties', 'details').additionalProperties).toBe(false);
+      expect(added.additionalProperties).toBe(false);
+    }
+    const badges = (variants as JsonObject[])[6] as JsonObject;
+    expect(child(badges, 'properties', 'details').required).toEqual(['emptyBadgeSlots']);
+    expect(child(badges, 'properties', 'details', 'properties', 'emptyBadgeSlots', 'items').enum).toEqual([
+      'team-badge-home',
+      'team-badge-away',
+    ]);
   });
 
   it('accepts capitalized_tokens in the existing QA acknowledgement', () => {
@@ -204,7 +213,11 @@ describe('OD-26 visual-QA warning check', () => {
       'application/json',
       'schema',
     );
-    expect(child(body, 'properties', 'checks', 'items').enum).toEqual(['style_consistency', 'capitalized_tokens']);
+    expect(child(body, 'properties', 'checks', 'items').enum).toEqual([
+      'style_consistency',
+      'capitalized_tokens',
+      'team_badges',
+    ]);
   });
 });
 
@@ -286,6 +299,8 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       // UX-REVIEW-01: setExcludedMatches retired (Product Owner, 2026-11-10).
       '/paths/~1projects~1{projectId}~1draft~1exclusions: removed',
       `${ack}/requestBody/content/application~1json/schema/properties/checks/items/enum/1: added`,
+      // PD-ARCH-01G-E.1: the team_badges warning (decision DE-E4).
+      `${ack}/requestBody/content/application~1json/schema/properties/checks/items/enum/2: added`,
       '/paths/~1brand~1assets/post/parameters/3: added',
       '/paths/~1brand~1assets/post/parameters/4: added',
       '/paths/~1brand~1assets/post/parameters/5: added',
@@ -437,6 +452,8 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/TextField/properties/field/enum/16: added',
       '/components/schemas/ContentFlag/properties/code/enum/4: added',
       '/components/schemas/QaResult/oneOf/5: added',
+      // PD-ARCH-01G-E.1: the team_badges warning variant (decision DE-E4).
+      '/components/schemas/QaResult/oneOf/6: added',
       '/components/schemas/BrandAssetKind/enum/3: added',
       '/components/schemas/BrandAssetKind/enum/4: added',
       '/components/schemas/BrandAsset/required/3: changed',

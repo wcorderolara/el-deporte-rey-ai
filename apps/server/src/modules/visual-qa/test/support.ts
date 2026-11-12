@@ -186,9 +186,12 @@ export interface ModelOptions {
   readonly height?: number;
 }
 
-/** The render model the current template builds for a stored text (as the rendering stage does). */
+/**
+ * The render model the current template builds for a stored text without badges (as the rendering stage does for a
+ * project whose badges do not cover the engine templates, decision DE-E3 of PD-ARCH-01G-E).
+ */
 export function modelOf(slideType: SlideType, text: ElementText, options: ModelOptions = {}): RenderModel {
-  return registry.current(slideType).build(
+  return registry.currentWithoutBadges(slideType).build(
     content(slideType, text, {
       demonstration: options.demonstration ?? false,
       language: options.language ?? 'es',

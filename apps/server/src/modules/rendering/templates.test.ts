@@ -17,7 +17,7 @@ import type { RenderModel, TextElement } from './render-model.js';
 import { RenderError, pngSize } from './renderer.js';
 import type { SlideContent } from './slide-content.js';
 import type { TemplateDefinition } from './templates/common.js';
-import { matchResultTemplate } from './templates/match-result.js';
+import { matchResultTemplate, matchResultTemplateV1 } from './templates/match-result.js';
 import { BUILT_IN_TEMPLATES, TemplateRegistry, toContractTemplate } from './templates/registry.js';
 import {
   MATCH_A,
@@ -76,18 +76,33 @@ const ALL_SLIDES: readonly SlideContent[] = [
 describe('template registry (OD-13, R-031, R-050)', () => {
   it('lists the built-in templates with versions, badge slots and image slots (PD-ARCH-01E-B adds three)', () => {
     const list = new TemplateRegistry().list().map(toContractTemplate);
+    // PD-ARCH-01G-E.1: the three match templates are at 1.1.0, which draws the team badges.
     expect(list.map((template) => [template.id, template.slideType, template.version])).toEqual([
       ['cover', 'cover', '1.0.0'],
-      ['match-result', 'match_result', '1.0.0'],
+      ['match-result', 'match_result', '1.1.0'],
       ['standings', 'standings', '1.0.0'],
       ['closing', 'closing', '1.0.0'],
       ['round-overview', 'round_overview', '1.0.0'],
-      ['fixture', 'fixture', '1.0.0'],
-      ['match-preview', 'match_preview', '1.0.0'],
+      ['fixture', 'fixture', '1.1.0'],
+      ['match-preview', 'match_preview', '1.1.0'],
     ]);
     expect(list.find((template) => template.id === 'fixture')?.badgeSlots).toBe(2);
     expect(list.find((template) => template.id === 'match-result')?.badgeSlots).toBe(2);
     expect(list.find((template) => template.id === 'cover')?.imageSlots).toEqual(['brand_logo', 'mascot']);
+  });
+
+  it('keeps every version and gives projects without engine badges the version without badges (DE-E3)', () => {
+    const registry = new TemplateRegistry();
+    for (const id of ['match-result', 'fixture', 'match-preview']) {
+      expect(registry.get(id, '1.0.0')?.drawsBadges, id).toBe(false);
+      expect(registry.get(id, '1.1.0')?.drawsBadges, id).toBe(true);
+    }
+    expect(registry.currentWithoutBadges('match_result')).toBe(matchResultTemplateV1);
+    expect(registry.currentWithoutBadges('fixture').version).toBe('1.0.0');
+    expect(registry.currentWithoutBadges('match_preview').version).toBe('1.0.0');
+    // Slide types without badge slots have one version: the same for every project.
+    expect(registry.currentWithoutBadges('cover')).toBe(registry.current('cover'));
+    expect(registry.currentWithoutBadges('round_overview')).toBe(registry.current('round_overview'));
   });
 
   it('refuses a duplicate template version', () => {
@@ -272,18 +287,19 @@ describe('R-211: shared layout and palette; template version changes apply to la
   it('renders later slides with a new template version and keeps the earlier render model unchanged', async () => {
     const before = await renderContent(content('match_result', matchText(MATCH_A)), deps(), '/t');
     const version2: TemplateDefinition = {
-      ...matchResultTemplate,
-      version: '1.1.0',
+      ...matchResultTemplateV1,
+      version: '1.2.0',
       build: (slide, ctx) => {
-        const model = matchResultTemplate.build(slide, ctx);
-        return { ...model, templateVersion: '1.1.0', background: { colorRole: 'primary', color: ctx.palette.primary } };
+        const model = matchResultTemplateV1.build(slide, ctx);
+        return { ...model, templateVersion: '1.2.0', background: { colorRole: 'primary', color: ctx.palette.primary } };
       },
     };
     const registry = new TemplateRegistry([...BUILT_IN_TEMPLATES, version2]);
-    expect(registry.current('match_result').version).toBe('1.1.0');
-    expect(registry.get('match-result', '1.0.0')).toBe(matchResultTemplate);
+    expect(registry.current('match_result').version).toBe('1.2.0');
+    expect(registry.get('match-result', '1.0.0')).toBe(matchResultTemplateV1);
+    expect(registry.get('match-result', '1.1.0')).toBe(matchResultTemplate);
     const after = await renderContent(content('match_result', matchText(MATCH_A)), deps({ registry }), '/t');
-    expect([before.templateVersion, after.templateVersion]).toEqual(['1.0.0', '1.1.0']);
+    expect([before.templateVersion, after.templateVersion]).toEqual(['1.0.0', '1.2.0']);
     expect(before.renderModel.templateVersion).toBe('1.0.0');
     expect(after.sha256).not.toBe(before.sha256);
   });

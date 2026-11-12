@@ -27,6 +27,11 @@
  * - `capitalized_tokens` (warning; OD-26, OD-38): capitalized tokens of the AI-written (commentary) text that are not
  *   part of a verified team name, a selection label (competition, stage, season), a brand term or the language word
  *   list: possible person names (T11H-F17 residual).
+ * - `team_badges` (warning; PD-ARCH-01G-E.1, decision DE-E4; PD-28 point 4): the badge slots of an engine match
+ *   template that record their team but have no badge, because the team has none in the project's snapshot or could
+ *   not be identified. The slot stays empty and nothing is substituted; generation is never stopped. A slot that
+ *   records no team (models rendered before 01G-E.1, projects whose snapshot does not cover the engine templates,
+ *   decision DE-E3) is not examined, so those slides pass as before.
  *
  * The caption element has no image: its QA is the content checks (architecture.md section 10), plus
  * `capitalized_tokens` on its caption and hashtags (OD-26 applies to every AI draft).
@@ -684,6 +689,18 @@ export function capitalizedTokens(version: VersionToCheck, ctx: QaContext): QaRe
   return result('capitalized_tokens', tokens.length === 0, { tokens });
 }
 
+/** The badge slots that record a team without a badge (PD-ARCH-01G-E.1), in model order. */
+export function emptyBadgeSlotsOf(model: RenderModel): ('team-badge-home' | 'team-badge-away')[] {
+  return model.elements.flatMap((element) =>
+    element.kind === 'badge_slot' && element.team !== undefined && element.team.badge === null ? [element.slot] : [],
+  );
+}
+
+export function teamBadges(model: RenderModel): QaResult {
+  const emptyBadgeSlots = emptyBadgeSlotsOf(model);
+  return result('team_badges', emptyBadgeSlots.length === 0, { emptyBadgeSlots });
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // Results
 // ---------------------------------------------------------------------------------------------------------------
@@ -696,6 +713,7 @@ export const CHECK_SEVERITY: Readonly<Record<QaCheck, 'blocking' | 'warning'>> =
   style_consistency: 'warning',
   dimensions: 'blocking',
   capitalized_tokens: 'warning',
+  team_badges: 'warning',
 });
 
 /** A closed contract result (T10-F17): validated, never acknowledged when produced. */
@@ -739,6 +757,9 @@ export function checkVersion(
     run('dimensions', () => dimensions(version, ctx));
   }
   run('capitalized_tokens', () => capitalizedTokens(version, ctx));
+  if (version.kind === 'slide' && model !== null) {
+    run('team_badges', () => teamBadges(model));
+  }
   return { versionId: version.versionId, qaStatus: qaStatusOf(results), results };
 }
 

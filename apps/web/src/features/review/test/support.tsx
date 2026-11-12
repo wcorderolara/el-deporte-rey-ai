@@ -286,6 +286,14 @@ export const PASSING_QA: QaResult[] = [
     acknowledgedAt: null,
   },
   { check: 'capitalized_tokens', outcome: 'pass', severity: 'warning', details: { tokens: [] }, acknowledgedAt: null },
+  // PD-ARCH-01G-E.1: badge slots of the engine match templates.
+  {
+    check: 'team_badges',
+    outcome: 'pass',
+    severity: 'warning',
+    details: { emptyBadgeSlots: [] },
+    acknowledgedAt: null,
+  },
 ];
 
 export function commentary(text: string): TextField['segments'][number] {

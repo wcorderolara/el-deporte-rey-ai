@@ -38,6 +38,7 @@ export {
 export { LINE_HEIGHT_FACTOR, type FittedText, type TextLayout, fitText, layoutText, measureText } from './layout.js';
 export { PREVIEW_CACHE_ENTRIES, TemplatePreviewService } from './preview.js';
 export {
+  type BadgeSlotElement,
   PALETTE_ROLES,
   type RenderElement,
   type ImageFit,

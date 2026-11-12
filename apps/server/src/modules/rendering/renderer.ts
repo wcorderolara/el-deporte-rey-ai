@@ -7,8 +7,12 @@
  * Satori lays the tree out with the bundled fonts and draws glyphs as paths (no `<text>` element), then resvg
  * rasterizes the SVG at the canvas size.
  *
- * Data only (T10-F09): image slots receive only `data:` URIs built from stored, hash-checked asset bytes, never a URL
- * or a file path; Satori gets no `loadAdditionalAsset` callback (a glyph missing from the bundled fonts is not
+ * Team badges (PD-ARCH-01G-E.1; PD-28): a badge slot with a badge draws it from its stored file like an image
+ * element, centred and scaled to fit the slot (`contain`: proportional, never cropped or stretched; a PNG keeps its
+ * transparency); an empty slot draws nothing.
+ *
+ * Data only (T10-F09): image slots and badge slots receive only `data:` URIs built from stored, hash-checked bytes,
+ * never a URL or a file path; Satori gets no `loadAdditionalAsset` callback (a glyph missing from the bundled fonts is not
  * fetched); resvg runs with `loadSystemFonts: false`, the bundled font files as its only `fontFiles` and no resources
  * directory. Text reaches Satori only as text content. The renderer opens no socket.
  *
@@ -33,7 +37,10 @@ export interface EmbeddedAsset {
 
 export interface RenderResources {
   readonly fonts: FontSet;
-  /** Assets by ID; every image element of the model must have its asset here, with the same SHA-256. */
+  /**
+   * Assets by ID; every image element and every drawn badge of the model must have its file here, with the same
+   * SHA-256.
+   */
   readonly assets: ReadonlyMap<string, EmbeddedAsset>;
 }
 
@@ -204,9 +211,31 @@ function elementNodes(element: RenderElement, resources: RenderResources, palett
           },
         },
       ];
-    case 'badge_slot':
-      // Reserved and always empty (PD-03, R-231): nothing is drawn.
-      return [];
+    case 'badge_slot': {
+      // An empty slot draws nothing (PD-28 point 4: no substitute); a badge is drawn from its file (PD-ARCH-01G-E.1).
+      const badge = element.team?.badge ?? null;
+      if (element.empty || badge === null) {
+        return [];
+      }
+      return [
+        {
+          type: 'img',
+          props: {
+            src: dataUri(resources.assets, badge.assetId, badge.sha256),
+            width: element.box.width,
+            height: element.box.height,
+            style: {
+              position: 'absolute',
+              left: element.box.x,
+              top: element.box.y,
+              width: element.box.width,
+              height: element.box.height,
+              objectFit: 'contain',
+            },
+          },
+        },
+      ];
+    }
   }
 }
 

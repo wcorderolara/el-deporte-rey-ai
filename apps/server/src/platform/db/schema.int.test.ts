@@ -964,10 +964,11 @@ describe('structure of the migrated schema', () => {
       { version: 32, name: 'engine_slide_type_templates' },
       { version: 33, name: 'editorial_copy' },
       { version: 34, name: 'editorial_naming_reconcile' },
+      { version: 35, name: 'qa_team_badges' },
     ]);
   });
 
-  it('qa_results accepts the six QA check names (OD-26, OD-56) and keeps one result per version and check', () => {
+  it('qa_results accepts the seven QA check names (OD-26, OD-56, PD-ARCH-01G-E.1) and keeps one result per version and check', () => {
     const row = db
       .prepare<{ sql: string }>("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'qa_results'")
       .get();
@@ -979,6 +980,7 @@ describe('structure of the migrated schema', () => {
       "'style_consistency'",
       "'dimensions'",
       "'capitalized_tokens'",
+      "'team_badges'",
     ]);
     const unique = db
       .prepare<{ name: string }>(

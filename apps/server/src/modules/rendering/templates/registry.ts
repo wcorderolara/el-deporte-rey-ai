@@ -9,20 +9,27 @@ import type { SlideType, Template } from '@edr/contracts';
 import type { TemplateDefinition } from './common.js';
 import { closingTemplate } from './closing.js';
 import { coverTemplate } from './cover.js';
-import { fixtureTemplate } from './fixture.js';
-import { matchPreviewTemplate } from './match-preview.js';
-import { matchResultTemplate } from './match-result.js';
+import { fixtureTemplate, fixtureTemplateV1 } from './fixture.js';
+import { matchPreviewTemplate, matchPreviewTemplateV1 } from './match-preview.js';
+import { matchResultTemplate, matchResultTemplateV1 } from './match-result.js';
 import { roundOverviewTemplate } from './round-overview.js';
 import { standingsTemplate } from './standings.js';
 
-/** The built-in templates of this release. */
+/**
+ * The built-in templates of this release, every version kept (OD-13). The current version of a slide type is its last
+ * one: the match templates are at 1.1.0, which draw the team badges (PD-ARCH-01G-E.1).
+ */
 export const BUILT_IN_TEMPLATES: readonly TemplateDefinition[] = Object.freeze([
   coverTemplate,
-  matchResultTemplate,
+  matchResultTemplateV1,
   standingsTemplate,
   closingTemplate,
   // PD-ARCH-01E-B: matches not played yet.
   roundOverviewTemplate,
+  fixtureTemplateV1,
+  matchPreviewTemplateV1,
+  // PD-ARCH-01G-E.1: team badges in the badge slots.
+  matchResultTemplate,
   fixtureTemplate,
   matchPreviewTemplate,
 ]);
@@ -62,6 +69,17 @@ export class TemplateRegistry {
       throw new TypeError('no template is registered for this slide type');
     }
     return template;
+  }
+
+  /**
+   * The template that draws a slide of a project whose badges do not cover the engine templates (decision DE-E3 of
+   * PD-ARCH-01G-E): the last registered version of the slide type that leaves its badge slots empty, so the slides of
+   * those projects keep the version, the render model and the image they had (match templates 1.0.0). The current
+   * version when every version of the type draws badges.
+   */
+  currentWithoutBadges(slideType: SlideType): TemplateDefinition {
+    const legacy = this.#all.findLast((template) => template.slideType === slideType && template.drawsBadges !== true);
+    return legacy ?? this.current(slideType);
   }
 
   /** The current version of a template ID, or undefined. */

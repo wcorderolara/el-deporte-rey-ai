@@ -11,6 +11,10 @@
  *   its evidence (supporting or consulted, never disagreeing) → the observation of the local source, whose `teamKey`
  *   is the local team ID. A name is
  *   never used to find an image.
+ * - The project's badges (`loadProjectBadges`) are read from the same snapshot for the badge slots of the engine
+ *   match templates too, when the snapshot covers them (version 2, PD-ARCH-01G-E.1; `projects/badge-snapshot.ts`).
+ *   A badge is read from its confined file with its hash checked; a file that does not match fails the render, and
+ *   nothing is substituted.
  * - Nothing here calls an AI provider or the network. This file imports the renderer modules directly (not the
  *   rendering module index) so the rendering stage can use it without an import cycle.
  */
@@ -33,8 +37,15 @@ import type { Db } from '../../platform/db/index.js';
 import { createBrandAssetService } from '../brand/index.js';
 import { teamBadgeServiceOf } from '../competitions/badges/index.js';
 import { designServiceOf } from '../design/index.js';
+import { parseBadgeSnapshot } from '../projects/badge-snapshot.js';
 import type { EmbeddedAsset } from '../rendering/renderer.js';
-import { type SegmentRun, type StoredElementText, runOf, segmentsOf } from '../rendering/slide-content.js';
+import {
+  type SegmentRun,
+  type SlideContent,
+  type StoredElementText,
+  runOf,
+  segmentsOf,
+} from '../rendering/slide-content.js';
 import type { StructuredDocument } from '../rendering/structured.js';
 import type { AssetRef } from '../rendering/templates/common.js';
 
@@ -69,6 +80,16 @@ export interface SlideTeams {
   readonly away: string | null;
 }
 
+/** The badges of a project's snapshot, with their verified files (PD-ARCH-01G-D, PD-ARCH-01G-E.1). */
+export interface ProjectBadges {
+  /** True when the badge slots of the engine match templates draw these badges (snapshot version 2). */
+  readonly engineSlots: boolean;
+  /** The badge of each team of the snapshot by local team ID; null for a team without a badge. */
+  readonly teams: ReadonlyMap<string, AssetRef | null>;
+  /** Every badge file of the snapshot, each once, with its bytes checked against its recorded hash. */
+  readonly files: readonly EmbeddedAsset[];
+}
+
 /** A project's template plan as validated stage input (it carries maps and bytes). */
 export const ProjectTemplatePlanSchema = z.custom<ProjectTemplatePlan>(
   (value) => typeof value === 'object' && value !== null && 'versionId' in value,
@@ -89,8 +110,6 @@ const SQL = {
     "json_extract(o.value, '$.kind') = 'team' ORDER BY o.id LIMIT 1",
 } as const;
 
-const SnapshotSchema = z.record(z.string().max(64), z.string().max(64).nullable());
-
 function sha256(content: Uint8Array): string {
   return createHash('sha256').update(content).digest('hex');
 }
@@ -108,12 +127,56 @@ function verified(ref: AssetRef, content: Buffer): EmbeddedAsset {
 }
 
 /**
+ * The badges of a project's snapshot with their verified files (see the module notes): by the teams' local IDs, as
+ * recorded when the project was created. A badge replaced or retired since then is still the one drawn. A project
+ * without a snapshot has no badge, and `engineSlots` is false for it and for a version 1 snapshot (decision DE-E3).
+ */
+export async function loadProjectBadges(container: AppContainer, projectId: string): Promise<ProjectBadges> {
+  const row = container.db.prepare<{ badge_snapshot_json: string | null }>(SQL.badges).get([projectId]);
+  const snapshot = parseBadgeSnapshot(row?.badge_snapshot_json);
+  const badgeService = teamBadgeServiceOf(container);
+  const files: EmbeddedAsset[] = [];
+  const teams = new Map<string, AssetRef | null>();
+  for (const [teamId, badgeId] of Object.entries(snapshot.teams)) {
+    const record = badgeId === null ? null : badgeService.badge(badgeId);
+    if (record === null) {
+      teams.set(teamId, null);
+      continue;
+    }
+    const ref: AssetRef = { id: record.id, sha256: record.sha256, mime: record.mime };
+    if (!files.some((file) => file.id === ref.id)) {
+      files.push(verified(ref, await badgeService.read(record)));
+    }
+    teams.set(teamId, ref);
+  }
+  return { engineSlots: snapshot.engineSlots, teams, files };
+}
+
+/**
+ * The teams and badges of an engine match slide (`SlideContent.badges`; PD-ARCH-01G-E.1): each side's team by its
+ * local identity and that team's snapshot badge. Undefined when the project's badges do not cover the engine
+ * templates (decision DE-E3), so the slots stay empty and record no team.
+ */
+export function engineSlideBadges(badges: ProjectBadges, teams: SlideTeams): SlideContent['badges'] {
+  if (!badges.engineSlots) {
+    return undefined;
+  }
+  const side = (teamId: string | null) => ({
+    teamId,
+    badge: teamId === null ? null : (badges.teams.get(teamId) ?? null),
+  });
+  return { home: side(teams.home), away: side(teams.away) };
+}
+
+/**
  * The template plans of a project, one per slide type with a pinned version; empty for a project without a visual
- * template (see the module notes).
+ * template (see the module notes). The plans draw the project's badges (`loadProjectBadges`), whichever the version
+ * of its snapshot.
  */
 export async function loadProjectTemplatePlans(
   container: AppContainer,
   projectId: string,
+  projectBadges?: ProjectBadges,
 ): Promise<ProjectTemplatePlan[]> {
   const { db } = container;
   const pins = db
@@ -123,27 +186,7 @@ export async function loadProjectTemplatePlans(
     return [];
   }
   const brand = createBrandAssetService(container);
-  const badgeService = teamBadgeServiceOf(container);
-  const row = db.prepare<{ badge_snapshot_json: string | null }>(SQL.badges).get([projectId]);
-  const snapshot = SnapshotSchema.parse(
-    row?.badge_snapshot_json === null || row?.badge_snapshot_json === undefined
-      ? {}
-      : JSON.parse(row.badge_snapshot_json),
-  );
-  const badgeFiles: EmbeddedAsset[] = [];
-  const badges = new Map<string, AssetRef | null>();
-  for (const [teamId, badgeId] of Object.entries(snapshot)) {
-    const record = badgeId === null ? null : badgeService.badge(badgeId);
-    if (record === null) {
-      badges.set(teamId, null);
-      continue;
-    }
-    const ref: AssetRef = { id: record.id, sha256: record.sha256, mime: record.mime };
-    if (!badgeFiles.some((file) => file.id === ref.id)) {
-      badgeFiles.push(verified(ref, await badgeService.read(record)));
-    }
-    badges.set(teamId, ref);
-  }
+  const { teams: badges, files: badgeFiles } = projectBadges ?? (await loadProjectBadges(container, projectId));
   const context = db
     .prepare<{ competition_name: string; season_label: string; stage_name: string | null; round_name: string }>(
       SQL.context,

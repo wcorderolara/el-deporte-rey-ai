@@ -408,6 +408,42 @@ describe('QA warnings (OD-09, OD-26, OD-38): acknowledged one check per request'
     expect(button(slideCard, 'Aprobar esta versión').disabled).toBe(true);
   });
 
+  it('shows the team badges warning with the side left without a badge and acknowledges it (PD-ARCH-01G-E.1)', async () => {
+    const badgeWarning = PASSING_QA.map((result) =>
+      result.check === 'team_badges'
+        ? { ...result, outcome: 'fail' as const, details: { emptyBadgeSlots: ['team-badge-away' as const] } }
+        : result,
+    );
+    const element = slide(1, 1, 'fixture', { qa: badgeWarning });
+    const acknowledged = checkedElement({
+      ...element,
+      currentVersion: {
+        ...element.currentVersion,
+        qa: badgeWarning.map((result) =>
+          result.check === 'team_badges' ? { ...result, acknowledgedAt: '2026-10-27T12:30:00Z' } : result,
+        ),
+      },
+    });
+    const server = fakeServer({
+      [DRAFT_PATH]: [
+        draftResponse(singleSlideDraft({ qa: badgeWarning })),
+        draftResponse(singleSlideDraft({ qa: acknowledged.currentVersion.qa })),
+      ],
+      [`POST ${elementPath(CAROUSEL_ID, elementId(1), 'qa-acknowledgements')}`]: () => json(acknowledged),
+    });
+    renderApp(REVIEW, server);
+    const slideCard = await card();
+    const qaRegion = within(slideCard).getByRole('region', { name: `Control visual: ${SLIDE}` });
+    expect(qaRegion.textContent).toContain('Escudos de equipo');
+    expect(qaRegion.textContent).toContain('Sin escudo: equipo visitante');
+    expect(qaRegion.textContent).toContain('Sube el escudo del equipo en Competiciones');
+    expect(button(slideCard, 'Aprobar esta versión').disabled).toBe(true);
+    await userEvent.click(button(qaRegion, 'Confirmar la advertencia: Escudos de equipo'));
+    expect(await within(slideCard).findByText('Advertencia confirmada.')).toBeTruthy();
+    const calls = server.callsTo('POST', elementPath(CAROUSEL_ID, elementId(1), 'qa-acknowledgements'));
+    expect(calls.map((call) => call.body)).toEqual([{ versionId: versionId(1), checks: ['team_badges'] }]);
+  });
+
   it('announces a refused acknowledgement', async () => {
     const server = fakeServer({
       [DRAFT_PATH]: draftResponse(singleSlideDraft({ qa: warnings })),

@@ -56,6 +56,7 @@ import { ImportService, LOCAL_COMPETITIONS_ADAPTER } from '../../imports/index.j
 import { TemplateRegistry, toContractTemplate } from '../../rendering/index.js';
 import { teamBadgeServiceOf } from '../../competitions/badges/index.js';
 import { VisualTemplateRepository } from '../../visual-templates/repository.js';
+import { badgeSnapshotJson } from '../badge-snapshot.js';
 import { ProjectRepository } from '../repository.js';
 
 import {
@@ -398,7 +399,6 @@ export class ContentBatchService {
     };
   }
 
-  /** The current templates of every slide type the selected kinds use. */
   /** The active badge of every team of the given matches, by local team ID (null without a badge). */
   #badgeSnapshot(resolved: Resolved, matchIds: readonly string[]): Record<string, string | null> {
     const badges = teamBadgeServiceOf(this.#container);
@@ -415,6 +415,7 @@ export class ContentBatchService {
     return snapshot;
   }
 
+  /** The current templates of every slide type the selected kinds use. */
   #compatibleTemplates(kinds: readonly ContentPieceKind[]) {
     const slideTypes = new Set(kinds.flatMap((kind) => [...SLIDE_TYPES_OF[CONTENT_KIND_OF[kind]]]));
     return this.#templates
@@ -569,13 +570,12 @@ export class ContentBatchService {
           SLIDE_TYPES_OF[CONTENT_KIND_OF[piece.kind]].has(usage.contentType),
         );
         if (pieceTemplates.length > 0) {
-          // PD-ARCH-01G-D: the exact version of each slide type and the badge of each team of the piece, as they are now.
-          this.#projects.assignVisualTemplates(
-            projectId,
-            pieceTemplates,
-            this.#badgeSnapshot(resolved, piece.matchIds),
-          );
+          // PD-ARCH-01G-D: the exact version of each slide type of the piece, as it is now.
+          this.#projects.assignVisualTemplates(projectId, pieceTemplates);
         }
+        // PD-ARCH-01G-D, PD-ARCH-01G-E.1: the badge of each team of the piece, as it is now, for the visual templates
+        // and the badge slots of the engine templates (snapshot version 2).
+        this.#projects.recordBadgeSnapshot(projectId, badgeSnapshotJson(this.#badgeSnapshot(resolved, piece.matchIds)));
         const run = this.#runner.start(projectId, 'full');
         this.#batches.insertItem(id, {
           id: itemId,

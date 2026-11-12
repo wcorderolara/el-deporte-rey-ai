@@ -19,14 +19,24 @@ import {
 
 /**
  * Visual-QA check names. `capitalized_tokens` is the OD-26 warning check (capitalized tokens in AI-written text that
- * are not verified team or competition names, the language word list or the brand terms; T11H-F17).
+ * are not verified team or competition names, the language word list or the brand terms; T11H-F17). `team_badges` is
+ * the PD-ARCH-01G-E.1 warning check (decision DE-E4): a badge slot of an engine match template left empty because its
+ * team has no badge in the project's snapshot (PD-28 point 4).
  */
-export const QA_CHECKS = ['data_match', 'team_names', 'text_fit', 'style_consistency', 'dimensions', 'capitalized_tokens'] as const;
+export const QA_CHECKS = [
+  'data_match',
+  'team_names',
+  'text_fit',
+  'style_consistency',
+  'dimensions',
+  'capitalized_tokens',
+  'team_badges',
+] as const;
 
 export const QaCheckSchema = z.enum(QA_CHECKS);
 
-/** Warning checks that the operator acknowledges through acknowledgeQaWarnings (OD-09, OD-26). */
-export const QA_WARNING_CHECKS = ['style_consistency', 'capitalized_tokens'] as const;
+/** Warning checks that the operator acknowledges through acknowledgeQaWarnings (OD-09, OD-26, DE-E4). */
+export const QA_WARNING_CHECKS = ['style_consistency', 'capitalized_tokens', 'team_badges'] as const;
 
 export const QaWarningCheckSchema = z.enum(QA_WARNING_CHECKS);
 
@@ -92,6 +102,14 @@ export const QaResultSchema = z.discriminatedUnion('check', [
     outcome: QaOutcomeSchema,
     severity: z.literal('warning'),
     details: z.strictObject({ tokens: z.array(z.string().max(64)) }),
+    acknowledgedAt: DateTimeSchema.nullable(),
+  }),
+  z.strictObject({
+    check: z.literal('team_badges'),
+    outcome: QaOutcomeSchema,
+    severity: z.literal('warning'),
+    /** The badge slots left empty (`team-badge-home`, `team-badge-away`). */
+    details: z.strictObject({ emptyBadgeSlots: z.array(z.enum(['team-badge-home', 'team-badge-away'])) }),
     acknowledgedAt: DateTimeSchema.nullable(),
   }),
 ]);

@@ -62,6 +62,11 @@ export interface TemplateDefinition {
   readonly label: string;
   readonly imageSlots: readonly ImageSlot[];
   readonly badgeSlots: readonly BadgeSlot[];
+  /**
+   * True when the template fills its badge slots with the slide's badges (`SlideContent.badges`; PD-ARCH-01G-E.1,
+   * version 1.1.0 of the match templates). Absent or false: the slots stay empty and record no team.
+   */
+  readonly drawsBadges?: boolean;
   build(content: SlideContent, ctx: TemplateContext): RenderModel;
 }
 
@@ -193,9 +198,33 @@ export class ModelBuilder {
     });
   }
 
-  /** A reserved badge slot: always empty (PD-03, R-050, R-231). */
+  /**
+   * A reserved badge slot. A template that draws badges records the slide's team and its snapshot badge
+   * (PD-ARCH-01G-E.1); otherwise, or without slide badges, the slot is empty and records no team (PD-03, R-231).
+   */
   badge(slot: BadgeSlot, x: number, y: number, width: number, height: number): void {
-    this.#elements.push({ kind: 'badge_slot', id: slot, slot, box: this.box(x, y, width, height), empty: true });
+    if (!this.#template.badgeSlots.includes(slot)) {
+      throw new TypeError('the template does not declare this badge slot');
+    }
+    const box = this.box(x, y, width, height);
+    const badges = this.#template.drawsBadges === true ? this.#content.badges : undefined;
+    if (badges === undefined) {
+      this.#elements.push({ kind: 'badge_slot', id: slot, slot, box, empty: true });
+      return;
+    }
+    const side = slot === 'team-badge-home' ? badges.home : badges.away;
+    const badge =
+      side.badge === null || side.teamId === null
+        ? null
+        : { assetId: side.badge.id, sha256: side.badge.sha256, mime: side.badge.mime };
+    this.#elements.push({
+      kind: 'badge_slot',
+      id: slot,
+      slot,
+      box,
+      empty: badge === null,
+      team: { teamId: side.teamId, badge },
+    });
   }
 
   /** Background, header band, brand logo slot and, on DEMO_DATA slides, the demonstration band. */

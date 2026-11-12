@@ -16,9 +16,12 @@
   plantillas y los submenús de Mi marca. Commit de cierre (documental): `3538af1deb3140e6c601c85793ec787528f6ac50`.
 - **PD-ARCH-01G-E** — escudos pendientes del punto 5 de PD-28 (plantillas del motor y calendarios de jornada). La
   enmienda de PD-28 y 01G-D-1 la habían integrado en 01G-D. El Product Owner pidió su rama y su assessment el
-  2026-11-11. `work/PD-ARCH-01G-E` se creó desde `3538af1`. **Assessment entregado, pendiente de las decisiones del
-  Product Owner** (DE-E1 a DE-E7). No hay nada implementado. En la misma rama tienen commit 01H, UX-REVIEW-01 y el
-  menú lateral colapsable (`3359476`, aceptados el 2026-11-11).
+  2026-11-11. `work/PD-ARCH-01G-E` se creó desde `3538af1`. En la misma rama tienen commit 01H, UX-REVIEW-01 y el menú
+  lateral colapsable (`3359476`, aceptados el 2026-11-11), y el assessment (`7a4c9f1`). El 2026-11-12 el Product Owner
+  aprobó DE-E1 a DE-E7 (PD-32) y dividió la fase en dos incrementos:
+  - **E.1** — escudos en las plantillas del motor de partido. **Implementado el 2026-11-12, sin commit, pendiente de
+    la aceptación del Product Owner.**
+  - **E.2** — calendarios por filas con escudos. Empieza solo después de aceptar E.1.
 
 ## Documentos
 
@@ -42,11 +45,15 @@
 - [Assessment de 01G-E](./pd-arch-01g-e-assessment.md): discrepancia entre la fuente de verdad, el plan y la
   implementación; objetivo original; lo ya hecho en 01G-D; dependencias y decisiones DE-E1 a DE-E7; alcance funcional y
   técnico (E-1 y E-2); criterios de aceptación; riesgos de compatibilidad y seguridad.
+- [Informe de implementación de 01G-E.1](./pd-arch-01g-e1-implementation-report.md): escudos en las plantillas del
+  motor, cambios del renderer, reglas de resolución, compatibilidad con proyectos anteriores, advertencia de QA
+  `team_badges` y migración 0035, contrato, pruebas, riesgos, validación manual y estado de Git.
 
 ## Decisiones del Product Owner
 
 | ID | Decisión | Fecha |
 | --- | --- | --- |
+| PD-32 (DE-E1 a DE-E7) | Aprobación formal de las decisiones del assessment de 01G-E. DE-E1: 01G-E vuelve a ser una fase independiente (segunda enmienda del punto 5 de PD-28; deja sin efecto el «no hay fase 01G-E» de 01G-D-1, sin borrarlo). DE-E2: E.1 (escudos en las plantillas del motor) y después E.2 (calendarios por filas), que necesita la aceptación de E.1. DE-E3: los proyectos anteriores conservan imágenes, snapshots, hashes y versiones. DE-E4: un escudo ausente deja el espacio vacío y una advertencia de QA que no bloquea, sin banners nuevos. DE-E5 (E.2): seis partidos por diapositiva como criterio inicial, a confirmar con pruebas visuales; si hay más, varias diapositivas. DE-E6 (E.2): filas con escudo y nombre de cada equipo, fecha, hora y estado. DE-E7: las plantillas desde un fondo de Mi marca quedan fuera de 01G-E, como iniciativa independiente. Registrada en `.orchestrate/source-of-truth.md`. | 2026-11-12 |
 | 01G-D (cierre) | Aceptación funcional de 01G-D y autorización de su cierre técnico, sujeta a que el commit contenga solo 01G-D y sus refinamientos aprobados, a preservar los cambios ajenos, a que las verificaciones finales sigan siendo válidas y a la consistencia con la fuente de verdad. Comprobado el 2026-11-11 (informe de 01G-D, secciones 13.4 y 14). | 2026-11-11 |
 | 01G-D-1 | Para 01G-D: los escudos se suben solo a mano (PD-28 sin cambios): se descarta cualquier referencia, URL o importación de escudos de proveedores, también como dato. Los escudos se implementan dentro de 01G-D (enmienda del punto 5 de PD-28; no hay fase 01G-E). En los proyectos solo se ofrecen plantillas 4:5 (BR-08 sin cambios). El binding de escudo es `badge`. | 2026-11-09 |
 | 01G-D-2 | Corrección: la base real conservaba claves foráneas de un borrador de la migración 0016 que impedían confirmar cualquier importación. Se agrega la migración de reconciliación 0031 (sin editar 0016), probada antes sobre una copia de la base. Ver el informe de 01G-D, sección 13.1. | 2026-11-09 |
@@ -66,10 +73,16 @@
 ## Fuente de verdad
 
 `.orchestrate/source-of-truth.md` registra el estado de WI-1 y no se ha actualizado en las fases PD-ARCH, salvo PD-27
-(01G-B), PD-28 (escudos, enmienda de PD-03) y PD-29 (mayúsculas de visualización, enmienda de BR-05); cada fase registra sus decisiones en su índice y en su informe (como PD-ARCH-01 y PD-ARCH-01E). Las de 01G
-quedan aquí.
+(01G-B), PD-28 (escudos, enmienda de PD-03), PD-29 (mayúsculas de visualización, enmienda de BR-05) y PD-32 (01G-E,
+segunda enmienda de PD-28 y BR-06); cada fase registra sus decisiones en su índice y en su informe (como PD-ARCH-01 y
+PD-ARCH-01E). Las de 01G quedan aquí.
 
 Discrepancia registrada al cierre de 01G-D (2026-11-11): según la enmienda del punto 5 de PD-28, ese punto se
 implementó en 01G-D. Dos partes no se implementaron: los espacios de escudo de las plantillas del motor y los escudos
 por partido de los calendarios de jornada (informe de 01G-D, sección 11). La fuente de verdad no se cambió en el cierre:
 el texto de PD-28 se corrige con la decisión del Product Owner sobre 01G-E.
+
+**Resuelta el 2026-11-12 con PD-32:** PD-28 tiene una segunda enmienda que deja en 01G-D las plantillas visuales de
+partido y pasa a 01G-E las plantillas del motor (E.1) y los calendarios (E.2). BR-06 cita 01G-D, 01G-E.1 y 01G-E.2, y
+PD-32 deja constancia de que supera R-231 en los espacios que llena un escudo autorizado. Las enmiendas anteriores se
+conservan.

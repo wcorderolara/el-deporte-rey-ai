@@ -274,7 +274,7 @@ export class TemplatePreviewService {
       }
     }
     // The preview uses this exact template version, even when it is the current one anyway.
-    const registry = { current: () => template_ } as unknown as TemplateRegistry;
+    const registry = { current: () => template_, currentWithoutBadges: () => template_ } as unknown as TemplateRegistry;
     const render = await renderContent(
       sampleContent(template_, language, this.#deps.config),
       { registry, fonts: this.#deps.fonts(), settings: renderSettings(this.#deps.config), assets },

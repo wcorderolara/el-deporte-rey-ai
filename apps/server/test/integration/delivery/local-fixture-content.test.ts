@@ -276,11 +276,18 @@ describe('content about matches not played yet: generation (PD-ARCH-01E-B)', () 
       expect(draft.leftOutMatches.map((match) => match.reason)).toEqual([]);
       for (const element of allElements(draft)) {
         expect(element.currentVersion.contentFlags, element.slideType ?? 'caption').toEqual([]);
-        // Not even a warning: the vocabulary of matches not played yet is ordinary language for capitalized_tokens.
+        // No other warning: the vocabulary of matches not played yet is ordinary language for capitalized_tokens.
+        // These teams have no badge, so each fixture warns about its two empty badge slots (PD-ARCH-01G-E.1).
         expect(
-          element.currentVersion.qa.filter((result) => result.outcome === 'fail'),
+          element.currentVersion.qa
+            .filter((result) => result.outcome === 'fail')
+            .map((result) => [result.check, result.severity, result.details]),
           element.slideType ?? 'caption',
-        ).toEqual([]);
+        ).toEqual(
+          element.slideType === 'fixture'
+            ? [['team_badges', 'warning', { emptyBadgeSlots: ['team-badge-home', 'team-badge-away'] }]]
+            : [],
+        );
       }
       const project = await getProject(t, item?.projectId ?? '');
       expect(project.sportsContext?.kind).toBe('round_calendar');

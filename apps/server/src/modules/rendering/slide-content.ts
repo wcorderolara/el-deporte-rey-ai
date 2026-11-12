@@ -50,6 +50,19 @@ export const StoredElementTextSchema = z.strictObject({
 export type StoredElementText = z.infer<typeof StoredElementTextSchema>;
 
 /** The input of a template. */
+/** The badge of one side of a slide (PD-ARCH-01G-E.1): a stored badge file, never bytes. */
+export interface SlideBadgeRef {
+  readonly id: string;
+  readonly sha256: string;
+  readonly mime: 'image/png' | 'image/jpeg';
+}
+
+/** One team of a slide for its badge slot: the local team ID (null when not identified) and its snapshot badge. */
+export interface SlideTeamBadge {
+  readonly teamId: string | null;
+  readonly badge: SlideBadgeRef | null;
+}
+
 export interface SlideContent {
   readonly slideType: SlideType;
   readonly language: Language;
@@ -58,6 +71,12 @@ export interface SlideContent {
   readonly text: StoredElementText;
   /** Latest research retrieval time of the facts run (ISO-8601), shown as "as of" on standings slides. */
   readonly standingsAsOf: string | null;
+  /**
+   * PD-ARCH-01G-E.1: the teams and badges of a match slide whose project's badge snapshot covers the engine
+   * templates, found through the teams' local identity (never a name). Absent otherwise: the badge slots stay empty
+   * and record no team, as before.
+   */
+  readonly badges?: { readonly home: SlideTeamBadge; readonly away: SlideTeamBadge };
 }
 
 /** The segments of a field, or an empty list when the field is absent. */

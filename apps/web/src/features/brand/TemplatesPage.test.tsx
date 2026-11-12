@@ -1,6 +1,7 @@
 /**
  * Templates page (PD-ARCH-01G-A; R-031, R-050, R-231; OD-13, PD-06), separate from Mi marca: each template with its
- * version, slide type, empty badge slots, image slots and a preview per language, with no editing control.
+ * version, slide type, badge slots (filled with the badges uploaded in Competiciones since PD-ARCH-01G-E.1), image
+ * slots and a preview per language, with no editing control.
  */
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -67,7 +68,7 @@ describe('Plantillas del motor: page frame', () => {
 });
 
 describe('Plantillas del motor: templates (R-231, OD-13)', () => {
-  it('lists each template with version, slide type, empty badge slots and image slots', async () => {
+  it('lists each template with version, slide type, badge slots and image slots', async () => {
     renderPage();
     await templateList();
 
@@ -76,7 +77,9 @@ describe('Plantillas del motor: templates (R-231, OD-13)', () => {
     expect(matchCard.textContent).toContain('match-result');
     expect(matchCard.textContent).toContain('1.2.0');
     expect(matchCard.textContent).toContain('Resultado de partido');
-    expect(matchCard.textContent).toContain('2 espacios reservados; quedan vacíos porque no hay escudos autorizados.');
+    expect(matchCard.textContent).toContain(
+      '2 espacios con los escudos subidos en Competiciones; un equipo sin escudo deja su espacio vacío.',
+    );
 
     const coverCard = card(TEMPLATE_COVER.label);
     expect(coverCard.textContent).toContain('Portada');

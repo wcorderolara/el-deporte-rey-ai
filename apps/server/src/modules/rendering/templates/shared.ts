@@ -45,8 +45,9 @@ export function aiFields(
 }
 
 /**
- * The body of a match not played yet (fixture and preview templates, PD-ARCH-01E-B): the status label, the two
- * empty badge slots around the versus mark, the two team names and the kickoff. There is no score element.
+ * The body of a match not played yet (fixture and preview templates, PD-ARCH-01E-B): the status label, the two badge
+ * slots around the versus mark (filled from version 1.1.0, PD-ARCH-01G-E.1), the two team names and the kickoff. There
+ * is no score element.
  */
 export function fixtureBody(model: ModelBuilder, content: SlideContent, versus: SegmentRun): void {
   model.text({

@@ -116,6 +116,7 @@ const COMMITTED = [
   { version: 32, name: 'engine_slide_type_templates' },
   { version: 33, name: 'editorial_copy' },
   { version: 34, name: 'editorial_naming_reconcile' },
+  { version: 35, name: 'qa_team_badges' },
 ];
 
 describe('committed migrations', () => {
@@ -179,6 +180,7 @@ describe('committed migrations', () => {
       { version: 32, name: 'engine_slide_type_templates', fileName: '0032_engine_slide_type_templates.sql' },
       { version: 33, name: 'editorial_copy', fileName: '0033_editorial_copy.sql' },
       { version: 34, name: 'editorial_naming_reconcile', fileName: '0034_editorial_naming_reconcile.sql' },
+      { version: 35, name: 'qa_team_badges', fileName: '0035_qa_team_badges.sql' },
     ]);
   });
 
@@ -253,8 +255,9 @@ describe('committed migrations', () => {
           { version: 32, name: 'engine_slide_type_templates' },
           { version: 33, name: 'editorial_copy' },
           { version: 34, name: 'editorial_naming_reconcile' },
+          { version: 35, name: 'qa_team_badges' },
         ],
-        currentVersion: 34,
+        currentVersion: 35,
       });
       expect(
         db
@@ -321,8 +324,9 @@ describe('committed migrations', () => {
           { version: 32, name: 'engine_slide_type_templates' },
           { version: 33, name: 'editorial_copy' },
           { version: 34, name: 'editorial_naming_reconcile' },
+          { version: 35, name: 'qa_team_badges' },
         ],
-        currentVersion: 34,
+        currentVersion: 35,
       });
       expect(JSON.stringify(snapshot())).toBe(before);
       for (const table of [
@@ -386,8 +390,9 @@ CREATE INDEX idx_content_generation_item_matches_match ON content_generation_ite
           { version: 32, name: 'engine_slide_type_templates' },
           { version: 33, name: 'editorial_copy' },
           { version: 34, name: 'editorial_naming_reconcile' },
+          { version: 35, name: 'qa_team_badges' },
         ],
-        currentVersion: 34,
+        currentVersion: 35,
       });
       expect(columns(empty.db)).toContain('import_id');
       expect(empty.db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
@@ -473,8 +478,9 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga', 's1', '2026/27', NU
           { version: 32, name: 'engine_slide_type_templates' },
           { version: 33, name: 'editorial_copy' },
           { version: 34, name: 'editorial_naming_reconcile' },
+          { version: 35, name: 'qa_team_badges' },
         ],
-        currentVersion: 34,
+        currentVersion: 35,
       });
       expect(
         JSON.stringify(reconciled.db.prepare('SELECT rowid, * FROM content_generation_items ORDER BY rowid, id').all()),
@@ -504,20 +510,20 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga', 's1', '2026/27', NU
     const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
     const first = openMigratedDatabase({ location, now: () => FIXED_NOW });
     try {
-      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 34 });
+      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 35 });
       expect(first.db.prepare('PRAGMA journal_mode').get()).toEqual({ journal_mode: 'wal' });
       expect(first.db.prepare('PRAGMA foreign_keys').get()).toEqual({ foreign_keys: 1 });
       expect(appliedMigrations(first.db)).toEqual(
         COMMITTED.map((record) => ({ ...record, appliedAt: '2026-10-27T16:32:21.123Z' })),
       );
-      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 34 });
+      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 35 });
     } finally {
       first.db.close();
     }
 
     const second = openMigratedDatabase({ location });
     try {
-      expect(second.report).toEqual({ applied: [], currentVersion: 34 });
+      expect(second.report).toEqual({ applied: [], currentVersion: 35 });
       expect(tableExists(second.db, 'competition_teams')).toBe(true);
       expect(tableExists(second.db, 'facts')).toBe(true);
       expect(tableExists(second.db, 'competitions')).toBe(true);
@@ -617,8 +623,9 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga', 's1', '2026/27', NU
           { version: 32, name: 'engine_slide_type_templates' },
           { version: 33, name: 'editorial_copy' },
           { version: 34, name: 'editorial_naming_reconcile' },
+          { version: 35, name: 'qa_team_badges' },
         ],
-        currentVersion: 34,
+        currentVersion: 35,
       });
       expect(db.prepare('SELECT competition_id, team_id FROM competition_teams ORDER BY team_id').all()).toEqual([
         { competition_id: 'c1', team_id: 't1' },
@@ -980,8 +987,9 @@ describe('migrations 0021 and 0022 upgrade a database at version 20 (PD-ARCH-01E
           { version: 32, name: 'engine_slide_type_templates' },
           { version: 33, name: 'editorial_copy' },
           { version: 34, name: 'editorial_naming_reconcile' },
+          { version: 35, name: 'qa_team_badges' },
         ],
-        currentVersion: 34,
+        currentVersion: 35,
       });
 
       expect(JSON.stringify(snapshot())).toBe(before);
@@ -1076,8 +1084,9 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
           { version: 32, name: 'engine_slide_type_templates' },
           { version: 33, name: 'editorial_copy' },
           { version: 34, name: 'editorial_naming_reconcile' },
+          { version: 35, name: 'qa_team_badges' },
         ],
-        currentVersion: 34,
+        currentVersion: 35,
       });
 
       expect(db.prepare(QA_RESULT_BYTES).all()).toEqual(bytesBefore);
@@ -1095,8 +1104,10 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
         },
       ]);
       expect(structureBefore.strict).toEqual({ strict: 1 });
-      // The definition differs from 0001 only by the sixth name of the check-name list.
-      expect(normalizedDdl(db)).toBe(ddlBefore.replace("'dimensions')", "'dimensions', 'capitalized_tokens')"));
+      // The definition differs from 0001 only by the sixth name of the check-name list, and the seventh of 0035.
+      expect(normalizedDdl(db)).toBe(
+        ddlBefore.replace("'dimensions')", "'dimensions', 'capitalized_tokens', 'team_badges')"),
+      );
       expect(
         db
           .prepare("SELECT name FROM sqlite_master WHERE name LIKE 'qa_results_next%' OR tbl_name = 'qa_results_next'")
@@ -1112,7 +1123,7 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
     // Reopening applies nothing more.
     const reopened = openMigratedDatabase({ location });
     try {
-      expect(reopened.report).toEqual({ applied: [], currentVersion: 34 });
+      expect(reopened.report).toEqual({ applied: [], currentVersion: 35 });
     } finally {
       reopened.db.close();
     }
@@ -1139,6 +1150,68 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
       expect(
         db.prepare<{ n: number }>("SELECT count(*) AS n FROM qa_results WHERE check_name = 'capitalized_tokens'").get(),
       ).toEqual({ n: 2 });
+    } finally {
+      db.close();
+    }
+  });
+});
+
+describe('migration 0035_qa_team_badges.sql (PD-ARCH-01G-E.1, decision DE-E4)', () => {
+  const VERSION = '00000000-0000-4000-8000-000000000007';
+  const CAPTION_VERSION = '00000000-0000-4000-8000-000000000008';
+
+  it('rebuilds qa_results with team_badges and keeps every existing row byte for byte', () => {
+    const committed = defaultMigrationsDirectory();
+    const read = (name: string) => readFileSync(path.join(committed, name), 'utf8');
+    const upTo34 = migrationDir(
+      Object.fromEntries(
+        readMigrations(committed)
+          .filter((migration) => migration.version <= 34)
+          .map((migration) => [migration.fileName, read(migration.fileName)]),
+      ),
+    );
+    const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
+    const { db } = openMigratedDatabase({
+      location,
+      directory: migrationDir({ '0001_initial.sql': read('0001_initial.sql') }),
+    });
+    try {
+      db.transaction(() => db.execScript(SEED_VERSION_1));
+      expect(runMigrations(db, { directory: upTo34 }).currentVersion).toBe(34);
+      insertQaResult(db, 'cap-before', CAPTION_VERSION, 'capitalized_tokens');
+      // Version 34 refuses the seventh check name.
+      expect(refusal(() => insertQaResult(db, 'before', VERSION, 'team_badges'))).toBe('check');
+
+      const bytesBefore = db.prepare(QA_RESULT_BYTES).all();
+      const rowsBefore = db.prepare('SELECT * FROM qa_results ORDER BY id').all();
+      const structureBefore = qaStructure(db);
+      const ddlBefore = normalizedDdl(db);
+      expect(bytesBefore).toHaveLength(6);
+
+      expect(runMigrations(db, { now: () => FIXED_NOW })).toEqual({
+        applied: [{ version: 35, name: 'qa_team_badges' }],
+        currentVersion: 35,
+      });
+      expect(db.prepare(QA_RESULT_BYTES).all()).toEqual(bytesBefore);
+      expect(db.prepare('SELECT * FROM qa_results ORDER BY id').all()).toEqual(rowsBefore);
+      expect(qaStructure(db)).toEqual(structureBefore);
+      // The only change is the seventh name of the check-name list.
+      expect(normalizedDdl(db)).toBe(
+        ddlBefore.replace("'capitalized_tokens')", "'capitalized_tokens', 'team_badges')"),
+      );
+      expect(
+        db
+          .prepare("SELECT name FROM sqlite_master WHERE name LIKE 'qa_results_next%' OR tbl_name = 'qa_results_next'")
+          .all(),
+      ).toEqual([]);
+      expect(db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
+      expect(db.prepare('PRAGMA integrity_check').all()).toEqual([{ integrity_check: 'ok' }]);
+
+      expect(refusal(() => insertQaResult(db, 'badges-1', VERSION, 'team_badges'))).toBe('accepted');
+      expect(refusal(() => insertQaResult(db, 'badges-2', CAPTION_VERSION, 'team_badges', 'pass'))).toBe('accepted');
+      expect(refusal(() => insertQaResult(db, 'duplicate', VERSION, 'team_badges'))).toBe('unique');
+      expect(refusal(() => insertQaResult(db, 'upper', VERSION, 'TEAM_BADGES'))).toBe('check');
+      expect(refusal(() => insertQaResult(db, 'unknown', VERSION, 'team_badge'))).toBe('check');
     } finally {
       db.close();
     }
@@ -1249,8 +1322,9 @@ describe('migration 0031_reconcile_field_provenance_references.sql', () => {
           { version: 32, name: 'engine_slide_type_templates' },
           { version: 33, name: 'editorial_copy' },
           { version: 34, name: 'editorial_naming_reconcile' },
+          { version: 35, name: 'qa_team_badges' },
         ],
-        currentVersion: 34,
+        currentVersion: 35,
       });
       for (const table of ['sports_field_provenance', 'sports_field_provenance_events'])
         expect(references(db, table)).toEqual([{ table: 'competitions', from: 'competition_id' }]);
@@ -1350,8 +1424,9 @@ describe('migration 0032_engine_slide_type_templates.sql (decision 01G-D-3)', ()
           { version: 32, name: 'engine_slide_type_templates' },
           { version: 33, name: 'editorial_copy' },
           { version: 34, name: 'editorial_naming_reconcile' },
+          { version: 35, name: 'qa_team_badges' },
         ],
-        currentVersion: 34,
+        currentVersion: 35,
       });
       expect(db.prepare('SELECT * FROM visual_templates ORDER BY id').all()).toEqual(templates);
       expect(db.prepare('SELECT * FROM visual_template_versions ORDER BY id').all()).toEqual(versions);
