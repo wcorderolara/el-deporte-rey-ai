@@ -9,6 +9,10 @@ fila. Registro: PD-32 en la fuente de verdad. Los cambios de la sección 9 se ap
 aceptado (ver el [informe de E.1](./pd-arch-01g-e1-implementation-report.md)), y E.2 está implementado y pendiente de
 aceptación (ver el [informe de E.2](./pd-arch-01g-e2-implementation-report.md)). Este assessment no se reescribe.
 
+**Cierre del 2026-11-12:** el Product Owner aprobó E.1 y E.2 tras su revisión manual y funcional. 01G-E queda
+**CLOSED — PRODUCT OWNER ACCEPTED**, con los commits `7dfbde3` (E.1) y `066bdad` (E.2) y el commit documental de
+cierre. Los criterios de aceptación de la sección 7 se cumplen como describen los dos informes.
+
 ## 1. Discrepancia previa
 
 El encargo pide crear y evaluar 01G-E. Las fuentes vigentes dicen que esa fase ya no existe:

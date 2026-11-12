@@ -2,10 +2,11 @@
 
 ## Estado
 
-- **Implementado el 2026-11-12 en `work/PD-ARCH-01G-E`, sin commit, pendiente de la aceptación del Product Owner.**
+- **Implementado el 2026-11-12 en `work/PD-ARCH-01G-E` y aprobado por el Product Owner el mismo día**, tras su
+  revisión manual y funcional. **01G-E: CLOSED — PRODUCT OWNER ACCEPTED.**
 - Empezó después de que el Product Owner aceptara E.1 ese mismo día («E.1 queda aceptada, sigue con E.2»).
-- E.1 tampoco tiene commit. Su árbol aceptado quedó guardado como un objeto de commit sin rama, `e2cbf2e`, y el diff
-  de E.2 se mide contra él (sección 14).
+- Commits: E.1 en `7dfbde3` y E.2 en `066bdad`; el cierre documental, en el commit que registra este estado
+  (sección 15).
 - Base: `7a4c9f1`. Los commits `3538af1`, `3359476` y `7a4c9f1` no se reescribieron.
 - Nada de E.2 llama a OpenAI, a un proveedor deportivo ni a la red. No hay migración.
 
@@ -239,6 +240,25 @@ OpenAI.
 | `git diff --check` y escaneo de secretos | Limpios |
 | E2E y accesibilidad | No se ejecutaron, por instrucción |
 
+**Verificación de cierre (2026-11-12).** Antes de los commits se repitió todo sobre el estado final:
+
+| Verificación | Resultado |
+| --- | --- |
+| Tipos, ESLint y build | Sin errores |
+| Unitarias | 2556/2556 |
+| Integración | 689/689 |
+| Contrato | 2418/2418 |
+| Prettier | Solo los 3 archivos que ya fallaban |
+| `npm audit --audit-level=high` | Pasa; 13 moderadas, sin cambios de dependencias |
+| `git diff --check` | Limpio |
+
+- El árbol de E.1 se probó aparte en un worktree temporal: unitarias 2525, integración 684 y contrato 2409.
+- En el cierre se agregaron dos comprobaciones, incluidas en `066bdad`:
+  - una jornada larga de 18 partidos se reparte en tres páginas de seis y dos carruseles numerados, en orden de inicio
+    del partido, con portada y cierre en cada carrusel y claves únicas (`content/structure.test.ts`);
+  - el flujo completo exporta cada diapositiva en el orden del carrusel, con todas las páginas del calendario
+    (`engine-calendar-rows.test.ts`).
+
 Pruebas nuevas:
 
 - `rendering/calendar-rows.test.ts` (13):
@@ -314,8 +334,15 @@ No hace falta reiniciar nada: los servidores de desarrollo usan este árbol de t
 
 ## 15. Estado de Git
 
-- Rama `work/PD-ARCH-01G-E` en `7a4c9f1`, sin commits nuevos. No se hizo merge, push ni deploy.
-- El árbol de trabajo tiene E.1 (aceptado) y E.2, sin commit.
-- Diff de E.2 contra el árbol de E.1 (`e2cbf2e`): 61 archivos, contando este informe y la fuente de verdad. Contra
-  `7a4c9f1` (E.1 y E.2 juntos): 87 archivos, 12 de ellos nuevos.
-- Otros worktrees: el bloqueado `.claude/worktrees/brand-submenus`, sin tocar.
+Commits del cierre en `work/PD-ARCH-01G-E`, sobre `7a4c9f1`:
+
+| Commit | Contenido |
+| --- | --- |
+| `178067f` | Notas de PD-33 y del refinamiento REVIEW-APPROVAL-01. Vienen del mismo encargo, pero se separaron porque son otro refinamiento. |
+| `7dfbde3` | E.1, con el árbol exacto que se aceptó. |
+| `066bdad` | E.2 (61 archivos, 5 nuevos). |
+| Cierre documental | Fuente de verdad, índice, assessment e informes. Es el commit que registra este estado. |
+
+- Los commits anteriores no se reescribieron.
+- No se hizo merge, push ni deploy.
+- El worktree bloqueado `.claude/worktrees/brand-submenus` sigue sin tocar.

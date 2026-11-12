@@ -19,10 +19,11 @@
   2026-11-11. `work/PD-ARCH-01G-E` se creó desde `3538af1`. En la misma rama tienen commit 01H, UX-REVIEW-01 y el menú
   lateral colapsable (`3359476`, aceptados el 2026-11-11), y el assessment (`7a4c9f1`). El 2026-11-12 el Product Owner
   aprobó DE-E1 a DE-E7 (PD-32) y dividió la fase en dos incrementos:
-  - **E.1** — escudos en las plantillas del motor de partido. Implementado y **aceptado por el Product Owner el
-    2026-11-12**, sin commit todavía.
-  - **E.2** — calendarios por filas con escudos. **Implementado el 2026-11-12, sin commit, pendiente de la
-    aceptación del Product Owner.**
+  - **E.1** — escudos en las plantillas del motor de partido. Commit `7dfbde3`.
+  - **E.2** — calendarios por filas con escudos. Commit `066bdad`.
+  - **CLOSED — PRODUCT OWNER ACCEPTED (2026-11-12).** El Product Owner aprobó E.1 y E.2 tras su revisión manual y
+    funcional y autorizó el cierre formal. El commit de cierre es el documental que registra este estado. Las
+    notas de PD-33 y REVIEW-APPROVAL-01, del mismo encargo pero de otro refinamiento, están en `178067f`.
 
 ## Documentos
 
@@ -57,6 +58,8 @@
 
 | ID | Decisión | Fecha |
 | --- | --- | --- |
+| 01G-E (cierre) | Aprobación de E.1 y E.2 tras la revisión manual y funcional del Product Owner, y autorización del cierre formal de 01G-E, sin pedir de nuevo la aprobación funcional. Incluye las decisiones técnicas de E.2: seis partidos por diapositiva confirmados con la prueba visual (DE-E5), la versión 3 del snapshot de escudos como marca de los proyectos con calendario por filas (los anteriores conservan páginas de ocho y la plantilla 1.0.0, DE-E3) y la capa «Lista de partidos» de las plantillas visuales. Las limitaciones conocidas están en la sección «Limitaciones conocidas de 01G-E». | 2026-11-12 |
+| 01G-E.1 (aceptación) | Aceptación de E.1 y orden de continuar con E.2. | 2026-11-12 |
 | PD-32 (DE-E1 a DE-E7) | Aprobación formal de las decisiones del assessment de 01G-E. DE-E1: 01G-E vuelve a ser una fase independiente (segunda enmienda del punto 5 de PD-28; deja sin efecto el «no hay fase 01G-E» de 01G-D-1, sin borrarlo). DE-E2: E.1 (escudos en las plantillas del motor) y después E.2 (calendarios por filas), que necesita la aceptación de E.1. DE-E3: los proyectos anteriores conservan imágenes, snapshots, hashes y versiones. DE-E4: un escudo ausente deja el espacio vacío y una advertencia de QA que no bloquea, sin banners nuevos. DE-E5 (E.2): seis partidos por diapositiva como criterio inicial, a confirmar con pruebas visuales; si hay más, varias diapositivas. DE-E6 (E.2): filas con escudo y nombre de cada equipo, fecha, hora y estado. DE-E7: las plantillas desde un fondo de Mi marca quedan fuera de 01G-E, como iniciativa independiente. Registrada en `.orchestrate/source-of-truth.md`. | 2026-11-12 |
 | 01G-D (cierre) | Aceptación funcional de 01G-D y autorización de su cierre técnico, sujeta a que el commit contenga solo 01G-D y sus refinamientos aprobados, a preservar los cambios ajenos, a que las verificaciones finales sigan siendo válidas y a la consistencia con la fuente de verdad. Comprobado el 2026-11-11 (informe de 01G-D, secciones 13.4 y 14). | 2026-11-11 |
 | 01G-D-1 | Para 01G-D: los escudos se suben solo a mano (PD-28 sin cambios): se descarta cualquier referencia, URL o importación de escudos de proveedores, también como dato. Los escudos se implementan dentro de 01G-D (enmienda del punto 5 de PD-28; no hay fase 01G-E). En los proyectos solo se ofrecen plantillas 4:5 (BR-08 sin cambios). El binding de escudo es `badge`. | 2026-11-09 |
@@ -73,6 +76,19 @@
 | PD-27 | Excepción a PD-22 y SC-03 para la API de imágenes de OpenAI, solo en 01G-B y sus validaciones manuales, con sus límites, y decisión de aislamiento de SC-05 tras la revisión de seguridad del 2026-11-06. Registrada en `.orchestrate/source-of-truth.md`. | 2026-11-06 |
 | 01G-B | El encargo de 01G-B autoriza la API de imágenes de OpenAI (proveedor de IA alojado, con costo) bajo sus controles: clave solo en el servidor, confirmación explícita, límites diarios, mensuales y de concurrencia, sin reintentos, sin llamadas en pruebas. La revisión de seguridad de SC-05 se hizo el 2026-11-06 (PD-27). | 2026-11-05 |
 | 01G-A | Paleta y fuentes de solo lectura con notas; un recurso principal por tipo; eliminación lógica con dependencias; PNG/JPEG y WebP solo para referencias; Mi marca (`/brand`) y Plantillas (`/templates`) en páginas separadas, Mi marca primero en el menú. | 2026-11-05 |
+
+## Limitaciones conocidas de 01G-E
+
+- E2E y accesibilidad no se ejecutaron: la suite ya fallaba antes de 01E y 01G-A porque espera la interfaz
+  anterior (informe de 01G-D).
+- El hash del contrato registrado en `.orchestrate/config.json` sigue desactualizado desde fases anteriores (DEP-4).
+- En una plantilla visual, un escudo ausente solo deja una advertencia de composición, no la advertencia de QA
+  `team_badges` del proyecto (como en 01G-D).
+- La vista previa del editor de una «Lista de partidos» muestra la primera página de la jornada.
+- La vista previa de «Plantillas del motor» usa datos sintéticos y no muestra escudos reales.
+- La migración 0035 (E.1) ya está aplicada en la base real de desarrollo.
+- Un archivo de escudo alterado en disco hace fallar el render con 500 y la versión nueva no se puede aprobar, como
+  en 01G-D.
 
 ## Fuente de verdad
 

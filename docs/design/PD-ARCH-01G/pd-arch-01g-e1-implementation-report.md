@@ -2,12 +2,12 @@
 
 ## Estado
 
-- **Implementado el 2026-11-12 en `work/PD-ARCH-01G-E` y aceptado por el Product Owner el mismo día**, sin commit
-  todavía. E.2 se implementó después sobre el mismo árbol de trabajo
-  ([informe de E.2](./pd-arch-01g-e2-implementation-report.md)).
-- Para separar el diff de E.1 del de E.2 se guardó el árbol aceptado como un objeto de commit que ninguna rama
-  referencia: `e2cbf2e26e893477d92785a52e88c11d96ebed04` (`git diff 7a4c9f1 e2cbf2e`). Una limpieza de Git puede
-  eliminarlo con el tiempo; sirve mientras E.1 y E.2 sigan sin commit.
+- **Implementado el 2026-11-12 en `work/PD-ARCH-01G-E` y aceptado por el Product Owner el mismo día.** E.2 se
+  implementó después sobre el mismo árbol de trabajo ([informe de E.2](./pd-arch-01g-e2-implementation-report.md)).
+- **Commit `7dfbde3`**, con el árbol exacto que se aceptó (el mismo que el objeto `e2cbf2e` guardado antes de E.2).
+  Sobre ese árbol, en el cierre, pasaron otra vez las pruebas unitarias (2525), de integración (684) y de contrato
+  (2409).
+- **01G-E: CLOSED — PRODUCT OWNER ACCEPTED (2026-11-12).**
 - Base: `7a4c9f1` (assessment de 01G-E), sobre el cierre de 01G-D (`3538af1`) y el commit de 01H, UX-REVIEW-01 y el
   menú lateral (`3359476`). Esos commits no se reescribieron.
 - Nada de E.1 llama a OpenAI, a un proveedor deportivo ni a la red.
