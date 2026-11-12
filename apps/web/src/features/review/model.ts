@@ -214,6 +214,29 @@ export function currentEditorialVersions(pkg: EditorialPackage | null): Editoria
   return pkg === null ? [] : pkg.deliverables.flatMap((entry) => (entry.current === null ? [] : [entry.current]));
 }
 
+/** What the carousel's download would carry of the editorial copy now (REVIEW-APPROVAL-01). */
+export interface EditorialExportSummary {
+  /** Deliverables with a current version. */
+  readonly total: number;
+  /** Deliverables the export would include: the server's `exportable` (approved, no flags, publishable data). */
+  readonly exportable: number;
+  /** Approved deliverables the server no longer allows to export: their sports data changed. */
+  readonly needsReview: number;
+}
+
+/**
+ * The editorial copy of the download, read from the server's states only (`EditorialDeliverableState.exportable`, the
+ * export's own rule): no eligibility rule is computed here.
+ */
+export function editorialExportSummary(pkg: EditorialPackage): EditorialExportSummary {
+  const generated = pkg.deliverables.filter((entry) => entry.current !== null);
+  return {
+    total: generated.length,
+    exportable: generated.filter((entry) => entry.exportable).length,
+    needsReview: generated.filter((entry) => entry.current?.state === 'approved' && !entry.exportable).length,
+  };
+}
+
 export interface ReviewIndicators {
   slidesApproved: number;
   slidesTotal: number;

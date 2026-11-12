@@ -6,6 +6,7 @@ import { Alert, Button, ErrorBanner, Icon, Modal, ModalFooter } from '../../ui';
 import { finalCopy, finalDialogCopy, finalRefusalLabel } from './copy';
 import {
   currentEditorialVersions,
+  editorialExportSummary,
   elementName,
   finalApprovalObstacles,
   hasValidFinalApproval,
@@ -30,7 +31,8 @@ export interface FinalApprovalActionProps {
  * reports the carousel ready and no valid final approval exists; otherwise the slides that prevent it are listed with
  * their reasons. It opens a confirmation dialog; nothing is approved before the server answers. A final approval
  * that a later change invalidated is shown as no longer valid (AD-13). The caption and the editorial copy are not
- * required (PD-ARCH-01E-PD-02): the dialog only says what their state means for the download.
+ * required (PD-ARCH-01E-PD-02; PD-33 option A, independent approvals): the dialog only says what their state means for
+ * the download, the editorial copy by the server's `exportable` state (REVIEW-APPROVAL-01).
  */
 export function FinalApprovalAction({ carousel, editorial, onApproved, onRefused, menu }: FinalApprovalActionProps) {
   const [open, setOpen] = useState(false);
@@ -125,6 +127,7 @@ function FinalApprovalDialog({
   const approvedSlides = slides.filter((element) => element.currentVersion.state === 'approved').length;
   const caption = carousel.elements.find((element) => element.kind === 'caption');
   const versions = currentEditorialVersions(editorial);
+  const copy = editorial === null ? null : editorialExportSummary(editorial);
   const obstacles = finalApprovalObstacles(carousel);
   // The view follows the refreshed draft: a concurrent change that makes the carousel not ready disables the
   // confirmation (the server would refuse it anyway).
@@ -174,14 +177,11 @@ function FinalApprovalDialog({
           </dd>
           <dt className="text-body-sm font-bold text-text-secondary">{finalDialogCopy.editorial}</dt>
           <dd className="m-0">
-            {editorial === null
+            {editorial === null || copy === null
               ? finalDialogCopy.editorialUnknown
               : versions.length === 0
                 ? finalDialogCopy.editorialNone
-                : finalDialogCopy.editorialValue(
-                    versions.filter((version) => version.state === 'approved').length,
-                    versions.length,
-                  )}
+                : finalDialogCopy.editorialValue(copy.exportable, copy.total, copy.needsReview)}
           </dd>
           <dt className="text-body-sm font-bold text-text-secondary">{finalDialogCopy.blocking}</dt>
           <dd className="m-0">

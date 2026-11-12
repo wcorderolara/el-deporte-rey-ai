@@ -994,8 +994,9 @@ const editorialPackage = {
   },
   writer: editorialWriter,
   deliverables: [
-    { deliverable: 'tiktok_reels', current: editorialVersion, versionCount: 2 },
-    { deliverable: 'youtube', current: null, versionCount: 0 },
+    // REVIEW-APPROVAL-01: `exportable` is the server's export eligibility of the current version (a flagged one is not).
+    { deliverable: 'tiktok_reels', current: editorialVersion, versionCount: 2, exportable: false },
+    { deliverable: 'youtube', current: null, versionCount: 0, exportable: false },
   ],
   lastGeneration: editorialGeneration,
 };

@@ -9,8 +9,16 @@ export interface ExportFilesProps {
   files: readonly ExportFile[];
 }
 
-/** Order of the file list: slide images by position, then caption.txt, then manifest.json (AD-17). */
-const kindOrder: Record<ExportFile['kind'], number> = { slide_image: 0, caption_text: 1, manifest: 2 };
+/**
+ * Order of the file list: slide images by position, then caption.txt, copy-editorial.txt (REVIEW-APPROVAL-01) and
+ * manifest.json (AD-17).
+ */
+const kindOrder: Record<ExportFile['kind'], number> = {
+  slide_image: 0,
+  caption_text: 1,
+  editorial_text: 2,
+  manifest: 3,
+};
 
 function sortFiles(files: readonly ExportFile[]): ExportFile[] {
   return [...files].sort((a, b) => kindOrder[a.kind] - kindOrder[b.kind] || a.position - b.position);

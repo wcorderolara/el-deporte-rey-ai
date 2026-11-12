@@ -13,9 +13,14 @@
  *    `01.png` to `NN.png` (the stored renders, hash-checked), `caption.txt` when the set holds the caption, and
  *    `manifest.json` (`manifest.ts`). A carousel exported without its caption gets it in a later export, after the
  *    caption and the carousel are approved again.
+ *    The approved editorial copy of the carousel's draft goes with them as `copy-editorial.txt` (REVIEW-APPROVAL-01,
+ *    amendment of PD-33, option b): every deliverable whose current version is approved and whose facts are all
+ *    publishable when the export is planned. The copy is never required and is not part of the final approval; it is
+ *    approved by itself (PD-ARCH-01H, DE-5), and approving it later only needs a new export.
  * 3. One synchronous `BEGIN IMMEDIATE` transaction re-checks the final approval (`invalidated_at IS NULL` and the
- *    same validity) and records the export with its files. A refused or failed commit leaves an orphan directory that
- *    no export record references.
+ *    same validity) and the approved editorial copy (the same versions, still approved and publishable;
+ *    `VERSION_CONFLICT` otherwise), and records the export with its files. A refused or failed commit leaves an
+ *    orphan directory that no export record references.
  *
  * The service has no egress client and no publication function (R-219, BR-11): its dependencies are the
  * configuration, the database, the clock, the logger and the paths. The helpers it reuses from other modules get a
@@ -34,12 +39,20 @@ import type { AppConfig } from '../../platform/config/index.js';
 import { type Db, readJsonColumn } from '../../platform/db/index.js';
 import { HttpProblem, type Logger, summarizeError } from '../../platform/http/index.js';
 import { ElementTextSchema, blockedOverlay, verificationPublishability } from '../content/index.js';
+import { editorialExportable } from '../editorial/eligibility.js';
 import { pngSize, readSlideImage, slideImageUrl } from '../rendering/index.js';
 import { ReviewRepository, VersionSetSchema, sameVersionSet, versionSetOf, versionState } from '../review/index.js';
 import { VerificationService } from '../verification/index.js';
 
 import { ExportFileStore, exportRelativeDirectory } from './files.js';
-import { type ExportPlan, type ManifestFact, type ManifestSource, type PlannedSlide, exportFiles } from './manifest.js';
+import {
+  type ExportPlan,
+  type ManifestFact,
+  type ManifestSource,
+  type PlannedEditorialDeliverable,
+  type PlannedSlide,
+  exportFiles,
+} from './manifest.js';
 import { createZip } from './zip.js';
 import {
   type ExportProject,
@@ -104,7 +117,18 @@ const PROBLEMS = {
       'FINAL_APPROVAL_REQUIRED',
       'The carousel has no valid final approval; approve every element and the carousel again before exporting.',
     ),
+  editorialChanged: (): HttpProblem =>
+    new HttpProblem(
+      409,
+      'VERSION_CONFLICT',
+      'The approved editorial copy changed while the export was written; export the carousel again.',
+    ),
 } as const;
+
+/** The editorial version IDs of a plan, in order (to compare the planned copy with the copy at commit). */
+function editorialIds(editorial: readonly PlannedEditorialDeliverable[]): string {
+  return editorial.map((entry) => entry.editorialVersionId).join(',');
+}
 
 /** A final approval that holds, with the IDs of its recorded version set. */
 interface ValidFinalApproval {
@@ -170,6 +194,10 @@ export class ExportService {
           !this.#repository.finalApprovalNotInvalidated(plan.finalApproval.id)
         ) {
           throw PROBLEMS.finalApprovalRequired();
+        }
+        // The copy written is the copy still approved and publishable (REVIEW-APPROVAL-01).
+        if (editorialIds(this.#approvedEditorial(carouselId, plan.project)) !== editorialIds(plan.editorial)) {
+          throw PROBLEMS.editorialChanged();
         }
         const stored = {
           id: exportId,
@@ -271,7 +299,8 @@ export class ExportService {
       throw new Error('a final approval must hold the slides and at most one caption');
     }
     const refs = new Map(versions.map((version) => [version.id, this.#repository.factRefs(version.id)]));
-    const factIds = [...new Set([...refs.values()].flat())].sort();
+    const editorial = this.#approvedEditorial(carouselId, project);
+    const factIds = [...new Set([...[...refs.values()].flat(), ...editorial.flatMap((entry) => entry.factIds)])].sort();
     const { facts, sources } = this.#facts(project, factIds);
     return {
       exportId,
@@ -294,9 +323,44 @@ export class ExportService {
               text: readJsonColumn(ElementTextSchema, caption.text, 'text'),
               factIds: refs.get(caption.id) ?? [],
             },
+      editorial,
       facts,
       sources,
     };
+  }
+
+  /**
+   * The exportable editorial copy of a carousel's draft (REVIEW-APPROVAL-01): each deliverable whose current version
+   * passes `editorialExportable` (approved, no flag, every fact publishable now), in the contract's deliverable order.
+   * A copy that a fact no longer allows is left out, never exported. The editorial package shows the same rule.
+   */
+  #approvedEditorial(
+    carouselId: string,
+    project: Pick<ExportProject, 'id' | 'language'>,
+  ): PlannedEditorialDeliverable[] {
+    const draftId = this.#repository.carouselDraftId(carouselId);
+    if (draftId === null) {
+      return [];
+    }
+    const context = { db: this.#deps.db, config: this.#deps.config };
+    return this.#repository
+      .approvedEditorialVersions(draftId)
+      .filter((version) =>
+        editorialExportable(context, project.id, project.language, {
+          approvedAt: version.approvedAt,
+          supersededAt: null,
+          flagCount: version.flagCount,
+          factIds: version.factIds,
+        }),
+      )
+      .map((version) => ({
+        deliverable: version.deliverable,
+        editorialVersionId: version.id,
+        versionNumber: version.versionNumber,
+        approvedAt: version.approvedAt,
+        fields: version.fields,
+        factIds: version.factIds,
+      }));
   }
 
   /** The used facts with their effective status and evidence, and the sources named by the manifest. */
@@ -372,6 +436,7 @@ export class ExportService {
       sources: planned.sources,
       slides,
       caption: planned.caption,
+      editorial: planned.editorial,
       facts: planned.facts,
     };
   }
@@ -440,10 +505,14 @@ export class ExportService {
     const records = this.#repository.exportFiles(exportId);
     const slides = records.filter((file) => file.kind === 'slide_image');
     const caption = records.filter((file) => file.kind === 'caption_text');
+    // REVIEW-APPROVAL-01: the approved editorial copy, when the export carries it.
+    const editorial = records.filter((file) => file.kind === 'editorial_text');
     const manifest = records.filter((file) => file.kind === 'manifest');
+    const ordered = [...slides, ...caption, ...editorial, ...manifest];
     if (
       slides.length === 0 ||
       caption.length > 1 ||
+      editorial.length > 1 ||
       manifest.length !== 1 ||
       slides.some((f, i) => f.position !== i + 1 || f.fileName !== `${String(i + 1).padStart(2, '0')}.png`)
     ) {
@@ -458,13 +527,13 @@ export class ExportService {
       files = await this.#files.readFiles(
         stored.projectId,
         stored.id,
-        [...slides, ...caption, ...manifest].map((f) => f.fileName),
+        ordered.map((f) => f.fileName),
       );
     } catch {
       throw new HttpProblem(404, 'EXPORT_FILES_MISSING', 'Los archivos de esta exportación ya no están disponibles.');
     }
     for (const [index, file] of files.entries()) {
-      const expected = [...slides, ...caption, ...manifest][index];
+      const expected = ordered[index];
       if (
         expected === undefined ||
         createHash('sha256').update(file.bytes).digest('hex') !== expected.sha256 ||
@@ -612,6 +681,7 @@ interface PlanWithoutImages {
   readonly finalApproval: ExportPlan['finalApproval'];
   readonly slides: readonly { readonly version: ExportVersionRow; readonly factIds: readonly string[] }[];
   readonly caption: ExportPlan['caption'];
+  readonly editorial: ExportPlan['editorial'];
   readonly facts: readonly ManifestFact[];
   readonly sources: readonly ManifestSource[];
 }

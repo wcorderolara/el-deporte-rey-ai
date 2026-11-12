@@ -8,6 +8,24 @@
   cambia la arquitectura de aprobación (ver la sección 3).
 - Hasta que se implemente, el código sigue la regla PD-ARCH-01E-PD-02: el copy no es obligatorio para la aprobación
   final ni para la exportación.
+- **Enmienda del 2026-11-12:** al preparar el refinamiento, el Product Owner reemplazó el punto 2. El copy editorial no
+  es obligatorio para la aprobación final ni para la exportación; si hay entregables aprobados, se exportan en el mismo
+  `.zip` del carrusel (opción b). PD-33 registra la enmienda; este documento conserva la regla original.
+  - Preguntas y respuesta: [preparación](./review-approval-01-preparation.md).
+  - Lo implementado: [informe de implementación](./review-approval-01-implementation-report.md).
+- **Decisión formal del 2026-11-12: PD-33, Opción A aprobada (aprobaciones independientes).** La aprobación final
+  gráfica del carrusel y la aprobación del copy editorial son independientes. La exportación incorpora solo las
+  versiones editoriales aprobadas y publicables al generar el archivo.
+  - La «Opción A» del Product Owner es lo que la preparación llamó opción (b). La opción (a) de la preparación, el copy
+    dentro de la aprobación final, no se eligió.
+  - **Estado: CLOSED — PRODUCT OWNER ACCEPTED.** El commit de cierre está en `work/REVIEW-APPROVAL-01`.
+
+## Documentos
+
+- [Preparación](./review-approval-01-preparation.md): inspección del código, preguntas RA-1 a RA-6, respuesta del
+  Product Owner y opciones.
+- [Informe de implementación y cierre](./review-approval-01-implementation-report.md): decisiones, cambios, migración
+  0036, contrato, pruebas, limitaciones y estado de Git.
 
 ## 1. Regla aprobada
 

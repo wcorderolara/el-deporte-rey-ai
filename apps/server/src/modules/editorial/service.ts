@@ -68,6 +68,7 @@ import {
   buildEditorialRequest,
 } from './core.js';
 import { computedCost, estimateCost, utcDayStart, utcMonthStart } from './cost.js';
+import { editorialExportable } from './eligibility.js';
 import { type GenerationRecord, EditorialRepository, type VersionRecord } from './repository.js';
 import { type EditorialResearch, localContextResearch } from './research.js';
 
@@ -333,6 +334,20 @@ export class EditorialService {
                 deliverable,
                 current: version === undefined ? null : this.#versionView(version),
                 versionCount: counts.get(deliverable) ?? 0,
+                // REVIEW-APPROVAL-01: the export's own rule, so the dialog and the ZIP agree.
+                exportable:
+                  version !== undefined &&
+                  editorialExportable(
+                    { db: this.#container.db, config: this.#container.config },
+                    loaded.projectId,
+                    loaded.input?.language ?? 'es',
+                    {
+                      approvedAt: version.approvedAt,
+                      supersededAt: version.supersededAt,
+                      flagCount: version.flags.length,
+                      factIds: version.factIds,
+                    },
+                  ),
               };
             }),
       lastGeneration: latest === null ? null : this.#generationView(latest),

@@ -10,6 +10,11 @@
   publicable correspondiente aprobado. No está implementada y no cambia 01H: es el refinamiento independiente
   [REVIEW-APPROVAL-01](../REVIEW-APPROVAL-01/README.md). Hoy cada entregable se sigue aprobando por separado (DE-5),
   sin efecto en la aprobación final.
+  - **Enmendada el mismo día:** el copy no es obligatorio. Los entregables aprobados se exportan en el `.zip` del
+    carrusel (`copy-editorial.txt`). La generación, la edición y la aprobación de 01H no cambian.
+  - **Decisión formal: PD-33, Opción A (aprobaciones independientes).** El paquete editorial indica en `exportable` si
+    la versión actual de cada entregable entra en la exportación: aprobada, sin avisos y con datos publicables. Es la
+    misma regla de la exportación (`editorial/eligibility.ts`). REVIEW-APPROVAL-01 está cerrado.
 
 ## Documentos
 

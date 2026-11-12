@@ -23,7 +23,7 @@ export function createZip(entries: readonly ZipEntry[]): Buffer {
   const centrals: Buffer[] = [];
   let offset = 0;
   for (const entry of entries) {
-    if (!/^(?:[0-9]{2}\.png|caption\.txt|manifest\.json)$/.test(entry.name))
+    if (!/^(?:[0-9]{2}\.png|caption\.txt|copy-editorial\.txt|manifest\.json)$/.test(entry.name))
       throw new TypeError('Invalid ZIP entry name');
     const name = Buffer.from(entry.name, 'utf8');
     const data = Buffer.from(entry.bytes);

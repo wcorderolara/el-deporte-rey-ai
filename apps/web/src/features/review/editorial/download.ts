@@ -4,39 +4,23 @@
  * is never mistaken for an approved one. Sources, evidence and links are not included: they stay in the review's
  * "Investigación y fuentes" panel, apart from the publishable copy.
  */
-import type { EditorialDeliverable, EditorialPackage, EditorialVersion } from '@edr/contracts';
+import {
+  type EditorialDeliverable,
+  type EditorialPackage,
+  type EditorialVersion,
+  editorialDeliverableText,
+} from '@edr/contracts';
 
 import { formatDateTime } from '../../../ui';
 
 import { deliverableTitle, editorialCopy, stateLabel, writerLabel } from './copy';
 
-function field(version: EditorialVersion, name: string): string {
-  return version.fields.find((entry) => entry.name === name)?.text ?? '';
-}
-
-/** The paste-ready text of one deliverable. */
+/**
+ * The paste-ready text of one deliverable: the contract's shared formatter, so the review's download and the export's
+ * `copy-editorial.txt` say the same (REVIEW-APPROVAL-01).
+ */
 export function deliverableText(deliverable: EditorialDeliverable, version: EditorialVersion): string {
-  switch (deliverable) {
-    case 'facebook_instagram':
-      return [
-        field(version, 'headline'),
-        field(version, 'body'),
-        field(version, 'question'),
-        field(version, 'hashtags'),
-      ]
-        .filter((text) => text !== '')
-        .join('\n\n');
-    case 'tiktok_reels':
-      return field(version, 'copy');
-    case 'viral_headlines':
-      return ['headline_1', 'headline_2', 'headline_3']
-        .map((name, index) => `${String(index + 1)}. ${field(version, name)}`)
-        .join('\n');
-    case 'youtube':
-      return `Título:\n${field(version, 'title')}\n\nDescripción:\n${field(version, 'description')}`;
-    case 'debate_question':
-      return field(version, 'question');
-  }
+  return editorialDeliverableText(deliverable, version.fields);
 }
 
 /** The text file of the editorial copy, or null when no deliverable has a version yet. */

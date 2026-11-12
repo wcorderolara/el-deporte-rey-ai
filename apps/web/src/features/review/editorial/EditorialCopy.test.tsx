@@ -74,7 +74,13 @@ function withVersions(
     ...base,
     deliverables: base.deliverables.map((entry) => {
       const found = current.find((item) => item.deliverable === entry.deliverable) ?? null;
-      return { ...entry, current: found, versionCount: found === null ? 0 : 1 };
+      // The server's export eligibility (REVIEW-APPROVAL-01): here every approved fixture keeps publishable data.
+      return {
+        ...entry,
+        current: found,
+        versionCount: found === null ? 0 : 1,
+        exportable: found?.state === 'approved',
+      };
     }),
   };
 }

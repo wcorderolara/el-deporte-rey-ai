@@ -52,6 +52,34 @@ export const EDITORIAL_DELIVERABLE_FIELDS: Readonly<Record<EditorialDeliverable,
     debate_question: ['question'],
   });
 
+/**
+ * The paste-ready text of one deliverable from its fields, the same in the review's download and in the export's
+ * `copy-editorial.txt` (REVIEW-APPROVAL-01): the post fields separated by blank lines, the three headlines numbered,
+ * the YouTube title and description under their labels. A missing field is empty.
+ */
+export function editorialDeliverableText(
+  deliverable: EditorialDeliverable,
+  fields: readonly { readonly name: EditorialFieldName; readonly text: string }[],
+): string {
+  const field = (name: EditorialFieldName): string => fields.find((entry) => entry.name === name)?.text ?? '';
+  switch (deliverable) {
+    case 'facebook_instagram':
+      return [field('headline'), field('body'), field('question'), field('hashtags')]
+        .filter((text) => text !== '')
+        .join('\n\n');
+    case 'tiktok_reels':
+      return field('copy');
+    case 'viral_headlines':
+      return (['headline_1', 'headline_2', 'headline_3'] as const)
+        .map((name, index) => `${String(index + 1)}. ${field(name)}`)
+        .join('\n');
+    case 'youtube':
+      return `Título:\n${field('title')}\n\nDescripción:\n${field('description')}`;
+    case 'debate_question':
+      return field('question');
+  }
+}
+
 /** Longest text of one field (the YouTube description limit). */
 export const MAX_EDITORIAL_FIELD_TEXT = 5000;
 /** Longest operator instruction for a generation. */
@@ -234,6 +262,12 @@ export const EditorialDeliverableStateSchema = z.strictObject({
   deliverable: EditorialDeliverableSchema,
   current: EditorialVersionSchema.nullable(),
   versionCount: count,
+  /**
+   * REVIEW-APPROVAL-01: true when the current version would go into a carousel's export now: approved, without flags,
+   * and every fact it rests on publishable (the export's own rule). An approved version whose facts stopped being
+   * publishable is approved but not exportable. The export checks it again when it writes the files.
+   */
+  exportable: z.boolean(),
 });
 
 export const EditorialGenerationSchema = z.strictObject({

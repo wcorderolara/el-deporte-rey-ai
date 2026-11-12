@@ -2192,6 +2192,9 @@ paths:
       description: |
         Write the approved images and caption to local files (R-041, R-218, R-421). Refused with FINAL_APPROVAL_REQUIRED
         without a valid final approval (R-216, R-240). Exports exactly the version set recorded by the final approval.
+        The approved editorial copy of the carousel's draft (PD-ARCH-01H deliverables) is added as copy-editorial.txt
+        when at least one deliverable is approved and publishable at export time; it is never required (amendment of
+        PD-33, REVIEW-APPROVAL-01). VERSION_CONFLICT when the approved copy changes while the export is written.
         Demonstration content is labelled in the manifest and on the slides (R-269, OD-21). Sends nothing to any
         external service (R-219). No request body.
       parameters:
@@ -5147,8 +5150,11 @@ components:
             additionalProperties: false
             properties:
               position: { type: integer }
-              fileName: { type: string, pattern: '^([0-9]{2}\.png|caption\.txt|manifest\.json)$' }
-              kind: { type: string, enum: [slide_image, caption_text, manifest] }
+              fileName: { type: string, pattern: '^([0-9]{2}\.png|caption\.txt|copy-editorial\.txt|manifest\.json)$' }
+              kind:
+                type: string
+                enum: [slide_image, caption_text, manifest, editorial_text]
+                description: editorial_text is the approved editorial copy (copy-editorial.txt; REVIEW-APPROVAL-01), with a null elementVersionId.
               sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
               elementVersionId:
                 oneOf:
@@ -5849,7 +5855,7 @@ components:
           maxItems: 5
           items:
             type: object
-            required: [deliverable, current, versionCount]
+            required: [deliverable, current, versionCount, exportable]
             additionalProperties: false
             properties:
               deliverable: { $ref: '#/components/schemas/EditorialDeliverable' }
@@ -5858,6 +5864,9 @@ components:
                   - $ref: '#/components/schemas/EditorialVersion'
                   - type: 'null'
               versionCount: { type: integer, minimum: 0, maximum: 1000000 }
+              exportable:
+                type: boolean
+                description: True when the current version would go into a carousel's export now (approved, without flags, every fact it rests on publishable; REVIEW-APPROVAL-01). The export checks it again when it writes the files.
         lastGeneration:
           oneOf:
             - $ref: '#/components/schemas/EditorialGeneration'

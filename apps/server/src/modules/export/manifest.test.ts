@@ -6,6 +6,7 @@
  */
 import { createHash } from 'node:crypto';
 
+import { EDITORIAL_DELIVERABLES, type EditorialFieldName, editorialDeliverableText } from '@edr/contracts';
 import { describe, expect, it } from 'vitest';
 
 import type { ElementText } from '../content/index.js';
@@ -15,8 +16,12 @@ import {
   MANIFEST_FORMAT,
   type ManifestFact,
   ManifestSchema,
+  type PlannedEditorialDeliverable,
+  buildManifest,
   captionText,
+  editorialCopyText,
   exportFiles,
+  sha256Of,
   slideFileName,
 } from './manifest.js';
 
@@ -97,6 +102,7 @@ function plan(overrides: Partial<ExportPlan> = {}, slideCount = 3): ExportPlan {
       text: captionOf('Resumen sintético', ['#futbol', '#LigaSintetica']),
       factIds: [uuid(501)],
     },
+    editorial: [],
     facts: [fact(501, 'verified'), fact(502, 'verified')],
     ...overrides,
   };
@@ -207,5 +213,129 @@ describe('exportFiles', () => {
   it('is deterministic for the same plan and refuses more than 99 slides', () => {
     expect(exportFiles(plan()).map((file) => file.sha256)).toEqual(exportFiles(plan()).map((file) => file.sha256));
     expect(() => exportFiles(plan({}, 100))).toThrow(RangeError);
+  });
+});
+
+describe('approved editorial copy in the export (REVIEW-APPROVAL-01, amendment of PD-33)', () => {
+  const field = (name: EditorialFieldName, text: string) => ({ name, text });
+  const FACEBOOK: PlannedEditorialDeliverable = {
+    deliverable: 'facebook_instagram',
+    editorialVersionId: uuid(700),
+    versionNumber: 2,
+    approvedAt: '2026-10-28T10:00:00.000Z',
+    fields: [
+      field('headline', 'Gancho sintético'),
+      field('body', 'Desarrollo sintético.'),
+      field('question', '¿Pregunta sintética?'),
+      field('hashtags', '#futbol #LigaSintetica'),
+    ],
+    factIds: [uuid(502)],
+  };
+  const HEADLINES: PlannedEditorialDeliverable = {
+    deliverable: 'viral_headlines',
+    editorialVersionId: uuid(701),
+    versionNumber: 1,
+    approvedAt: '2026-10-28T10:05:00.000Z',
+    fields: [field('headline_1', 'Uno'), field('headline_2', 'Dos'), field('headline_3', 'Tres')],
+    factIds: [],
+  };
+
+  it('writes no copy file and no editorial manifest entry without an approved deliverable', () => {
+    const files = exportFiles(plan());
+    expect(files.map((file) => file.fileName)).toEqual(['01.png', '02.png', '03.png', 'caption.txt', 'manifest.json']);
+    const manifest = JSON.parse(Buffer.from(files.at(-1)?.bytes ?? []).toString('utf8')) as Record<string, unknown>;
+    expect(manifest).not.toHaveProperty('editorial');
+  });
+
+  it('adds copy-editorial.txt after the caption with only the approved deliverables, and lists their versions', () => {
+    const files = exportFiles(plan({ editorial: [FACEBOOK, HEADLINES] }));
+    expect(files.map((file) => [file.position, file.fileName, file.kind, file.elementVersionId])).toEqual([
+      [1, '01.png', 'slide_image', uuid(200)],
+      [2, '02.png', 'slide_image', uuid(201)],
+      [3, '03.png', 'slide_image', uuid(202)],
+      [4, 'caption.txt', 'caption_text', uuid(250)],
+      [5, 'copy-editorial.txt', 'editorial_text', null],
+      [6, 'manifest.json', 'manifest', null],
+    ]);
+    const text = Buffer.from(files[4]?.bytes ?? []).toString('utf8');
+    const rule = '='.repeat(40);
+    expect(text).toBe(
+      [
+        'COPY EDITORIAL APROBADO\nLiga Sintética · Fase regular · 2026/27',
+        `${rule}\nFacebook / Instagram\n${rule}\n\nGancho sintético\n\nDesarrollo sintético.\n\n¿Pregunta sintética?\n\n` +
+          '#futbol #LigaSintetica',
+        `${rule}\nTitulares virales\n${rule}\n\n1. Uno\n2. Dos\n3. Tres`,
+      ].join('\n\n') + '\n',
+    );
+    // UTF-8, readable: no identifier, version, JSON or link.
+    expect(Buffer.from(text, 'utf8').equals(Buffer.from(files[4]?.bytes ?? []))).toBe(true);
+    expect(text).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-|Versi[oó]n|\{|https?:/u);
+    expect(editorialCopyText(plan({ editorial: [FACEBOOK, HEADLINES] }))).toBe(text);
+    const manifest = ManifestSchema.parse(JSON.parse(Buffer.from(files[5]?.bytes ?? []).toString('utf8')));
+    expect(manifest.editorial).toEqual({
+      position: 5,
+      fileName: 'copy-editorial.txt',
+      sha256: files[4]?.sha256,
+      deliverables: [
+        {
+          deliverable: 'facebook_instagram',
+          editorialVersionId: uuid(700),
+          versionNumber: 2,
+          approvedAt: '2026-10-28T10:00:00.000Z',
+          textSha256: sha256Of(Buffer.from(editorialDeliverableText('facebook_instagram', FACEBOOK.fields), 'utf8')),
+          factIds: [uuid(502)],
+        },
+        expect.objectContaining({ deliverable: 'viral_headlines', editorialVersionId: uuid(701), factIds: [] }),
+      ],
+    });
+    // The element files of the manifest are unchanged: the copy is not an element of the carousel.
+    expect(manifest.files.map((file) => file.fileName)).toEqual(['01.png', '02.png', '03.png', 'caption.txt']);
+  });
+
+  it('writes every exported deliverable in the contract order, whatever the order of the plan', () => {
+    const one = (deliverable: PlannedEditorialDeliverable['deliverable'], name: EditorialFieldName, n: number) => ({
+      ...HEADLINES,
+      deliverable,
+      editorialVersionId: uuid(710 + n),
+      fields: [field(name, `Texto ${String(n)}`)],
+    });
+    const text = editorialCopyText(
+      plan({
+        editorial: [
+          one('youtube', 'title', 4),
+          one('debate_question', 'question', 5),
+          FACEBOOK,
+          one('tiktok_reels', 'copy', 2),
+          HEADLINES,
+        ].sort((a, b) => EDITORIAL_DELIVERABLES.indexOf(a.deliverable) - EDITORIAL_DELIVERABLES.indexOf(b.deliverable)),
+      }),
+    );
+    const lines = text.split('\n');
+    const rule = '='.repeat(40);
+    const titles = lines.filter((_line, index) => lines[index - 1] === rule && lines[index + 1] === rule);
+    expect(titles).toEqual([
+      'Facebook / Instagram',
+      'TikTok / Reels',
+      'Titulares virales',
+      'YouTube',
+      'Pregunta para generar debate',
+    ]);
+    expect(text).toContain('YouTube\n' + '='.repeat(40) + '\n\nTítulo:\nTexto 4\n\nDescripción:\n');
+    expect(text.endsWith('Texto 5\n')).toBe(true);
+  });
+
+  it('places the copy right after the slides when there is no caption, and refuses an inconsistent file set', () => {
+    const files = exportFiles(plan({ caption: null, editorial: [HEADLINES] }));
+    expect(files.map((file) => [file.position, file.fileName])).toEqual([
+      [1, '01.png'],
+      [2, '02.png'],
+      [3, '03.png'],
+      [4, 'copy-editorial.txt'],
+      [5, 'manifest.json'],
+    ]);
+    const withoutFile = files.filter((file) => file.kind !== 'editorial_text' && file.kind !== 'manifest');
+    expect(() => buildManifest(plan({ caption: null, editorial: [HEADLINES] }), withoutFile)).toThrow(
+      'the manifest needs the editorial file exactly when the plan has approved editorial copy',
+    );
   });
 });

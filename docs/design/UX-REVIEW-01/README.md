@@ -38,3 +38,8 @@ No se copió ningún dato, persona, API, telemetría ni certificación de las im
   cambia la arquitectura de aprobación, así que se documentó como refinamiento independiente,
   [REVIEW-APPROVAL-01](../REVIEW-APPROVAL-01/README.md), con sus preguntas RA-1 a RA-5. No está implementado; hasta
   entonces la interfaz y el servidor mantienen PD-ARCH-01E-PD-02.
+- **Enmienda del mismo día:** el Product Owner decidió que el copy no es obligatorio. Los entregables aprobados se
+  exportan en el `.zip` del carrusel. El diálogo de aprobación final solo cambia sus frases sobre el copy editorial.
+- **Decisión formal (PD-33, Opción A, aprobaciones independientes):** el diálogo cuenta los textos listos para exportar
+  con el estado del servidor y avisa de los aprobados que requieren revisión por cambios en los datos deportivos. La
+  pantalla, sus acciones y su diseño no cambian. REVIEW-APPROVAL-01: CLOSED — PRODUCT OWNER ACCEPTED.

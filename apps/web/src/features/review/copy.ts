@@ -134,10 +134,18 @@ export const finalDialogCopy = {
   captionPending: 'Sin aprobar: la descarga tendrá solo las diapositivas.',
   captionMissing: 'Este carrusel no tiene texto de publicación.',
   editorial: 'Copy editorial',
-  editorialValue: (approved: number, total: number): string =>
-    `${approved} de ${total} textos aprobados. No forma parte del carrusel: se descarga aparte (.txt).`,
-  editorialNone: 'Sin generar. No forma parte del carrusel: se descarga aparte (.txt).',
-  editorialUnknown: 'No se pudo leer su estado. No forma parte del carrusel.',
+  // REVIEW-APPROVAL-01 (PD-33 option A): independent approvals; the exportable texts go into the download.
+  editorialValue: (exportable: number, total: number, needsReview: number): string =>
+    `${exportable} de ${total} ${total === 1 ? 'texto listo' : 'textos listos'} para exportar.` +
+    (needsReview === 0
+      ? ''
+      : needsReview === 1
+        ? ' 1 texto aprobado requiere revisión por cambios en los datos deportivos.'
+        : ` ${needsReview} textos aprobados requieren revisión por cambios en los datos deportivos.`) +
+    ' Opcional: los textos listos se incluyen en la descarga (copy-editorial.txt) y los demás quedan fuera. Puedes aprobarlos después y volver a descargar; los cambios en el copy no anulan la aprobación del carrusel.',
+  editorialNone:
+    'Sin generar. Opcional: puedes generarlo y aprobarlo después y volver a descargar; no anula la aprobación del carrusel.',
+  editorialUnknown: 'No se pudo leer su estado. Es opcional: no afecta a la aprobación del carrusel.',
   blocking: 'Errores bloqueantes',
   blockingNone: 'Ninguno',
   notReadyAnymore:

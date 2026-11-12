@@ -3,7 +3,13 @@
  * reasons listed otherwise, server refusals listing the elements, a valid approval linking to the exports, and an
  * approval invalidated by a later change.
  */
-import type { FinalApproval } from '@edr/contracts';
+import {
+  EDITORIAL_DELIVERABLES,
+  type EditorialDeliverable,
+  type EditorialPackage,
+  type EditorialVersion,
+  type FinalApproval,
+} from '@edr/contracts';
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -17,6 +23,7 @@ import {
   draft,
   DRAFT_PATH,
   draftResponse,
+  editorialPackage,
   elementId,
   factId,
   fakeServer,
@@ -110,7 +117,9 @@ describe('Final approval control (R-240)', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Aprobar carrusel completo' });
     expect(dialog.textContent).toContain('Diapositivas aprobadas2 de 2');
     expect(dialog.textContent).toContain('Aprobado: se incluye en la descarga (caption.txt).');
-    expect(dialog.textContent).toContain('Sin generar. No forma parte del carrusel');
+    expect(dialog.textContent).toContain(
+      'Sin generar. Opcional: puedes generarlo y aprobarlo después y volver a descargar; no anula la aprobación del carrusel.',
+    );
     expect(dialog.textContent).toContain('Errores bloqueantesNinguno');
     // Nothing is approved before the confirmation.
     expect(server.callsTo('PUT', FINAL)).toHaveLength(0);
@@ -131,6 +140,81 @@ describe('Final approval control (R-240)', () => {
     const [call] = server.callsTo('PUT', FINAL);
     expect(call?.body).toBeUndefined();
     expect(call?.headers['X-EDR-Client']).toBe('web');
+  });
+
+  it('counts only the texts the server can export, and keeps the carousel approvable (REVIEW-APPROVAL-01)', async () => {
+    const ready = draft({ carousels: [carousel(allApproved(), { readyForFinalApproval: true })] });
+    const base = editorialPackage();
+    const version = (deliverable: EditorialDeliverable, state: EditorialVersion['state']): EditorialVersion => ({
+      id: `b0000000-0000-4000-8000-00000000000${String(EDITORIAL_DELIVERABLES.indexOf(deliverable) + 1)}`,
+      deliverable,
+      versionNumber: 1,
+      origin: 'generated',
+      state,
+      fields: [{ name: 'question', text: '¿Pregunta?', words: 1, characters: 10 }],
+      flags: [],
+      generationId: 'b0000000-0000-4000-8000-0000000000aa',
+      instructions: null,
+      eventIds: [],
+      evidenceIds: [],
+      createdAt: '2026-11-12T10:00:00Z',
+      approvedAt: state === 'approved' ? '2026-11-12T10:05:00Z' : null,
+    });
+    // Three approved, one of them with sports data that stopped being publishable (the server says not exportable),
+    // and two pending.
+    const states: EditorialVersion['state'][] = ['approved', 'ready', 'approved', 'approved', 'ready'];
+    const exportable = [true, false, true, false, false];
+    const withCopy: EditorialPackage = {
+      ...base,
+      deliverables: base.deliverables.map((entry, index) => ({
+        ...entry,
+        current: version(entry.deliverable, states[index] ?? 'ready'),
+        versionCount: 1,
+        exportable: exportable[index] ?? false,
+      })),
+    };
+    const server = fakeServer({
+      [DRAFT_PATH]: draftResponse(ready),
+      [`GET ${API}/projects/${PROJECT_ID}/editorial`]: () => json(withCopy),
+    });
+    renderApp(REVIEW, server);
+    const panel = await finalPanel();
+    await userEvent.click(finalButton(panel));
+    const dialog = await screen.findByRole('dialog', { name: 'Aprobar carrusel completo' });
+    expect(dialog.textContent).toContain('2 de 5 textos listos para exportar.');
+    expect(dialog.textContent).toContain('1 texto aprobado requiere revisión por cambios en los datos deportivos.');
+    expect(dialog.textContent).toContain(
+      'Opcional: los textos listos se incluyen en la descarga (copy-editorial.txt) y los demás quedan fuera.',
+    );
+    expect(dialog.textContent).toContain('los cambios en el copy no anulan la aprobación del carrusel');
+    expect(dialog.textContent).not.toContain('3 de 5');
+    // The graphic approval does not depend on the copy.
+    expect(within(dialog).getByRole('button', { name: 'Confirmar aprobación final' })).toHaveProperty(
+      'disabled',
+      false,
+    );
+  });
+
+  it('keeps the final approval available when the copy state cannot be read', async () => {
+    const ready = draft({ carousels: [carousel(allApproved(), { readyForFinalApproval: true })] });
+    const server = fakeServer({
+      [DRAFT_PATH]: draftResponse(ready),
+      [`GET ${API}/projects/${PROJECT_ID}/editorial`]: () =>
+        problem({ status: 500, code: 'INTERNAL', detail: 'An internal error occurred.' }),
+    });
+    renderApp(REVIEW, server);
+    const panel = await finalPanel();
+    await userEvent.click(finalButton(panel));
+    const dialog = await screen.findByRole('dialog', { name: 'Aprobar carrusel completo' });
+    await waitFor(() =>
+      expect(dialog.textContent).toContain(
+        'No se pudo leer su estado. Es opcional: no afecta a la aprobación del carrusel.',
+      ),
+    );
+    expect(within(dialog).getByRole('button', { name: 'Confirmar aprobación final' })).toHaveProperty(
+      'disabled',
+      false,
+    );
   });
 
   it('cancels without any request, and shows the pending state while the server answers', async () => {

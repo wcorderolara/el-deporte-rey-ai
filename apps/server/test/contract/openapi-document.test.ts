@@ -5,6 +5,7 @@
  * proposal except `info.version`, descriptions and that recorded addition (V-29), and closes every fact value and QA
  * detail schema (T10-F17).
  */
+import { ExportSchema } from '@edr/contracts';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import {
@@ -172,6 +173,33 @@ describe('no publication operation (R-219, BR-11)', () => {
     expect(PUBLISH_WORDING.test('/carousels/{carouselId}/publish')).toBe(true);
     expect(PUBLISH_WORDING.test('postToNetwork')).toBe(true);
     expect(PUBLISH_WORDING.test('shareCarousel')).toBe(true);
+  });
+});
+
+describe('approved editorial copy in an export (REVIEW-APPROVAL-01, amendment of PD-33)', () => {
+  it('lists copy-editorial.txt as an export file of its own kind, with no element version', () => {
+    const file = child(document, 'components', 'schemas', 'ExportFields', 'properties', 'files', 'items');
+    expect(child(file, 'properties', 'kind').enum).toEqual([
+      'slide_image',
+      'caption_text',
+      'manifest',
+      'editorial_text',
+    ]);
+    const pattern = new RegExp(String(child(file, 'properties', 'fileName').pattern), 'u');
+    for (const name of ['01.png', 'caption.txt', 'copy-editorial.txt', 'manifest.json']) {
+      expect(pattern.test(name), name).toBe(true);
+    }
+    for (const name of ['copy.txt', 'copy-editorial.md', '../copy-editorial.txt', 'copy-editorial.txt.png']) {
+      expect(pattern.test(name), name).toBe(false);
+    }
+    const parsed = ExportSchema.shape.files.element.safeParse({
+      position: 4,
+      fileName: 'copy-editorial.txt',
+      kind: 'editorial_text',
+      sha256: 'a'.repeat(64),
+      elementVersionId: null,
+    });
+    expect(parsed.success).toBe(true);
   });
 });
 
@@ -461,6 +489,9 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/QaResult/oneOf/5: added',
       // PD-ARCH-01G-E.1: the team_badges warning variant (decision DE-E4).
       '/components/schemas/QaResult/oneOf/6: added',
+      // REVIEW-APPROVAL-01 (amendment of PD-33): the approved editorial copy in the export.
+      '/components/schemas/ExportFields/properties/files/items/properties/fileName/pattern: changed',
+      '/components/schemas/ExportFields/properties/files/items/properties/kind/enum/3: added',
       '/components/schemas/BrandAssetKind/enum/3: added',
       '/components/schemas/BrandAssetKind/enum/4: added',
       '/components/schemas/BrandAsset/required/3: changed',

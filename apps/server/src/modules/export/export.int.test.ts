@@ -13,6 +13,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { readJsonColumn } from '../../platform/db/index.js';
 import { ElementTextSchema } from '../content/index.js';
+import { leagueFacts } from '../content/test/support.js';
 import { pngSize } from '../rendering/index.js';
 
 import { ExportFileStore, type ExportFolder } from './files.js';
@@ -324,5 +325,227 @@ describe('export integrity (T10-F15)', () => {
     expect(written.directory).not.toContain(orphans[0] as string);
     const directories = h.container.db.prepare<{ directory: string }>('SELECT directory FROM exports').all();
     expect(directories.map((row) => row.directory)).toEqual([written.directory]);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------
+// REVIEW-APPROVAL-01: the approved editorial copy in the export
+// ---------------------------------------------------------------------------------------------------------------
+
+describe('approved editorial copy in the export (REVIEW-APPROVAL-01; PD-33 option A, independent approvals)', () => {
+  const FIELD: Readonly<Record<string, string>> = {
+    facebook_instagram: 'headline',
+    tiktok_reels: 'copy',
+    viral_headlines: 'headline_1',
+    youtube: 'title',
+    debate_question: 'question',
+  };
+
+  function draftId(h: ExportHarness): string {
+    return (
+      h.container.db
+        .prepare<{ id: string }>('SELECT id FROM content_drafts WHERE project_id = ? AND superseded_at IS NULL')
+        .get([PROJECT_ID])?.id ?? ''
+    );
+  }
+
+  /** A current editorial version of the draft (as the editorial module stores it), approved or not. */
+  function copyVersion(
+    h: ExportHarness,
+    id: string,
+    deliverable: string,
+    text: string,
+    factIds: string[],
+    options: { readonly approved?: boolean; readonly versionNumber?: number } = {},
+  ): void {
+    h.container.db
+      .prepare(
+        'INSERT INTO editorial_versions (id, project_id, draft_id, deliverable, version_number, origin, generation_id, ' +
+          'base_version_id, instructions, raw, fields, flags, fact_ids, event_ids, evidence_ids, created_at, ' +
+          "approved_at, superseded_at) VALUES (?, ?, ?, ?, ?, 'edited', NULL, NULL, NULL, NULL, ?, '[]', ?, '[]', " +
+          "'[]', '2026-10-28T20:00:00.000Z', ?, NULL)",
+      )
+      .run([
+        id,
+        PROJECT_ID,
+        draftId(h),
+        deliverable,
+        options.versionNumber ?? 1,
+        JSON.stringify([{ name: FIELD[deliverable] ?? 'question', text, words: 3, characters: text.length }]),
+        JSON.stringify(factIds),
+        options.approved === false ? null : '2026-10-28T20:05:00.000Z',
+      ]);
+  }
+
+  function factOf(h: ExportHarness, factKey: string): string {
+    const row = h.container.db.prepare<{ id: string }>('SELECT id FROM facts WHERE fact_key = ?').get([factKey]);
+    if (row === undefined) {
+      throw new Error(`no fact ${factKey}`);
+    }
+    return row.id;
+  }
+
+  /** A file store that runs `change` once, right after the manifest is written (before the export is recorded). */
+  function changingStore(change: () => void): (dataDir: string) => ExportFileStore {
+    let pending: (() => void) | null = change;
+    class ChangingStore extends ExportFileStore {
+      override async createFolder(projectId: string, exportId: string): Promise<ExportFolder> {
+        const folder = await super.createFolder(projectId, exportId);
+        return {
+          relativeDirectory: folder.relativeDirectory,
+          writeFile: async (name, bytes) => {
+            await folder.writeFile(name, bytes);
+            if (name === 'manifest.json') {
+              pending?.();
+              pending = null;
+            }
+          },
+        };
+      }
+    }
+    return (dataDir) => new ChangingStore(dataDir);
+  }
+
+  function copyText(h: ExportHarness, written: Pick<Export, 'directory'>): string {
+    return readFileSync(join(folderOf(h, written), 'copy-editorial.txt'), 'utf8');
+  }
+
+  it('never exports a copy whose facts are no longer publishable', async () => {
+    // A team the slides do not use, with an unconfirmed name: the copy that relies on it is blocked.
+    const facts = leagueFacts('verified').team('equipo-sin-confirmar', 'Equipo Sin Confirmar', [], 'candidate');
+    const h = await start({ facts });
+    await h.approveAll();
+    await h.finalApprove();
+    copyVersion(h, '00000000-0000-4000-8000-00000000c001', 'debate_question', '¿Quién gana la jornada?', [
+      factOf(h, 'team:atletico-rio-ebano:name'),
+    ]);
+    copyVersion(h, '00000000-0000-4000-8000-00000000c002', 'youtube', 'Resumen con un dato sin confirmar', [
+      factOf(h, 'team:equipo-sin-confirmar:name'),
+    ]);
+    const written = await exported(h);
+    const text = copyText(h, written);
+    expect(text).toContain(
+      `${'='.repeat(40)}\nPregunta para generar debate\n${'='.repeat(40)}\n\n¿Quién gana la jornada?`,
+    );
+    expect(text).not.toContain('YouTube');
+    expect(text).not.toContain('sin confirmar');
+    const manifest = ManifestSchema.parse(
+      JSON.parse(readFileSync(join(folderOf(h, written), 'manifest.json'), 'utf8')),
+    );
+    expect(manifest.editorial?.deliverables.map((entry) => entry.deliverable)).toEqual(['debate_question']);
+    // The manifest lists the copy's facts with their status, like the slides' facts.
+    expect(manifest.facts.map((fact) => fact.factId)).toContain(factOf(h, 'team:atletico-rio-ebano:name'));
+    expect(manifest.facts.map((fact) => fact.factId)).not.toContain(factOf(h, 'team:equipo-sin-confirmar:name'));
+  });
+
+  it('writes one approved deliverable, then all five in the contract order, the same file on consecutive exports', async () => {
+    const h = await start();
+    await h.approveAll();
+    await h.finalApprove();
+    copyVersion(h, '00000000-0000-4000-8000-00000000c010', 'youtube', 'Título sintético', []);
+    const one = await exported(h);
+    expect(copyText(h, one)).toContain('YouTube');
+    expect(copyText(h, one).match(/^={40}$/gmu)).toHaveLength(2);
+
+    copyVersion(h, '00000000-0000-4000-8000-00000000c011', 'debate_question', '¿Pregunta sintética?', []);
+    copyVersion(h, '00000000-0000-4000-8000-00000000c012', 'facebook_instagram', 'GANCHO SINTÉTICO', []);
+    copyVersion(h, '00000000-0000-4000-8000-00000000c013', 'tiktok_reels', 'Corto sintético', []);
+    copyVersion(h, '00000000-0000-4000-8000-00000000c014', 'viral_headlines', 'Titular uno', []);
+    const first = await exported(h);
+    const second = await exported(h);
+    const lines = copyText(h, first).split('\n');
+    const rule = '='.repeat(40);
+    expect(lines.filter((_line, index) => lines[index - 1] === rule && lines[index + 1] === rule)).toEqual([
+      'Facebook / Instagram',
+      'TikTok / Reels',
+      'Titulares virales',
+      'YouTube',
+      'Pregunta para generar debate',
+    ]);
+    // Scenario D: two consecutive exports write the same copy, bytes and hash, under two records.
+    expect(second.id).not.toBe(first.id);
+    expect(copyText(h, second)).toBe(copyText(h, first));
+    const copyHash = (written: Export) => written.files.find((file) => file.kind === 'editorial_text')?.sha256;
+    expect(copyHash(second)).toBe(copyHash(first));
+    expect(first.finalApprovalId).toBe(second.finalApprovalId);
+  });
+
+  it('refuses the export when the copy approval is withdrawn while the files are written (scenario B)', async () => {
+    const copyId = '00000000-0000-4000-8000-00000000c003';
+    let h: ExportHarness | null = null;
+    h = await start({
+      files: changingStore(() => {
+        h?.container.db.prepare('UPDATE editorial_versions SET approved_at = NULL WHERE id = ?').run([copyId]);
+      }),
+    });
+    await h.approveAll();
+    await h.finalApprove();
+    copyVersion(h, copyId, 'debate_question', '¿Quién gana la jornada?', []);
+    const refused = await h.exportCarousel();
+    expect(refused.statusCode).toBe(409);
+    expect(problem(refused).code).toBe('VERSION_CONFLICT');
+    expect(rowCount(h.container, 'exports')).toBe(0);
+    expect(rowCount(h.container, 'export_files')).toBe(0);
+    // The next export carries the copy as it is now (none), with the same final approval.
+    const written = await exported(h);
+    expect(written.files.map((file) => file.kind)).not.toContain('editorial_text');
+  });
+
+  it('refuses the export when the copy is edited while the files are written (scenario A)', async () => {
+    const copyId = '00000000-0000-4000-8000-00000000c004';
+    let h: ExportHarness | null = null;
+    h = await start({
+      files: changingStore(() => {
+        // The operator's edit: the approved version is superseded by a new version that is not approved.
+        h?.container.db
+          .prepare("UPDATE editorial_versions SET superseded_at = '2026-10-28T21:00:00.000Z' WHERE id = ?")
+          .run([copyId]);
+        if (h !== null) {
+          copyVersion(h, '00000000-0000-4000-8000-00000000c005', 'debate_question', '¿Pregunta editada?', [], {
+            approved: false,
+            versionNumber: 2,
+          });
+        }
+      }),
+    });
+    await h.approveAll();
+    await h.finalApprove();
+    copyVersion(h, copyId, 'debate_question', '¿Quién gana la jornada?', []);
+    const refused = await h.exportCarousel();
+    expect(refused.statusCode).toBe(409);
+    expect(problem(refused).code).toBe('VERSION_CONFLICT');
+    expect(rowCount(h.container, 'exports')).toBe(0);
+    // The edited version is not approved: the next export has no copy.
+    const written = await exported(h);
+    expect(written.files.map((file) => file.kind)).not.toContain('editorial_text');
+  });
+
+  it('refuses the export when a fact of the copy stops being publishable while the files are written (scenario C)', async () => {
+    // A confirmed team the slides do not use: only the copy rests on it.
+    const facts = leagueFacts('verified').team('equipo-extra', 'Equipo Extra');
+    let h: ExportHarness | null = null;
+    h = await start({
+      facts,
+      files: changingStore(() => {
+        h?.container.db
+          .prepare(
+            "UPDATE facts SET status = 'unverified', unverified_reason = 'disputed', value = NULL, " +
+              'candidate_value = NULL WHERE fact_key = ?',
+          )
+          .run(['team:equipo-extra:name']);
+      }),
+    });
+    await h.approveAll();
+    await h.finalApprove();
+    copyVersion(h, '00000000-0000-4000-8000-00000000c006', 'youtube', 'Equipo Extra en la jornada', [
+      factOf(h, 'team:equipo-extra:name'),
+    ]);
+    const refused = await h.exportCarousel();
+    expect(refused.statusCode).toBe(409);
+    expect(problem(refused).code).toBe('VERSION_CONFLICT');
+    expect(rowCount(h.container, 'exports')).toBe(0);
+    // The graphic approval is untouched, and the next export leaves the copy out.
+    const written = await exported(h);
+    expect(written.files.map((file) => file.kind)).not.toContain('editorial_text');
   });
 });
