@@ -214,6 +214,9 @@ function templateFields(
       return [{ field: 'title', segments: [templateSegment(`${text.closingFollow} ${context.brand.handle}`)] }];
     case 'round_overview': {
       // One line per fixture: home, versus, away, kickoff; lines separated by template line feeds (like standings).
+      // A calendar with rows (PD-ARCH-01G-E.2, decision DE-E6) also stores the kickoff time and, for a match that is
+      // not scheduled, its status; the fact segments keep this order (rendering `fixtureRowsOf`).
+      const rows = context.calendarRows === true;
       const segments: Segment[] = [];
       slide.fixtures.forEach((fixture, index) => {
         for (const factId of [fixture.teamsFactId, fixture.kickoffFactId, fixture.home.factId, fixture.away.factId]) {
@@ -227,6 +230,15 @@ function templateFields(
         segments.push(factSegment(fixture.away.name, fixture.away.factId));
         segments.push(templateSegment(' · '));
         segments.push(factSegment(kickoffDisplay(fixture.kickoff, context), fixture.kickoffFactId));
+        if (rows) {
+          segments.push(templateSegment(' · '));
+          segments.push(factSegment(formatTime(fixture.kickoff, context.utcOffsetMinutes), fixture.kickoffFactId));
+          if (fixture.status !== 'scheduled') {
+            refs.add(fixture.statusFactId, 'template');
+            segments.push(templateSegment(' · '));
+            segments.push(factSegment(statusDisplay(fixture.status, context.language), fixture.statusFactId));
+          }
+        }
       });
       return [
         {

@@ -1,11 +1,26 @@
-import type { BrandColorRole, BrandFontRole, VisualTemplateLayer } from '@edr/contracts';
-import { useId, useRef, type KeyboardEvent, type PointerEvent } from 'react';
+import {
+  VISUAL_TEMPLATE_FIXTURE_ROW_PARTS,
+  type BrandColorRole,
+  type BrandFontRole,
+  type VisualTemplateLayer,
+} from '@edr/contracts';
+import { Fragment, useId, useRef, type KeyboardEvent, type PointerEvent } from 'react';
 
 import { PreviewImage } from '../../brand/PreviewImage';
 import { badgeBindingLabel, bindingLabel, editorCopy } from '../copy';
-import { clampBox, effectShadow } from '../layers';
+import { clampBox, effectShadow, fixtureRowBoxes } from '../layers';
 
 type Box = { x: number; y: number; width: number; height: number };
+
+/** The CSS position of a box given in fractions of its container. */
+function boxStyle(box: Box) {
+  return {
+    left: `${String(box.x * 100)}%`,
+    top: `${String(box.y * 100)}%`,
+    width: `${String(box.width * 100)}%`,
+    height: `${String(box.height * 100)}%`,
+  };
+}
 
 export interface EditorCanvasProps {
   canvasWidth: number;
@@ -54,7 +69,8 @@ function layerText(layer: VisualTemplateLayer): string {
 /**
  * The editing canvas (PD-ARCH-01G-C): the background and the layers as positioned overlays in percentages of the
  * canvas, with the version's aspect ratio. A layer is selected by click or focus, moved by dragging or with the arrow
- * keys, and resized from its corner handle; a locked layer is only selected. Its width on screen is the zoom: the
+ * keys, and resized from its corner handle; a locked layer is only selected. A match list is edited by its first row,
+ * which shows the outlines of its visible parts; the outlines of the other rows follow it and cannot be selected. Its width on screen is the zoom: the
  * layers are placed in fractions and sized in container units, so the zoom never changes the stored coordinates. It
  * is a positioning aid in HTML; the reference image is the preview the server draws with the slide engine.
  */
@@ -184,53 +200,75 @@ export function EditorCanvas({
               }
             : {};
         return (
-          <div
-            key={layer.id}
-            role="button"
-            tabIndex={0}
-            aria-label={editorCopy.selectLayer(layer.name)}
-            aria-pressed={selected}
-            data-layer-id={layer.id}
-            className={`absolute flex flex-col overflow-hidden leading-tight focus-studio ${movable ? 'cursor-move' : 'cursor-pointer'} ${selected ? 'outline-2 outline-brand-gold outline-solid' : 'outline-1 outline-border-strong outline-dashed'} ${layer.visible ? '' : 'opacity-40'}`}
-            style={{
-              left: `${String(layer.x * 100)}%`,
-              top: `${String(layer.y * 100)}%`,
-              width: `${String(layer.width * 100)}%`,
-              height: `${String(layer.height * 100)}%`,
-              touchAction: 'none',
-              ...style,
-            }}
-            onPointerDown={(event) => start(event, layer, 'move')}
-            onPointerMove={move}
-            onPointerUp={end}
-            onPointerCancel={end}
-            onKeyDown={(event) => nudge(event, layer)}
-          >
-            {layer.type === 'image' || layer.type === 'brand_asset' ? (
-              <img
-                src={assetUrl(layer.assetId)}
-                alt=""
-                draggable={false}
-                className={`pointer-events-none h-full w-full ${layer.type === 'brand_asset' || layer.fit === 'contain' ? 'object-contain' : layer.fit === 'cover' ? 'object-cover' : 'object-fill'}`}
-              />
-            ) : layer.type === 'team_badge' ? (
-              <span className="pointer-events-none grid h-full w-full place-items-center rounded-md border-2 border-dashed border-brand-gold text-center text-caption text-text-primary">
-                {text}
-              </span>
-            ) : (
-              <span className="pointer-events-none break-words whitespace-pre-line">{text}</span>
-            )}
-            {selected && movable ? (
-              <span
-                aria-hidden="true"
-                className="absolute right-0 bottom-0 size-3 cursor-se-resize border border-surface-canvas bg-brand-gold"
-                onPointerDown={(event) => start(event, layer, 'resize')}
-                onPointerMove={move}
-                onPointerUp={end}
-                onPointerCancel={end}
-              />
-            ) : null}
-          </div>
+          <Fragment key={layer.id}>
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label={editorCopy.selectLayer(layer.name)}
+              aria-pressed={selected}
+              data-layer-id={layer.id}
+              data-fixture-row={layer.type === 'fixture_list' ? 1 : undefined}
+              className={`absolute flex flex-col overflow-hidden leading-tight focus-studio ${movable ? 'cursor-move' : 'cursor-pointer'} ${selected ? 'outline-2 outline-brand-gold outline-solid' : 'outline-1 outline-border-strong outline-dashed'} ${layer.visible ? '' : 'opacity-40'}`}
+              style={{
+                ...boxStyle(layer),
+                touchAction: 'none',
+                ...style,
+              }}
+              onPointerDown={(event) => start(event, layer, 'move')}
+              onPointerMove={move}
+              onPointerUp={end}
+              onPointerCancel={end}
+              onKeyDown={(event) => nudge(event, layer)}
+            >
+              {layer.type === 'image' || layer.type === 'brand_asset' ? (
+                <img
+                  src={assetUrl(layer.assetId)}
+                  alt=""
+                  draggable={false}
+                  className={`pointer-events-none h-full w-full ${layer.type === 'brand_asset' || layer.fit === 'contain' ? 'object-contain' : layer.fit === 'cover' ? 'object-cover' : 'object-fill'}`}
+                />
+              ) : layer.type === 'team_badge' ? (
+                <span className="pointer-events-none grid h-full w-full place-items-center rounded-md border-2 border-dashed border-brand-gold text-center text-caption text-text-primary">
+                  {text}
+                </span>
+              ) : layer.type === 'fixture_list' ? (
+                VISUAL_TEMPLATE_FIXTURE_ROW_PARTS.filter((part) => layer.row[part].visible).map((part) => (
+                  <span
+                    key={part}
+                    aria-hidden="true"
+                    data-fixture-part={part}
+                    className={`pointer-events-none absolute ${part === 'homeBadge' || part === 'awayBadge' ? 'rounded-md border-2 border-dashed border-brand-gold' : 'outline-1 outline-border-strong outline-dashed'}`}
+                    style={boxStyle(layer.row[part])}
+                  />
+                ))
+              ) : (
+                <span className="pointer-events-none break-words whitespace-pre-line">{text}</span>
+              )}
+              {selected && movable ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute right-0 bottom-0 size-3 cursor-se-resize border border-surface-canvas bg-brand-gold"
+                  onPointerDown={(event) => start(event, layer, 'resize')}
+                  onPointerMove={move}
+                  onPointerUp={end}
+                  onPointerCancel={end}
+                />
+              ) : null}
+            </div>
+            {layer.type === 'fixture_list'
+              ? fixtureRowBoxes(layer)
+                  .slice(1)
+                  .map((row, index) => (
+                    <span
+                      key={`row-${String(index + 2)}`}
+                      aria-hidden="true"
+                      data-fixture-row={index + 2}
+                      className={`pointer-events-none absolute outline-1 outline-border-strong outline-dashed ${layer.visible ? '' : 'opacity-40'}`}
+                      style={boxStyle(row)}
+                    />
+                  ))
+              : null}
+          </Fragment>
         );
       })}
       {guides ? (

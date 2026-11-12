@@ -65,7 +65,12 @@ export interface PreparedRegeneration {
   readonly aiAdapter: string;
 }
 
-function slideOf(element: StoredCarouselElement, index: FactIndex, kind: ContentKind): SlidePlan {
+function slideOf(
+  element: StoredCarouselElement,
+  index: FactIndex,
+  kind: ContentKind,
+  calendarRows: boolean,
+): SlidePlan {
   const { subject } = element;
   const fixtureKind = kind === 'results' ? null : kind;
   switch (element.slideType) {
@@ -102,11 +107,11 @@ function slideOf(element: StoredCarouselElement, index: FactIndex, kind: Content
       return { type: element.slideType, key: element.slideKey, fixture };
     }
     case 'round_overview': {
-      // The page is rebuilt from the facts exactly as the calendar planned it.
+      // The page is rebuilt from the facts exactly as the calendar planned it (pages of the project's calendar kind).
       const page =
         fixtureKind === null || subject.standingsPage === null
           ? undefined
-          : overviewSlides(selectFixtures(index, [], fixtureKind).included)[subject.standingsPage - 1];
+          : overviewSlides(selectFixtures(index, [], fixtureKind).included, calendarRows)[subject.standingsPage - 1];
       if (page?.type !== 'round_overview') {
         throw new ElementRegenerationRefused('not_regenerable');
       }
@@ -151,7 +156,7 @@ export async function prepareElementRegeneration(
   const slides = repository
     .carouselElements(element.carouselId)
     .filter((sibling) => sibling.kind === 'slide')
-    .map((sibling) => slideOf(sibling, index, input.contentKind));
+    .map((sibling) => slideOf(sibling, index, input.contentKind, input.calendarRows === true));
   const carousel: CarouselPlan = { sequence: element.sequence, total: element.total, slides };
   const ai = container.aiProvider;
 

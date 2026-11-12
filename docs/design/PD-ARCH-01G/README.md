@@ -19,9 +19,10 @@
   2026-11-11. `work/PD-ARCH-01G-E` se creó desde `3538af1`. En la misma rama tienen commit 01H, UX-REVIEW-01 y el menú
   lateral colapsable (`3359476`, aceptados el 2026-11-11), y el assessment (`7a4c9f1`). El 2026-11-12 el Product Owner
   aprobó DE-E1 a DE-E7 (PD-32) y dividió la fase en dos incrementos:
-  - **E.1** — escudos en las plantillas del motor de partido. **Implementado el 2026-11-12, sin commit, pendiente de
-    la aceptación del Product Owner.**
-  - **E.2** — calendarios por filas con escudos. Empieza solo después de aceptar E.1.
+  - **E.1** — escudos en las plantillas del motor de partido. Implementado y **aceptado por el Product Owner el
+    2026-11-12**, sin commit todavía.
+  - **E.2** — calendarios por filas con escudos. **Implementado el 2026-11-12, sin commit, pendiente de la
+    aceptación del Product Owner.**
 
 ## Documentos
 
@@ -48,6 +49,9 @@
 - [Informe de implementación de 01G-E.1](./pd-arch-01g-e1-implementation-report.md): escudos en las plantillas del
   motor, cambios del renderer, reglas de resolución, compatibilidad con proyectos anteriores, advertencia de QA
   `team_badges` y migración 0035, contrato, pruebas, riesgos, validación manual y estado de Git.
+- [Informe de implementación de 01G-E.2](./pd-arch-01g-e2-implementation-report.md): prueba visual de seis partidos
+  por diapositiva, calendario del motor 2.0.0 por filas, capa «Lista de partidos» de las plantillas visuales,
+  paginación, compatibilidad con proyectos anteriores, QA por fila, contrato, pruebas, riesgos y validación manual.
 
 ## Decisiones del Product Owner
 

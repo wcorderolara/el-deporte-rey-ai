@@ -1,41 +1,37 @@
 import {
-  BrandColorRoleSchema,
-  BrandFontRoleSchema,
-  MAX_VISUAL_TEMPLATE_FONT_SIZE,
-  MAX_VISUAL_TEMPLATE_LINES,
   MAX_VISUAL_TEMPLATE_TEXT,
-  MIN_VISUAL_TEMPLATE_FONT_SIZE,
+  VISUAL_TEMPLATE_FIXTURE_ROW_PARTS,
   VisualTemplateBadgeBindingSchema,
   VisualTemplateImageFitSchema,
-  VisualTemplateTextEffectSchema,
   type BrandAsset,
   type BrandIdentity,
   type VisualTemplateBinding,
   type VisualTemplateContentType,
+  type VisualTemplateFixtureListLayer,
   type VisualTemplateImageFit,
   type VisualTemplateLayer,
   type VisualTemplatePreview,
-  type VisualTemplateTextEffect,
   type VisualTemplateTextStyle,
 } from '@edr/contracts';
 import { useId } from 'react';
 
 import { Button, Icon, Input, Select, Textarea } from '../../../ui';
-import { identityCopy, usagePolicyLabel } from '../../brand/copy';
+import { usagePolicyLabel } from '../../brand/copy';
+import { badgeBindingLabel, bindingLabel, editorCopy, fitLabel, fixtureRowPartLabel, layerTypeLabel } from '../copy';
 import {
-  alignLabel,
-  badgeBindingLabel,
-  bindingLabel,
-  editorCopy,
-  effectLabel,
-  fitLabel,
-  layerTypeLabel,
-  overflowLabel,
-  verticalAlignLabel,
-} from '../copy';
-import { bindingsFor, brandMarkAssets, clampBox, imageAssets, percent } from '../layers';
+  bindingsFor,
+  brandMarkAssets,
+  changeFixturePart,
+  clampBox,
+  fraction,
+  imageAssets,
+  isFixtureNamePart,
+  isFixtureTextPart,
+  percent,
+} from '../layers';
 import { layerTypeIcon } from './LayerList';
 import { Section } from './Section';
+import { BehaviourControls, TypographyControls } from './TextStyleControls';
 
 export interface LayerPropertiesProps {
   layer: VisualTemplateLayer;
@@ -51,11 +47,6 @@ export interface LayerPropertiesProps {
   preview: VisualTemplatePreview | null;
   onChange: (layer: VisualTemplateLayer) => void;
   onUnlock: () => void;
-}
-
-function intValue(text: string, fallback: number): number {
-  const value = Number.parseInt(text, 10);
-  return Number.isFinite(value) ? value : fallback;
 }
 
 /** «Texto fijo» or «Dato vinculado»: what the layer draws. */
@@ -122,11 +113,88 @@ function ratioLabel(width: number, height: number): string {
 }
 
 /**
+ * The parts of the row of a match list (PD-ARCH-01G-E.2), one group each in drawing order: its box as percentages of
+ * the row, whether it is drawn (not for the team names, which are always drawn), and the text style of a text part.
+ */
+function FixtureRowParts({
+  layer,
+  identity,
+  id,
+  onChange,
+}: {
+  layer: VisualTemplateFixtureListLayer;
+  identity: BrandIdentity | null;
+  id: (name: string) => string;
+  onChange: (layer: VisualTemplateFixtureListLayer) => void;
+}) {
+  return VISUAL_TEMPLATE_FIXTURE_ROW_PARTS.map((part) => {
+    const value = layer.row[part];
+    const label = fixtureRowPartLabel[part];
+    const partId = (name: string) => id(`${part}-${name}`);
+    const box = (name: 'x' | 'y' | 'width' | 'height', text: string) => {
+      const number = Number.parseFloat(text);
+      if (!Number.isFinite(number)) return;
+      onChange(changeFixturePart(layer, part, clampBox({ ...value, [name]: number / 100 })));
+    };
+    const style = (change: Partial<VisualTemplateTextStyle>) => {
+      if (isFixtureTextPart(part)) {
+        onChange(changeFixturePart(layer, part, { style: { ...layer.row[part].style, ...change } }));
+      }
+    };
+    return (
+      <Section key={part} title={label}>
+        <fieldset className="m-0 grid min-w-0 gap-3 border-0 p-0">
+          <legend className="sr-only">{label}</legend>
+          <div className="grid grid-cols-2 gap-3">
+            {(
+              [
+                ['x', editorCopy.partX],
+                ['y', editorCopy.partY],
+                ['width', editorCopy.partWidth],
+                ['height', editorCopy.partHeight],
+              ] as const
+            ).map(([name, text]) => (
+              <Input
+                key={name}
+                id={partId(name)}
+                type="number"
+                label={text}
+                min={name === 'width' || name === 'height' ? 1 : 0}
+                max={100}
+                step={0.1}
+                value={percent(value[name])}
+                onChange={(event) => box(name, event.target.value)}
+              />
+            ))}
+          </div>
+          {isFixtureNamePart(part) ? null : (
+            <label className="flex items-center gap-2 text-body-sm text-text-primary">
+              <input
+                type="checkbox"
+                checked={value.visible}
+                onChange={(event) => onChange(changeFixturePart(layer, part, { visible: event.target.checked }))}
+              />
+              {editorCopy.visible}
+            </label>
+          )}
+          {isFixtureTextPart(part) ? (
+            <>
+              <TypographyControls style={layer.row[part].style} identity={identity} id={partId} onChange={style} />
+              <BehaviourControls style={layer.row[part].style} id={partId} onChange={style} />
+            </>
+          ) : null}
+        </fieldset>
+      </Section>
+    );
+  });
+}
+
+/**
  * The properties of the selected layer (PD-ARCH-01G-C), in collapsible groups that depend on its type: content (the
  * fixed text, or the bound field with the value of the last preview), typography, resource and fit, team badge,
- * position and size as percentages of the canvas, and behaviour when the text does not fit. Fonts and colours are
- * the brand roles only; images come from Mi marca only. A published version or a locked layer shows the same
- * controls, disabled.
+ * position and size as percentages of the canvas (with the row gap and the row parts of a match list), and behaviour
+ * when the text does not fit. Fonts and colours are the brand roles only; images come from Mi marca only. A published
+ * version or a locked layer shows the same controls, disabled.
  */
 export function LayerProperties({
   layer,
@@ -179,145 +247,13 @@ export function LayerProperties({
 
   const typography = text ? (
     <Section title={editorCopy.typography}>
-      <Select
-        id={field('font')}
-        label={editorCopy.fontRole}
-        value={layer.style.fontRole}
-        onChange={(event) => style({ fontRole: event.target.value as VisualTemplateTextStyle['fontRole'] })}
-      >
-        {BrandFontRoleSchema.options.map((role) => {
-          const face = identity?.typography.find((entry) => entry.role === role);
-          return (
-            <option key={role} value={role}>
-              {face === undefined
-                ? identityCopy.fontRole[role]
-                : editorCopy.fontRoleOption(identityCopy.fontRole[role], face.family, face.weight)}
-            </option>
-          );
-        })}
-      </Select>
-      <div className="grid grid-cols-2 gap-3">
-        <Input
-          id={field('max-size')}
-          type="number"
-          label={editorCopy.maxFontSize}
-          min={MIN_VISUAL_TEMPLATE_FONT_SIZE}
-          max={MAX_VISUAL_TEMPLATE_FONT_SIZE}
-          value={layer.style.maxFontSize}
-          onChange={(event) => style({ maxFontSize: intValue(event.target.value, layer.style.maxFontSize) })}
-        />
-        <Input
-          id={field('min-size')}
-          type="number"
-          label={editorCopy.minFontSize}
-          min={MIN_VISUAL_TEMPLATE_FONT_SIZE}
-          max={MAX_VISUAL_TEMPLATE_FONT_SIZE}
-          value={layer.style.minFontSize}
-          onChange={(event) => style({ minFontSize: intValue(event.target.value, layer.style.minFontSize) })}
-        />
-      </div>
-      <div className="flex items-end gap-3">
-        <Select
-          id={field('color')}
-          label={editorCopy.color}
-          value={layer.style.colorRole}
-          wrapperClassName="flex-1"
-          onChange={(event) => style({ colorRole: event.target.value as VisualTemplateTextStyle['colorRole'] })}
-        >
-          {BrandColorRoleSchema.options.map((role) => (
-            <option key={role} value={role}>
-              {identityCopy.colorRole[role]}
-            </option>
-          ))}
-        </Select>
-        <span
-          aria-hidden="true"
-          className="mb-2 size-8 shrink-0 rounded-lg border border-border-strong"
-          style={{
-            backgroundColor: identity?.palette.find((entry) => entry.role === layer.style.colorRole)?.value,
-          }}
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <Select
-          id={field('align')}
-          label={editorCopy.align}
-          value={layer.style.align}
-          onChange={(event) => style({ align: event.target.value as VisualTemplateTextStyle['align'] })}
-        >
-          {(['left', 'center', 'right'] as const).map((value) => (
-            <option key={value} value={value}>
-              {alignLabel[value]}
-            </option>
-          ))}
-        </Select>
-        <Select
-          id={field('valign')}
-          label={editorCopy.verticalAlign}
-          value={layer.style.verticalAlign}
-          onChange={(event) => style({ verticalAlign: event.target.value as VisualTemplateTextStyle['verticalAlign'] })}
-        >
-          {(['top', 'middle', 'bottom'] as const).map((value) => (
-            <option key={value} value={value}>
-              {verticalAlignLabel[value]}
-            </option>
-          ))}
-        </Select>
-      </div>
-      <Select
-        id={field('effect')}
-        label={editorCopy.effect}
-        description={editorCopy.effectNote}
-        value={layer.style.effect ?? 'none'}
-        onChange={(event) => style({ effect: event.target.value as VisualTemplateTextEffect })}
-      >
-        {VisualTemplateTextEffectSchema.options.map((value) => (
-          <option key={value} value={value}>
-            {effectLabel[value]}
-          </option>
-        ))}
-      </Select>
-      <label className="flex items-start gap-2 text-body-sm text-text-primary">
-        <input
-          type="checkbox"
-          checked={layer.style.uppercase === true}
-          aria-describedby={field('uppercase-note')}
-          onChange={(event) => style({ uppercase: event.target.checked })}
-        />
-        <span className="grid gap-0.5">
-          <span>{editorCopy.uppercase}</span>
-          <small id={field('uppercase-note')} className="text-caption text-text-secondary">
-            {editorCopy.uppercaseNote}
-          </small>
-        </span>
-      </label>
+      <TypographyControls style={layer.style} identity={identity} id={field} onChange={style} />
     </Section>
   ) : null;
 
   const behaviour = text ? (
     <Section title={editorCopy.behaviour}>
-      <Select
-        id={field('overflow')}
-        label={editorCopy.overflow}
-        description={editorCopy.overflowNote}
-        value={layer.style.overflow}
-        onChange={(event) => style({ overflow: event.target.value as VisualTemplateTextStyle['overflow'] })}
-      >
-        {(['shrink', 'fixed'] as const).map((value) => (
-          <option key={value} value={value}>
-            {overflowLabel[value]}
-          </option>
-        ))}
-      </Select>
-      <Input
-        id={field('lines')}
-        type="number"
-        label={editorCopy.maxLines}
-        min={1}
-        max={MAX_VISUAL_TEMPLATE_LINES}
-        value={layer.style.maxLines}
-        onChange={(event) => style({ maxLines: intValue(event.target.value, layer.style.maxLines) })}
-      />
+      <BehaviourControls style={layer.style} id={field} onChange={style} />
     </Section>
   ) : null;
 
@@ -348,6 +284,21 @@ export function LayerProperties({
       <p className="m-0 text-caption text-text-subtle">
         {editorCopy.boxPixels(Math.round(boxWidth), Math.round(boxHeight))}
       </p>
+      {layer.type === 'fixture_list' ? (
+        <Input
+          id={field('row-gap')}
+          type="number"
+          label={editorCopy.rowGap}
+          min={0}
+          max={100}
+          step={0.1}
+          value={percent(layer.rowGap)}
+          onChange={(event) => {
+            const value = Number.parseFloat(event.target.value);
+            if (Number.isFinite(value)) onChange({ ...layer, rowGap: fraction(value / 100) });
+          }}
+        />
+      ) : null}
     </Section>
   );
 
@@ -528,6 +479,9 @@ export function LayerProperties({
         ) : null}
 
         {position}
+        {layer.type === 'fixture_list' ? (
+          <FixtureRowParts layer={layer} identity={identity} id={field} onChange={onChange} />
+        ) : null}
         {behaviour}
       </fieldset>
     </div>

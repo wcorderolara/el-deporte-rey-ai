@@ -23,6 +23,7 @@ import {
   type BrandAsset,
   type Language,
   VISUAL_TEMPLATE_CANVAS,
+  VISUAL_TEMPLATE_FIXTURE_LIST_ROWS,
   type VisualTemplate,
   type VisualTemplateAssetRef,
   type VisualTemplateBackgroundInput,
@@ -46,11 +47,13 @@ import {
 
 import type { Clock } from '../../container.js';
 import type { Db } from '../../platform/db/index.js';
+import { formatDate, formatTime, templateText } from '../../platform/format/index.js';
 import { HttpProblem, type Logger } from '../../platform/http/index.js';
 import type { BrandAssetService } from '../brand/index.js';
 import type { TeamBadgeRecord, TeamBadgeService } from '../competitions/badges/index.js';
 import type { DesignService, DesignTemplateSource } from '../design/index.js';
 import {
+  type AssetRef,
   type EmbeddedAsset,
   type FontSet,
   type Palette,
@@ -63,7 +66,7 @@ import { type LocalSelectionData, readSelection, resolveBinding } from './catalo
 import { type LuminanceSampler, backgroundSampler } from './contrast.js';
 import type { VisualTemplateRepository } from './repository.js';
 import { type StoredBackground, type TemplateRecord, type VersionRecord } from './repository.js';
-import { composeItems } from './compose.js';
+import { type ComposeRow, composeItems } from './compose.js';
 import { issueOf } from './issues.js';
 import {
   type AssetState,
@@ -923,6 +926,40 @@ export class VisualTemplateService {
       const teamId = binding === 'match.homeTeam.badge' ? data.match?.homeTeamId : data.match?.awayTeamId;
       badgeRecords.set(binding, teamId === undefined ? null : this.#badges.active(teamId));
     }
+    // PD-ARCH-01G-E.2: a match list previews the first page of the selected round (the rows a slide holds), each
+    // team's current badge by its internal identity.
+    const rowBadgeRecords: TeamBadgeRecord[] = [];
+    const rowBadge = (teamId: string): AssetRef | null => {
+      const record = this.#badges.active(teamId);
+      if (record === null) {
+        return null;
+      }
+      rowBadgeRecords.push(record);
+      return { id: record.id, sha256: record.sha256, mime: record.mime };
+    };
+    const previewRun = (text: string | null) =>
+      text === null ? null : ({ text, factIds: [], provenance: 'fact' } as const);
+    const words = templateText(language);
+    const rows = (): ComposeRow[] =>
+      version.layers.some((layer) => layer.type === 'fixture_list')
+        ? data.roundMatches.slice(0, VISUAL_TEMPLATE_FIXTURE_LIST_ROWS).map((match) => ({
+            homeName: previewRun(match.homeTeamName),
+            awayName: previewRun(match.awayTeamName),
+            kickoffDate: previewRun(
+              match.kickoffAt === null ? null : formatDate(match.kickoffAt, language, this.#utcOffsetMinutes),
+            ),
+            kickoffTime: previewRun(
+              match.kickoffAt === null ? null : formatTime(match.kickoffAt, this.#utcOffsetMinutes),
+            ),
+            status: previewRun(
+              match.status === 'scheduled'
+                ? null
+                : words.matchStatus[match.status === 'in_progress' ? 'in_play' : match.status],
+            ),
+            homeBadge: rowBadge(match.homeTeamId),
+            awayBadge: rowBadge(match.awayTeamId),
+          }))
+        : [];
     const { background } = version;
     const assets = new Map<string, EmbeddedAsset>();
     const composition = composeItems(
@@ -954,6 +991,7 @@ export class VisualTemplateService {
             protectedAsset: asset.usagePolicy === 'protected',
           };
         },
+        rows,
       },
     );
     if (withFiles) {
@@ -967,7 +1005,8 @@ export class VisualTemplateService {
         if (item.kind !== 'image' || assets.has(item.asset.id)) {
           continue;
         }
-        const badge = [...badgeRecords.values()].find((record) => record?.id === item.asset.id) ?? null;
+        const badge =
+          [...badgeRecords.values(), ...rowBadgeRecords].find((record) => record?.id === item.asset.id) ?? null;
         const content =
           badge === null ? (await this.#brand.readFile(item.asset.id)).content : await this.#badges.read(badge);
         assets.set(item.asset.id, { ...item.asset, content });

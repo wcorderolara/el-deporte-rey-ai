@@ -16,6 +16,9 @@
  *   records its `team`: the team's local ID (null when the slide's team could not be identified) and the badge drawn
  *   from the snapshot, or null when the team has no badge. The renderer draws the badge from its stored file, scaled
  *   to fit the slot without distortion; an empty slot draws nothing, and visual QA warns about it (`team_badges`).
+ * - From version 2.0.0 of the round calendar template (PD-ARCH-01G-E.2, decision DE-E6), every row of the calendar has
+ *   its own two badge slots, and each records its `row` (1 for the first match of the slide). Slots without a row are
+ *   the slots of a match slide.
  */
 import { LanguageSchema, SlideTypeSchema, SlugSchema, TextFieldNameSchema, UuidSchema } from '@edr/contracts';
 import { z } from 'zod';
@@ -181,6 +184,8 @@ export const BadgeSlotElementSchema = z
     box: BoxSchema,
     /** True when nothing is drawn in the slot (always, before PD-ARCH-01G-E.1). */
     empty: z.boolean(),
+    /** PD-ARCH-01G-E.2: the calendar row of the slot, 1 for the first match of the slide; absent on a match slide. */
+    row: z.int().min(1).max(64).optional(),
     /**
      * PD-ARCH-01G-E.1: the slot's team and its badge (see the module notes). Absent when the project's badges do not
      * cover the engine templates, and in every model stored before.

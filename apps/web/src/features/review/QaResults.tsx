@@ -63,15 +63,21 @@ function QaDetails({ result }: { result: QaResult }) {
           <p className={styles.hint}>{qaCopy.tokensHint}</p>
         </div>
       );
-    case 'team_badges':
-      return result.details.emptyBadgeSlots.length === 0 ? null : (
+    case 'team_badges': {
+      // A match slide names the side; a round calendar (PD-ARCH-01G-E.2) names the match row and the side.
+      const empty = [
+        ...result.details.emptyBadgeSlots.map((slot) => qaCopy.badgeSide[slot]),
+        ...(result.details.emptyRowBadgeSlots ?? []).map(({ row, slot }) => qaCopy.badgeRow(row, slot)),
+      ];
+      return empty.length === 0 ? null : (
         <div className={styles.detailText}>
           <p>
-            {qaCopy.emptyBadgeSlots}: {result.details.emptyBadgeSlots.map((slot) => qaCopy.badgeSide[slot]).join(', ')}
+            {qaCopy.emptyBadgeSlots}: {empty.join(', ')}
           </p>
           <p className={styles.hint}>{qaCopy.badgesHint}</p>
         </div>
       );
+    }
   }
 }
 

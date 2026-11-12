@@ -265,8 +265,12 @@ describe('content about matches not played yet: generation (PD-ARCH-01E-B)', () 
       ]);
       const overview = slidesOfType(draft.carousels[0] as Draft['carousels'][number], 'round_overview')[0];
       expect(fieldText(overview as never, 'title')).toBe('Calendario · Jornada 20');
-      expect(fieldText(overview as never, 'fixtures').split('\n')).toHaveLength(3);
-      expect(fieldText(overview as never, 'fixtures')).toContain('Club Alfa vs Club Beta');
+      // PD-ARCH-01G-E.2: one row per match with the kickoff date and time, and the status of a match not scheduled.
+      const lines = fieldText(overview as never, 'fixtures').split('\n');
+      expect(lines).toHaveLength(3);
+      expect(lines[0]).toMatch(/^Club Alfa vs Club Beta · \d{1,2} \p{L}{3} \d{4} · \d{2}:\d{2}$/u);
+      expect(lines[1]).toMatch(/^Club Gamma vs Club Delta · .+ · \d{2}:\d{2} · Aplazado$/u);
+      expect(lines[2]).toMatch(/ · En juego$/u);
       // No score anywhere, not even the one recorded for the match in play.
       expect(hasScoreField(draft)).toBe(false);
       const texts = allElements(draft).flatMap((element) =>
@@ -277,7 +281,12 @@ describe('content about matches not played yet: generation (PD-ARCH-01E-B)', () 
       for (const element of allElements(draft)) {
         expect(element.currentVersion.contentFlags, element.slideType ?? 'caption').toEqual([]);
         // No other warning: the vocabulary of matches not played yet is ordinary language for capitalized_tokens.
-        // These teams have no badge, so each fixture warns about its two empty badge slots (PD-ARCH-01G-E.1).
+        // These teams have no badge, so each fixture warns about its two empty badge slots (PD-ARCH-01G-E.1) and the
+        // calendar about the two slots of each row (PD-ARCH-01G-E.2).
+        const rows = [1, 2, 3].flatMap((row) => [
+          { row, slot: 'team-badge-home' },
+          { row, slot: 'team-badge-away' },
+        ]);
         expect(
           element.currentVersion.qa
             .filter((result) => result.outcome === 'fail')
@@ -286,7 +295,9 @@ describe('content about matches not played yet: generation (PD-ARCH-01E-B)', () 
         ).toEqual(
           element.slideType === 'fixture'
             ? [['team_badges', 'warning', { emptyBadgeSlots: ['team-badge-home', 'team-badge-away'] }]]
-            : [],
+            : element.slideType === 'round_overview'
+              ? [['team_badges', 'warning', { emptyBadgeSlots: [], emptyRowBadgeSlots: rows }]]
+              : [],
         );
       }
       const project = await getProject(t, item?.projectId ?? '');

@@ -18,6 +18,7 @@ import { RenderError, pngSize } from './renderer.js';
 import type { SlideContent } from './slide-content.js';
 import type { TemplateDefinition } from './templates/common.js';
 import { matchResultTemplate, matchResultTemplateV1 } from './templates/match-result.js';
+import { roundOverviewTemplateV1 } from './templates/round-overview.js';
 import { BUILT_IN_TEMPLATES, TemplateRegistry, toContractTemplate } from './templates/registry.js';
 import {
   MATCH_A,
@@ -76,18 +77,21 @@ const ALL_SLIDES: readonly SlideContent[] = [
 describe('template registry (OD-13, R-031, R-050)', () => {
   it('lists the built-in templates with versions, badge slots and image slots (PD-ARCH-01E-B adds three)', () => {
     const list = new TemplateRegistry().list().map(toContractTemplate);
-    // PD-ARCH-01G-E.1: the three match templates are at 1.1.0, which draws the team badges.
+    // PD-ARCH-01G-E.1: the three match templates are at 1.1.0, which draws the team badges; PD-ARCH-01G-E.2: the round
+    // calendar is at 2.0.0, one row per match with both badges.
     expect(list.map((template) => [template.id, template.slideType, template.version])).toEqual([
       ['cover', 'cover', '1.0.0'],
       ['match-result', 'match_result', '1.1.0'],
       ['standings', 'standings', '1.0.0'],
       ['closing', 'closing', '1.0.0'],
-      ['round-overview', 'round_overview', '1.0.0'],
+      ['round-overview', 'round_overview', '2.0.0'],
       ['fixture', 'fixture', '1.1.0'],
       ['match-preview', 'match_preview', '1.1.0'],
     ]);
     expect(list.find((template) => template.id === 'fixture')?.badgeSlots).toBe(2);
     expect(list.find((template) => template.id === 'match-result')?.badgeSlots).toBe(2);
+    // Six rows of two badge slots.
+    expect(list.find((template) => template.id === 'round-overview')?.badgeSlots).toBe(12);
     expect(list.find((template) => template.id === 'cover')?.imageSlots).toEqual(['brand_logo', 'mascot']);
   });
 
@@ -97,12 +101,32 @@ describe('template registry (OD-13, R-031, R-050)', () => {
       expect(registry.get(id, '1.0.0')?.drawsBadges, id).toBe(false);
       expect(registry.get(id, '1.1.0')?.drawsBadges, id).toBe(true);
     }
+    expect(registry.get('round-overview', '1.0.0')?.drawsBadges).toBeUndefined();
+    expect(registry.get('round-overview', '2.0.0')).toMatchObject({ drawsBadges: true, rows: 6 });
     expect(registry.currentWithoutBadges('match_result')).toBe(matchResultTemplateV1);
     expect(registry.currentWithoutBadges('fixture').version).toBe('1.0.0');
     expect(registry.currentWithoutBadges('match_preview').version).toBe('1.0.0');
+    expect(registry.currentWithoutBadges('round_overview')).toBe(roundOverviewTemplateV1);
     // Slide types without badge slots have one version: the same for every project.
     expect(registry.currentWithoutBadges('cover')).toBe(registry.current('cover'));
-    expect(registry.currentWithoutBadges('round_overview')).toBe(registry.current('round_overview'));
+  });
+
+  it('draws each slide with the versions its badges cover (DE-E3, snapshot versions 1 to 3)', () => {
+    const registry = new TemplateRegistry();
+    const side = { teamId: uuid(1), badge: null };
+    const matchBadges = { home: side, away: side };
+    const version = (slideType: SlideContent['slideType'], badges: Partial<SlideContent>) =>
+      registry.forContent({ slideType, ...badges }).version;
+    // No snapshot or version 1: every slide as before 01G-E.
+    expect(version('match_result', {})).toBe('1.0.0');
+    expect(version('round_overview', {})).toBe('1.0.0');
+    // Version 2 (01G-E.1): match badges, but no calendar rows.
+    expect(version('fixture', { badges: matchBadges })).toBe('1.1.0');
+    expect(version('round_overview', { badges: matchBadges })).toBe('1.0.0');
+    // Version 3 (01G-E.2): calendar rows too.
+    expect(version('round_overview', { badges: matchBadges, rowBadges: [matchBadges] })).toBe('2.0.0');
+    expect(version('match_preview', { badges: matchBadges, rowBadges: [] })).toBe('1.1.0');
+    expect(version('cover', { badges: matchBadges, rowBadges: [] })).toBe('1.0.0');
   });
 
   it('refuses a duplicate template version', () => {

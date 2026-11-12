@@ -6,7 +6,7 @@ info:
     HTTP contract v1 of the local El Deporte Rey GT API, version 1.0.0 (contract ID http-api). Promoted by WI-1-T20
     from the proposal accepted by the Orchestrator (OD-23; 1.0.0-proposed.2 as designed in WI-1-T09 and WI-1-T11G and
     corrected for the security design reviews T10 and T11H), with the visual-QA warning check capitalized_tokens added
-    by OD-26 and the visual-QA warning check team_badges added by PD-ARCH-01G-E.1. The OpenAPI document is authoritative; packages/contracts mirrors it with Zod schemas and the contract
+    by OD-26 and the visual-QA warning check team_badges added by PD-ARCH-01G-E.1 (calendar rows: PD-ARCH-01G-E.2). The OpenAPI document is authoritative; packages/contracts mirrors it with Zod schemas and the contract
     tests check the parity (AD-04).
     Contract evolution (PD-11): within v1 only additive changes are allowed. A breaking change needs a new major path
     and a Product Owner decision. Every change follows the contract-change process with a Contract Safety assessment.
@@ -5062,7 +5062,7 @@ components:
                   type: array
                   items: { type: string, maxLength: 64 }
             acknowledgedAt: { type: [string, 'null'], format: date-time }
-        - description: Badge slots of an engine match template left empty because the team has no badge in the project's badge snapshot (PD-28 point 4; PD-ARCH-01G-E.1, decision DE-E4). Nothing is substituted. Warning, acknowledged like style_consistency.
+        - description: Badge slots of an engine match template, or of the rows of an engine round calendar (PD-ARCH-01G-E.2), left empty because the team has no badge in the project's badge snapshot (PD-28 point 4; PD-ARCH-01G-E.1, decision DE-E4). Nothing is substituted. Warning, acknowledged like style_consistency.
           type: object
           required: [check, outcome, severity, details, acknowledgedAt]
           additionalProperties: false
@@ -5076,8 +5076,20 @@ components:
               additionalProperties: false
               properties:
                 emptyBadgeSlots:
+                  description: The badge slots of a match slide left empty.
                   type: array
                   items: { type: string, enum: [team-badge-home, team-badge-away] }
+                emptyRowBadgeSlots:
+                  description: The badge slots of a round calendar's rows left empty, each with its row (1 for the first match of the slide); absent on a match slide (PD-ARCH-01G-E.2).
+                  type: array
+                  maxItems: 128
+                  items:
+                    type: object
+                    required: [row, slot]
+                    additionalProperties: false
+                    properties:
+                      row: { type: integer, minimum: 1, maximum: 64 }
+                      slot: { type: string, enum: [team-badge-home, team-badge-away] }
             acknowledgedAt: { type: [string, 'null'], format: date-time }
     QaOutcome:
       type: string
@@ -6335,6 +6347,63 @@ components:
         visible: { type: boolean }
         type: { type: string, const: team_badge }
         binding: { $ref: '#/components/schemas/VisualTemplateBadgeBinding' }
+    VisualTemplateFixtureRowBadge:
+      description: A team badge of a match-list row (PD-28), drawn from its original file and only scaled proportionally. Position and size are fractions of the row.
+      type: object
+      required: [x, y, width, height, visible]
+      additionalProperties: false
+      properties:
+        x: { type: number, minimum: 0, maximum: 1 }
+        y: { type: number, minimum: 0, maximum: 1 }
+        width: { type: number, minimum: 0, maximum: 1 }
+        height: { type: number, minimum: 0, maximum: 1 }
+        visible: { type: boolean }
+    VisualTemplateFixtureRowText:
+      description: A value of a match-list row with its text style. Position and size are fractions of the row.
+      type: object
+      required: [x, y, width, height, visible, style]
+      additionalProperties: false
+      properties:
+        x: { type: number, minimum: 0, maximum: 1 }
+        y: { type: number, minimum: 0, maximum: 1 }
+        width: { type: number, minimum: 0, maximum: 1 }
+        height: { type: number, minimum: 0, maximum: 1 }
+        visible: { type: boolean }
+        style: { $ref: '#/components/schemas/VisualTemplateTextStyle' }
+    VisualTemplateFixtureListLayer:
+      description: |
+        A match list of a round calendar (PD-ARCH-01G-E.2, decisions DE-E5 and DE-E6). The operator designs one row and
+        the slide engine repeats it for every match of the slide, top to bottom, up to six rows. The layer box is the
+        first row (fractions of the canvas); rowGap is the space between two rows (fraction of the canvas height). A
+        row shows the home badge and official name, the kickoff date and time, the status of a match that is not
+        scheduled, and the away name and badge. Badges come from the project's snapshot through each team's internal
+        identity, never its name; a team without a badge leaves its badge empty and keeps its name. The list shows the
+        round.fixtures value.
+      type: object
+      required: [id, name, x, y, width, height, visible, type, rowGap, row]
+      additionalProperties: false
+      properties:
+        id: { type: string, minLength: 1, maxLength: 40, pattern: '^[a-z0-9][a-z0-9-]{0,39}$' }
+        name: { $ref: '#/components/schemas/Label' }
+        x: { type: number, minimum: 0, maximum: 1 }
+        y: { type: number, minimum: 0, maximum: 1 }
+        width: { type: number, minimum: 0, maximum: 1 }
+        height: { type: number, minimum: 0, maximum: 1 }
+        visible: { type: boolean }
+        type: { type: string, const: fixture_list }
+        rowGap: { type: number, minimum: 0, maximum: 1 }
+        row:
+          type: object
+          required: [homeBadge, homeName, kickoffDate, kickoffTime, status, awayName, awayBadge]
+          additionalProperties: false
+          properties:
+            homeBadge: { $ref: '#/components/schemas/VisualTemplateFixtureRowBadge' }
+            homeName: { $ref: '#/components/schemas/VisualTemplateFixtureRowText' }
+            kickoffDate: { $ref: '#/components/schemas/VisualTemplateFixtureRowText' }
+            kickoffTime: { $ref: '#/components/schemas/VisualTemplateFixtureRowText' }
+            status: { $ref: '#/components/schemas/VisualTemplateFixtureRowText' }
+            awayName: { $ref: '#/components/schemas/VisualTemplateFixtureRowText' }
+            awayBadge: { $ref: '#/components/schemas/VisualTemplateFixtureRowBadge' }
     VisualTemplateLayer:
       description: One layer; the stacking order is the order of the layer list, bottom first.
       oneOf:
@@ -6343,6 +6412,7 @@ components:
         - { $ref: '#/components/schemas/VisualTemplateImageLayer' }
         - { $ref: '#/components/schemas/VisualTemplateBrandAssetLayer' }
         - { $ref: '#/components/schemas/VisualTemplateTeamBadgeLayer' }
+        - { $ref: '#/components/schemas/VisualTemplateFixtureListLayer' }
     VisualTemplateBackgroundSource:
       type: string
       enum: [design_proposal, brand_asset]

@@ -379,6 +379,8 @@ export const qaCopy = {
   blockingHint: 'Un fallo bloqueante solo se resuelve regenerando el elemento.',
   emptyBadgeSlots: 'Sin escudo',
   badgeSide: { 'team-badge-home': 'equipo local', 'team-badge-away': 'equipo visitante' },
+  badgeRow: (row: number, slot: 'team-badge-home' | 'team-badge-away'): string =>
+    `partido ${String(row)} (${slot === 'team-badge-home' ? 'equipo local' : 'equipo visitante'})`,
   badgesHint: 'El espacio queda vacío. Sube el escudo del equipo en Competiciones; se usa en los proyectos nuevos.',
 } as const;
 

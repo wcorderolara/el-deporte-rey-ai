@@ -5,6 +5,8 @@
 import {
   type BrandAsset,
   VISUAL_TEMPLATE_BINDINGS,
+  VISUAL_TEMPLATE_FIXTURE_LIST_ROWS,
+  type VisualTemplateFixtureListLayer,
   type VisualTemplateLayer,
   type VisualTemplateTextStyle,
   VisualTemplateBindingSchema,
@@ -17,8 +19,8 @@ import type { LocalMatchRecord } from '../projects/content-batches/repository.js
 
 import { BINDING_ELEMENT, type LocalSelectionData, STRESS_VALUES, bindingAllowed, resolveBinding } from './catalog.js';
 import { contrastRatio, hexLuminance } from './contrast.js';
-import { composeItems } from './compose.js';
-import { type AssetState, type ValidationInput, validateVersion } from './validation.js';
+import { type ComposeRow, composeItems } from './compose.js';
+import { type AssetState, type ValidationInput, usedBindings, validateVersion } from './validation.js';
 
 const fonts = testFonts();
 
@@ -496,6 +498,7 @@ describe('team badges in a template (PD-ARCH-01G-D)', () => {
         text: () => null,
         badge: (binding) => (binding === 'match.homeTeam.badge' ? badge : null),
         asset: () => null,
+        rows: () => [],
       },
     );
     expect(items.map((item) => item.id)).toEqual(['background', 'layer-home-badge']);
@@ -522,7 +525,7 @@ describe('team badges in a template (PD-ARCH-01G-D)', () => {
     };
     const { items, issues } = composeItems(
       { background, layers: [...TEAMS, optional] },
-      { text: () => null, badge: () => null, asset: () => null },
+      { text: () => null, badge: () => null, asset: () => null, rows: () => [] },
     );
     expect(items).toHaveLength(1);
     expect(issues.map((issue) => `${issue.layerId ?? ''}:${issue.severity}`)).toEqual([
@@ -530,5 +533,220 @@ describe('team badges in a template (PD-ARCH-01G-D)', () => {
       'away:error',
       'stage:warning',
     ]);
+  });
+});
+
+describe('match lists of round calendars (PD-ARCH-01G-E.2)', () => {
+  const TEXT_STYLE = (overrides: Partial<VisualTemplateTextStyle> = {}): VisualTemplateTextStyle => ({
+    ...STYLE,
+    maxFontSize: 30,
+    minFontSize: 18,
+    ...overrides,
+  });
+  /** The row of the built-in calendar 2.0.0, in fractions (the web editor's defaults). */
+  function list(overrides: Partial<VisualTemplateFixtureListLayer> = {}): VisualTemplateFixtureListLayer {
+    return {
+      id: 'partidos',
+      name: 'Lista de partidos',
+      type: 'fixture_list',
+      x: 0.0278,
+      y: 0.2415,
+      width: 0.9444,
+      height: 0.077,
+      visible: true,
+      rowGap: 0.0074,
+      row: {
+        homeBadge: { x: 0.0157, y: 0.1154, width: 0.0784, height: 0.7692, visible: true },
+        homeName: { x: 0.1059, y: 0, width: 0.2941, height: 1, visible: true, style: TEXT_STYLE({ align: 'right' }) },
+        kickoffDate: {
+          x: 0.4118,
+          y: 0.06,
+          width: 0.1765,
+          height: 0.3,
+          visible: true,
+          style: TEXT_STYLE({ fontRole: 'body', maxFontSize: 24, minFontSize: 16, maxLines: 1 }),
+        },
+        kickoffTime: {
+          x: 0.4118,
+          y: 0.36,
+          width: 0.1765,
+          height: 0.33,
+          visible: true,
+          style: TEXT_STYLE({ fontRole: 'numeric', maxLines: 1, colorRole: 'accent' }),
+        },
+        status: {
+          x: 0.4118,
+          y: 0.7,
+          width: 0.1765,
+          height: 0.26,
+          visible: true,
+          style: TEXT_STYLE({ fontRole: 'body', maxFontSize: 20, minFontSize: 14, maxLines: 1, colorRole: 'accent' }),
+        },
+        awayName: { x: 0.6, y: 0, width: 0.2941, height: 1, visible: true, style: TEXT_STYLE({ align: 'left' }) },
+        awayBadge: { x: 0.9059, y: 0.1154, width: 0.0784, height: 0.7692, visible: true },
+      },
+      ...overrides,
+    };
+  }
+  const calendar = (layers: VisualTemplateLayer[]) => input(layers, { contentType: 'round_overview' });
+
+  it('meets the round calendar requirement and validates the six rows of the default row', () => {
+    const result = validateVersion(calendar([list()]));
+    expect(codes(result, 'error')).toEqual([]);
+    expect(codes(result, 'warning')).toEqual(['BACKGROUND_REVIEW']);
+    expect(usedBindings([list()])).toEqual(['round.fixtures']);
+    expect(VISUAL_TEMPLATE_FIXTURE_LIST_ROWS).toBe(6);
+  });
+
+  it('refuses a list outside a calendar, a second list, rows that leave the canvas and hidden names', () => {
+    expect(validateVersion(input([...TEAMS, list()])).issues).toContainEqual(
+      expect.objectContaining({ code: 'BINDING_NOT_ALLOWED', severity: 'error', layerId: 'partidos' }),
+    );
+    const second = list({ id: 'otra', y: 0.05, height: 0.02, rowGap: 0 });
+    expect(validateVersion(calendar([list(), second])).issues).toContainEqual(
+      expect.objectContaining({ code: 'BINDING_NOT_ALLOWED', severity: 'error', layerId: 'otra' }),
+    );
+    // The first row fits; the sixth does not.
+    const low = validateVersion(calendar([list({ y: 0.6 })]));
+    expect(low.issues).toContainEqual(
+      expect.objectContaining({
+        code: 'OUT_OF_CANVAS',
+        severity: 'error',
+        message: expect.stringContaining('6 filas'),
+      }),
+    );
+    const row = list().row;
+    const hidden = list({ row: { ...row, awayName: { ...row.awayName, visible: false } } });
+    expect(codes(validateVersion(calendar([hidden])), 'error')).toEqual(['REQUIRED_BINDING_MISSING']);
+    const outside = list({ row: { ...row, awayBadge: { ...row.awayBadge, x: 0.95 } } });
+    expect(codes(validateVersion(calendar([outside])), 'error')).toEqual(['OUT_OF_CANVAS']);
+    const sizes = list({ row: { ...row, status: { ...row.status, style: TEXT_STYLE({ minFontSize: 40 }) } } });
+    expect(codes(validateVersion(calendar([sizes])), 'error')).toEqual(['FONT_SIZE_INVALID']);
+  });
+
+  it('warns about parts that overlap, values that may not fit and low contrast in any row', () => {
+    const row = list().row;
+    const crowded = list({
+      row: {
+        ...row,
+        awayName: { ...row.awayName, width: 0.05, style: TEXT_STYLE({ minFontSize: 28, maxLines: 1 }) },
+        kickoffTime: { ...row.kickoffTime, x: 0.3 },
+      },
+    });
+    const result = validateVersion(calendar([crowded]));
+    expect(codes(result, 'error')).toEqual([]);
+    expect(codes(result, 'warning')).toEqual(
+      expect.arrayContaining(['TEXT_MAY_NOT_FIT', 'OVERLAP', 'BACKGROUND_REVIEW']),
+    );
+    // A light background under the fourth row only.
+    const bright = validateVersion(calendar([list()]));
+    expect(codes(bright, 'warning')).not.toContain('LOW_CONTRAST');
+    const sampler = (box: { y: number }) => (box.y > 0.5 && box.y < 0.6 ? 1 : 0);
+    const lowContrast = validateVersion({ ...calendar([list()]), sampler });
+    expect(lowContrast.issues.filter((issue) => issue.code === 'LOW_CONTRAST').length).toBeGreaterThan(0);
+    // One warning per part at most, whatever the number of low rows.
+    const names = lowContrast.issues.filter((issue) => issue.code === 'LOW_CONTRAST').map((issue) => issue.message);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  it('draws one row per match, its badges by row and each value as its own element; reports what is missing', () => {
+    const background = {
+      id: '00000000-0000-4000-8000-000000000090',
+      sha256: 'ab'.repeat(32),
+      mime: 'image/png' as const,
+    };
+    const badge = (n: number) => ({
+      id: `00000000-0000-4000-8000-00000000009${String(n)}`,
+      sha256: 'cd'.repeat(32),
+      mime: 'image/png' as const,
+    });
+    const run = (text: string, factId: string) => ({ text, factIds: [factId], provenance: 'fact' as const });
+    const rows: ComposeRow[] = [
+      {
+        homeName: run('Club Deportivo Ejemplo B', 'f1'),
+        awayName: run('Club Deportivo Ejemplo', 'f2'),
+        kickoffDate: run('10 may 2027', 'f3'),
+        kickoffTime: run('12:00', 'f3'),
+        status: null,
+        homeBadge: badge(1),
+        awayBadge: badge(2),
+      },
+      {
+        homeName: run('Unión Ficticia', 'f4'),
+        awayName: run('Racing Prueba', 'f5'),
+        kickoffDate: run('11 may 2027', 'f6'),
+        kickoffTime: run('18:30', 'f6'),
+        status: run('Aplazado', 'f7'),
+        homeBadge: null,
+        awayBadge: badge(3),
+      },
+    ];
+    const { items, issues } = composeItems(
+      { background, layers: [list()] },
+      { text: () => null, badge: () => null, asset: () => null, rows: () => rows },
+    );
+    expect(items.map((item) => item.id)).toEqual([
+      'background',
+      'layer-partidos-r1-home-badge',
+      'layer-partidos-r1-away-badge',
+      'layer-partidos-r1-home',
+      'layer-partidos-r1-date',
+      'layer-partidos-r1-time',
+      'layer-partidos-r1-away',
+      'layer-partidos-r2-away-badge',
+      'layer-partidos-r2-home',
+      'layer-partidos-r2-date',
+      'layer-partidos-r2-time',
+      'layer-partidos-r2-status',
+      'layer-partidos-r2-away',
+    ]);
+    const byId = new Map(items.map((item) => [item.id, item]));
+    expect(byId.get('layer-partidos-r1-home-badge')).toMatchObject({ kind: 'image', fit: 'contain', asset: badge(1) });
+    expect(byId.get('layer-partidos-r2-away')).toMatchObject({
+      kind: 'text',
+      field: 'fixtures',
+      semantic: 'team_name',
+      run: rows[1]?.awayName,
+    });
+    expect(byId.get('layer-partidos-r2-status')).toMatchObject({ semantic: 'match_status' });
+    // Row 2 sits one row height and one gap below row 1.
+    const first = byId.get('layer-partidos-r1-home')?.box;
+    const second = byId.get('layer-partidos-r2-home')?.box;
+    expect((second?.y ?? 0) - (first?.y ?? 0)).toBeCloseTo(0.077 + 0.0074, 6);
+    expect(issues).toEqual([
+      expect.objectContaining({
+        code: 'VALUE_MISSING',
+        severity: 'warning',
+        layerId: 'partidos',
+        message: expect.stringContaining('partido 2, escudo local'),
+      }),
+    ]);
+
+    const missingName = composeItems(
+      { background, layers: [list()] },
+      {
+        text: () => null,
+        badge: () => null,
+        asset: () => null,
+        rows: () => [{ ...(rows[0] as ComposeRow), awayName: null }],
+      },
+    );
+    expect(missingName.issues).toContainEqual(expect.objectContaining({ code: 'VALUE_MISSING', severity: 'error' }));
+    const none = composeItems(
+      { background, layers: [list()] },
+      { text: () => null, badge: () => null, asset: () => null, rows: () => [] },
+    );
+    expect(none.issues).toEqual([expect.objectContaining({ code: 'VALUE_MISSING', severity: 'error' })]);
+    const seven = composeItems(
+      { background, layers: [list()] },
+      {
+        text: () => null,
+        badge: () => null,
+        asset: () => null,
+        rows: () => Array.from({ length: 7 }, () => rows[0] as ComposeRow),
+      },
+    );
+    expect(seven.items).toHaveLength(1);
+    expect(seven.issues).toEqual([expect.objectContaining({ code: 'TEXT_OVERFLOW', severity: 'error' })]);
   });
 });

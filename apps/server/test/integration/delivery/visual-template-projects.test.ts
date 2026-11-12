@@ -628,3 +628,123 @@ describe('generation with a published visual template (PD-ARCH-01G-D)', { timeou
     expect(egress.requests.length).toBe(imageRequests);
   });
 });
+
+describe('round calendars with a match list (PD-ARCH-01G-E.2)', { timeout: WORKFLOW_TEST_TIMEOUT }, () => {
+  it('draws one row per match with each badge by the team identity, compares every row with its facts and never draws the badge of a team without one', async () => {
+    const { t, egress } = await app();
+    const s = await seed(t);
+    // Two matches not played yet in the same round: the finished ones are left out of the calendar.
+    const base = `/competitions/${s.competitionId}/seasons/${s.seasonId}`;
+    const fixture = async (home: string, away: string, kickoffAt: string) =>
+      (
+        await ok<{ id: string }>(
+          t.send('POST', `${base}/matches`, {
+            homeTeamId: s.teams[home],
+            awayTeamId: s.teams[away],
+            kickoffAt,
+            stageId: null,
+            roundId: s.roundId,
+          }),
+        )
+      ).id;
+    const first = await fixture('FC Barcelona', 'Atlético de Madrid', '2026-12-10T18:00:00.000Z');
+    const second = await fixture('Borussia Mönchengladbach', 'Wolverhampton Wanderers', '2026-12-11T18:00:00.000Z');
+    await ok(
+      t.send('POST', `${base}/matches/${second}/result`, { status: 'postponed', homeScore: null, awayScore: null }),
+    );
+    const style = { ...STYLE, maxFontSize: 30, minFontSize: 18, effect: 'none', uppercase: false };
+    const part = (x: number, y: number, width: number, height: number) => ({ x, y, width, height, visible: true });
+    const calendar = await publishedTemplate(t, '4:5', {
+      contentType: 'round_overview',
+      name: 'Calendario de referencia',
+      layers: [
+        {
+          id: 'partidos',
+          name: 'Lista de partidos',
+          type: 'fixture_list',
+          ...part(0.0278, 0.2415, 0.9444, 0.077),
+          rowGap: 0.0074,
+          row: {
+            homeBadge: part(0.0157, 0.1154, 0.0784, 0.7692),
+            homeName: { ...part(0.1059, 0, 0.2941, 1), style: { ...style, align: 'right' } },
+            kickoffDate: { ...part(0.4118, 0.06, 0.1765, 0.3), style: { ...style, fontRole: 'body', maxLines: 1 } },
+            kickoffTime: { ...part(0.4118, 0.36, 0.1765, 0.33), style: { ...style, fontRole: 'numeric', maxLines: 1 } },
+            status: { ...part(0.4118, 0.7, 0.1765, 0.26), style: { ...style, fontRole: 'body', maxLines: 1 } },
+            awayName: { ...part(0.6, 0, 0.2941, 1), style: { ...style, align: 'left' } },
+            awayBadge: part(0.9059, 0.1154, 0.0784, 0.7692),
+          },
+        },
+      ] as VisualTemplateLayer[],
+    });
+    const imageRequests = egress.requests.length;
+    const batch = await settled(
+      t,
+      ContentBatchSchema.parse(
+        await ok(
+          t.send('POST', '/content-batches', {
+            requestKey: requestKey(),
+            selection: {
+              competitionId: s.competitionId,
+              seasonId: s.seasonId,
+              stageId: null,
+              roundId: s.roundId,
+              matchIds: [s.matches.a, s.matches.b, s.matches.c, first, second],
+              kinds: ['round_calendar'],
+              visualTemplateVersionIds: [calendar.version.id],
+            },
+          }),
+        ),
+      ),
+    );
+    expect(batch.items.map((item) => item.status)).toEqual(['completed']);
+    const draft = await draftOf(t, batch.items[0]?.projectId ?? '');
+    const page = draft.carousels.flatMap((carousel) => slidesOfType(carousel, 'round_overview'))[0] as Element;
+    expect(renderRow(t, page.currentVersion.id)).toEqual({
+      template_id: `vt-${calendar.templateId}`,
+      template_version: '1',
+    });
+    expect(
+      fieldText(page, 'fixtures')
+        .split('\n')
+        .map((line) => line.split(' · ')[0]),
+    ).toEqual(['FC Barcelona vs Atlético de Madrid', 'Borussia Mönchengladbach vs Wolverhampton Wanderers']);
+    // Every row is compared with its facts: names, date, time and the postponed status; nothing fails.
+    const failures = page.currentVersion.qa.filter(
+      (check) => check.outcome === 'fail' && check.check !== 'capitalized_tokens',
+    );
+    expect(failures).toEqual([]);
+    const model = JSON.parse(
+      t.container.db
+        .prepare<{ render_model: string }>('SELECT render_model FROM element_versions WHERE id = ?')
+        .get([page.currentVersion.id])?.render_model ?? '{}',
+    ) as { elements: { id: string; kind: string; text?: string; semantic?: string }[] };
+    const ids = model.elements.map((element) => element.id).filter((id) => id.startsWith('layer-partidos-'));
+    // Row 2: Mönchengladbach has no badge, so its badge is not drawn; its name is.
+    expect(ids).toEqual([
+      'layer-partidos-r1-home-badge',
+      'layer-partidos-r1-away-badge',
+      'layer-partidos-r1-home',
+      'layer-partidos-r1-date',
+      'layer-partidos-r1-time',
+      'layer-partidos-r1-away',
+      'layer-partidos-r2-away-badge',
+      'layer-partidos-r2-home',
+      'layer-partidos-r2-date',
+      'layer-partidos-r2-time',
+      'layer-partidos-r2-status',
+      'layer-partidos-r2-away',
+    ]);
+    expect(model.elements.find((element) => element.id === 'layer-partidos-r2-status')?.text).toBe('Aplazado');
+    const pixel = await pixelsOf((await t.get(`/element-versions/${page.currentVersion.id}/image`)).rawPayload);
+    const badgeCentre = (row: number, partX: number) =>
+      [
+        Math.round((0.0278 + (partX + 0.0392) * 0.9444) * 1080),
+        Math.round((0.2415 + row * (0.077 + 0.0074) + 0.5 * 0.077) * 1350),
+      ] as const;
+    // Barcelona (blue) at home and Atlético (red) away in row 1; Wolverhampton (orange) away in row 2.
+    expect(pixel(...badgeCentre(0, 0.0157))).toEqual([...BLUE]);
+    expect(pixel(...badgeCentre(0, 0.9059))).toEqual([...RED]);
+    expect(pixel(...badgeCentre(1, 0.9059))).toEqual([...ORANGE]);
+    expect(egress.requests.length).toBe(imageRequests);
+  });
+});

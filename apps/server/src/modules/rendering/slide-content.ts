@@ -77,6 +77,12 @@ export interface SlideContent {
    * and record no team, as before.
    */
   readonly badges?: { readonly home: SlideTeamBadge; readonly away: SlideTeamBadge };
+  /**
+   * PD-ARCH-01G-E.2: the teams and badges of each row of a round calendar slide, in row order, when the project's badge
+   * snapshot covers the calendar rows (decision DE-E6). Absent otherwise: the calendar is drawn as before, one line
+   * of text per match.
+   */
+  readonly rowBadges?: readonly { readonly home: SlideTeamBadge; readonly away: SlideTeamBadge }[];
 }
 
 /** The segments of a field, or an empty list when the field is absent. */

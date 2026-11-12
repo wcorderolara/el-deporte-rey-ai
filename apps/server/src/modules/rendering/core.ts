@@ -103,16 +103,13 @@ export interface SlideRender {
 }
 
 /**
- * Builds the render model of one slide with the current template of its type. A slide without badges
- * (`SlideContent.badges` absent: the project's snapshot does not cover the engine templates) uses the current version
- * that leaves the badge slots empty, so projects created before PD-ARCH-01G-E.1 render as before (decision DE-E3).
+ * Builds the render model of one slide with the current template of its type that draws the badges the slide has
+ * (`TemplateRegistry.forContent`). A slide without badges (`SlideContent.badges` or `rowBadges` absent: the project's
+ * snapshot does not cover that engine template) uses the version that leaves the badge slots empty, so projects
+ * created before PD-ARCH-01G-E.1 and E.2 render as before (decision DE-E3).
  */
 export function buildRenderModel(content: SlideContent, deps: Omit<RenderDeps, 'signal'>): RenderModel {
-  const template =
-    content.badges === undefined
-      ? deps.registry.currentWithoutBadges(content.slideType)
-      : deps.registry.current(content.slideType);
-  return template.build(content, templateContext(deps.settings, deps.fonts, deps.assets));
+  return deps.registry.forContent(content).build(content, templateContext(deps.settings, deps.fonts, deps.assets));
 }
 
 /** Renders one slide; stored text that cannot be drawn fails with `invalid` at the given path. */

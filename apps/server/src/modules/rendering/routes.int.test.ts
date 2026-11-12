@@ -64,7 +64,8 @@ describe('listTemplates', () => {
       ['match-result', '1.1.0', 2],
       ['standings', '1.0.0', 0],
       ['closing', '1.0.0', 0],
-      ['round-overview', '1.0.0', 0],
+      // PD-ARCH-01G-E.2: six rows of two badge slots.
+      ['round-overview', '2.0.0', 12],
       ['fixture', '1.1.0', 2],
       ['match-preview', '1.1.0', 2],
     ]);

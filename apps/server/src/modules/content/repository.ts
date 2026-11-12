@@ -17,6 +17,7 @@ import { z } from 'zod';
 
 import type { Db } from '../../platform/db/index.js';
 import { readJsonColumn, readNullableJsonColumn, writeJsonColumn } from '../../platform/db/index.js';
+import { parseBadgeSnapshot } from '../projects/badge-snapshot.js';
 
 import {
   ContentFlagListSchema,
@@ -33,7 +34,7 @@ const ExcludedKeysSchema = uniquePrimitives(z.array(MatchKeySchema).max(64));
 
 const SQL = {
   project:
-    'SELECT id, competition_name, season_label, stage_label, matchday, language, content_kind, ' +
+    'SELECT id, competition_name, season_label, stage_label, matchday, language, content_kind, badge_snapshot_json, ' +
     // A visual template draws the match slides (PD-ARCH-01G-D; one per slide type, decision 01G-D-3).
     '(EXISTS (SELECT 1 FROM project_visual_templates pt WHERE pt.project_id = projects.id AND ' +
     "pt.slide_type IN ('match_result', 'fixture', 'match_preview'))) AS templated FROM projects " +
@@ -98,6 +99,7 @@ interface ProjectRow {
   matchday: number | null;
   language: string;
   content_kind: string;
+  badge_snapshot_json: string | null;
   templated: number;
 }
 
@@ -125,6 +127,8 @@ export interface ProjectLabels {
   readonly contentKind: string;
   /** True when a visual template draws the project's match slides (PD-ARCH-01G-D, decision 01G-D-3). */
   readonly templated: boolean;
+  /** True when the project's badge snapshot covers the calendar rows (PD-ARCH-01G-E.2, snapshot version 3). */
+  readonly calendarRows: boolean;
 }
 
 /** An element with its carousel and draft, as a regeneration needs it. */
@@ -218,6 +222,7 @@ export class ContentRepository {
           language: row.language,
           contentKind: row.content_kind,
           templated: row.templated === 1,
+          calendarRows: parseBadgeSnapshot(row.badge_snapshot_json).calendarRows,
         };
   }
 

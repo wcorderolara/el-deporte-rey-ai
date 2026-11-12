@@ -36,6 +36,9 @@ import {
   qaInput,
   resultOf,
   SELECTION_A,
+  calendarRowsText,
+  calendarVersion,
+  overviewText,
   settings,
   slideVersion,
   slug,
@@ -661,6 +664,92 @@ describe('team_badges (warning; PD-ARCH-01G-E.1, decision DE-E4)', () => {
   it('is not run on a caption', () => {
     const caption = runVisualQa(qaInput([captionVersion(5, 'Resumen')], FACTS), FONTS).versions[0];
     expect(caption?.results.map((item) => item.check)).toEqual(['capitalized_tokens']);
+  });
+});
+
+describe('round calendars with rows (PD-ARCH-01G-E.2)', () => {
+  const MATCHES = [
+    MATCH_A,
+    { ...MATCH_A, home: 'Real Brisamar', away: 'Peñas Sur', factBase: 20, kickoff: '2026-10-25T18:00:00Z' },
+    { ...MATCH_A, home: 'Club Deportivo Ejemplo B', away: 'Club Deportivo Ejemplo', factBase: 30 },
+  ];
+  const ROW_FACTS = [
+    ...fixtureFacts(MATCHES[0] as typeof MATCH_A),
+    ...fixtureFacts(MATCHES[1] as typeof MATCH_A, 'postponed'),
+    ...fixtureFacts(MATCHES[2] as typeof MATCH_A),
+  ];
+  const TEXT = calendarRowsText(MATCHES, { 1: 'postponed' });
+  const ALL_BADGES: { home: string | null; away: string | null }[] = MATCHES.map((_, index) => ({
+    home: uuid(810 + index),
+    away: uuid(820 + index),
+  }));
+
+  function calendar(badges = ALL_BADGES) {
+    return calendarVersion(6, TEXT, badges);
+  }
+
+  it('passes every check when each row has its values and both badges', () => {
+    const result = check(calendar(), qaInput([calendar()], ROW_FACTS));
+    expect(failedChecks(result)).toEqual([]);
+    expect(resultOf(result, 'team_badges').details).toEqual({ emptyBadgeSlots: [], emptyRowBadgeSlots: [] });
+  });
+
+  it('warns about each empty badge slot with its row, without blocking', () => {
+    const badges = ALL_BADGES.map((row, index) =>
+      index === 0 ? { ...row, away: null } : index === 2 ? { home: null, away: null } : row,
+    );
+    const result = check(calendar(badges), qaInput([calendar(badges)], ROW_FACTS));
+    expect(failedChecks(result)).toEqual(['team_badges']);
+    expect(result.qaStatus).toBe('warnings');
+    const warning = resultOf(result, 'team_badges');
+    expect(warning.details).toEqual({
+      emptyBadgeSlots: [],
+      emptyRowBadgeSlots: [
+        { row: 1, slot: 'team-badge-away' },
+        { row: 3, slot: 'team-badge-home' },
+        { row: 3, slot: 'team-badge-away' },
+      ],
+    });
+    expect(QaResultSchema.parse(warning)).toEqual(warning);
+  });
+
+  it('compares every value of every row with its fact (data_match, team_names)', () => {
+    const seeded = withModel(calendar(), (model) => {
+      for (const [id, text] of [
+        ['row-2-time', '20:00'],
+        ['row-2-status', 'Aplazada'],
+        ['row-3-away', 'Club Deportivo Ejemplo B'],
+      ] as const) {
+        textElement(model, id).text = text;
+        textElement(model, id).lines = [...(id === 'row-3-away' ? ['Club Deportivo', 'Ejemplo B'] : [text])];
+      }
+    });
+    const result = check(seeded, qaInput([seeded], ROW_FACTS));
+    expect(failedChecks(result)).toEqual(['data_match', 'team_names']);
+    expect(resultOf(result, 'data_match').details).toEqual({
+      mismatches: [
+        { elementId: 'row-2-time', factId: uuid(24), expected: '12:00', actual: '20:00' },
+        { elementId: 'row-2-status', factId: uuid(25), expected: 'Aplazado', actual: 'Aplazada' },
+      ],
+    });
+    expect(resultOf(result, 'team_names').details).toEqual({
+      mismatches: [
+        {
+          elementId: 'row-3-away',
+          factId: uuid(32),
+          expected: 'Club Deportivo Ejemplo',
+          actual: 'Club Deportivo Ejemplo B',
+        },
+      ],
+    });
+  });
+
+  it('does not examine the badges of a calendar without rows (DE-E3)', () => {
+    const legacy = slideVersion(7, 'round_overview', overviewText(MATCHES));
+    expect(legacy.renderModel?.templateVersion).toBe('1.0.0');
+    const result = check(legacy, qaInput([legacy], ROW_FACTS));
+    expect(failedChecks(result)).toEqual([]);
+    expect(resultOf(result, 'team_badges').details).toEqual({ emptyBadgeSlots: [] });
   });
 });
 

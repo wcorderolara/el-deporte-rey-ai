@@ -126,6 +126,7 @@ describe('badges in the engine match templates (PD-ARCH-01G-E.1)', () => {
     );
     const projectBadges = {
       engineSlots: true,
+      calendarRows: false,
       teams: new Map([
         [HOME_TEAM, { id: red.id, sha256: red.sha256, mime: red.mime }],
         [AWAY_TEAM, { id: blue.id, sha256: blue.sha256, mime: blue.mime }],

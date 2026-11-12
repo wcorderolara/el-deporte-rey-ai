@@ -62,6 +62,7 @@ export function buildContentInput(
     matchday: labels.matchday,
     contentKind: labels.contentKind,
     templateFields: labels.templated,
+    calendarRows: labels.calendarRows,
     brand: { name: config.brand.name, handle: config.brand.handle },
     utcOffsetMinutes: config.display.utcOffsetMinutes,
     maxSlidesPerCarousel: request.maxSlidesPerCarousel,

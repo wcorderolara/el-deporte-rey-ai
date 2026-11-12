@@ -41,6 +41,7 @@ import { type VisualQaOptions, createVisualQaStage } from '../stage.js';
 export {
   MATCH_A,
   SELECTION_A,
+  calendarRowsText,
   closingText,
   coverText,
   fixtureText,
@@ -245,6 +246,42 @@ export function captionVersion(n: number, caption: string, hashtags: readonly st
     },
     renderModel: null,
     image: null,
+  };
+}
+
+/**
+ * A round calendar page with rows (PD-ARCH-01G-E.2): the stored text of `calendarRowsText` drawn by the round calendar
+ * template 2.0.0, each row's home and away team with the given badge IDs (null for a team without a badge).
+ */
+export function calendarVersion(
+  n: number,
+  text: ElementText,
+  badges: readonly { readonly home: string | null; readonly away: string | null }[],
+): VersionToCheck {
+  const side = (row: number, home: boolean, badgeId: string | null) => ({
+    teamId: uuid(700 + row * 2 + (home ? 0 : 1)),
+    badge: badgeId === null ? null : { id: badgeId, sha256: 'a'.repeat(64), mime: 'image/png' as const },
+  });
+  const slide = {
+    ...content('round_overview', text, { demonstration: false, language: 'es' }),
+    rowBadges: badges.map((row, index) => ({ home: side(index, true, row.home), away: side(index, false, row.away) })),
+  };
+  const renderModel = registry.forContent(slide).build(slide, {
+    canvas: { width: 1080, height: 1350 },
+    palette: { ...PALETTE },
+    fonts: FONTS,
+    assets: {},
+    utcOffsetMinutes: UTC_OFFSET,
+  });
+  return {
+    versionId: uuid(9000 + n),
+    elementId: uuid(8000 + n),
+    carouselId: CAROUSEL,
+    kind: 'slide',
+    slideType: 'round_overview',
+    text,
+    renderModel,
+    image: { width: 1080, height: 1350 },
   };
 }
 

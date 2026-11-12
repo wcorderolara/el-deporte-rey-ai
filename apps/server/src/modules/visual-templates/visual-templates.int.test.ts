@@ -202,7 +202,7 @@ async function sportsData(app: TestApp) {
     roundId: round.id,
     kickoffAt: '2027-05-10T18:00:00Z',
   });
-  return { competitionId: competition.id, seasonId: season.id, roundId: round.id, matchId: match.id, base };
+  return { competitionId: competition.id, seasonId: season.id, roundId: round.id, matchId: match.id, base, teams };
 }
 
 /** The RGB of a pixel of a PNG, decoded by resvg. */
@@ -811,6 +811,66 @@ describe('previews with local sports data', () => {
     expect(preview.values).toEqual([
       { binding: 'round.fixtures', value: 'Club Plantilla Local vs Club Plantilla Visitante · 10 may 2027' },
     ]);
+  });
+
+  it('previews a match list of a round calendar: one row per match, each team badge by its identity (PD-ARCH-01G-E.2)', async () => {
+    const { app, egress } = await start();
+    const detail = await create(app, { sourceProposalId: await proposal(app, { contentType: 'round_overview' }) });
+    const templateId = detail.template.id;
+    const draft = await version(app, templateId, detail.template.draftVersionId ?? '');
+    const local = await sportsData(app);
+    const badge = await app.inject({
+      method: 'PUT',
+      url: `/api/v1/teams/${local.teams[0] ?? ''}/badge`,
+      query: { source: 'Archivo sintético de prueba', authorized: 'true' },
+      headers: { host: app.host, origin: app.origin, 'x-edr-client': 'web', 'content-type': 'image/png' },
+      payload: png({ width: 64, height: 64, rgba: [200, 30, 40, 255] }),
+    });
+    expect(badge.statusCode, badge.body).toBe(200);
+    const style = { ...STYLE, maxFontSize: 30, minFontSize: 18 };
+    const part = (x: number, y: number, width: number, height: number) => ({ x, y, width, height, visible: true });
+    const list = {
+      id: 'partidos',
+      name: 'Lista de partidos',
+      type: 'fixture_list',
+      ...part(0.0278, 0.2415, 0.9444, 0.077),
+      rowGap: 0.0074,
+      row: {
+        homeBadge: part(0.0157, 0.1154, 0.0784, 0.7692),
+        homeName: { ...part(0.1059, 0, 0.2941, 1), style: { ...style, align: 'right' } },
+        kickoffDate: { ...part(0.4118, 0.06, 0.1765, 0.3), style: { ...style, fontRole: 'body', maxLines: 1 } },
+        kickoffTime: { ...part(0.4118, 0.36, 0.1765, 0.33), style: { ...style, fontRole: 'numeric', maxLines: 1 } },
+        status: { ...part(0.4118, 0.7, 0.1765, 0.26), style: { ...style, fontRole: 'body', maxLines: 1 } },
+        awayName: { ...part(0.6, 0, 0.2941, 1), style: { ...style, align: 'left' } },
+        awayBadge: part(0.9059, 0.1154, 0.0784, 0.7692),
+      },
+    } as VisualTemplateLayer;
+    const saved = VisualTemplateVersionSchema.parse((await save(app, draft, [list])).json());
+    expect(saved.validation.issues.filter((issue) => issue.severity === 'error')).toEqual([]);
+    expect(saved.bindings).toEqual(['round.fixtures']);
+    const before = imageRequests(egress);
+    const response = await app.send('POST', `/visual-templates/${templateId}/versions/${draft.id}/previews`, {
+      selection: { competitionId: local.competitionId, seasonId: local.seasonId, roundId: local.roundId },
+    });
+    expect(response.statusCode, response.body).toBe(200);
+    const preview = VisualTemplatePreviewSchema.parse(response.json());
+    // The visiting team has no badge: its badge is left out with a warning, its name is drawn.
+    expect(preview.issues).toEqual([
+      expect.objectContaining({
+        code: 'VALUE_MISSING',
+        severity: 'warning',
+        layerId: 'partidos',
+        message: expect.stringContaining('partido 1, escudo visitante') as unknown as string,
+      }),
+    ]);
+    const image = await app.get(preview.imageUrl.replace('/api/v1', ''));
+    expect(image.statusCode, image.body).toBe(200);
+    const pixel = await pixelsOf(image.rawPayload);
+    const centreOf = (partX: number) =>
+      [Math.round((0.0278 + (partX + 0.0392) * 0.9444) * 1080), Math.round((0.2415 + 0.5 * 0.077) * 1350)] as const;
+    expect(pixel(...centreOf(0.0157))).toEqual([200, 30, 40]);
+    expect(pixel(...centreOf(0.9059))).not.toEqual([200, 30, 40]);
+    expect(imageRequests(egress)).toBe(before);
   });
 
   it('draws a protected asset from its original file, only scaled proportionally, even in a stretched box', async () => {

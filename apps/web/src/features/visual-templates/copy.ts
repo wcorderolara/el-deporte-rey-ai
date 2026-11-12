@@ -3,6 +3,7 @@ import type {
   VisualTemplateBadgeBinding,
   VisualTemplateBinding,
   VisualTemplateContentType,
+  VisualTemplateFixtureRowPart,
   VisualTemplateImageFit,
   VisualTemplateIssueCode,
   VisualTemplateLayerType,
@@ -73,6 +74,18 @@ export const layerTypeLabel: Record<VisualTemplateLayerType, string> = {
   image: 'Imagen de Mi marca',
   brand_asset: 'Recurso oficial',
   team_badge: 'Escudo de equipo',
+  fixture_list: 'Lista de partidos',
+};
+
+/** The parts of a match-list row (contract `VISUAL_TEMPLATE_FIXTURE_ROW_PARTS`, PD-ARCH-01G-E.2). */
+export const fixtureRowPartLabel: Record<VisualTemplateFixtureRowPart, string> = {
+  homeBadge: 'Escudo local',
+  homeName: 'Nombre local',
+  kickoffDate: 'Fecha',
+  kickoffTime: 'Hora',
+  status: 'Estado',
+  awayName: 'Nombre visitante',
+  awayBadge: 'Escudo visitante',
 };
 
 export const fitLabel: Record<VisualTemplateImageFit, string> = {
@@ -276,6 +289,7 @@ export const editorCopy = {
   addMascot: 'Ketsi',
   addHomeBadge: 'Escudo local',
   addAwayBadge: 'Escudo visitante',
+  addFixtureList: 'Lista de partidos',
   badgeBinding: 'Escudo',
   teamBadgeNote:
     'Se dibuja el escudo del equipo, proporcional, desde su archivo original. Si el equipo no tiene escudo, la capa queda vacía y se avisa.',
@@ -330,6 +344,11 @@ export const editorCopy = {
   y: 'Y (%)',
   width: 'Ancho (%)',
   height: 'Alto (%)',
+  rowGap: 'Espacio entre filas (%)',
+  partX: 'X (% de la fila)',
+  partY: 'Y (% de la fila)',
+  partWidth: 'Ancho (% de la fila)',
+  partHeight: 'Alto (% de la fila)',
   visible: 'Visible',
   text: 'Texto fijo',
   binding: 'Dato deportivo',

@@ -9,6 +9,7 @@ export const layerTypeIcon: Record<VisualTemplateLayerType, StudioIconName> = {
   image: 'image',
   brand_asset: 'mark',
   team_badge: 'shield',
+  fixture_list: 'table',
 };
 
 export interface LayerListProps {

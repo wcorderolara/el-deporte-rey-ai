@@ -5,9 +5,9 @@ Hecho el 2026-11-11 sobre `work/PD-ARCH-01G-E`, creada desde el cierre de 01G-D
 
 **Decisiones del 2026-11-12:** el Product Owner aprobó DE-E1 a DE-E7 tal como se recomiendan en la sección 4, con dos
 precisiones: DE-E5 fija seis partidos por diapositiva como criterio inicial de E.2, y DE-E6 define el contenido de cada
-fila. Registro: PD-32 en la fuente de verdad. Los cambios de la sección 9 se aplicaron. E.1 está implementado (ver el
-[informe de E.1](./pd-arch-01g-e1-implementation-report.md)), y E.2 espera la aceptación de E.1. Este assessment no se
-reescribe.
+fila. Registro: PD-32 en la fuente de verdad. Los cambios de la sección 9 se aplicaron. E.1 está implementado y
+aceptado (ver el [informe de E.1](./pd-arch-01g-e1-implementation-report.md)), y E.2 está implementado y pendiente de
+aceptación (ver el [informe de E.2](./pd-arch-01g-e2-implementation-report.md)). Este assessment no se reescribe.
 
 ## 1. Discrepancia previa
 

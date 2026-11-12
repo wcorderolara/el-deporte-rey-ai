@@ -17,8 +17,9 @@
  *   they alone exceed one carousel). One slide per match (OD-03).
  *
  * Matches not played yet (PD-ARCH-01E-B), by the project's content kind:
- * - `calendar`: cover; round overview pages listing the fixtures (`OVERVIEW_ROWS_PER_SLIDE` each); one fixture slide
- *   per match that is not finished; closing. Finished matches are left out as `already_finished`.
+ * - `calendar`: cover; round overview pages listing the fixtures (`OVERVIEW_ROWS_PER_SLIDE` each, or
+ *   `CALENDAR_ROWS_PER_SLIDE` in a calendar with rows, PD-ARCH-01G-E.2); one fixture slide per match that is not
+ *   finished; closing. Finished matches are left out as `already_finished`.
  * - `upcoming`: cover; one fixture slide per `scheduled` or `postponed` match; closing. Any other status is left out
  *   as `not_upcoming` (a past kickoff never makes a match played).
  * - `preview`: cover; one match preview slide of the first upcoming match; closing.
@@ -156,8 +157,15 @@ export interface FixturePlan {
   readonly status: MatchStatus;
 }
 
-/** Fixtures listed per round overview slide. */
+/** Fixtures listed per round overview slide (calendars without rows: every project created before PD-ARCH-01G-E.2). */
 export const OVERVIEW_ROWS_PER_SLIDE = 8;
+
+/**
+ * Fixtures per round overview slide of a calendar with rows (PD-ARCH-01G-E.2, decision DE-E5: six per 1080 x 1350
+ * slide, confirmed with a visual test): the rows of the round calendar template 2.0.0. More fixtures go to further
+ * pages; the calendar is never replaced by a text block.
+ */
+export const CALENDAR_ROWS_PER_SLIDE = 6;
 
 export interface StandingsRowPlan {
   readonly factId: string;
@@ -205,6 +213,8 @@ export interface PlanOptions {
   readonly excludedMatchKeys: readonly string[];
   readonly maxSlidesPerCarousel: number;
   readonly standingsRowsPerSlide: number;
+  /** True for a calendar with rows (PD-ARCH-01G-E.2): `CALENDAR_ROWS_PER_SLIDE` fixtures per overview page. */
+  readonly calendarRows?: boolean;
 }
 
 /** Slide key of a match slide (positional, so that no source key reaches the AI request). */
@@ -414,9 +424,9 @@ export function selectFixtures(
   return { included, leftOut };
 }
 
-/** The round overview pages of a calendar. */
-export function overviewSlides(fixtures: readonly FixturePlan[]): SlidePlan[] {
-  return chunks(fixtures, OVERVIEW_ROWS_PER_SLIDE).map((page, position) => ({
+/** The round overview pages of a calendar, with rows (PD-ARCH-01G-E.2) or without. */
+export function overviewSlides(fixtures: readonly FixturePlan[], calendarRows = false): SlidePlan[] {
+  return chunks(fixtures, calendarRows ? CALENDAR_ROWS_PER_SLIDE : OVERVIEW_ROWS_PER_SLIDE).map((page, position) => ({
     type: 'round_overview',
     key: overviewSlideKey(position + 1),
     page: position + 1,
@@ -483,7 +493,8 @@ function planFixtures(index: FactIndex, options: PlanOptions, kind: Exclude<Cont
       key: fixtureSlideKey(fixture.index),
       fixture,
     }));
-    content = kind === 'calendar' ? [...overviewSlides(included), ...fixtures] : fixtures;
+    content =
+      kind === 'calendar' ? [...overviewSlides(included, options.calendarRows === true), ...fixtures] : fixtures;
   }
   const capacity = Math.max(1, options.maxSlidesPerCarousel - 2);
   return {

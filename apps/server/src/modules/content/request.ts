@@ -62,6 +62,8 @@ export interface DraftContext {
   readonly brand: { readonly name: string; readonly handle: string };
   /** Store the values a visual template draws independently (PD-ARCH-01G-D); false when absent. */
   readonly templateFields?: boolean;
+  /** Calendar rows (PD-ARCH-01G-E.2): each overview line also stores the time and the status; false when absent. */
+  readonly calendarRows?: boolean;
 }
 
 function fact(placeholder: string, kind: string, text: string, factId: string): PlaceholderBinding {

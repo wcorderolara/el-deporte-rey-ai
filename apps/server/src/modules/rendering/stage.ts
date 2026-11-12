@@ -6,8 +6,9 @@
  *   DEMO_DATA, OD-21), the "as of" time of the facts run, and the active brand logo and mascot with their verified
  *   bytes (T33). A run without a draft fails with `no_data`.
  * - `load` also reads the project's badge snapshot with its verified files and the teams (local IDs) of every slide
- *   that draws badges: the slides of a visual template, and the engine match slides when the snapshot covers the
- *   engine templates (PD-ARCH-01G-E.1). The teams are found through the facts' evidence, never by a name.
+ *   that draws badges: the slides of a visual template, the engine match slides when the snapshot covers the engine
+ *   templates (PD-ARCH-01G-E.1), and the rows of the engine round calendars when it covers the calendar rows
+ *   (PD-ARCH-01G-E.2). The teams are found through the facts' evidence, never by a name.
  * - `run` is the pure core: one render model and one PNG per slide, at the configured size, with the current
  *   templates (no database writes).
  * - `persist` writes each PNG to `renders/<projectId>/<versionId>.png` with the exclusive flag (T10-F13), then
@@ -46,6 +47,7 @@ import {
   type ProjectTemplatePlan,
   ProjectTemplatePlanSchema,
   type SlideTeams,
+  engineRowBadges,
   engineSlideBadges,
   loadProjectBadges,
   loadProjectTemplatePlans,
@@ -97,10 +99,24 @@ export const RenderingInputSchema = z.strictObject({
    * engine templates only.
    */
   templates: z.array(ProjectTemplatePlanSchema).max(6),
-  /** The project's badge snapshot with its verified files (PD-ARCH-01G-D, PD-ARCH-01G-E.1). */
+  /** The project's badge snapshot with its verified files (PD-ARCH-01G-D, PD-ARCH-01G-E.1, PD-ARCH-01G-E.2). */
   badges: ProjectBadgesSchema,
-  /** The teams (local IDs) of each slide that draws badges, by element version ID. */
-  slideTeams: z.record(UuidSchema, z.strictObject({ home: UuidSchema.nullable(), away: UuidSchema.nullable() })),
+  /**
+   * The teams (local IDs) of each slide that draws badges, by element version ID; a round calendar also has the teams
+   * of each row.
+   */
+  slideTeams: z.record(
+    UuidSchema,
+    z.strictObject({
+      home: UuidSchema.nullable(),
+      away: UuidSchema.nullable(),
+      rows: z
+        .array(z.strictObject({ home: UuidSchema.nullable(), away: UuidSchema.nullable() }))
+        .max(64)
+        .readonly()
+        .optional(),
+    }),
+  ),
 });
 export type RenderingInput = z.infer<typeof RenderingInputSchema>;
 
@@ -152,6 +168,7 @@ function slideContent(
   teams: SlideTeams,
 ): SlideContent {
   const badges = engineSlideBadges(input.badges, teams);
+  const rowBadges = engineRowBadges(input.badges, teams);
   return {
     slideType: slide.slideType,
     language: input.language,
@@ -159,6 +176,7 @@ function slideContent(
     text: slide.text,
     standingsAsOf: input.standingsAsOf,
     ...(badges === undefined ? {} : { badges }),
+    ...(rowBadges === undefined ? {} : { rowBadges }),
   };
 }
 
@@ -180,8 +198,9 @@ function renderDeps(
 }
 
 /**
- * True when a slide draws team badges: its type has a visual template in the project, or the project's badges cover
- * the engine templates and the current engine template of its type has badge slots (PD-ARCH-01G-E.1).
+ * True when a slide draws team badges: its type has a visual template in the project, or the current engine template
+ * of its type has badge slots that the project's badges cover (the match slots, PD-ARCH-01G-E.1; the calendar rows,
+ * PD-ARCH-01G-E.2).
  */
 function drawsBadges(
   registry: TemplateRegistry,
@@ -192,7 +211,8 @@ function drawsBadges(
   if (planOf(templates, slideType) !== null) {
     return true;
   }
-  return badges.engineSlots && registry.current(slideType).badgeSlots.length > 0;
+  const current = registry.current(slideType);
+  return current.badgeSlots.length > 0 && (current.rows === undefined ? badges.engineSlots : badges.calendarRows);
 }
 
 /** The teams of every slide that draws badges (see `drawsBadges`). */
@@ -393,7 +413,7 @@ export async function renderElementVersion(
   const badges = await loadProjectBadges(container, version.projectId);
   const deps = renderDeps(container, resolved, assets, badges, signal);
   // A project with visual templates draws the slides of each pinned type with its version (PD-ARCH-01G-D); the engine
-  // match slides draw the snapshot badges when it covers them (PD-ARCH-01G-E.1).
+  // match slides and calendar rows draw the snapshot badges when it covers them (PD-ARCH-01G-E.1, PD-ARCH-01G-E.2).
   const templates = await loadProjectTemplatePlans(container, version.projectId, badges);
   const plan = planOf(templates, version.slideType);
   const teams = drawsBadges(resolved.registry, templates, badges, version.slideType)

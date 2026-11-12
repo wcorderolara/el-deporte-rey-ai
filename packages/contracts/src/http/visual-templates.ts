@@ -129,6 +129,11 @@ export const MIN_VISUAL_TEMPLATE_FONT_SIZE = 8;
 export const MAX_VISUAL_TEMPLATE_FONT_SIZE = 400;
 /** Most lines of a text layer. */
 export const MAX_VISUAL_TEMPLATE_LINES = 12;
+/**
+ * The rows a match list draws on one slide (PD-ARCH-01G-E.2, decision DE-E5: six matches per 1080 x 1350 slide), as
+ * the round calendar pages of a project hold.
+ */
+export const VISUAL_TEMPLATE_FIXTURE_LIST_ROWS = 6;
 
 export const VisualTemplateLayerIdSchema = z.string().min(1).max(40).regex(contractRegExp('LayerId'));
 
@@ -229,15 +234,82 @@ export const VisualTemplateTeamBadgeLayerSchema = z.strictObject({
   binding: VisualTemplateBadgeBindingSchema,
 });
 
+/** A part of a match-list row: its box as fractions of the row (left, top, width, height), and whether it is drawn. */
+const FixtureRowPartShape = {
+  x: Fraction,
+  y: Fraction,
+  width: Fraction,
+  height: Fraction,
+  visible: z.boolean(),
+};
+
+/** A team badge of a row, drawn from its original file and only scaled proportionally (`contain`). */
+export const VisualTemplateFixtureRowBadgeSchema = z.strictObject(FixtureRowPartShape);
+
+/** A value of a row, drawn with its text style. */
+export const VisualTemplateFixtureRowTextSchema = z.strictObject({
+  ...FixtureRowPartShape,
+  style: VisualTemplateTextStyleSchema,
+});
+
+/**
+ * The parts of a match-list row (decision DE-E6): the home badge and official name, the kickoff date and time, the
+ * match status (drawn only for a match that is not scheduled), and the away name and badge. The two names are always
+ * drawn (PD-28 point 4: a team without a badge keeps its name).
+ */
+export const VisualTemplateFixtureRowSchema = z.strictObject({
+  homeBadge: VisualTemplateFixtureRowBadgeSchema,
+  homeName: VisualTemplateFixtureRowTextSchema,
+  kickoffDate: VisualTemplateFixtureRowTextSchema,
+  kickoffTime: VisualTemplateFixtureRowTextSchema,
+  status: VisualTemplateFixtureRowTextSchema,
+  awayName: VisualTemplateFixtureRowTextSchema,
+  awayBadge: VisualTemplateFixtureRowBadgeSchema,
+});
+
+/**
+ * A match list of a round calendar (PD-ARCH-01G-E.2): the operator designs one row and the slide engine repeats it for
+ * every match of the slide, top to bottom, up to `VISUAL_TEMPLATE_FIXTURE_LIST_ROWS` rows. The layer box is the first
+ * row; `rowGap` is the space between two rows, a fraction of the canvas height. Values come from the slide's facts
+ * and badges from the project's snapshot, by each team's internal identity (never its name). It shows the
+ * `round.fixtures` value, so it meets the requirement of a round calendar.
+ */
+export const VisualTemplateFixtureListLayerSchema = z.strictObject({
+  ...LayerBaseShape,
+  type: z.literal('fixture_list'),
+  rowGap: Fraction,
+  row: VisualTemplateFixtureRowSchema,
+});
+
 export const VisualTemplateLayerSchema = z.discriminatedUnion('type', [
   VisualTemplateTextLayerSchema,
   VisualTemplateSportsDataLayerSchema,
   VisualTemplateImageLayerSchema,
   VisualTemplateBrandAssetLayerSchema,
   VisualTemplateTeamBadgeLayerSchema,
+  VisualTemplateFixtureListLayerSchema,
 ]);
 
-export const VisualTemplateLayerTypeSchema = z.enum(['text', 'sports_data', 'image', 'brand_asset', 'team_badge']);
+export const VisualTemplateLayerTypeSchema = z.enum([
+  'text',
+  'sports_data',
+  'image',
+  'brand_asset',
+  'team_badge',
+  'fixture_list',
+]);
+
+/** The parts of a match-list row, in drawing order. */
+export const VISUAL_TEMPLATE_FIXTURE_ROW_PARTS = [
+  'homeBadge',
+  'homeName',
+  'kickoffDate',
+  'kickoffTime',
+  'status',
+  'awayName',
+  'awayBadge',
+] as const;
+export type VisualTemplateFixtureRowPart = (typeof VISUAL_TEMPLATE_FIXTURE_ROW_PARTS)[number];
 
 /** Where the background comes from: the clean background of a design proposal, or a background of Mi marca. */
 export const VisualTemplateBackgroundSourceSchema = z.enum(['design_proposal', 'brand_asset']);
@@ -485,6 +557,10 @@ export type VisualTemplateVersion = z.infer<typeof VisualTemplateVersionSchema>;
 export type VisualTemplateVersionRef = z.infer<typeof VisualTemplateVersionRefSchema>;
 export type VisualTemplateUsage = z.infer<typeof VisualTemplateUsageSchema>;
 export type VisualTemplateTeamBadgeLayer = z.infer<typeof VisualTemplateTeamBadgeLayerSchema>;
+export type VisualTemplateFixtureRowBadge = z.infer<typeof VisualTemplateFixtureRowBadgeSchema>;
+export type VisualTemplateFixtureRowText = z.infer<typeof VisualTemplateFixtureRowTextSchema>;
+export type VisualTemplateFixtureRow = z.infer<typeof VisualTemplateFixtureRowSchema>;
+export type VisualTemplateFixtureListLayer = z.infer<typeof VisualTemplateFixtureListLayerSchema>;
 export type VisualTemplateCreate = z.infer<typeof VisualTemplateCreateSchema>;
 export type VisualTemplateUpdate = z.infer<typeof VisualTemplateUpdateSchema>;
 export type VisualTemplateVersionSave = z.infer<typeof VisualTemplateVersionSaveSchema>;

@@ -5,11 +5,15 @@
  */
 import {
   VISUAL_TEMPLATE_BINDINGS,
+  VISUAL_TEMPLATE_FIXTURE_LIST_ROWS,
   type BrandAsset,
   type BrandColorRole,
   type VisualTemplateBadgeBinding,
   type VisualTemplateBinding,
   type VisualTemplateContentType,
+  type VisualTemplateFixtureListLayer,
+  type VisualTemplateFixtureRow,
+  type VisualTemplateFixtureRowPart,
   type VisualTemplateLayer,
   type VisualTemplateLayerType,
   type VisualTemplateTextEffect,
@@ -45,6 +49,7 @@ const PREFIX: Record<VisualTemplateLayerType, string> = {
   image: 'imagen',
   brand_asset: 'marca',
   team_badge: 'escudo',
+  fixture_list: 'partidos',
 };
 
 /** A layer ID not used by the given layers (contract `LayerId`). */
@@ -125,12 +130,82 @@ const MARK_BOX = {
   mascot: { x: 0.68, y: 0.6, width: 0.29, height: 0.37 },
 } as const;
 
+/** A text style of a match-list row: no effect, as in the built-in round calendar. */
+function rowStyle(
+  fontRole: VisualTemplateTextStyle['fontRole'],
+  maxFontSize: number,
+  minFontSize: number,
+  maxLines: number,
+  colorRole: VisualTemplateTextStyle['colorRole'],
+  align: VisualTemplateTextStyle['align'],
+): VisualTemplateTextStyle {
+  return {
+    fontRole,
+    maxFontSize,
+    minFontSize,
+    maxLines,
+    colorRole,
+    align,
+    verticalAlign: 'middle',
+    overflow: 'shrink',
+  };
+}
+
+/** The row of a new match list: the parts of the built-in round calendar (2.0.0) on a 1080 × 1350 canvas. */
+function defaultFixtureRow(): VisualTemplateFixtureRow {
+  return {
+    homeBadge: { x: 0.0157, y: 0.1154, width: 0.0784, height: 0.7692, visible: true },
+    homeName: {
+      x: 0.1059,
+      y: 0,
+      width: 0.2941,
+      height: 1,
+      visible: true,
+      style: rowStyle('heading', 30, 18, 2, 'light', 'right'),
+    },
+    kickoffDate: {
+      x: 0.4118,
+      y: 0.06,
+      width: 0.1765,
+      height: 0.3,
+      visible: true,
+      style: rowStyle('body', 24, 16, 1, 'light', 'center'),
+    },
+    kickoffTime: {
+      x: 0.4118,
+      y: 0.36,
+      width: 0.1765,
+      height: 0.33,
+      visible: true,
+      style: rowStyle('numeric', 30, 18, 1, 'accent', 'center'),
+    },
+    status: {
+      x: 0.4118,
+      y: 0.7,
+      width: 0.1765,
+      height: 0.26,
+      visible: true,
+      style: rowStyle('body', 20, 14, 1, 'accent', 'center'),
+    },
+    awayName: {
+      x: 0.6,
+      y: 0,
+      width: 0.2941,
+      height: 1,
+      visible: true,
+      style: rowStyle('heading', 30, 18, 2, 'light', 'left'),
+    },
+    awayBadge: { x: 0.9059, y: 0.1154, width: 0.0784, height: 0.7692, visible: true },
+  };
+}
+
 export type NewLayerRequest =
   | { type: 'text' }
   | { type: 'sports_data' }
   | { type: 'image'; asset: BrandAsset }
   | { type: 'brand_asset'; asset: BrandAsset }
-  | { type: 'team_badge'; binding: VisualTemplateBadgeBinding };
+  | { type: 'team_badge'; binding: VisualTemplateBadgeBinding }
+  | { type: 'fixture_list' };
 
 /** A new layer with defaults, placed on top of the others. */
 export function newLayer(request: NewLayerRequest, layers: readonly VisualTemplateLayer[]): VisualTemplateLayer {
@@ -192,12 +267,66 @@ export function newLayer(request: NewLayerRequest, layers: readonly VisualTempla
         binding: request.binding,
       };
     }
+    case 'fixture_list':
+      // The box is the first row; the slide engine repeats it for each match of the slide (PD-ARCH-01G-E.2).
+      return {
+        ...base,
+        type: 'fixture_list',
+        name: 'Lista de partidos',
+        x: 0.0278,
+        y: 0.2415,
+        width: 0.9444,
+        height: 0.077,
+        rowGap: 0.0074,
+        row: defaultFixtureRow(),
+      };
   }
 }
 
 /** Content types whose slides show one match: the only ones with team badges (PD-ARCH-01G-D). */
 export function hasTeamBadges(contentType: VisualTemplateContentType): boolean {
   return contentType === 'match_preview' || contentType === 'fixture' || contentType === 'match_result';
+}
+
+/** A match list can be added to a round calendar that has none yet (one per version, PD-ARCH-01G-E.2). */
+export function canAddFixtureList(
+  contentType: VisualTemplateContentType,
+  layers: readonly VisualTemplateLayer[],
+): boolean {
+  return contentType === 'round_overview' && !layers.some((layer) => layer.type === 'fixture_list');
+}
+
+/** The parts of a match-list row drawn as text, with a text style. */
+export type FixtureRowTextPart = Exclude<VisualTemplateFixtureRowPart, 'homeBadge' | 'awayBadge'>;
+
+export function isFixtureTextPart(part: VisualTemplateFixtureRowPart): part is FixtureRowTextPart {
+  return part !== 'homeBadge' && part !== 'awayBadge';
+}
+
+/** The team names of a row: always drawn, so they cannot be hidden. */
+export function isFixtureNamePart(part: VisualTemplateFixtureRowPart): boolean {
+  return part === 'homeName' || part === 'awayName';
+}
+
+/** Changes one part of the row of a match list. */
+export function changeFixturePart<P extends VisualTemplateFixtureRowPart>(
+  layer: VisualTemplateFixtureListLayer,
+  part: P,
+  change: Partial<VisualTemplateFixtureRow[P]>,
+): VisualTemplateFixtureListLayer {
+  return { ...layer, row: { ...layer.row, [part]: { ...layer.row[part], ...change } } };
+}
+
+/** The box of each row of a match list, in canvas fractions: row n is `height + rowGap` lower than row n - 1. */
+export function fixtureRowBoxes(
+  layer: VisualTemplateFixtureListLayer,
+): { x: number; y: number; width: number; height: number }[] {
+  return Array.from({ length: VISUAL_TEMPLATE_FIXTURE_LIST_ROWS }, (_, index) => ({
+    x: layer.x,
+    y: layer.y + index * (layer.height + layer.rowGap),
+    width: layer.width,
+    height: layer.height,
+  }));
 }
 
 /** Moves a layer one step up (towards the top) or down in the stacking order. */

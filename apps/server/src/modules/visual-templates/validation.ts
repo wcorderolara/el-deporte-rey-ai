@@ -13,9 +13,16 @@
  * background (not checked under a text effect with a dark halo), a hidden layer, no layer, a background of another
  * aspect ratio, and the review notices of a background made by AI (guided, own prompt, brand images sent to the
  * provider). Text is measured as it is drawn, in capital letters when the style asks for it.
+ *
+ * A match list (`fixture_list`, PD-ARCH-01G-E.2) is checked as all its rows together (`fixture-list.ts`): errors when
+ * it is not in a round calendar, when the version has another list, when its rows leave the canvas, when a part leaves
+ * its row or is too small, when a team name is hidden (PD-28 point 4) or a minimum font size is above the maximum;
+ * warnings when a long value may not fit a part, when a part has low contrast over the background in any row, and
+ * when two parts of the row overlap.
  */
 import {
   type BrandAsset,
+  VISUAL_TEMPLATE_FIXTURE_LIST_ROWS,
   VISUAL_TEMPLATE_REQUIRED_BINDINGS,
   type VisualTemplateBadgeBinding,
   type VisualTemplateBinding,
@@ -28,6 +35,16 @@ import {
 import { type FontSet, type FractionBox, type Palette, layoutTextBox, pixelBox } from '../rendering/index.js';
 
 import { STRESS_VALUES, bindingAllowed } from './catalog.js';
+import {
+  FIXTURE_ROW_BADGE_PARTS,
+  FIXTURE_ROW_TEXT_PARTS,
+  type FixtureRowBadgePart,
+  type FixtureRowTextPart,
+  type Fractions,
+  layerArea,
+  partBox,
+  rowBox,
+} from './fixture-list.js';
 import { issueOf } from './issues.js';
 import { type LuminanceSampler, contrastRatio, hexLuminance } from './contrast.js';
 
@@ -81,7 +98,7 @@ function intersects(a: FractionBox, b: FractionBox): boolean {
 }
 
 function isText(layer: VisualTemplateLayer): boolean {
-  return layer.type === 'text' || layer.type === 'sports_data';
+  return layer.type === 'text' || layer.type === 'sports_data' || layer.type === 'fixture_list';
 }
 
 function assetIssues(
@@ -171,15 +188,124 @@ export function usedBadgeBindings(layers: readonly VisualTemplateLayer[]): Visua
   return used;
 }
 
-/** The bindings of the visible sports-data layers. */
+/** The binding a layer shows: its own for a sports-data layer, `round.fixtures` for a match list; else null. */
+function bindingOf(layer: VisualTemplateLayer): VisualTemplateBinding | null {
+  if (layer.type === 'sports_data') {
+    return layer.binding;
+  }
+  return layer.type === 'fixture_list' ? 'round.fixtures' : null;
+}
+
+/** The bindings of the sports-data layers and match lists, once each, in layer order. */
 export function usedBindings(layers: readonly VisualTemplateLayer[]): VisualTemplateBinding[] {
   const used: VisualTemplateBinding[] = [];
   for (const layer of layers) {
-    if (layer.type === 'sports_data' && layer.binding !== null && !used.includes(layer.binding)) {
-      used.push(layer.binding);
+    const binding = bindingOf(layer);
+    if (binding !== null && !used.includes(binding)) {
+      used.push(binding);
     }
   }
   return used;
+}
+
+/** A low-contrast warning for a text style over a box, or null (not checked under a text effect with a dark halo). */
+function contrastIssue(
+  input: ValidationInput,
+  style: { readonly colorRole: keyof Palette; readonly maxFontSize: number; readonly effect?: string | undefined },
+  box: Fractions,
+  layerId: string,
+  label?: string,
+): VisualTemplateIssue | null {
+  if (input.sampler === null || DARK_HALO.has(style.effect ?? 'none')) {
+    return null;
+  }
+  const background = input.sampler(box);
+  if (background === null) {
+    return null;
+  }
+  const ratio = contrastRatio(hexLuminance(input.palette[style.colorRole]), background);
+  const minimum = style.maxFontSize >= LARGE_TEXT ? 3 : 4.5;
+  if (ratio >= minimum) {
+    return null;
+  }
+  const where = label === undefined ? '' : `(${label}) `;
+  return issueOf(
+    'LOW_CONTRAST',
+    'warning',
+    layerId,
+    `${where}Relación ${ratio.toFixed(1)}:1 (mínimo recomendado ${String(minimum)}:1).`,
+  );
+}
+
+/** The issues of a match list (see the module notes). */
+function fixtureListIssues(
+  layer: Extract<VisualTemplateLayer, { type: 'fixture_list' }>,
+  input: ValidationInput,
+): VisualTemplateIssue[] {
+  const issues: VisualTemplateIssue[] = [];
+  if (input.contentType !== 'round_overview') {
+    issues.push(issueOf('BINDING_NOT_ALLOWED', 'error', layer.id, 'La lista de partidos es de un calendario.'));
+  }
+  const firstRow = rowBox(layer, 0);
+  const parts: { name: string; box: Fractions; text: boolean; visible: boolean }[] = [];
+  const check = (part: FixtureRowTextPart | FixtureRowBadgePart, label: string): void => {
+    const value = layer.row[part];
+    if (value.x + value.width > 1 + EDGE || value.y + value.height > 1 + EDGE) {
+      issues.push(issueOf('OUT_OF_CANVAS', 'error', layer.id, `(${label}) La parte sale de la fila.`));
+    }
+    const box = partBox(firstRow, value);
+    const pixels = pixelBox(box, input.canvas);
+    if (value.visible && (pixels.width < MIN_LAYER_PIXELS || pixels.height < MIN_LAYER_PIXELS)) {
+      issues.push(issueOf('TOO_SMALL', 'error', layer.id, `(${label})`));
+    }
+    parts.push({ name: label, box, text: part in FIXTURE_ROW_TEXT_PARTS, visible: value.visible });
+  };
+  for (const [part, { label }] of Object.entries(FIXTURE_ROW_BADGE_PARTS) as [
+    FixtureRowBadgePart,
+    { label: string },
+  ][]) {
+    check(part, label);
+  }
+  for (const [part, spec] of Object.entries(FIXTURE_ROW_TEXT_PARTS) as [
+    FixtureRowTextPart,
+    (typeof FIXTURE_ROW_TEXT_PARTS)[FixtureRowTextPart],
+  ][]) {
+    check(part, spec.label);
+    const value = layer.row[part];
+    if ((part === 'homeName' || part === 'awayName') && !value.visible) {
+      issues.push(
+        issueOf('REQUIRED_BINDING_MISSING', 'error', layer.id, `(${spec.label}) Los nombres se dibujan siempre.`),
+      );
+    }
+    const { style } = value;
+    if (style.minFontSize > style.maxFontSize) {
+      issues.push(issueOf('FONT_SIZE_INVALID', 'error', layer.id, `(${spec.label})`));
+      continue;
+    }
+    const sample = STRESS_VALUES[spec.binding];
+    if (layoutTextBox(sample, style, pixelBox(partBox(firstRow, value), input.canvas), input.fonts).overflow) {
+      issues.push(issueOf('TEXT_MAY_NOT_FIT', 'warning', layer.id, `(${spec.label}) Prueba: «${sample}».`));
+    }
+    if (layer.visible && value.visible) {
+      // Every row has its own background under the part: one warning for the part when any row is low.
+      for (let index = 0; index < VISUAL_TEMPLATE_FIXTURE_LIST_ROWS; index += 1) {
+        const issue = contrastIssue(input, style, partBox(rowBox(layer, index), value), layer.id, spec.label);
+        if (issue !== null) {
+          issues.push(issue);
+          break;
+        }
+      }
+    }
+  }
+  const shown = parts.filter((part) => part.visible);
+  shown.forEach((part, index) => {
+    for (const other of shown.slice(index + 1)) {
+      if ((part.text || other.text) && intersects(part.box, other.box)) {
+        issues.push(issueOf('OVERLAP', 'warning', layer.id, `(${part.name} y ${other.name})`));
+      }
+    }
+  });
+  return issues;
 }
 
 /** Validates a version (see the module notes). */
@@ -190,9 +316,11 @@ export function validateVersion(input: ValidationInput): VisualTemplateValidatio
     issues.push(issueOf('NO_LAYERS', 'warning', null));
   }
   const visible = layers.filter((layer) => layer.visible);
-  const shown = new Set(
-    visible.flatMap((layer) => (layer.type === 'sports_data' && layer.binding !== null ? [layer.binding] : [])),
-  );
+  const shown = new Set(visible.flatMap((layer) => bindingOf(layer) ?? []));
+  // One match list per version (PD-ARCH-01G-E.2): every list after the first is refused.
+  for (const extra of layers.filter((layer) => layer.type === 'fixture_list').slice(1)) {
+    issues.push(issueOf('BINDING_NOT_ALLOWED', 'error', extra.id, 'Una plantilla tiene una sola lista de partidos.'));
+  }
   for (const requirement of VISUAL_TEMPLATE_REQUIRED_BINDINGS[input.contentType]) {
     if (!requirement.anyOf.some((bindings) => bindings.every((binding) => shown.has(binding)))) {
       issues.push(
@@ -210,8 +338,18 @@ export function validateVersion(input: ValidationInput): VisualTemplateValidatio
     if (!layer.visible) {
       issues.push(issueOf('HIDDEN_LAYER', 'warning', layer.id));
     }
-    if (layer.x + layer.width > 1 + EDGE || layer.y + layer.height > 1 + EDGE) {
-      issues.push(issueOf('OUT_OF_CANVAS', 'error', layer.id));
+    const area = layerArea(layer);
+    if (area.x + area.width > 1 + EDGE || area.y + area.height > 1 + EDGE) {
+      issues.push(
+        issueOf(
+          'OUT_OF_CANVAS',
+          'error',
+          layer.id,
+          layer.type === 'fixture_list'
+            ? `Las ${String(VISUAL_TEMPLATE_FIXTURE_LIST_ROWS)} filas no caben en el lienzo.`
+            : undefined,
+        ),
+      );
     }
     const box = pixelBox(layer, canvas);
     if (box.width < MIN_LAYER_PIXELS || box.height < MIN_LAYER_PIXELS) {
@@ -224,6 +362,8 @@ export function validateVersion(input: ValidationInput): VisualTemplateValidatio
       if (!MATCH_TYPES.has(input.contentType)) {
         issues.push(issueOf('BINDING_NOT_ALLOWED', 'error', layer.id));
       }
+    } else if (layer.type === 'fixture_list') {
+      issues.push(...fixtureListIssues(layer, input));
     } else {
       const { style } = layer;
       if (style.minFontSize > style.maxFontSize) {
@@ -246,22 +386,9 @@ export function validateVersion(input: ValidationInput): VisualTemplateValidatio
           issues.push(issueOf('BINDING_NOT_ALLOWED', 'error', layer.id));
         }
       }
-      if (input.sampler !== null && layer.visible && !DARK_HALO.has(style.effect ?? 'none')) {
-        const background = input.sampler(layer);
-        if (background !== null) {
-          const ratio = contrastRatio(hexLuminance(input.palette[style.colorRole]), background);
-          const minimum = style.maxFontSize >= LARGE_TEXT ? 3 : 4.5;
-          if (ratio < minimum) {
-            issues.push(
-              issueOf(
-                'LOW_CONTRAST',
-                'warning',
-                layer.id,
-                `Relación ${ratio.toFixed(1)}:1 (mínimo recomendado ${String(minimum)}:1).`,
-              ),
-            );
-          }
-        }
+      const contrast = layer.visible ? contrastIssue(input, style, layer, layer.id) : null;
+      if (contrast !== null) {
+        issues.push(contrast);
       }
     }
     if (!layer.visible) {
@@ -269,7 +396,7 @@ export function validateVersion(input: ValidationInput): VisualTemplateValidatio
     }
     // Layers above this one (later in the list) that cover it.
     for (const above of layers.slice(index + 1)) {
-      if (!above.visible || !intersects(layer, above)) {
+      if (!above.visible || !intersects(area, layerArea(above))) {
         continue;
       }
       if (layer.type === 'brand_asset' && input.assets.get(layer.assetId)?.asset.usagePolicy === 'protected') {

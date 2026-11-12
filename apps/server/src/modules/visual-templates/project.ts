@@ -12,7 +12,9 @@
  *   is the local team ID. A name is
  *   never used to find an image.
  * - The project's badges (`loadProjectBadges`) are read from the same snapshot for the badge slots of the engine
- *   match templates too, when the snapshot covers them (version 2, PD-ARCH-01G-E.1; `projects/badge-snapshot.ts`).
+ *   match templates too, when the snapshot covers them (versions 2 and 3, PD-ARCH-01G-E.1), and for the rows of the
+ *   round calendars (version 3, PD-ARCH-01G-E.2; `projects/badge-snapshot.ts`). The team of each calendar row is
+ *   found the same way, from the team-name fact segments of its line.
  *   A badge is read from its confined file with its hash checked; a file that does not match fails the render, and
  *   nothing is substituted.
  * - Nothing here calls an AI provider or the network. This file imports the renderer modules directly (not the
@@ -43,11 +45,13 @@ import {
   type SegmentRun,
   type SlideContent,
   type StoredElementText,
+  type StoredSegment,
   runOf,
   segmentsOf,
 } from '../rendering/slide-content.js';
 import type { StructuredDocument } from '../rendering/structured.js';
 import type { AssetRef } from '../rendering/templates/common.js';
+import { fixtureRowsOf } from '../rendering/templates/round-overview.js';
 
 import { composeItems } from './compose.js';
 import { VisualTemplateRepository } from './repository.js';
@@ -74,16 +78,24 @@ export interface ProjectTemplatePlan {
   readonly files: readonly EmbeddedAsset[];
 }
 
-/** The teams of a slide by their local IDs (null when the slide does not show that team). */
-export interface SlideTeams {
+/** The teams of one match by their local IDs (null when the slide does not show that team or it is not found). */
+export interface MatchTeams {
   readonly home: string | null;
   readonly away: string | null;
 }
 
+/** The teams of a slide: its match's teams, and the teams of each row of a round calendar (PD-ARCH-01G-E.2). */
+export interface SlideTeams extends MatchTeams {
+  /** One entry per calendar row, in row order; absent on a slide without a `fixtures` field. */
+  readonly rows?: readonly MatchTeams[];
+}
+
 /** The badges of a project's snapshot, with their verified files (PD-ARCH-01G-D, PD-ARCH-01G-E.1). */
 export interface ProjectBadges {
-  /** True when the badge slots of the engine match templates draw these badges (snapshot version 2). */
+  /** True when the badge slots of the engine match templates draw these badges (snapshot versions 2 and 3). */
   readonly engineSlots: boolean;
+  /** True when the round calendars are drawn as rows with these badges (snapshot version 3, PD-ARCH-01G-E.2). */
+  readonly calendarRows: boolean;
   /** The badge of each team of the snapshot by local team ID; null for a team without a badge. */
   readonly teams: ReadonlyMap<string, AssetRef | null>;
   /** Every badge file of the snapshot, each once, with its bytes checked against its recorded hash. */
@@ -149,7 +161,11 @@ export async function loadProjectBadges(container: AppContainer, projectId: stri
     }
     teams.set(teamId, ref);
   }
-  return { engineSlots: snapshot.engineSlots, teams, files };
+  return { engineSlots: snapshot.engineSlots, calendarRows: snapshot.calendarRows, teams, files };
+}
+
+function sideOf(badges: ProjectBadges, teamId: string | null): { teamId: string | null; badge: AssetRef | null } {
+  return { teamId, badge: teamId === null ? null : (badges.teams.get(teamId) ?? null) };
 }
 
 /**
@@ -157,15 +173,23 @@ export async function loadProjectBadges(container: AppContainer, projectId: stri
  * local identity and that team's snapshot badge. Undefined when the project's badges do not cover the engine
  * templates (decision DE-E3), so the slots stay empty and record no team.
  */
-export function engineSlideBadges(badges: ProjectBadges, teams: SlideTeams): SlideContent['badges'] {
+export function engineSlideBadges(badges: ProjectBadges, teams: MatchTeams): SlideContent['badges'] {
   if (!badges.engineSlots) {
     return undefined;
   }
-  const side = (teamId: string | null) => ({
-    teamId,
-    badge: teamId === null ? null : (badges.teams.get(teamId) ?? null),
-  });
-  return { home: side(teams.home), away: side(teams.away) };
+  return { home: sideOf(badges, teams.home), away: sideOf(badges, teams.away) };
+}
+
+/**
+ * The teams and badges of each row of an engine round calendar slide (`SlideContent.rowBadges`; PD-ARCH-01G-E.2).
+ * Undefined when the project's badges do not cover the calendar rows (decision DE-E3) or the slide has no rows, so
+ * the calendar keeps its earlier template.
+ */
+export function engineRowBadges(badges: ProjectBadges, teams: SlideTeams): SlideContent['rowBadges'] {
+  if (!badges.calendarRows || teams.rows === undefined) {
+    return undefined;
+  }
+  return teams.rows.map((row) => ({ home: sideOf(badges, row.home), away: sideOf(badges, row.away) }));
 }
 
 /**
@@ -249,9 +273,8 @@ export function planOf(plans: readonly ProjectTemplatePlan[], slideType: string)
   return plans.find((plan) => plan.slideType === slideType) ?? null;
 }
 
-/** The local team of a team-name field of a slide, through its fact's evidence (null when it cannot be found). */
-function teamOfField(db: Db, text: StoredElementText, field: TextFieldName): string | null {
-  const factId = segmentsOf(text, field).find((segment) => segment.factId !== null)?.factId ?? null;
+/** The local team of a team-name fact, through its evidence (null when it cannot be found). */
+function teamOfFact(db: Db, factId: string | null): string | null {
   if (factId === null) {
     return null;
   }
@@ -259,9 +282,26 @@ function teamOfField(db: Db, text: StoredElementText, field: TextFieldName): str
   return typeof key === 'string' && key.length > 0 ? key : null;
 }
 
-/** The teams of a slide by their local IDs (see the module notes). */
+/** The local team of a team-name field of a slide (null when it cannot be found). */
+function teamOfField(db: Db, text: StoredElementText, field: TextFieldName): string | null {
+  return teamOfFact(db, segmentsOf(text, field).find((segment) => segment.factId !== null)?.factId ?? null);
+}
+
+/**
+ * The teams of a slide by their local IDs (see the module notes); a slide with a `fixtures` field also has the teams
+ * of each calendar row, from the home and away name segments of its line (rendering `fixtureRowsOf`).
+ */
 export function slideTeams(db: Db, text: StoredElementText): SlideTeams {
-  return { home: teamOfField(db, text, 'team_home'), away: teamOfField(db, text, 'team_away') };
+  const teams = { home: teamOfField(db, text, 'team_home'), away: teamOfField(db, text, 'team_away') };
+  const fixtures = segmentsOf(text, 'fixtures');
+  if (fixtures.length === 0) {
+    return teams;
+  }
+  const rows = fixtureRowsOf(fixtures).map((row) => ({
+    home: teamOfFact(db, row.home?.factId ?? null),
+    away: teamOfFact(db, row.away?.factId ?? null),
+  }));
+  return { ...teams, rows };
 }
 
 /** The slide field that stores each binding's value in a project; null for the context labels. */
@@ -296,10 +336,12 @@ export function projectSlideDocument(
   canvas: { readonly width: number; readonly height: number },
 ): { document: StructuredDocument; issues: VisualTemplateIssue[] } {
   const { context } = plan;
-  const badgeOf = (binding: VisualTemplateBadgeBinding): AssetRef | null => {
-    const teamId = binding === 'match.homeTeam.badge' ? slide.teams.home : slide.teams.away;
-    return teamId === null ? null : (plan.badges.get(teamId) ?? null);
-  };
+  const badgeOfTeam = (teamId: string | null): AssetRef | null =>
+    teamId === null ? null : (plan.badges.get(teamId) ?? null);
+  const badgeOf = (binding: VisualTemplateBadgeBinding): AssetRef | null =>
+    badgeOfTeam(binding === 'match.homeTeam.badge' ? slide.teams.home : slide.teams.away);
+  const runOfSegment = (segment: StoredSegment | null): SegmentRun | null =>
+    segment === null ? null : runOf([segment]);
   const { items, issues } = composeItems(
     { background: plan.background, layers: plan.layers },
     {
@@ -322,6 +364,17 @@ export function projectSlideDocument(
       },
       badge: badgeOf,
       asset: (assetId) => plan.assets.get(assetId) ?? null,
+      // PD-ARCH-01G-E.2: the matches of a calendar page from its stored lines, each team's badge by its identity.
+      rows: () =>
+        fixtureRowsOf(segmentsOf(slide.text, 'fixtures')).map((row, index) => ({
+          homeName: runOfSegment(row.home),
+          awayName: runOfSegment(row.away),
+          kickoffDate: runOfSegment(row.date),
+          kickoffTime: runOfSegment(row.time),
+          status: runOfSegment(row.status),
+          homeBadge: badgeOfTeam(slide.teams.rows?.[index]?.home ?? null),
+          awayBadge: badgeOfTeam(slide.teams.rows?.[index]?.away ?? null),
+        })),
     },
   );
   return {

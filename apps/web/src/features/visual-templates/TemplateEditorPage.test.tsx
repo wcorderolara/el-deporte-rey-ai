@@ -4,7 +4,7 @@
  * validation indicator, the Diseño / Vista previa modes with local sports data, publication, and the read-only
  * published version with "Crear nueva versión". A fake fetch answers every request; no network is used.
  */
-import type { VisualTemplateLayer } from '@edr/contracts';
+import { VISUAL_TEMPLATE_FIXTURE_ROW_PARTS, VisualTemplateLayerSchema, type VisualTemplateLayer } from '@edr/contracts';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -600,6 +600,139 @@ describe('TemplateEditorPage: cover and closing templates (decision 01G-D-3)', (
     expect(lastBody(fake, 'POST', '/previews')).toEqual({
       selection: { competitionId: COMPETITION.id, seasonId: SEASON.id },
       language: 'es',
+    });
+  });
+});
+
+describe('TemplateEditorPage: match list of a round calendar (PD-ARCH-01G-E.2)', () => {
+  const roundCalendar = {
+    [`GET ${BASE}`]: () => jsonResponse(detail({ contentType: 'round_overview' })),
+    [`GET ${DRAFT_PATH}`]: () => jsonResponse(version({ layers: version().layers.slice(0, 1), bindings: [] })),
+  };
+  /** The top of a row outline, as a percentage of the canvas. */
+  const top = (element: Element | undefined) =>
+    Number.parseFloat((element as HTMLElement | undefined)?.style.top ?? '');
+
+  it('is not offered to a template of one match', async () => {
+    const user = userEvent.setup();
+    renderEditor();
+    await editor();
+    await user.click(screen.getByRole('button', { name: 'Agregar capa' }));
+    expect(screen.getByRole('menuitem', { name: 'Escudo local' })).toBeTruthy();
+    expect(screen.queryByRole('menuitem', { name: 'Lista de partidos' })).toBeNull();
+  });
+
+  it('adds one list to a round calendar and draws its six rows and the parts of the first one', async () => {
+    const user = userEvent.setup();
+    renderEditor(roundCalendar);
+    const canvas = await editor();
+    await addLayer(user, 'Lista de partidos');
+
+    const list = within(canvas).getByRole('button', { name: 'Capa «Lista de partidos»' });
+    expect(list.style.left).toBe('2.78%');
+    expect(list.style.width).toBe('94.44%');
+    const rows = [...canvas.querySelectorAll('[data-fixture-row]')];
+    expect(rows).toHaveLength(6);
+    expect(rows[0]).toBe(list);
+    rows.forEach((row, index) => expect(top(row)).toBeCloseTo((0.2415 + index * (0.077 + 0.0074)) * 100, 6));
+    // Only the first row is a layer: the other outlines are not selectable.
+    expect(rows.slice(1).every((row) => row.getAttribute('aria-hidden') === 'true')).toBe(true);
+    expect(within(canvas).getAllByRole('button')).toHaveLength(2);
+    expect(
+      [...list.querySelectorAll('[data-fixture-part]')].map((part) => part.getAttribute('data-fixture-part')),
+    ).toEqual([...VISUAL_TEMPLATE_FIXTURE_ROW_PARTS]);
+    const layerList = screen.getByRole('list', { name: 'Capas' });
+    expect(within(layerList).getAllByRole('listitem')[0]?.querySelector('button')?.textContent).toBe(
+      'Lista de partidosLista de partidos',
+    );
+
+    // The first row moves like any layer, and the other rows follow it.
+    list.focus();
+    await user.keyboard('{Shift>}{ArrowDown}{/Shift}');
+    expect(top(rows[0])).toBeCloseTo(29.15, 6);
+    expect(top(canvas.querySelector('[data-fixture-row="6"]') ?? undefined)).toBeCloseTo(
+      (0.2915 + 5 * (0.077 + 0.0074)) * 100,
+      6,
+    );
+
+    // A version holds one list at most.
+    await user.click(screen.getByRole('button', { name: 'Agregar capa' }));
+    expect(screen.getByRole('menuitem', { name: 'Texto' })).toBeTruthy();
+    expect(screen.queryByRole('menuitem', { name: 'Lista de partidos' })).toBeNull();
+  });
+
+  it('edits the row gap and the parts of the row, and saves them', async () => {
+    const user = userEvent.setup();
+    const { fake } = renderEditor({
+      ...roundCalendar,
+      [`PUT ${DRAFT_PATH}`]: (request) => {
+        const body = JSON.parse(String(request.body)) as { layers: VisualTemplateLayer[] };
+        return jsonResponse(version({ revision: 4, layers: body.layers }));
+      },
+    });
+    const canvas = await editor();
+    await addLayer(user, 'Lista de partidos');
+    const properties = screen.getByRole('complementary', { name: 'Propiedades' });
+    expect([...properties.querySelectorAll('fieldset fieldset > legend')].map((legend) => legend.textContent)).toEqual([
+      'Escudo local',
+      'Nombre local',
+      'Fecha',
+      'Hora',
+      'Estado',
+      'Nombre visitante',
+      'Escudo visitante',
+    ]);
+    const part = (name: string) => within(properties).getByRole('group', { name });
+
+    // The row gap is a percentage of the canvas height, as the vertical position.
+    const gap = within(properties).getByRole('spinbutton', { name: 'Espacio entre filas (%)' }) as HTMLInputElement;
+    expect(gap.value).toBe('0.74');
+    fireEvent.change(gap, { target: { value: '1.5' } });
+    expect(top(canvas.querySelector('[data-fixture-row="2"]') ?? undefined)).toBeCloseTo(
+      (0.2415 + 0.077 + 0.015) * 100,
+      6,
+    );
+
+    // The parts are placed in percentages of the row.
+    const date = within(part('Fecha')).getByRole('spinbutton', { name: 'Y (% de la fila)' }) as HTMLInputElement;
+    expect(date.value).toBe('6');
+    fireEvent.change(date, { target: { value: '10' } });
+
+    // The names are always drawn: they have no Visible control; the other parts do, and badges have no text style.
+    for (const name of ['Nombre local', 'Nombre visitante']) {
+      expect(within(part(name)).queryByRole('checkbox', { name: 'Visible' })).toBeNull();
+      expect(within(part(name)).getByRole('combobox', { name: 'Familia' })).toBeTruthy();
+    }
+    for (const name of ['Escudo local', 'Fecha', 'Hora', 'Estado', 'Escudo visitante']) {
+      expect(within(part(name)).getByRole('checkbox', { name: 'Visible' })).toBeTruthy();
+    }
+    expect(within(part('Escudo local')).queryByRole('combobox', { name: 'Familia' })).toBeNull();
+    await user.click(within(part('Estado')).getByRole('checkbox', { name: 'Visible' }));
+    expect(canvas.querySelector('[data-fixture-part="status"]')).toBeNull();
+
+    // A text part edits its style with the same controls as a text layer.
+    await user.selectOptions(within(part('Hora')).getByRole('combobox', { name: 'Alineación' }), 'right');
+    fireEvent.change(within(part('Hora')).getByRole('spinbutton', { name: 'Tamaño máximo (px)' }), {
+      target: { value: '34' },
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Guardar borrador' }));
+    await waitFor(() => expect(fake.requests.some((request) => request.method === 'PUT')).toBe(true));
+    const body = lastBody(fake, 'PUT', DRAFT_PATH) as { layers: VisualTemplateLayer[] };
+    const saved = body.layers.find((layer) => layer.type === 'fixture_list');
+    expect(VisualTemplateLayerSchema.safeParse(saved).success).toBe(true);
+    expect(saved).toMatchObject({
+      id: 'partidos-1',
+      name: 'Lista de partidos',
+      y: 0.2415,
+      rowGap: 0.015,
+      row: {
+        homeName: { visible: true },
+        kickoffDate: { y: 0.1, height: 0.3 },
+        kickoffTime: { style: { align: 'right', maxFontSize: 34, minFontSize: 18, fontRole: 'numeric' } },
+        status: { visible: false },
+        awayName: { visible: true },
+      },
     });
   });
 });

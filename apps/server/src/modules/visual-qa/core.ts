@@ -31,7 +31,8 @@
  *   template that record their team but have no badge, because the team has none in the project's snapshot or could
  *   not be identified. The slot stays empty and nothing is substituted; generation is never stopped. A slot that
  *   records no team (models rendered before 01G-E.1, projects whose snapshot does not cover the engine templates,
- *   decision DE-E3) is not examined, so those slides pass as before.
+ *   decision DE-E3) is not examined, so those slides pass as before. The rows of an engine round calendar
+ *   (PD-ARCH-01G-E.2) are examined the same way, and each empty slot is reported with its row.
  *
  * The caption element has no image: its QA is the content checks (architecture.md section 10), plus
  * `capitalized_tokens` on its caption and hashtags (OD-26 applies to every AI draft).
@@ -689,16 +690,41 @@ export function capitalizedTokens(version: VersionToCheck, ctx: QaContext): QaRe
   return result('capitalized_tokens', tokens.length === 0, { tokens });
 }
 
-/** The badge slots that record a team without a badge (PD-ARCH-01G-E.1), in model order. */
-export function emptyBadgeSlotsOf(model: RenderModel): ('team-badge-home' | 'team-badge-away')[] {
+type BadgeSide = 'team-badge-home' | 'team-badge-away';
+
+/** The badge slots of a match slide that record a team without a badge (PD-ARCH-01G-E.1), in model order. */
+export function emptyBadgeSlotsOf(model: RenderModel): BadgeSide[] {
   return model.elements.flatMap((element) =>
-    element.kind === 'badge_slot' && element.team !== undefined && element.team.badge === null ? [element.slot] : [],
+    element.kind === 'badge_slot' &&
+    element.row === undefined &&
+    element.team !== undefined &&
+    element.team.badge === null
+      ? [element.slot]
+      : [],
+  );
+}
+
+/** The badge slots of calendar rows that record a team without a badge (PD-ARCH-01G-E.2), in model order. */
+export function emptyRowBadgeSlotsOf(model: RenderModel): { row: number; slot: BadgeSide }[] {
+  return model.elements.flatMap((element) =>
+    element.kind === 'badge_slot' &&
+    element.row !== undefined &&
+    element.team !== undefined &&
+    element.team.badge === null
+      ? [{ row: element.row, slot: element.slot }]
+      : [],
   );
 }
 
 export function teamBadges(model: RenderModel): QaResult {
   const emptyBadgeSlots = emptyBadgeSlotsOf(model);
-  return result('team_badges', emptyBadgeSlots.length === 0, { emptyBadgeSlots });
+  const emptyRowBadgeSlots = emptyRowBadgeSlotsOf(model);
+  const rows = model.elements.some((element) => element.kind === 'badge_slot' && element.row !== undefined);
+  return result(
+    'team_badges',
+    emptyBadgeSlots.length === 0 && emptyRowBadgeSlots.length === 0,
+    rows ? { emptyBadgeSlots, emptyRowBadgeSlots } : { emptyBadgeSlots },
+  );
 }
 
 // ---------------------------------------------------------------------------------------------------------------

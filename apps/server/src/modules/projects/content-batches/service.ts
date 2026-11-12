@@ -573,8 +573,8 @@ export class ContentBatchService {
           // PD-ARCH-01G-D: the exact version of each slide type of the piece, as it is now.
           this.#projects.assignVisualTemplates(projectId, pieceTemplates);
         }
-        // PD-ARCH-01G-D, PD-ARCH-01G-E.1: the badge of each team of the piece, as it is now, for the visual templates
-        // and the badge slots of the engine templates (snapshot version 2).
+        // PD-ARCH-01G-D, PD-ARCH-01G-E.1, PD-ARCH-01G-E.2: the badge of each team of the piece, as it is now, for the
+        // visual templates, the badge slots of the engine templates and the calendar rows (snapshot version 3).
         this.#projects.recordBadgeSnapshot(projectId, badgeSnapshotJson(this.#badgeSnapshot(resolved, piece.matchIds)));
         const run = this.#runner.start(projectId, 'full');
         this.#batches.insertItem(id, {

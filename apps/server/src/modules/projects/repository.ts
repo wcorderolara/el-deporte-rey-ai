@@ -253,7 +253,7 @@ export class ProjectRepository {
 
   /**
    * Records the badge of each team of a project as it is when the project is created (PD-ARCH-01G-D; version 2 of the
-   * snapshot since PD-ARCH-01G-E.1, `badge-snapshot.ts`).
+   * snapshot since PD-ARCH-01G-E.1, version 3 since PD-ARCH-01G-E.2, `badge-snapshot.ts`).
    */
   recordBadgeSnapshot(projectId: string, snapshotJson: string): void {
     this.#db.prepare(SQL.assignBadges).run([snapshotJson, projectId]);

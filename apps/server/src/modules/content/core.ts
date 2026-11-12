@@ -26,6 +26,7 @@ export function draftContextOf(input: ContentInput): DraftContext {
     matchday: input.matchday,
     brand: { name: input.brand.name, handle: input.brand.handle },
     templateFields: input.templateFields === true,
+    calendarRows: input.calendarRows === true,
   };
 }
 
@@ -141,6 +142,7 @@ export async function draftContent(
     excludedMatchKeys: input.excludedMatchKeys,
     maxSlidesPerCarousel: input.maxSlidesPerCarousel,
     standingsRowsPerSlide: input.standingsRowsPerSlide,
+    calendarRows: input.calendarRows === true,
   });
   const context = draftContextOf(input);
   const checks = checkContextOf(index, input.teamAliases, input.brand.handle, input.contentKind);

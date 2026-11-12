@@ -198,6 +198,12 @@ export const ContentInputSchema = z.strictObject({
    * kickoff time and, on results, the status, as fact segments the template can draw independently.
    */
   templateFields: z.boolean().optional(),
+  /**
+   * True when the project's badge snapshot covers the calendar rows (PD-ARCH-01G-E.2, version 3): the round overview
+   * pages hold six fixtures, and each line also stores the kickoff time and the status of a match that is not
+   * scheduled, as fact segments a calendar row draws on their own.
+   */
+  calendarRows: z.boolean().optional(),
   brand: z.strictObject({ name: z.string().min(1).max(80), handle: BrandHandleSchema }),
   utcOffsetMinutes: z.int(),
   maxSlidesPerCarousel: z.int().min(3).max(100),

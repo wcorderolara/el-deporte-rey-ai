@@ -43,6 +43,7 @@ import { ResourcesPanel } from './editor/ResourcesPanel';
 import { useFillHeight, wideEnough } from './editor/layout';
 import { Workspace } from './editor/Workspace';
 import {
+  canAddFixtureList,
   hasTeamBadges,
   imageAssets,
   moveLayer,
@@ -422,6 +423,16 @@ function VersionEditor({
             label: editorCopy.addAwayBadge,
             icon: 'shield',
             onSelect: () => add({ type: 'team_badge', binding: 'match.awayTeam.badge' }),
+          },
+        ] satisfies ActionMenuItem[])
+      : []),
+    // A round calendar draws its matches with one match list (PD-ARCH-01G-E.2).
+    ...(canAddFixtureList(template.contentType, draft.layers)
+      ? ([
+          {
+            label: editorCopy.addFixtureList,
+            icon: 'table',
+            onSelect: () => add({ type: 'fixture_list' }),
           },
         ] satisfies ActionMenuItem[])
       : []),

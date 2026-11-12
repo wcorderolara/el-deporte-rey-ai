@@ -72,8 +72,9 @@ describe('contract document', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('has 211 component schemas', () => {
-    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(211);
+  it('has 214 component schemas', () => {
+    // PD-ARCH-01G-E.2 adds the three schemas of the match list of a round calendar.
+    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(214);
   });
 });
 
@@ -200,6 +201,12 @@ describe('OD-26 visual-QA warning check', () => {
       'team-badge-home',
       'team-badge-away',
     ]);
+    // PD-ARCH-01G-E.2: the slots of a calendar's rows, optional and closed, each with its row.
+    const rows = child(badges, 'properties', 'details', 'properties', 'emptyRowBadgeSlots');
+    expect(rows.maxItems).toBe(128);
+    expect(child(rows, 'items').required).toEqual(['row', 'slot']);
+    expect(child(rows, 'items').additionalProperties).toBe(false);
+    expect(child(rows, 'items', 'properties', 'slot').enum).toEqual(['team-badge-home', 'team-badge-away']);
   });
 
   it('accepts capitalized_tokens in the existing QA acknowledgement', () => {
@@ -587,6 +594,10 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/VisualTemplateContentType: added',
       '/components/schemas/VisualTemplateBadgeBinding: added',
       '/components/schemas/VisualTemplateTeamBadgeLayer: added',
+      // PD-ARCH-01G-E.2: the match list of a round calendar.
+      '/components/schemas/VisualTemplateFixtureRowBadge: added',
+      '/components/schemas/VisualTemplateFixtureRowText: added',
+      '/components/schemas/VisualTemplateFixtureListLayer: added',
       '/components/schemas/VisualTemplateLayer: added',
       '/components/schemas/VisualTemplateBackgroundSource: added',
       '/components/schemas/VisualTemplateBackgroundInput: added',

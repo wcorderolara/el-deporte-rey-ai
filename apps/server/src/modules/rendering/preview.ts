@@ -13,7 +13,7 @@
 import type { Language } from '@edr/contracts';
 
 import type { AppConfig } from '../../platform/config/index.js';
-import { formatDate, formatScore, stageDisplay, templateText } from '../../platform/format/index.js';
+import { formatDate, formatScore, formatTime, stageDisplay, templateText } from '../../platform/format/index.js';
 import type { BrandAssetLookup } from '../brand/index.js';
 
 import { IMAGE_SLOTS, type SlotAsset, renderContent, renderSettings } from './core.js';
@@ -148,6 +148,15 @@ export function sampleFields(template_: TemplateDefinition, language: Language, 
         segments.push(fact(SAMPLE_TEAMS[index + 1] ?? '', 201 + index));
         segments.push(template(' · '));
         segments.push(fact(formatDate(SAMPLE_KICKOFF, language, config.display.utcOffsetMinutes), 4));
+        if (template_.rows !== undefined) {
+          // A calendar with rows (PD-ARCH-01G-E.2) also shows the time, and the status of a match not scheduled.
+          segments.push(template(' · '));
+          segments.push(fact(formatTime(SAMPLE_KICKOFF, config.display.utcOffsetMinutes), 4));
+          if (index === 2) {
+            segments.push(template(' · '));
+            segments.push(fact(text.matchStatus.postponed, 5));
+          }
+        }
       }
       return [
         {
@@ -274,7 +283,11 @@ export class TemplatePreviewService {
       }
     }
     // The preview uses this exact template version, even when it is the current one anyway.
-    const registry = { current: () => template_, currentWithoutBadges: () => template_ } as unknown as TemplateRegistry;
+    const registry = {
+      current: () => template_,
+      currentWithoutBadges: () => template_,
+      forContent: () => template_,
+    } as unknown as TemplateRegistry;
     const render = await renderContent(
       sampleContent(template_, language, this.#deps.config),
       { registry, fonts: this.#deps.fonts(), settings: renderSettings(this.#deps.config), assets },

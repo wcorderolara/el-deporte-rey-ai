@@ -67,6 +67,11 @@ export interface TemplateDefinition {
    * version 1.1.0 of the match templates). Absent or false: the slots stay empty and record no team.
    */
   readonly drawsBadges?: boolean;
+  /**
+   * The calendar rows a slide shows, each with the badge slots of `badgeSlots` (PD-ARCH-01G-E.2, version 2.0.0 of the
+   * round calendar template; `SlideContent.rowBadges`). Absent: the slide shows one match.
+   */
+  readonly rows?: number;
   build(content: SlideContent, ctx: TemplateContext): RenderModel;
 }
 
@@ -223,6 +228,38 @@ export class ModelBuilder {
       slot,
       box,
       empty: badge === null,
+      team: { teamId: side.teamId, badge },
+    });
+  }
+
+  /**
+   * The badge slot of one side of a calendar row (PD-ARCH-01G-E.2): the row's team and its snapshot badge
+   * (`SlideContent.rowBadges`), like `badge` for a match slide. A row without badges (the content has none for it)
+   * stays empty and records no team.
+   */
+  rowBadge(row: number, slot: BadgeSlot, x: number, y: number, width: number, height: number): void {
+    if (!this.#template.badgeSlots.includes(slot) || this.#template.rows === undefined || row > this.#template.rows) {
+      throw new TypeError('the template does not declare this row badge slot');
+    }
+    const id = `row-${String(row)}-${slot === 'team-badge-home' ? 'badge-home' : 'badge-away'}`;
+    const box = this.box(x, y, width, height);
+    const badges = this.#template.drawsBadges === true ? this.#content.rowBadges?.[row - 1] : undefined;
+    if (badges === undefined) {
+      this.#elements.push({ kind: 'badge_slot', id, slot, box, empty: true, row });
+      return;
+    }
+    const side = slot === 'team-badge-home' ? badges.home : badges.away;
+    const badge =
+      side.badge === null || side.teamId === null
+        ? null
+        : { assetId: side.badge.id, sha256: side.badge.sha256, mime: side.badge.mime };
+    this.#elements.push({
+      kind: 'badge_slot',
+      id,
+      slot,
+      box,
+      empty: badge === null,
+      row,
       team: { teamId: side.teamId, badge },
     });
   }

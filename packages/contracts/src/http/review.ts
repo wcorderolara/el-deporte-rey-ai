@@ -21,7 +21,8 @@ import {
  * Visual-QA check names. `capitalized_tokens` is the OD-26 warning check (capitalized tokens in AI-written text that
  * are not verified team or competition names, the language word list or the brand terms; T11H-F17). `team_badges` is
  * the PD-ARCH-01G-E.1 warning check (decision DE-E4): a badge slot of an engine match template left empty because its
- * team has no badge in the project's snapshot (PD-28 point 4).
+ * team has no badge in the project's snapshot (PD-28 point 4); from PD-ARCH-01G-E.2 also the badge slots of the rows
+ * of an engine round calendar.
  */
 export const QA_CHECKS = [
   'data_match',
@@ -108,8 +109,18 @@ export const QaResultSchema = z.discriminatedUnion('check', [
     check: z.literal('team_badges'),
     outcome: QaOutcomeSchema,
     severity: z.literal('warning'),
-    /** The badge slots left empty (`team-badge-home`, `team-badge-away`). */
-    details: z.strictObject({ emptyBadgeSlots: z.array(z.enum(['team-badge-home', 'team-badge-away'])) }),
+    details: z.strictObject({
+      /** The badge slots of a match slide left empty (`team-badge-home`, `team-badge-away`). */
+      emptyBadgeSlots: z.array(z.enum(['team-badge-home', 'team-badge-away'])),
+      /**
+       * PD-ARCH-01G-E.2: the badge slots of a round calendar's rows left empty, each with its row (1 for the first
+       * match of the slide). Absent on a match slide.
+       */
+      emptyRowBadgeSlots: z
+        .array(z.strictObject({ row: z.int().min(1).max(64), slot: z.enum(['team-badge-home', 'team-badge-away']) }))
+        .max(128)
+        .optional(),
+    }),
     acknowledgedAt: DateTimeSchema.nullable(),
   }),
 ]);
