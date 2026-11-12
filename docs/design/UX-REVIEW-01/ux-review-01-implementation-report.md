@@ -192,6 +192,9 @@ modos ni en el diálogo. Para ver estados pendientes, el script reescribía en e
 - **P-1:** ¿La aprobación final debe exigir el texto del carrusel o el copy editorial? Hoy no los exige
   (PD-ARCH-01E-PD-02, DE-5): la interfaz conserva esa regla y el diálogo solo informa de su estado. Exigirlos cambiaría
   la arquitectura de aprobación y necesita autorización; no se hizo.
+  **Resuelta el 2026-11-12 (PD-33):** la aprobación final debe exigir el contenido editorial publicable
+  correspondiente aprobado. No está implementada: es el refinamiento independiente
+  [REVIEW-APPROVAL-01](../REVIEW-APPROVAL-01/README.md).
 - **P-2 (resuelta, 2026-11-10):** el editor de exclusiones no debe existir; se eliminó de la interfaz (A-5).
 - **P-3 (resuelta, 2026-11-10):** la operación `setExcludedMatches` se retiró también del servidor y del contrato
   (A-6, PD-31).

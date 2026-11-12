@@ -6,6 +6,10 @@
 - **Aceptada por el Product Owner el 2026-11-11** y con commit en `work/PD-ARCH-01G-E`, junto con UX-REVIEW-01 y el
   menú lateral colapsable. Se implementó sobre `work/PD-ARCH-01G-D`, cuyo cierre (`3538af1`) no la incluye. El hash
   del commit está en el [assessment de 01G-E](../PD-ARCH-01G/pd-arch-01g-e-assessment.md), DEP-1.
+- **Relación con PD-33 (2026-11-12):** la aprobación final de un carrusel deberá exigir el contenido editorial
+  publicable correspondiente aprobado. No está implementada y no cambia 01H: es el refinamiento independiente
+  [REVIEW-APPROVAL-01](../REVIEW-APPROVAL-01/README.md). Hoy cada entregable se sigue aprobando por separado (DE-5),
+  sin efecto en la aprobación final.
 
 ## Documentos
 

@@ -28,8 +28,13 @@ Las cuatro imágenes de Google Stitch del Product Owner (fuera del repositorio, 
 
 No se copió ningún dato, persona, API, telemetría ni certificación de las imágenes.
 
-## Pendiente del Product Owner
+## Pregunta P-1 (resuelta el 2026-11-12)
 
-- Pregunta P-1 del informe: si la aprobación final debe exigir el texto del carrusel o el copy editorial. Hoy no los
-  exige (PD-ARCH-01E-PD-02, DE-5) y la interfaz conserva esa regla; cambiarla modifica la arquitectura de aprobación y
-  necesita autorización.
+- P-1 preguntaba si la aprobación final debe exigir el texto del carrusel o el copy editorial. El Product Owner fijó la
+  regla el 2026-11-12 (PD-33): la aprobación final exige las diapositivas requeridas aprobadas, el contenido editorial
+  publicable correspondiente aprobado, ningún error bloqueante y las validaciones actuales, sin aprobaciones
+  duplicadas, con compatibilidad para el modelo legacy de copy y sin invalidar aprobaciones anteriores.
+- La inspección de los contratos y del código muestra que el punto del contenido editorial no se cumple hoy. Cumplirlo
+  cambia la arquitectura de aprobación, así que se documentó como refinamiento independiente,
+  [REVIEW-APPROVAL-01](../REVIEW-APPROVAL-01/README.md), con sus preguntas RA-1 a RA-5. No está implementado; hasta
+  entonces la interfaz y el servidor mantienen PD-ARCH-01E-PD-02.
