@@ -397,7 +397,7 @@ Los hallazgos de UI-06.1 conservan su registro en el informe de ese incremento (
 
 ## 17. Estado de Git
 
-Rama `work/WI-2-UI-06`. El cierre de UI-06.2 está en el commit de la sección 18.2, sobre `cc0182d`; los commits de
+Rama `work/WI-2-UI-06`. El cierre de UI-06.2 está en `c2defce` (`c2defce797f41546b195b2c899189c7eb971a643`), sobre `cc0182d`; los commits de
 UI-06.1 no cambian. Sin merge, push ni deploy. UI-06.3 no ha empezado.
 
 ## 18. Decisiones del Product Owner y cierre
@@ -419,9 +419,9 @@ UI-06.1 no cambian. Sin merge, push ni deploy. UI-06.3 no ha empezado.
 
 Las verificaciones finales, con O-1 y O-2, pasan sin defectos bloqueantes (sección 10) y los siete hallazgos siguen
 corregidos: sus pruebas pasan y ninguna excepción está declarada en la suite. **UI-06.2 queda aceptado por el
-Product Owner y cerrado** en un commit de la rama `work/WI-2-UI-06` sobre `cc0182d`, con solo los cambios de este
-incremento. El hash del commit se registra en la fuente de verdad (fila UI-06) y en el registro de decisiones del
-Product Owner (sección 7).
+Product Owner y cerrado** en el commit `c2defce797f41546b195b2c899189c7eb971a643` de la rama `work/WI-2-UI-06`, sobre `cc0182d` y con solo los
+cambios de este incremento. El hash se registra también en la fuente de verdad (fila UI-06) y en el registro de
+decisiones del Product Owner (sección 7).
 
 ### 18.3 Pendientes concretos para UI-06.3
 
