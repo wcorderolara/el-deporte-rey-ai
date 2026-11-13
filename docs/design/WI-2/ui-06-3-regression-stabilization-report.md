@@ -446,7 +446,7 @@ limitación conocida, con TEAM-DISPLAY-01 como iniciativa posterior (21.4).
 
 ## 19. Estado de Git
 
-Rama `work/WI-2-UI-06`. El cierre de UI-06.3 está en el commit de la sección 22.6, sobre `3c11a9a`; los commits de
+Rama `work/WI-2-UI-06`. El cierre de UI-06.3 está en `4ef6c06` (`4ef6c0615a109e016928c180f0070aa8217205c7`), sobre `3c11a9a`; los commits de
 UI-06.1 y UI-06.2 no cambian. Sin merge, push ni deploy. Ni TEAM-DISPLAY-01 ni CLOUD-ARCH-01 han empezado.
 
 ## 20. L-01 — Nombres de presentación de equipos (decisión del Product Owner del 2026-11-13)
@@ -680,8 +680,9 @@ Además: la caracterización de dos dígitos, la prueba de la migración y la de
 ### 22.6 Cierre
 
 UI-06.3 se cierra como incremento técnico con la aceptación del Product Owner de los cambios autorizados (D06, D07 y
-D08), en un commit de la rama `work/WI-2-UI-06` sobre `3c11a9a`, con solo los cambios de este incremento. El hash se
-registra en la fuente de verdad (fila UI-06) y en el registro de decisiones (sección 7). WCAG 2.2 AA no se declara,
+D08), en el commit `4ef6c0615a109e016928c180f0070aa8217205c7` de la rama `work/WI-2-UI-06`, sobre `3c11a9a` y con solo los cambios de
+este incremento. El hash se registra también en la fuente de verdad (fila UI-06) y en el registro de decisiones
+(sección 7). WCAG 2.2 AA no se declara,
 porque faltan las comprobaciones manuales, y la v1.0 no ha pasado una validación manual: está técnicamente lista,
 pendiente de esa validación. TEAM-DISPLAY-01 sigue pendiente y separado de UI-06.3; CLOUD-ARCH-01 no ha empezado.
 

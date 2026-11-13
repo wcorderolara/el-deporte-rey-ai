@@ -2,7 +2,7 @@
 
 **Estado:** UI-06.1 aceptado por el Product Owner y cerrado el 2026-11-13 en `bcdecc7` (recuperación de las suites y
 corrección de E2E-F01). UI-06.2 aceptado por el Product Owner y cerrado el 2026-11-13 en `c2defce` (responsive,
-accesibilidad, O-1 y O-2). UI-06.3 aceptado por el Product Owner y cerrado el 2026-11-13 como incremento técnico. Con él UI-06 queda terminado;
+accesibilidad, O-1 y O-2). UI-06.3 aceptado por el Product Owner y cerrado el 2026-11-13 en `4ef6c06` como incremento técnico. Con él UI-06 queda terminado;
 WCAG 2.2 AA no se declara y la v1.0 no ha pasado la validación manual.
 **Rama:** `work/WI-2-UI-06`, creada desde `9f5963fa0517ac4220acf4577fe92f3188c6217f` (cierre de REVIEW-APPROVAL-01).
 **Origen:** instrucción del Product Owner «WI-2 / UI-06 — Estabilización, responsive y accesibilidad» (2026-11-13) y la
