@@ -23,10 +23,15 @@ import {
   Select,
   Tabs,
   tabPanelId,
+  Tooltip,
   ViewModeToggle,
   buttonClassName,
   describeError,
 } from '../../../ui';
+
+/** The tooltip of «Verificar cambios locales» (one per page). */
+const VERIFY_TIP_ID = 'verify-local-changes-tip';
+const VERIFY_TIP = 'Comprueba si los datos locales cambiaron desde que se generó esta vista previa. No importa datos.';
 import { useCompetitionsApi } from '../CompetitionsContext';
 import {
   ConfirmImportModal,
@@ -1351,23 +1356,18 @@ export function ImportPreviewPage() {
                 >
                   Modificar selección
                 </Button>
-                <span className="group relative inline-flex">
+                <Tooltip id={VERIFY_TIP_ID} label={VERIFY_TIP} align="start" wide>
                   <Button
                     variant="secondary"
                     isLoading={verifying}
                     loadingLabel="Verificando…"
-                    title="Comprueba si los datos locales cambiaron desde que se generó esta vista previa. No importa datos."
+                    title={VERIFY_TIP}
+                    aria-describedby={VERIFY_TIP_ID}
                     onClick={() => void verifyLocalChanges()}
                   >
                     Verificar cambios locales
                   </Button>
-                  <span
-                    role="tooltip"
-                    className="pointer-events-none absolute bottom-full left-0 z-20 mb-2 hidden w-72 rounded-md border border-border-subtle bg-surface-overlay px-2 py-1 text-caption text-text-primary shadow-card group-hover:block group-focus-within:block"
-                  >
-                    Comprueba si los datos locales cambiaron desde que se generó esta vista previa. No importa datos.
-                  </span>
-                </span>
+                </Tooltip>
                 {expired ? (
                   <Button disabled={busy} onClick={() => void createPreview()}>
                     {busy ? 'Consultando proveedor…' : 'Generar otra vista previa'}

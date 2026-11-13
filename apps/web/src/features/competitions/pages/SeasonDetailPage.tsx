@@ -27,6 +27,7 @@ import {
   ModalFooter,
   Tabs,
   tabPanelId,
+  Tooltip,
   ViewModeToggle,
 } from '../../../ui';
 import { useCompetitionsApi } from '../CompetitionsContext';
@@ -1066,7 +1067,7 @@ export function SeasonDetailPage() {
                           </th>
                           <td className="px-4 py-3">
                             <div className="flex justify-end">
-                              <span className="group relative inline-flex">
+                              <Tooltip id={tooltipId} label="Quitar de esta temporada" align="end">
                                 <IconButton
                                   label={`Quitar ${team.name} de esta temporada`}
                                   title="Quitar de esta temporada"
@@ -1077,14 +1078,7 @@ export function SeasonDetailPage() {
                                 >
                                   <Icon name="trash" />
                                 </IconButton>
-                                <span
-                                  id={tooltipId}
-                                  role="tooltip"
-                                  className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 hidden whitespace-nowrap rounded-md border border-border-subtle bg-surface-overlay px-2 py-1 text-caption font-semibold text-text-primary shadow-card group-hover:block group-focus-within:block"
-                                >
-                                  Quitar de esta temporada
-                                </span>
-                              </span>
+                              </Tooltip>
                             </div>
                           </td>
                         </tr>
@@ -1111,7 +1105,7 @@ export function SeasonDetailPage() {
                             ) : null}
                           </div>
                         </div>
-                        <span className="group relative inline-flex">
+                        <Tooltip id={tooltipId} label="Quitar de esta temporada" align="end">
                           <IconButton
                             label={`Quitar ${team.name} de esta temporada`}
                             title="Quitar de esta temporada"
@@ -1128,14 +1122,7 @@ export function SeasonDetailPage() {
                               <Icon name="trash" />
                             )}
                           </IconButton>
-                          <span
-                            id={tooltipId}
-                            role="tooltip"
-                            className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 hidden whitespace-nowrap rounded-md border border-border-subtle bg-surface-overlay px-2 py-1 text-caption font-semibold text-text-primary shadow-card group-hover:block group-focus-within:block"
-                          >
-                            Quitar de esta temporada
-                          </span>
-                        </span>
+                        </Tooltip>
                       </Card>
                     </li>
                   );
@@ -1442,7 +1429,7 @@ export function SeasonDetailPage() {
                                   <Button variant="quiet" size="sm" onClick={() => setEditingRound(round)}>
                                     Editar jornada
                                   </Button>
-                                  <span className="group relative inline-flex" title={tooltip}>
+                                  <Tooltip id={tooltipId} label={tooltip} align="end">
                                     <IconButton
                                       label={tooltip}
                                       aria-describedby={tooltipId}
@@ -1452,14 +1439,7 @@ export function SeasonDetailPage() {
                                     >
                                       <Icon name="trash" />
                                     </IconButton>
-                                    <span
-                                      id={tooltipId}
-                                      role="tooltip"
-                                      className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 hidden whitespace-nowrap rounded-md border border-border-subtle bg-surface-overlay px-2 py-1 text-caption font-semibold text-text-primary shadow-card group-hover:block group-focus-within:block"
-                                    >
-                                      {tooltip}
-                                    </span>
-                                  </span>
+                                  </Tooltip>
                                 </div>
                               </td>
                             </tr>
@@ -1492,7 +1472,7 @@ export function SeasonDetailPage() {
                               <Button variant="quiet" size="sm" onClick={() => setEditingRound(round)}>
                                 Editar jornada
                               </Button>
-                              <span className="group relative inline-flex" title={tooltip}>
+                              <Tooltip id={tooltipId} label={tooltip} align="end">
                                 <IconButton
                                   label={tooltip}
                                   aria-describedby={tooltipId}
@@ -1502,14 +1482,7 @@ export function SeasonDetailPage() {
                                 >
                                   <Icon name="trash" />
                                 </IconButton>
-                                <span
-                                  id={tooltipId}
-                                  role="tooltip"
-                                  className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 hidden whitespace-nowrap rounded-md border border-border-subtle bg-surface-overlay px-2 py-1 text-caption font-semibold text-text-primary shadow-card group-hover:block group-focus-within:block"
-                                >
-                                  {tooltip}
-                                </span>
-                              </span>
+                              </Tooltip>
                             </div>
                           </Card>
                         </li>

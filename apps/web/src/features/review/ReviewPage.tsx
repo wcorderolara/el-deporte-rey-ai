@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 
 import { ApiError } from '../../api/client';
 import { featurePaths } from '../../app/routes';
-import { ErrorBanner, Tabs, tabId, tabPanelId, type TabOption } from '../../ui';
+import { classNames, ErrorBanner, Tabs, tabId, tabPanelId, type TabOption } from '../../ui';
 import { CarouselReview } from './CarouselReview';
 import { EditorialCopy } from './editorial/EditorialCopy';
 import { useEditorialPackage } from './editorial/useEditorialPackage';
@@ -190,40 +190,51 @@ function ProjectReview({ projectId }: { projectId: string }) {
 
   return (
     <article aria-labelledby="review-title" className={`${styles.theme} grid gap-4`}>
-      <div className="flex min-w-0 flex-col gap-3 lg:h-[calc(100dvh-1.5rem)] lg:min-h-[44rem]">
-        <ReviewHeader
-          projectId={projectId}
-          project={project}
-          carousels={carousels}
-          carousel={carousel}
-          onSelectCarousel={(id) => {
-            setSelectedCarouselId(id);
-            setFinalMessage('');
-          }}
-          indicators={indicators}
-          format={format}
-          actions={actions}
-        />
-        {loaded.demonstration || loaded.dataMode === 'DEMO_DATA' ? (
-          <p
-            role="note"
-            className="m-0 rounded-control border-alert border-demo bg-demo-surface px-3 py-2 text-body-sm text-demo"
-          >
-            {workspaceCopy.demoNote}
-          </p>
-        ) : null}
-        <p role="status" aria-live="polite" className={styles.visuallyHidden}>
-          {request.refreshing ? reviewCopy.refreshing : ''}
-        </p>
-        {request.refreshError === null ? null : (
-          <ErrorBanner title={reviewCopy.refreshError} error={request.refreshError} onRetry={request.refresh} />
+      {/*
+       * From the lg breakpoint the workspace fills the height of the window below the header and the tabs, and never
+       * gets less than 34rem: on a short window (1280 × 720, R-03) the page grows and scrolls instead of the preview
+       * running past its column. The open mode is size-contained, so its content scrolls inside its panels instead of
+       * growing the row.
+       */}
+      <div
+        className={classNames(
+          'flex min-w-0 flex-col gap-3',
+          carousel === undefined ? '' : 'lg:grid lg:min-h-[calc(100dvh-1.5rem)] lg:grid-rows-[auto_minmax(34rem,1fr)]',
         )}
-        {carousel === undefined ? (
-          <p className="m-0 rounded-panel border border-dashed border-border-strong p-6 text-text-secondary">
-            {reviewCopy.noCarousels}
+      >
+        <div className="flex min-w-0 flex-col gap-3">
+          <ReviewHeader
+            projectId={projectId}
+            project={project}
+            carousels={carousels}
+            carousel={carousel}
+            onSelectCarousel={(id) => {
+              setSelectedCarouselId(id);
+              setFinalMessage('');
+            }}
+            indicators={indicators}
+            format={format}
+            actions={actions}
+          />
+          {loaded.demonstration || loaded.dataMode === 'DEMO_DATA' ? (
+            <p
+              role="note"
+              className="m-0 rounded-control border-alert border-demo bg-demo-surface px-3 py-2 text-body-sm text-demo"
+            >
+              {workspaceCopy.demoNote}
+            </p>
+          ) : null}
+          <p role="status" aria-live="polite" className={styles.visuallyHidden}>
+            {request.refreshing ? reviewCopy.refreshing : ''}
           </p>
-        ) : (
-          <>
+          {request.refreshError === null ? null : (
+            <ErrorBanner title={reviewCopy.refreshError} error={request.refreshError} onRetry={request.refresh} />
+          )}
+          {carousel === undefined ? (
+            <p className="m-0 rounded-panel border border-dashed border-border-strong p-6 text-text-secondary">
+              {reviewCopy.noCarousels}
+            </p>
+          ) : (
             <Tabs
               id={modesId}
               label={workspaceCopy.modesLabel}
@@ -233,13 +244,17 @@ function ProjectReview({ projectId }: { projectId: string }) {
               onChange={setMode}
               className="self-start"
             />
+          )}
+        </div>
+        {carousel === undefined ? null : (
+          <>
             {/* Both modes stay mounted: the selected slide, open edits and messages survive a change of mode. */}
             <div
               role="tabpanel"
               id={tabPanelId(modesId, 'design')}
               aria-labelledby={tabId(modesId, 'design')}
               hidden={mode !== 'design'}
-              className={mode === 'design' ? 'min-h-0 min-w-0 flex-1' : 'hidden'}
+              className={mode === 'design' ? 'min-h-0 min-w-0 flex-1 lg:[contain:size]' : 'hidden'}
             >
               <CarouselReview
                 key={carousel.id}
@@ -255,7 +270,7 @@ function ProjectReview({ projectId }: { projectId: string }) {
               id={tabPanelId(modesId, 'copy')}
               aria-labelledby={tabId(modesId, 'copy')}
               hidden={mode !== 'copy'}
-              className={mode === 'copy' ? 'min-h-0 min-w-0 flex-1' : 'hidden'}
+              className={mode === 'copy' ? 'min-h-0 min-w-0 flex-1 lg:[contain:size]' : 'hidden'}
             >
               <EditorialCopy
                 key={loaded.id}

@@ -10,7 +10,6 @@
 import type {
   BlockReason,
   ContentFlag,
-  ElementVersionState,
   FactKind,
   FinalApprovalRefusalReason,
   QaCheck,
@@ -39,8 +38,9 @@ export const carouselCopy = {
   title: (sequence: number, total: number): string => (total > 1 ? `Carrusel ${sequence} de ${total}` : 'Carrusel'),
   slideNavigation: 'Diapositivas del carrusel',
   slidesHeading: (count: number): string => `${count} ${count === 1 ? 'diapositiva' : 'diapositivas'}`,
-  slideButton: (position: number, type: SlideType | null, state: ElementVersionState): string =>
-    `${elementCopy.slide(position, type)}, ${versionStateLabel[state]}`,
+  /** The rail button's name: the slide and the same state its badge shows (`elementStatus`, A11Y-02). */
+  slideButton: (position: number, type: SlideType | null, status: string): string =>
+    `${elementCopy.slide(position, type)}, ${status}`,
   slidePosition: (position: number, total: number): string => `Diapositiva ${position} de ${total}`,
   previous: 'Anterior',
   next: 'Siguiente',
@@ -233,7 +233,6 @@ export const elementCopy = {
   noImage: 'Imagen todavía no disponible.',
   dimensions: (width: number, height: number): string => `${width} × ${height} px`,
   noText: 'Sin texto.',
-  blocked: 'Bloqueada',
   validationSummary: (blocking: number, warnings: number, pending: boolean): string =>
     blocking === 0 && warnings === 0
       ? pending
@@ -281,14 +280,6 @@ export const elementCopy = {
   acknowledgeError: 'No se pudo confirmar la advertencia',
   refusedFacts: 'El servidor rechazó la aprobación por estos datos:',
 } as const;
-
-export const versionStateLabel: Record<ElementVersionState, string> = {
-  pending_qa: 'Pendiente del control visual',
-  qa_failed: 'Control visual fallido',
-  ready: 'Lista para aprobar',
-  approved: 'Aprobada',
-  superseded: 'Reemplazada por una versión nueva',
-};
 
 /** Why an element cannot be approved yet, derived from the shown version (the server decides). */
 export type ApprovalObstacle = 'blocked' | 'flagged' | 'qa_failed' | 'qa_ack_required' | 'pending_qa' | 'superseded';

@@ -1,7 +1,17 @@
 import type { ProjectSummary } from '@edr/contracts';
 import { useId } from 'react';
 import { Link } from 'react-router';
-import { Badge, Button, buttonClassName, Card, formatDateTime, Icon, IconButton, iconButtonClassName } from '../../ui';
+import {
+  Badge,
+  Button,
+  buttonClassName,
+  Card,
+  formatDateTime,
+  Icon,
+  IconButton,
+  iconButtonClassName,
+  Tooltip,
+} from '../../ui';
 import { createCopy } from './copy';
 import { contentTypeLabel, projectStatus, sportsContextSummary } from './dashboardModel';
 import { projectPath } from './paths';
@@ -10,19 +20,6 @@ export interface ProjectActionsProps {
   project: ProjectSummary;
   onDelete: (project: ProjectSummary) => void;
   className?: string;
-}
-
-/** A tooltip for an icon-only action, shown on hover and keyboard focus (pattern of the season tables, 01D-D). */
-function Tip({ id, children }: { id: string; children: string }) {
-  return (
-    <span
-      id={id}
-      role="tooltip"
-      className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 hidden whitespace-nowrap rounded-md border border-border-subtle bg-surface-overlay px-2 py-1 text-caption font-semibold text-text-primary shadow-card group-hover:block group-focus-within:block"
-    >
-      {children}
-    </span>
-  );
 }
 
 /**
@@ -41,7 +38,7 @@ export function ProjectActions({
   if (compact) {
     return (
       <div className={className ?? 'flex items-center gap-2'}>
-        <span className="group relative inline-flex">
+        <Tooltip id={viewTip} label="Ver contenido" align="end">
           <Link
             className={iconButtonClassName('default')}
             to={projectPath(project.id)}
@@ -50,9 +47,8 @@ export function ProjectActions({
           >
             <Icon name="eye" />
           </Link>
-          <Tip id={viewTip}>Ver contenido</Tip>
-        </span>
-        <span className="group relative inline-flex">
+        </Tooltip>
+        <Tooltip id={deleteTip} label="Eliminar proyecto" align="end">
           <IconButton
             label={`Eliminar: ${project.title}`}
             tone="danger"
@@ -61,8 +57,7 @@ export function ProjectActions({
           >
             <Icon name="trash" />
           </IconButton>
-          <Tip id={deleteTip}>Eliminar proyecto</Tip>
-        </span>
+        </Tooltip>
       </div>
     );
   }

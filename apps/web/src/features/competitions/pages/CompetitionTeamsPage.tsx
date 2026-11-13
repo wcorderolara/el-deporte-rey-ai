@@ -12,6 +12,7 @@ import {
   LoadingState,
   Modal,
   ModalFooter,
+  Tooltip,
   ViewModeToggle,
   describeError,
 } from '../../../ui';
@@ -26,32 +27,31 @@ function identityKey(value: string): string {
   return value.normalize('NFKC').trim().replace(/\s+/gu, ' ').toLowerCase();
 }
 
+/**
+ * An icon action of a team row or card. Its tooltip shows the action (`label`); its accessible name adds the team
+ * (`Editar equipo: Club Alfa`, O-2), so a list of the page's controls tells the rows apart.
+ */
 function ActionIcon({
   label,
+  team,
   id,
   icon,
   onClick,
   tone = 'default',
 }: {
   label: string;
+  team: string;
   id: string;
   icon: 'pencil' | 'trash';
   onClick: () => void;
   tone?: 'default' | 'danger';
 }) {
   return (
-    <span className="group relative inline-flex">
-      <IconButton label={label} title={label} aria-describedby={id} tone={tone} onClick={onClick}>
+    <Tooltip id={id} label={label} align="end">
+      <IconButton label={`${label}: ${team}`} title={label} aria-describedby={id} tone={tone} onClick={onClick}>
         <Icon name={icon} />
       </IconButton>
-      <span
-        id={id}
-        role="tooltip"
-        className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 hidden whitespace-nowrap rounded-md border border-border-subtle bg-surface-overlay px-2 py-1 text-caption font-semibold text-text-primary shadow-card group-hover:block group-focus-within:block"
-      >
-        {label}
-      </span>
-    </span>
+    </Tooltip>
   );
 }
 
@@ -221,12 +221,14 @@ export function CompetitionTeamsPage() {
       <div className="flex items-center justify-end gap-2">
         <ActionIcon
           label="Editar equipo"
+          team={item.team.name}
           id={`edit-team-tip-${item.team.id}`}
           icon="pencil"
           onClick={() => edit(item)}
         />
         <ActionIcon
           label="Quitar de competición"
+          team={item.team.name}
           id={`remove-team-tip-${item.team.id}`}
           icon="trash"
           tone="danger"

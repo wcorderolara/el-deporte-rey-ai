@@ -39,9 +39,11 @@ export function SlideWorkspace({
       className={classNames(
         'grid min-w-0 gap-3',
         height === 'parent' ? 'lg:h-full lg:min-h-0' : 'lg:h-[calc(100dvh-1.5rem)] lg:max-h-[56rem] lg:min-h-[36rem]',
+        // The side columns take their narrower width until xl (R-03): at 1280 px the selected slide keeps the widest
+        // column instead of sharing the space almost equally with the inspector.
         navigationCollapsed
-          ? 'md:grid-cols-[4.5rem_minmax(0,1fr)_minmax(16rem,18rem)] lg:grid-cols-[4.5rem_minmax(0,1fr)_minmax(18rem,22rem)]'
-          : 'md:grid-cols-[minmax(11rem,13rem)_minmax(0,1fr)_minmax(16rem,18rem)] lg:grid-cols-[minmax(13rem,15rem)_minmax(0,1fr)_minmax(18rem,22rem)]',
+          ? 'md:grid-cols-[4.5rem_minmax(0,1fr)_minmax(16rem,18rem)] lg:grid-cols-[4.5rem_minmax(0,1fr)_18rem] xl:grid-cols-[4.5rem_minmax(0,1fr)_minmax(18rem,22rem)]'
+          : 'md:grid-cols-[minmax(11rem,13rem)_minmax(0,1fr)_minmax(16rem,18rem)] lg:grid-cols-[13rem_minmax(0,1fr)_18rem] xl:grid-cols-[minmax(13rem,15rem)_minmax(0,1fr)_minmax(18rem,22rem)]',
         className,
       )}
     >

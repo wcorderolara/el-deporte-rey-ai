@@ -236,6 +236,9 @@ function MainNavigation({ pathname }: { pathname: string }) {
 /** Routes on the studio surface; every other route keeps the legacy content panel. */
 export function contentVariantOf(pathname: string): 'studio' | 'legacy' | 'workspace' {
   if (/^\/templates\/visual\/[^/]+\/?$/.test(pathname)) return 'workspace';
+  // A11Y-01: the trace of an exported slide is a record built from the components of «Datos y verificación» (facts,
+  // evidence tables, dispute records) and styled for the light panel, like that page.
+  if (/^\/projects\/[^/]+\/exports\/[^/]+\/slides\/[^/]+\/trace\/?$/.test(pathname)) return 'legacy';
   // UX-REVIEW-01: the content review is a full-width workspace that uses the height of the viewport.
   if (/^\/projects\/[^/]+\/review(?:\/.*)?$/.test(pathname)) return 'workspace';
   return ['/', '/projects', '/projects/', '/exports', '/exports/'].includes(pathname) ||

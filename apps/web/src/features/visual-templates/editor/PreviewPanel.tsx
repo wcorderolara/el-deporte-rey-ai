@@ -167,7 +167,7 @@ export function PreviewPanel({
   }
 
   return (
-    <div className="grid h-full min-h-0 gap-4 lg:grid-cols-[17rem_minmax(0,1fr)] xl:grid-cols-[18rem_minmax(0,1fr)_20rem]">
+    <div className="grid min-h-0 gap-4 lg:h-full lg:grid-cols-[17rem_minmax(0,1fr)] xl:grid-cols-[18rem_minmax(0,1fr)_20rem]">
       <section
         aria-labelledby={`${baseId}-context`}
         className="grid min-h-0 content-start gap-3 overflow-y-auto rounded-xl border border-border-subtle bg-surface-raised p-4"

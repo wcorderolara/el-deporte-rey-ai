@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import type { FormEvent } from 'react';
 
 import { ActionMenu } from './ActionMenu';
@@ -16,6 +16,7 @@ import { Modal, ModalFooter } from './Modal';
 import { Tabs } from './Tabs';
 import { Select } from './Select';
 import { Textarea } from './Textarea';
+import { Tooltip } from './Tooltip';
 import { ViewModeToggle } from './Modal';
 
 afterEach(cleanup);
@@ -112,6 +113,100 @@ describe('design-system actions', () => {
     expect(cards.getAttribute('title')).toBe('Vista de tarjetas');
     await user.click(cards);
     expect(onChange).toHaveBeenCalledWith('cards');
+  });
+
+  it('shows a view tooltip on focus and hover, keeps it inside the window and hides it with Escape (R-02, 1.4.13)', async () => {
+    const user = userEvent.setup();
+    render(<ViewModeToggle value="table" onChange={() => undefined} />);
+    const table = screen.getByRole('button', { name: 'Vista de tabla' });
+    const cards = screen.getByRole('button', { name: 'Vista de tarjetas' });
+    const tip = document.getElementById(cards.getAttribute('aria-describedby') ?? '');
+    const tableTip = document.getElementById(table.getAttribute('aria-describedby') ?? '');
+    expect(tip?.getAttribute('role')).toBe('tooltip');
+    expect(tip?.textContent).toBe('Vista de tarjetas');
+    expect(tableTip?.id).not.toBe(tip?.id);
+    expect(tip?.className).toContain('hidden');
+    // jsdom has no layout: centred, the tooltip would end 10 px past the right edge of a 768 px window (4 px margin).
+    Object.defineProperty(document.documentElement, 'clientWidth', { configurable: true, value: 768 });
+    try {
+      vi.spyOn(tip as HTMLElement, 'getBoundingClientRect').mockReturnValue({
+        x: 666,
+        y: 0,
+        left: 666,
+        right: 774,
+        top: 0,
+        bottom: 24,
+        width: 108,
+        height: 24,
+        toJSON: () => ({}),
+      });
+      await user.tab();
+      await user.tab();
+      expect(document.activeElement).toBe(cards);
+      expect(tip?.className).toContain('block');
+      expect(tip?.style.transform).toBe('translateX(calc(-50% + -10px))');
+      // Escape hides it without moving the focus; it shows again once the focus comes back.
+      await user.keyboard('{Escape}');
+      expect(tip?.className).toContain('hidden');
+      expect(document.activeElement).toBe(cards);
+      await user.tab({ shift: true });
+      expect(tip?.className).toContain('hidden');
+      expect(tableTip?.className).toContain('block');
+      await user.tab();
+      expect(tip?.className).toContain('block');
+      // On hover it stays while the pointer moves onto the tooltip itself.
+      await user.tab();
+      await user.hover(cards);
+      expect(tip?.className).toContain('block');
+      await user.hover(tip as HTMLElement);
+      expect(tip?.className).toContain('block');
+      await user.unhover(tip as HTMLElement);
+      expect(tip?.className).toContain('hidden');
+    } finally {
+      Reflect.deleteProperty(document.documentElement, 'clientWidth');
+    }
+  });
+
+  it('moves an end-aligned tooltip right when it would start past the left edge, and keeps a dialog open on Escape', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(
+      <Modal title="Equipos" onClose={onClose}>
+        <Tooltip id="tip-remove" label="Quitar de esta temporada" align="end">
+          <button type="button" aria-describedby="tip-remove">
+            Quitar
+          </button>
+        </Tooltip>
+      </Modal>,
+    );
+    const tip = document.getElementById('tip-remove') as HTMLElement;
+    // jsdom has no layout: a 390 px window, and a tooltip that would start 20 px before its left edge.
+    Object.defineProperty(document.documentElement, 'clientWidth', { configurable: true, value: 390 });
+    onTestFinished(() => {
+      Reflect.deleteProperty(document.documentElement, 'clientWidth');
+    });
+    vi.spyOn(tip, 'getBoundingClientRect').mockReturnValue({
+      x: -20,
+      y: 0,
+      left: -20,
+      right: 140,
+      top: 0,
+      bottom: 24,
+      width: 160,
+      height: 24,
+      toJSON: () => ({}),
+    });
+    const control = screen.getByRole('button', { name: 'Quitar' });
+    control.focus();
+    await user.hover(control);
+    expect(tip.className).toContain('block');
+    expect(tip.style.transform).toBe('translateX(calc(0px + 24px))');
+    // The first Escape closes only the tooltip; the dialog stays open until the next one.
+    await user.keyboard('{Escape}');
+    expect(tip.className).toContain('hidden');
+    expect(onClose).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('keeps Button native, actionable and loading-safe', async () => {

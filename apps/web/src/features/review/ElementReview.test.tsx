@@ -47,6 +47,11 @@ async function card(name = SLIDE): Promise<HTMLElement> {
   return screen.findByRole('article', { name });
 }
 
+/** The inspector of the shown element, inside its workspace. */
+function inspector(container: HTMLElement): HTMLElement {
+  return within(container).getByRole('region', { name: /^Estado y acciones: / });
+}
+
 function button(container: HTMLElement, name: string | RegExp): HTMLButtonElement {
   if (name === 'Aprobar esta versión') {
     name = container.textContent?.includes('Texto de publicación y hashtags')
@@ -148,7 +153,10 @@ describe('Blocked content (R-206): approval refused naming the fact, other conte
     renderApp(REVIEW, server);
     const slideCard = await card();
 
-    expect(within(slideCard).getByText('Bloqueada')).toBeTruthy();
+    // A11Y-02: the inspector and the slide's name in the list state the block, never «Lista para aprobar».
+    expect(within(inspector(slideCard)).getByText('Bloqueada por datos')).toBeTruthy();
+    expect(inspector(slideCard).textContent).not.toContain('Lista para aprobar');
+    expect(screen.getByRole('button', { name: `${SLIDE}, Bloqueada por datos` })).toBeTruthy();
     const blocked = within(slideCard).getByRole('list', { name: 'Datos que bloquean la aprobación' });
     expect(blocked.textContent).toContain('Marcador: 2-1');
     expect(blocked.textContent).toContain('Sin verificar');
@@ -159,7 +167,7 @@ describe('Blocked content (R-206): approval refused naming the fact, other conte
     expect(description?.textContent).toContain('usa datos que no son publicables');
 
     const captionCard = await openCaption();
-    expect(within(captionCard).queryByText('Bloqueada')).toBeNull();
+    expect(within(captionCard).queryByText('Bloqueada por datos')).toBeNull();
     await userEvent.click(button(captionCard, 'Aprobar esta versión'));
     expect(await within(captionCard).findByText('Versión 1 aprobada.')).toBeTruthy();
     expect(server.callsTo('PUT', elementPath(CAROUSEL_ID, elementId(1), 'approval'))).toHaveLength(0);
@@ -189,7 +197,7 @@ describe('Blocked content (R-206): approval refused naming the fact, other conte
     expect(refused.textContent).toContain('pendiente de verificación independiente');
     expect(slideCard.innerHTML).not.toContain('<script>');
     // The refresh shows the server's blocked overlay.
-    expect(await within(slideCard).findByText('Bloqueada')).toBeTruthy();
+    expect(await within(inspector(slideCard)).findByText('Bloqueada por datos')).toBeTruthy();
   });
 });
 
@@ -296,7 +304,7 @@ describe('Manually approved facts (R-272, PD-17): both eligibility states, alway
     });
     renderApp(REVIEW, server);
     const slideCard = await card();
-    expect(within(slideCard).queryByText('Bloqueada')).toBeNull();
+    expect(within(slideCard).queryByText('Bloqueada por datos')).toBeNull();
     await userEvent.click(button(slideCard, 'Aprobar esta versión'));
     expect(await within(slideCard).findByText('Versión 1 aprobada.')).toBeTruthy();
   });
@@ -346,7 +354,9 @@ describe('Content flags and blocking QA failures (R-207, OD-09)', () => {
     expect(qaRegion.textContent).toContain('esperado «2-1», obtenido «2-7»');
     expect(qaRegion.textContent).toContain('Un fallo bloqueante solo se resuelve regenerando el elemento.');
     expect(within(qaRegion).queryByRole('button')).toBeNull();
-    expect(within(slideCard).getAllByText('Control visual fallido').length).toBeGreaterThan(0);
+    // A11Y-02: the inspector states what the list shows for a failed visual check.
+    expect(within(inspector(slideCard)).getByText('Requiere regenerar')).toBeTruthy();
+    expect(screen.getByRole('button', { name: `${SLIDE}, Requiere regenerar` })).toBeTruthy();
     expect(button(slideCard, 'Aprobar esta versión').disabled).toBe(true);
   });
 });

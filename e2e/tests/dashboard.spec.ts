@@ -38,10 +38,10 @@ for (const width of [1440, 768, 390]) {
           // The cards view: one article per project, with the same accessible actions.
           await main.getByRole('button', { name: 'Vista de tarjetas' }).click();
           await expect(main.getByRole('article')).toHaveCount(4);
-          // The toggle's tooltip, shown while it has focus or the pointer, runs past the right edge at 768 px
-          // (finding R-02, UI-06.2); the layout itself is measured without it.
-          await page.mouse.move(0, 0);
-          await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+          // The toggle keeps the focus and the pointer, so its tooltip is shown: it stays inside the window
+          // (R-02, corrected in UI-06.2) and the page does not scroll sideways with it.
+          await expect(page.getByRole('tooltip', { name: 'Vista de tarjetas' })).toBeVisible();
+          expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
           for (const project of dashboardProjects) {
             await expect(main.getByRole('link', { name: `Ver contenido: ${project.title}` })).toBeVisible();
           }

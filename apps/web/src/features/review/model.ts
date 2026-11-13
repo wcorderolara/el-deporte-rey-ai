@@ -209,6 +209,17 @@ export function elementStatus(element: Element): ElementStatus {
   return { label: elementCopy.statusReady, tone: 'info', symbol: '•', issue: null };
 }
 
+/**
+ * The tone of a `StatusBadge` that shows `status` (the inspector of the review and the project's content panel), so
+ * that the panel states the same as the slide list (A11Y-02): approved is positive, a block or a warning to confirm is
+ * a caution, the rest is neutral.
+ */
+export function statusBadgeTone(status: ElementStatus): 'positive' | 'caution' | 'neutral' {
+  if (status.tone === 'success') return 'positive';
+  if (status.tone === 'danger' || status.tone === 'warning') return 'caution';
+  return 'neutral';
+}
+
 /** The editorial versions that exist (PD-ARCH-01H), in contract order; `null` while the package is not loaded. */
 export function currentEditorialVersions(pkg: EditorialPackage | null): EditorialVersion[] {
   return pkg === null ? [] : pkg.deliverables.flatMap((entry) => (entry.current === null ? [] : [entry.current]));

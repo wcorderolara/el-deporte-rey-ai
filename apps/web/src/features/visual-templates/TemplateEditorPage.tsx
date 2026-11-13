@@ -8,13 +8,14 @@ import {
   type VisualTemplatePreview,
   type VisualTemplateVersion,
 } from '@edr/contracts';
-import { useCallback, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 
 import { ApiError } from '../../api/client';
 import {
   ActionMenu,
   Alert,
+  classNames,
   Button,
   ErrorBanner,
   Icon,
@@ -451,7 +452,17 @@ function VersionEditor({
   const sidebarTabsId = `${baseId}-sidebar`;
 
   return (
-    <div ref={rootRef} className="flex min-h-0 min-w-0 flex-col gap-3" style={height === null ? undefined : { height }}>
+    // The editor fills the window where its mode has columns: the design from the md breakpoint, the preview from lg.
+    // Below that the panels are stacked and the page scrolls (UI-06.2: at 390 px the three columns left no width for
+    // the canvas), as in the slide workspace.
+    <div
+      ref={rootRef}
+      className={classNames(
+        'flex min-h-0 min-w-0 flex-col gap-3',
+        mode === 'design' ? 'md:h-[var(--editor-height)]' : 'lg:h-[var(--editor-height)]',
+      )}
+      style={height === null ? undefined : ({ '--editor-height': `${String(height)}px` } as CSSProperties)}
+    >
       <EditorToolbar
         modeTabsId={modeTabsId}
         detail={detail}
@@ -505,8 +516,8 @@ function VersionEditor({
           id={tabPanelId(modeTabsId, 'design')}
           role="tabpanel"
           aria-labelledby={`${modeTabsId}-tab-design`}
-          className="grid min-h-0 flex-1 gap-3"
-          style={{ gridTemplateColumns: columns.join(' '), gridTemplateRows: 'minmax(0, 1fr)' }}
+          className="grid min-h-0 flex-1 gap-3 md:[grid-template-columns:var(--editor-columns)] md:[grid-template-rows:minmax(0,1fr)]"
+          style={{ '--editor-columns': columns.join(' ') } as CSSProperties}
         >
           {leftOpen ? (
             <aside

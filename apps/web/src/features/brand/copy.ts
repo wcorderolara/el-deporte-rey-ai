@@ -85,8 +85,9 @@ export const languageLabel: Record<Language, string> = {
 export const brandCopy = {
   /** Eyebrow of both views of Mi marca: the parent menu item. */
   eyebrow: 'Mi marca',
+  /** O-1 (UI-06.2, approved by the Product Owner): team badges are managed in Competiciones (PD-28, PD-32). */
   authorizedOnly:
-    'Solo se registran recursos autorizados de El Deporte Rey GT. No se registran escudos de clubes, marcas de competiciones ni imágenes sin autorización: los nombres de equipos y competiciones aparecen como texto.',
+    'Los escudos de los equipos se gestionan desde Competiciones, donde puedes cargar los archivos y registrar su procedencia y autorización de uso. Mi marca administra los recursos visuales propios de El Deporte Rey.',
   provisional:
     'Mientras no haya recursos registrados, las plantillas usan los valores provisionales de la marca y generan diapositivas completas sin logotipo ni mascota.',
   statusRegion: 'Avisos de la página de marca',

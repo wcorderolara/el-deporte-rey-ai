@@ -40,7 +40,8 @@ export function Workspace({ canvasWidth, canvasHeight, formatLabel, children }: 
   return (
     <section
       aria-label={editorCopy.workspace}
-      className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface-subtle"
+      // Stacked below the md breakpoint, the area gets its own height so that the canvas can be fitted in it.
+      className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface-subtle max-md:h-[min(80dvh,48rem)] max-md:min-h-80"
     >
       <div
         role="toolbar"

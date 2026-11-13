@@ -70,7 +70,12 @@ describe('BrandPage: page frame', () => {
     expect(screen.getByText('Mi marca')).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Plantillas' })).toBeNull();
     expect(screen.queryByRole('region', { name: 'Identidad visual' })).toBeNull();
-    expect(document.body.textContent).toContain('No se registran escudos de clubes, marcas de competiciones');
+    // O-1: team badges are managed in Competiciones (PD-28, PD-32); Mi marca keeps the studio's own resources.
+    expect(document.body.textContent).toContain(
+      'Los escudos de los equipos se gestionan desde Competiciones, donde puedes cargar los archivos y registrar su procedencia y autorización de uso.',
+    );
+    expect(document.body.textContent).toContain('Mi marca administra los recursos visuales propios de El Deporte Rey.');
+    expect(document.body.textContent).not.toContain('aparecen como texto');
     expect(document.body.textContent).toContain('sin logotipo ni mascota');
     expect(within(librarySection()).getAllByRole('button', { name: 'Subir recurso' }).length).toBeGreaterThan(0);
     await libraryTable();

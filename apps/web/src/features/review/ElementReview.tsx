@@ -4,9 +4,9 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { ApiError } from '../../api/client';
 import { Button, classNames, ErrorBanner, formatDateTime, Icon, StatusBadge } from '../../ui';
 import { BlockingFacts } from './BlockingFacts';
-import { approvalObstacleLabel, elementCopy, slideTypeLabel, textFieldLabel, versionStateLabel } from './copy';
+import { approvalObstacleLabel, elementCopy, slideTypeLabel, textFieldLabel } from './copy';
 import { copyText } from './editorial/download';
-import { approvalObstacles, elementName, problemFacts } from './model';
+import { approvalObstacles, elementName, elementStatus, problemFacts, statusBadgeTone } from './model';
 import type { SlidePagerProps } from './SlidePreview';
 import { SlidePanel, SlideWorkspace } from './SlideWorkspace';
 import styles from './Review.module.css';
@@ -85,6 +85,8 @@ export function ElementReview({
   const obstacles = approvalObstacles(version);
   const warningCount = version.qa.filter((result) => result.severity === 'warning' && result.outcome === 'fail').length;
   const approved = version.state === 'approved';
+  // The state shown in the inspector is the one of the slide list (A11Y-02): a blocked version is never «ready».
+  const status = elementStatus(element);
   const busy = action !== null;
 
   useEffect(() => {
@@ -154,16 +156,7 @@ export function ElementReview({
     <SlidePanel
       label={`${elementCopy.reviewPanel}: ${name}`}
       eyebrow={isSlide ? elementCopy.slideEyebrow : elementCopy.captionEyebrow}
-      badges={
-        <span className="flex flex-wrap gap-1">
-          <StatusBadge
-            label={versionStateLabel[version.state]}
-            tone={approved ? 'positive' : version.state === 'qa_failed' ? 'caution' : 'neutral'}
-            symbol={approved ? '✓' : version.state === 'qa_failed' ? '!' : '•'}
-          />
-          {version.blocked ? <StatusBadge label={elementCopy.blocked} tone="caution" symbol="⛔" /> : null}
-        </span>
-      }
+      badges={<StatusBadge label={status.label} tone={statusBadgeTone(status)} symbol={status.symbol} />}
       title={name}
       titleId={titleId}
       titleRef={headingRef}

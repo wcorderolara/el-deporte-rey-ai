@@ -9,9 +9,12 @@
  * (resources with the upload dialog, visual identity); Plantillas (create, engine templates); the not-found page; and
  * the project page of a run that failed. A positive control proves that the scan reports a seeded serious violation.
  *
- * A violation that is already known and assigned to UI-06.2 is declared per page in `KNOWN` with its finding ID
- * (docs/design/WI-2/ui-06-1-e2e-a11y-recovery-report.md). The check then expects exactly that rule, so the test fails
- * on any new violation and also once the known one is fixed, which is when the declaration must be removed.
+ * A violation that is already known and assigned to a later increment can be declared per check (`expectAccessible`'s
+ * `known` rules, with its finding ID): the check then expects exactly that rule, so it fails on any new violation and
+ * also once the known one is fixed. UI-06.2 fixed the two that UI-06.1 declared (A11Y-01, the trace page in the dark
+ * studio colours, and R-03, the review preview at 1280 x 720): none is declared now. The trace is scanned in its
+ * states: operator-attested facts (local data), verified facts with the demonstration notice (a DEMO_DATA export),
+ * and an invalid address.
  *
  * The data is prepared once through the interface (beforeAll) on the suite server, on synthetic local data created
  * through the API; the failed-run page uses a journey-owned server (e2e/support/scenario-server.ts).
@@ -28,6 +31,7 @@ import {
   chooseSportsContext,
   createCatalogueProject,
   downloadCarousel,
+  factsLink,
   generateContent,
   generateEditorialCopy,
   giveFinalApproval,
@@ -40,20 +44,10 @@ import { seedLocalCompetition, type LocalCompetition } from '../support/local-da
 import { solidPng } from '../support/png.js';
 import { test as scenarioTest } from '../support/scenario-server.js';
 import { axeScan, expect, guardRequests, test } from '../support/test.js';
+import { readZip } from '../support/zip.js';
 
 const PROJECT_ROOT = resolve(import.meta.dirname, '../..');
 const VALID_MATCHES_CSV = readFileSync(resolve(PROJECT_ROOT, 'fixtures/manual/valid/liga-manual-matches.csv'), 'utf8');
-
-/** Known violations by finding ID (see the module notes). */
-const KNOWN = {
-  /** A11Y-01: the trace page keeps light-theme colours on the dark studio surface (contrast 2.2 to 2.3). */
-  tracePage: ['color-contrast'],
-  /**
-   * R-03: at 1280 x 720 (the suite's viewport) the review preview runs past its column and the page past the
-   * viewport, whose white root background then sits under the caption «1080 × 1350 px · Versión n» (contrast 1.7).
-   */
-  reviewWorkspace: ['color-contrast'],
-} as const;
 
 /** Addresses of the pages prepared by beforeAll. */
 interface Prepared {
@@ -64,6 +58,10 @@ interface Prepared {
   review: string;
   exportDetail: string;
   trace: string;
+  /** The trace of an exported slide of a DEMO_DATA catalogue project (verified facts, demonstration notice). */
+  demoTrace: string;
+  /** The data and verification page of that DEMO_DATA run. */
+  demoFacts: string;
   importDetail: string;
   version: string;
 }
@@ -100,7 +98,7 @@ async function expectAccessible(page: Page, known: readonly string[] = []): Prom
   for (const id of known) {
     expect(
       findings.map((finding) => finding.id),
-      `known violation ${id} is no longer reported: remove it from KNOWN`,
+      `known violation ${id} is no longer reported: remove its declaration`,
     ).toContain(id);
   }
 }
@@ -151,6 +149,23 @@ test.describe('Accessibility @a11y', () => {
       await expect(page.getByRole('heading', { level: 1, name: 'Carrusel exportado' })).toBeVisible();
       const exportDetail = new URL(page.url()).pathname;
 
+      // A DEMO_DATA catalogue export: its trace shows verified facts and the demonstration notice.
+      const demo = await createCatalogueProject(page, baseURL, {
+        competitionId: 'liga-demo',
+        sourceId: 'demo-a',
+        seasonId: '2026',
+        stageId: 'temporada-regular',
+        matchday: 2,
+      });
+      await page.goto(`/projects/${demo}`);
+      await runToEnd(page, 1);
+      const demoFacts = await (await factsLink(page, 1)).getAttribute('href');
+      await openContentReview(page, demo);
+      await approveReadySlidesInBulk(page);
+      await giveFinalApproval(page);
+      const manifest = readZip(await downloadCarousel(page)).find((file) => file.name === 'manifest.json');
+      const { exportId } = JSON.parse(manifest?.bytes.toString('utf8') ?? '{}') as { exportId?: string };
+
       // Datos: an applied import with its selection versions.
       await page.goto('/imports');
       await uploadCsv(page, 'liga-manual-a11y.csv', VALID_MATCHES_CSV);
@@ -172,6 +187,8 @@ test.describe('Accessibility @a11y', () => {
         review: `/projects/${project}/review`,
         exportDetail,
         trace: `${exportDetail}/slides/2/trace`,
+        demoTrace: `/projects/${demo}/exports/${exportId ?? ''}/slides/2/trace`,
+        demoFacts: demoFacts ?? '',
         importDetail: importDetail ?? '',
         version: version ?? '',
       };
@@ -240,7 +257,7 @@ test.describe('Accessibility @a11y', () => {
     const { competition } = pages();
     const [project] = await generateContent(page, competition, competition.played);
     await openContentReview(page, project ?? '');
-    await expectAccessible(page, KNOWN.reviewWorkspace);
+    await expectAccessible(page);
     // A slide with a visual QA warning to confirm.
     await page
       .getByRole('navigation', { name: 'Diapositivas del carrusel' })
@@ -249,12 +266,12 @@ test.describe('Accessibility @a11y', () => {
     await expect(
       slideInspector(page, 'Diapositiva 2: Resultado').getByRole('button', { name: /^Confirmar la advertencia/ }),
     ).toBeVisible();
-    await expectAccessible(page, KNOWN.reviewWorkspace);
+    await expectAccessible(page);
     // The bulk approval confirmation.
     await page.getByRole('button', { name: /^Aprobar todas \(\d+\)$/ }).click();
     const bulk = page.getByRole('dialog', { name: 'Confirmar aprobación de diapositivas' });
     await expect(bulk).toBeVisible();
-    await expectAccessible(page, KNOWN.reviewWorkspace);
+    await expectAccessible(page);
     await bulk.getByRole('button', { name: 'Cancelar' }).click();
     // Editorial copy, before and after generation.
     await openEditorialMode(page);
@@ -269,25 +286,40 @@ test.describe('Accessibility @a11y', () => {
     await approveReadySlidesInBulk(page);
     await page.getByRole('button', { name: 'Aprobar carrusel completo' }).click();
     await expect(page.getByRole('dialog', { name: 'Aprobar carrusel completo' })).toBeVisible();
-    await expectAccessible(page, KNOWN.reviewWorkspace);
+    await expectAccessible(page);
   });
 
   test('review workspace with a valid final approval', async ({ page }) => {
     await page.goto(pages().review);
     await expect(page.getByText('La aprobación final es válida. El carrusel se puede exportar.')).toBeVisible();
-    await expectAccessible(page, KNOWN.reviewWorkspace);
+    await expectAccessible(page);
   });
 
-  test('Exportaciones, an export and the trace of an exported slide', async ({ page }) => {
+  test('Exportaciones, an export, the trace of an exported slide in its states and a demo run', async ({ page }) => {
     await page.goto('/exports');
     await expect(page.getByRole('list', { name: 'Historial de exportaciones' })).toBeVisible();
     await expectAccessible(page);
     await page.goto(pages().exportDetail);
     await expect(page.getByRole('heading', { level: 1, name: 'Carrusel exportado' })).toBeVisible();
     await expectAccessible(page);
+    // The trace in its states (A11Y-01): operator-attested local facts, verified DEMO_DATA facts with the
+    // demonstration notice, and an address that names no export.
     await page.goto(pages().trace);
     await expect(page.getByRole('heading', { level: 1, name: 'Trazabilidad de la diapositiva 2' })).toBeVisible();
-    await expectAccessible(page, KNOWN.tracePage);
+    await expect(page.getByText(/aprobados manualmente/).first()).toBeVisible();
+    await expectAccessible(page);
+    await page.goto(pages().demoTrace);
+    await expect(page.getByRole('heading', { level: 1, name: 'Trazabilidad de la diapositiva 2' })).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Datos de la diapositiva' }).getByText(/^\d+ datos: \d+ verificados/),
+    ).toBeVisible();
+    await expectAccessible(page);
+    await page.goto(`${pages().exportDetail}/slides/no-es-una-posicion/trace`);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectAccessible(page);
+    await page.goto(pages().demoFacts);
+    await expect(page.getByRole('heading', { level: 1, name: 'Datos y verificación' })).toBeVisible();
+    await expectAccessible(page);
   });
 
   test('Competiciones: list, competition, teams with the badge form, season and round', async ({ page }) => {
@@ -303,7 +335,7 @@ test.describe('Accessibility @a11y', () => {
     await expectAccessible(page);
     await page
       .getByRole('row', { name: /^Club Alfa / })
-      .getByRole('button', { name: 'Editar equipo' })
+      .getByRole('button', { name: /^Editar equipo: Club Alfa / })
       .click();
     const dialog = page.getByRole('dialog', { name: 'Editar equipo' });
     await dialog.getByRole('button', { name: 'Subir escudo' }).click();

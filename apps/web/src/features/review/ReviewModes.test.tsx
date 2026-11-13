@@ -23,6 +23,7 @@ import {
   openCaption,
   openCopyTab,
   openMode,
+  PASSING_QA,
   problem,
   PROJECT_ID,
   renderApp,
@@ -265,6 +266,67 @@ describe('Design workspace (UX-REVIEW-01)', () => {
     expect(header.textContent).toContain('Bloqueos:1');
     await userEvent.click(screen.getByRole('button', { name: /^Siguiente pendiente/ }));
     expect(screen.getByRole('heading', { level: 3, name: 'Diapositiva 2: Resultado' })).toBeTruthy();
+  });
+});
+
+describe('Slide states: the name, the badge and the inspector agree (A11Y-02)', () => {
+  const STATES = [
+    'Aprobada',
+    'Bloqueada por datos',
+    'Advertencia por confirmar',
+    'Requiere regenerar',
+    'Pendiente del control visual',
+    'Lista para aprobar',
+  ];
+
+  it('names each slide with the state its badge shows, and its inspector states the same and offers only what it allows', async () => {
+    const warning = PASSING_QA.map((result) =>
+      result.check === 'capitalized_tokens'
+        ? { ...result, outcome: 'fail' as const, details: { tokens: ['GOLAZO'] } }
+        : result,
+    );
+    const failed = PASSING_QA.map((result) =>
+      result.check === 'text_fit'
+        ? { ...result, outcome: 'fail' as const, details: { overflowingElements: ['headline'] } }
+        : result,
+    );
+    const items = [
+      slide(1, 1, 'cover', { state: 'approved' }),
+      slide(2, 2, 'match_result', { blocked: true }),
+      slide(3, 3, 'match_result', { qa: warning }),
+      slide(4, 4, 'match_result', { state: 'qa_failed', qa: failed }),
+      slide(5, 5, 'match_result', { state: 'pending_qa', qa: [] }),
+      slide(6, 6, 'closing'),
+      caption(7, 7),
+    ];
+    renderApp(REVIEW, fakeServer({ [DRAFT_PATH]: draftResponse(draft({ carousels: [carousel(items)] })) }));
+    const rail = await screen.findByRole('navigation', { name: 'Diapositivas del carrusel' });
+    const expected: [string, string, 'approved' | 'disabled' | 'enabled'][] = [
+      ['Diapositiva 1: Portada', 'Aprobada', 'approved'],
+      ['Diapositiva 2: Resultado', 'Bloqueada por datos', 'disabled'],
+      ['Diapositiva 3: Resultado', 'Advertencia por confirmar', 'disabled'],
+      ['Diapositiva 4: Resultado', 'Requiere regenerar', 'disabled'],
+      ['Diapositiva 5: Resultado', 'Pendiente del control visual', 'disabled'],
+      ['Diapositiva 6: Cierre', 'Lista para aprobar', 'enabled'],
+    ];
+    for (const [name, state, approval] of expected) {
+      const item = within(rail).getByRole('button', { name: `${name}, ${state}` });
+      // The visible badge of the list says the same as the name.
+      expect(item.textContent).toContain(state);
+      await userEvent.click(item);
+      const inspector = await screen.findByRole('region', { name: `Estado y acciones: ${name}` });
+      const badge = within(inspector).getByText(state);
+      expect(badge.closest('header')).not.toBeNull();
+      for (const other of STATES.filter((label) => label !== state)) {
+        expect(inspector.textContent, `${name}: ${other}`).not.toContain(other);
+      }
+      if (approval === 'approved') {
+        expect(within(inspector).getByRole('button', { name: 'Retirar la aprobación' })).toBeTruthy();
+      } else {
+        const approve = within(inspector).getByRole('button', { name: 'Aprobar diapositiva' }) as HTMLButtonElement;
+        expect(approve.disabled, name).toBe(approval === 'disabled');
+      }
+    }
   });
 });
 

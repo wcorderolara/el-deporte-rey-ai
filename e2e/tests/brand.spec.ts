@@ -49,7 +49,7 @@ test.describe('Brand assets and team badges (R-231, PD-28)', () => {
     await page.goto(`/competitions/${competition.competitionId}/teams`);
     await page
       .getByRole('row', { name: /^Club Alfa / })
-      .getByRole('button', { name: 'Editar equipo' })
+      .getByRole('button', { name: /^Editar equipo: Club Alfa / })
       .click();
     const dialog = page.getByRole('dialog', { name: 'Editar equipo' });
     const badge = dialog.getByRole('region', { name: 'Escudo' });

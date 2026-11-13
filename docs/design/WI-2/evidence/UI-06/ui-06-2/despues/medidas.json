@@ -1,0 +1,17 @@
+{
+  "A11Y-02 rail names": [
+    "Diapositiva 1: Portada, Lista para aprobar",
+    "Diapositiva 2: Resultado, Advertencia por confirmar",
+    "Diapositiva 3: Resultado, Advertencia por confirmar",
+    "Diapositiva 4: Cierre, Lista para aprobar"
+  ],
+  "A11Y-02 rail visible": [
+    "01 · Portada•Lista para aprobar",
+    "02 · Resultado!Advertencia por confirmar",
+    "03 · Resultado!Advertencia por confirmar",
+    "04 · Cierre•Lista para aprobar"
+  ],
+  "A11Y-02 inspector header": "Inspector de revisión!Advertencia por confirmarDiapositiva 2: Resultado",
+  "R-02 scrollWidth - clientWidth at 768": 0,
+  "Reflow competiciones scrollWidth - clientWidth at 320": 0
+}

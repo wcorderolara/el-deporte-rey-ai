@@ -95,7 +95,10 @@ export function CompetitionListPage() {
     <section aria-labelledby="competitions-title" className="grid min-w-0 gap-6">
       <header>
         <p className="m-0 mb-2 text-caption font-bold tracking-label text-brand-gold uppercase">Administración local</p>
-        <h1 id="competitions-title" className="m-0 font-display text-heading-lg font-extrabold text-text-primary">
+        <h1
+          id="competitions-title"
+          className="m-0 font-display text-heading-md font-extrabold text-text-primary sm:text-heading-lg"
+        >
           Competiciones
         </h1>
         <p className="m-0 mt-2 max-w-reading text-body-md text-text-secondary">

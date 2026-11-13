@@ -752,7 +752,14 @@ describe('competition foundation page', () => {
     );
     await screen.findByRole('rowheader', { name: 'Club Uno' });
     expect(screen.queryByRole('link', { name: 'Ver temporadas' })).toBeNull();
-    await userEvent.click(screen.getByRole('button', { name: 'Editar equipo' }));
+    // O-2: the accessible names carry the team; the tooltip and the title keep the action only.
+    const editTeam = screen.getByRole('button', { name: 'Editar equipo: Club Uno' });
+    expect(editTeam.getAttribute('title')).toBe('Editar equipo');
+    expect(document.getElementById(editTeam.getAttribute('aria-describedby') ?? '')?.textContent).toBe('Editar equipo');
+    expect(screen.getByRole('button', { name: 'Quitar de competición: Club Uno' }).getAttribute('title')).toBe(
+      'Quitar de competición',
+    );
+    await userEvent.click(editTeam);
     const editDialog = screen.getByRole('dialog');
     await userEvent.clear(within(editDialog).getByRole('textbox', { name: 'Nombre del equipo' }));
     await userEvent.type(within(editDialog).getByRole('textbox', { name: 'Nombre del equipo' }), updated.name);
@@ -765,7 +772,8 @@ describe('competition foundation page', () => {
     expect(await screen.findByRole('rowheader', { name: updated.name })).toBeTruthy();
     expect(api.updateTeam).toHaveBeenCalledWith(team.id, { name: updated.name, region: updated.region });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Quitar de competición' }));
+    // The name follows the team's current name.
+    await userEvent.click(screen.getByRole('button', { name: `Quitar de competición: ${updated.name}` }));
     const removeDialog = screen.getByRole('dialog');
     expect(within(removeDialog).getByText(/El equipo global se conservará/)).toBeTruthy();
     await userEvent.click(within(removeDialog).getByRole('button', { name: 'Quitar de competición' }));
@@ -1345,7 +1353,7 @@ describe('competition foundation page', () => {
     expect(row.querySelector('img')?.getAttribute('src')).toMatch(new RegExp(`^/api/v1/teams/${team.id}/badge\\?v=`));
     expect(badgeOf(screen.getByRole('rowheader', { name: 'Club Dos' }))).toBe('none');
 
-    await userEvent.click(screen.getAllByRole('button', { name: 'Editar equipo' })[0] as HTMLElement);
+    await userEvent.click(screen.getByRole('button', { name: 'Editar equipo: Club Uno' }));
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByText('Sitio oficial del club')).toBeTruthy();
     expect(within(dialog).getByText('Subido a mano')).toBeTruthy();

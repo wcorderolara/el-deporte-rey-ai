@@ -118,6 +118,9 @@ describe('App shell (R-235)', () => {
     // UX-REVIEW-01: the content review is a full-width workspace that uses the height of the viewport.
     expect(contentVariantOf('/projects/p1/review')).toBe('workspace');
     expect(contentVariantOf('/projects/p1/exports')).toBe('studio');
+    expect(contentVariantOf('/projects/p1/exports/e1')).toBe('studio');
+    // A11Y-01: the trace of an exported slide is a record in the light panel, like «Datos y verificación».
+    expect(contentVariantOf('/projects/p1/exports/e1/slides/2/trace')).toBe('legacy');
   });
 
   it('opens Mi marca and Plantillas as separate pages on the studio surface (PD-ARCH-01G-A)', async () => {

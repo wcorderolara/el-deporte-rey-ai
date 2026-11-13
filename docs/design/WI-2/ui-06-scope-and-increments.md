@@ -1,7 +1,9 @@
 # UI-06 — Estabilización, responsive y accesibilidad: alcance e incrementos
 
 **Estado:** UI-06.1 aceptado por el Product Owner y cerrado el 2026-11-13 en `bcdecc7` (recuperación de las suites y
-corrección de E2E-F01). UI-06.2 y UI-06.3 no iniciados; empiezan solo con la validación del Product Owner. UI-06 no está terminado.
+corrección de E2E-F01). UI-06.2 aceptado por el Product Owner y cerrado el 2026-11-13 (responsive,
+accesibilidad, O-1 y O-2). UI-06.3 no iniciado; empieza solo con la validación del Product Owner. UI-06 no está
+terminado.
 **Rama:** `work/WI-2-UI-06`, creada desde `9f5963fa0517ac4220acf4577fe92f3188c6217f` (cierre de REVIEW-APPROVAL-01).
 **Origen:** instrucción del Product Owner «WI-2 / UI-06 — Estabilización, responsive y accesibilidad» (2026-11-13) y la
 sección UI-06 de [`incremental-ux-ui-implementation-plan.md`](incremental-ux-ui-implementation-plan.md).
@@ -78,6 +80,9 @@ Alcance (sujeto a validación del Product Owner tras UI-06.1):
   R-02 (tooltip de Inicio a 768 px) y R-03 (vista previa de la revisión a 1280 × 720). Siguen declarados en la suite
   hasta que se corrijan. O-1 y O-2 quedan a la espera de la decisión del Product Owner.
 - Mientras estos hallazgos sigan abiertos no se declara el cumplimiento de WCAG 2.2 AA.
+- Instrucción del Product Owner del 2026-11-13 («WI-2 / UI-06.2 — Responsive, accesibilidad y corrección de
+  hallazgos»): criterios AC-01 a AC-12, sin commit hasta su aceptación, sin actualizar `@fastify/static`, sin tocar
+  la política de exportaciones, PD-33 ni PD-34, y O-1 y O-2 presentadas sin asumir la decisión.
 
 Criterios de aceptación:
 
@@ -85,6 +90,14 @@ Criterios de aceptación:
    inaccesibles; las distribuciones de tres columnas se apilan en pantallas pequeñas.
 2. Sin violaciones axe serias o críticas y sin bloqueos manuales de teclado o reflow en esas pantallas.
 3. La identidad visual aprobada no cambia; cada cambio visible tiene evidencia antes y después.
+
+Resultado: aceptado por el Product Owner y cerrado el 2026-11-13 (informe, sección 18). A11Y-01, A11Y-02, R-02 y
+R-03 corregidos y sus excepciones retiradas de la suite; la validación encontró y corrigió R-04 (editor de plantillas
+por debajo de 900 px), R-05 (título de Competiciones a 320 px) y A11Y-03 (tooltips sin cierre con Escape, WCAG
+1.4.13); 34 pantallas y estados medidos en los cinco anchos, al 200 % y a 320 px. O-1 (nota de Mi marca) y O-2
+(nombres accesibles de las acciones de equipos) aprobadas e implementadas (PD-35). WCAG 2.2 AA no se declara: faltan
+lectores de pantalla, zoom real, colores forzados, dispositivos físicos y navegación compleja por teclado. Informe:
+[`ui-06-2-responsive-a11y-report.md`](ui-06-2-responsive-a11y-report.md).
 
 ### UI-06.3 — Regresión integral y estabilización final
 
@@ -96,6 +109,9 @@ Alcance (sujeto a validación del Product Owner tras UI-06.2):
 - Auditoría de CSS Modules restantes (M5 de `tailwind-v4-migration-strategy.md`).
 - Actualizaciones de dependencias que el Product Owner apruebe a partir de la clasificación de UI-06.1. Candidata:
   `@fastify/static` 10.1.11 (mismo mayor; sección 7.3 del informe), que necesita una autorización aparte.
+- Pendientes que deja UI-06.2 (su informe, sección 18.3): trazabilidad con una disputa entre fuentes, la validación
+  manual de accesibilidad si el Product Owner la incluye, y el color del enlace de la página de error de sección
+  dentro de las páginas del estudio.
 
 Criterios de aceptación:
 
@@ -105,3 +121,4 @@ Criterios de aceptación:
 ## 4. Documentos
 
 - Informe de UI-06.1: [`ui-06-1-e2e-a11y-recovery-report.md`](ui-06-1-e2e-a11y-recovery-report.md).
+- Informe de UI-06.2: [`ui-06-2-responsive-a11y-report.md`](ui-06-2-responsive-a11y-report.md).

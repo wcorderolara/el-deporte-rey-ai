@@ -11,8 +11,8 @@ import { useReviewDependencies } from '../review/ReviewContext';
 import { useDraft } from '../review/useDraft';
 import { ReviewThumbnailRail, type ReviewThumbnail } from '../review/ReviewThumbnailRail';
 import { SlidePanel, SlideWorkspace } from '../review/SlideWorkspace';
-import { slideTypeLabel, textFieldLabel, versionStateLabel } from '../review/copy';
-import { elementName, elementStatus } from '../review/model';
+import { slideTypeLabel, textFieldLabel } from '../review/copy';
+import { elementName, elementStatus, statusBadgeTone } from '../review/model';
 
 function fieldText(element: Element, field: string): string | null {
   const item = element.currentVersion.fields.find((entry) => entry.field === field);
@@ -135,6 +135,7 @@ function ProjectCarouselPreview({
   }
 
   const version = selectedSlide.currentVersion;
+  const selectedStatus = elementStatus(selectedSlide);
   const name = elementName(selectedSlide);
   const detailFields = DETAIL_FIELDS.map((field) => ({ field, value: fieldText(selectedSlide, field) })).filter(
     (item): item is { field: (typeof DETAIL_FIELDS)[number]; value: string } => item.value !== null,
@@ -172,9 +173,9 @@ function ProjectCarouselPreview({
           eyebrow="Contenido del carrusel"
           badges={
             <StatusBadge
-              label={versionStateLabel[version.state]}
-              tone={version.state === 'approved' ? 'positive' : version.state === 'qa_failed' ? 'caution' : 'neutral'}
-              symbol={version.state === 'approved' ? '✓' : version.state === 'qa_failed' ? '!' : '•'}
+              label={selectedStatus.label}
+              tone={statusBadgeTone(selectedStatus)}
+              symbol={selectedStatus.symbol}
             />
           }
           title={name}

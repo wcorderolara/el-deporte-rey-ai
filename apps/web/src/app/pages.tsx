@@ -36,7 +36,10 @@ export function RootErrorPage() {
       <h1>{pageCopy.routeErrorTitle}</h1>
       <p>{pageCopy.routeErrorBody}</p>
       <p>
-        <a href="/">{pageCopy.backToProjects}</a>
+        {/* Outside the shell, on the studio canvas of the document: the studio link colour. */}
+        <a className="text-text-link" href="/">
+          {pageCopy.backToProjects}
+        </a>
       </p>
     </main>
   );

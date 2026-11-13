@@ -385,7 +385,7 @@ export function CarouselReview({
           imageSource: element.currentVersion.imageUrl ? api.slideImageUrl(element.currentVersion.id) : null,
           title: element.slideType ? slideTypeLabel[element.slideType] : 'Diapositiva',
           status: { label: status.label, tone: status.tone, symbol: status.symbol },
-          ariaLabel: carouselCopy.slideButton(element.position, element.slideType, element.currentVersion.state),
+          ariaLabel: carouselCopy.slideButton(element.position, element.slideType, status.label),
         };
       })}
       onSelect={selectSlide}

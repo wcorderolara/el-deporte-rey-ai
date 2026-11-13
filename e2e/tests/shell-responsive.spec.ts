@@ -1,6 +1,7 @@
 import { axeScan, expect, test } from '../support/test.js';
 
-for (const width of [1440, 768, 390]) {
+// The five widths of UI-06.2: the navigation is a fixed column from 1200 px and a menu below.
+for (const width of [1440, 1280, 1024, 768, 390]) {
   test(`shell navigation at ${width}px @a11y`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto('/');

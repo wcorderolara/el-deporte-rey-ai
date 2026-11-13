@@ -1,6 +1,7 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { Button } from './Button';
 import { Icon } from './Icon';
+import { Tooltip } from './Tooltip';
 
 export function ModalFooter({
   onCancel,
@@ -109,6 +110,35 @@ export function Modal({
   );
 }
 
+/** A view control with its tooltip (`Tooltip`, R-02: at 768 px the last control sits at the edge of the window). */
+function ViewModeButton({
+  mode,
+  pressed,
+  onChange,
+}: {
+  mode: 'table' | 'cards';
+  pressed: boolean;
+  onChange: (value: 'table' | 'cards') => void;
+}) {
+  const label = mode === 'table' ? 'Vista de tabla' : 'Vista de tarjetas';
+  const id = useId();
+  return (
+    <Tooltip id={id} label={label}>
+      <button
+        type="button"
+        aria-label={label}
+        aria-describedby={id}
+        aria-pressed={pressed}
+        title={label}
+        className={`inline-flex min-h-touch min-w-touch items-center justify-center rounded-lg border border-transparent p-2 transition-colors focus-studio ${pressed ? 'border-border-strong bg-surface-overlay text-brand-gold shadow-control' : 'bg-transparent text-text-secondary hover:border-border-subtle hover:bg-surface-card hover:text-text-primary'}`}
+        onClick={() => onChange(mode)}
+      >
+        <Icon name={mode === 'table' ? 'table' : 'grid'} />
+      </button>
+    </Tooltip>
+  );
+}
+
 export function ViewModeToggle({
   value,
   onChange,
@@ -122,32 +152,9 @@ export function ViewModeToggle({
       role="group"
       aria-label="Formato de visualización"
     >
-      {(['table', 'cards'] as const).map((mode) => {
-        const label = mode === 'table' ? 'Vista de tabla' : 'Vista de tarjetas';
-        const id = `view-mode-tip-${mode}`;
-        return (
-          <span key={mode} className="group relative inline-flex">
-            <button
-              type="button"
-              aria-label={label}
-              aria-describedby={id}
-              aria-pressed={value === mode}
-              title={label}
-              className={`inline-flex min-h-touch min-w-touch items-center justify-center rounded-lg border border-transparent p-2 transition-colors focus-studio ${value === mode ? 'border-border-strong bg-surface-overlay text-brand-gold shadow-control' : 'bg-transparent text-text-secondary hover:border-border-subtle hover:bg-surface-card hover:text-text-primary'}`}
-              onClick={() => onChange(mode)}
-            >
-              <Icon name={mode === 'table' ? 'table' : 'grid'} />
-            </button>
-            <span
-              id={id}
-              role="tooltip"
-              className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-border-subtle bg-surface-overlay px-2 py-1 text-caption font-semibold text-text-primary shadow-card group-hover:block group-focus-within:block"
-            >
-              {label}
-            </span>
-          </span>
-        );
-      })}
+      {(['table', 'cards'] as const).map((mode) => (
+        <ViewModeButton key={mode} mode={mode} pressed={value === mode} onChange={onChange} />
+      ))}
     </div>
   );
 }

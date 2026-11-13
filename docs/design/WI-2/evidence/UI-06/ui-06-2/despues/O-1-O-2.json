@@ -1,0 +1,27 @@
+{
+  "O-1 nota": "Los escudos de los equipos se gestionan desde Competiciones, donde puedes cargar los archivos y registrar su procedencia y autorización de uso. Mi marca administra los recursos visuales propios de El Deporte Rey.",
+  "O-2 tabla": [
+    "Editar equipo: Club Alfa lzahkl",
+    "Quitar de competición: Club Alfa lzahkl",
+    "Editar equipo: Club Beta lzahkl",
+    "Quitar de competición: Club Beta lzahkl",
+    "Editar equipo: Club Delta lzahkl",
+    "Quitar de competición: Club Delta lzahkl",
+    "Editar equipo: Club Gamma lzahkl",
+    "Quitar de competición: Club Gamma lzahkl"
+  ],
+  "O-2 tarjetas": [
+    "Editar equipo: Club Alfa lzahkl",
+    "Quitar de competición: Club Alfa lzahkl",
+    "Editar equipo: Club Beta lzahkl",
+    "Quitar de competición: Club Beta lzahkl",
+    "Editar equipo: Club Delta lzahkl",
+    "Quitar de competición: Club Delta lzahkl",
+    "Editar equipo: Club Gamma lzahkl",
+    "Quitar de competición: Club Gamma lzahkl"
+  ],
+  "O-2 tooltip visible": [
+    "Vista de tabla",
+    "Editar equipo"
+  ]
+}
