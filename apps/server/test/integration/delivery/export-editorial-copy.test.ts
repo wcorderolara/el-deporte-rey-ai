@@ -126,7 +126,8 @@ describe('approved editorial copy in the export (REVIEW-APPROVAL-01)', { timeout
     const rule = '='.repeat(40);
     expect(text).toBe(
       `COPY EDITORIAL APROBADO\n${manifestOf(t, withCopy).project.competitionName} · ` +
-        `${manifestOf(t, withCopy).project.stageLabel} · ${manifestOf(t, withCopy).project.seasonLabel}\n\n` +
+        `${manifestOf(t, withCopy).project.stageLabel} · Jornada ${String(manifestOf(t, withCopy).project.matchday)} · ` +
+        `${manifestOf(t, withCopy).project.seasonLabel}\n\n` +
         `${rule}\nFacebook / Instagram\n${rule}\n\n${editorialDeliverableText('facebook_instagram', main.fields)}\n\n` +
         `${rule}\nYouTube\n${rule}\n\n${editorialDeliverableText('youtube', youtube.fields)}\n`,
     );

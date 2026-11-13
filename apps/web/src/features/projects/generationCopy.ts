@@ -54,6 +54,8 @@ export const skipReasonCopy: Readonly<Record<ContentPieceSkipReason, string>> = 
   already_finished: 'El partido ya finalizó; no es un partido por jugar.',
   not_upcoming: 'El estado del partido no es programado ni aplazado.',
   score_missing: 'El marcador es desconocido; no se representa como 0-0.',
+  score_not_supported:
+    'Este recorrido no admite marcadores de más de 99 goles por equipo; el resultado se conserva sin cambios en Competiciones.',
   kickoff_missing: 'El partido no tiene fecha y hora registradas.',
   team_name_not_supported: 'Un nombre de equipo no es compatible con la plantilla.',
   no_eligible_matches: 'Ningún partido seleccionado es compatible con este tipo de contenido.',

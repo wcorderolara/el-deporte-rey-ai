@@ -118,6 +118,7 @@ const COMMITTED = [
   { version: 34, name: 'editorial_naming_reconcile' },
   { version: 35, name: 'qa_team_badges' },
   { version: 36, name: 'export_editorial_copy' },
+  { version: 37, name: 'content_skip_reason_score_not_supported' },
 ];
 
 describe('committed migrations', () => {
@@ -183,6 +184,11 @@ describe('committed migrations', () => {
       { version: 34, name: 'editorial_naming_reconcile', fileName: '0034_editorial_naming_reconcile.sql' },
       { version: 35, name: 'qa_team_badges', fileName: '0035_qa_team_badges.sql' },
       { version: 36, name: 'export_editorial_copy', fileName: '0036_export_editorial_copy.sql' },
+      {
+        version: 37,
+        name: 'content_skip_reason_score_not_supported',
+        fileName: '0037_content_skip_reason_score_not_supported.sql',
+      },
     ]);
   });
 
@@ -259,8 +265,9 @@ describe('committed migrations', () => {
           { version: 34, name: 'editorial_naming_reconcile' },
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
+          { version: 37, name: 'content_skip_reason_score_not_supported' },
         ],
-        currentVersion: 36,
+        currentVersion: 37,
       });
       expect(
         db
@@ -329,8 +336,9 @@ describe('committed migrations', () => {
           { version: 34, name: 'editorial_naming_reconcile' },
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
+          { version: 37, name: 'content_skip_reason_score_not_supported' },
         ],
-        currentVersion: 36,
+        currentVersion: 37,
       });
       expect(JSON.stringify(snapshot())).toBe(before);
       for (const table of [
@@ -396,8 +404,9 @@ CREATE INDEX idx_content_generation_item_matches_match ON content_generation_ite
           { version: 34, name: 'editorial_naming_reconcile' },
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
+          { version: 37, name: 'content_skip_reason_score_not_supported' },
         ],
-        currentVersion: 36,
+        currentVersion: 37,
       });
       expect(columns(empty.db)).toContain('import_id');
       expect(empty.db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
@@ -485,8 +494,9 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga', 's1', '2026/27', NU
           { version: 34, name: 'editorial_naming_reconcile' },
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
+          { version: 37, name: 'content_skip_reason_score_not_supported' },
         ],
-        currentVersion: 36,
+        currentVersion: 37,
       });
       expect(
         JSON.stringify(reconciled.db.prepare('SELECT rowid, * FROM content_generation_items ORDER BY rowid, id').all()),
@@ -516,20 +526,20 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga', 's1', '2026/27', NU
     const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
     const first = openMigratedDatabase({ location, now: () => FIXED_NOW });
     try {
-      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 36 });
+      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 37 });
       expect(first.db.prepare('PRAGMA journal_mode').get()).toEqual({ journal_mode: 'wal' });
       expect(first.db.prepare('PRAGMA foreign_keys').get()).toEqual({ foreign_keys: 1 });
       expect(appliedMigrations(first.db)).toEqual(
         COMMITTED.map((record) => ({ ...record, appliedAt: '2026-10-27T16:32:21.123Z' })),
       );
-      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 36 });
+      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 37 });
     } finally {
       first.db.close();
     }
 
     const second = openMigratedDatabase({ location });
     try {
-      expect(second.report).toEqual({ applied: [], currentVersion: 36 });
+      expect(second.report).toEqual({ applied: [], currentVersion: 37 });
       expect(tableExists(second.db, 'competition_teams')).toBe(true);
       expect(tableExists(second.db, 'facts')).toBe(true);
       expect(tableExists(second.db, 'competitions')).toBe(true);
@@ -631,8 +641,9 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga', 's1', '2026/27', NU
           { version: 34, name: 'editorial_naming_reconcile' },
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
+          { version: 37, name: 'content_skip_reason_score_not_supported' },
         ],
-        currentVersion: 36,
+        currentVersion: 37,
       });
       expect(db.prepare('SELECT competition_id, team_id FROM competition_teams ORDER BY team_id').all()).toEqual([
         { competition_id: 'c1', team_id: 't1' },
@@ -996,8 +1007,9 @@ describe('migrations 0021 and 0022 upgrade a database at version 20 (PD-ARCH-01E
           { version: 34, name: 'editorial_naming_reconcile' },
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
+          { version: 37, name: 'content_skip_reason_score_not_supported' },
         ],
-        currentVersion: 36,
+        currentVersion: 37,
       });
 
       expect(JSON.stringify(snapshot())).toBe(before);
@@ -1094,8 +1106,9 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
           { version: 34, name: 'editorial_naming_reconcile' },
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
+          { version: 37, name: 'content_skip_reason_score_not_supported' },
         ],
-        currentVersion: 36,
+        currentVersion: 37,
       });
 
       expect(db.prepare(QA_RESULT_BYTES).all()).toEqual(bytesBefore);
@@ -1132,7 +1145,7 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
     // Reopening applies nothing more.
     const reopened = openMigratedDatabase({ location });
     try {
-      expect(reopened.report).toEqual({ applied: [], currentVersion: 36 });
+      expect(reopened.report).toEqual({ applied: [], currentVersion: 37 });
     } finally {
       reopened.db.close();
     }
@@ -1298,8 +1311,11 @@ describe('migration 0036_export_editorial_copy.sql (REVIEW-APPROVAL-01, amendmen
       expect(bytesBefore).toHaveLength(3);
 
       expect(runMigrations(db, { now: () => FIXED_NOW })).toEqual({
-        applied: [{ version: 36, name: 'export_editorial_copy' }],
-        currentVersion: 36,
+        applied: [
+          { version: 36, name: 'export_editorial_copy' },
+          { version: 37, name: 'content_skip_reason_score_not_supported' },
+        ],
+        currentVersion: 37,
       });
       expect(db.prepare(EXPORT_FILE_BYTES).all()).toEqual(bytesBefore);
       // The only change is the fourth kind of the kind list.
@@ -1320,6 +1336,86 @@ describe('migration 0036_export_editorial_copy.sql (REVIEW-APPROVAL-01, amendmen
       expect(refusal(() => insertFile(db, 'other.txt', 'editorial', 6, null))).toBe('check');
     } finally {
       db.close();
+    }
+  });
+});
+
+describe('migration 0037_content_skip_reason_score_not_supported.sql (UI06.3-D06)', () => {
+  it('rebuilds the content item tables with score_not_supported and keeps every row as it was', () => {
+    const committed = defaultMigrationsDirectory();
+    const read = (name: string) => readFileSync(path.join(committed, name), 'utf8');
+    const upTo36 = migrationDir(
+      Object.fromEntries(
+        readMigrations(committed)
+          .filter((migration) => migration.version <= 36)
+          .map((migration) => [migration.fileName, read(migration.fileName)]),
+      ),
+    );
+    const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
+    const at = FIXED_NOW.toISOString();
+    const item = (db: SqliteDatabase, id: string, position: number, kind: string, reason: string): void => {
+      db.prepare(
+        'INSERT INTO content_generation_items (id, batch_id, position, kind, title, skip_reason) VALUES (?, ?, ?, ?, ?, ?)',
+      ).run([id, 'b1', position, kind, 'Pieza sintética', reason]);
+    };
+    const rows = (db: SqliteDatabase) => ({
+      items: JSON.stringify(db.prepare('SELECT rowid, * FROM content_generation_items ORDER BY rowid').all()),
+      matches: JSON.stringify(db.prepare('SELECT rowid, * FROM content_generation_item_matches ORDER BY rowid').all()),
+    });
+    let before: { items: string; matches: string };
+    const old = openMigratedDatabase({ location, directory: upTo36 });
+    try {
+      expect(old.report.currentVersion).toBe(36);
+      old.db.execScript(`
+INSERT INTO sources (id, name, mode, role, official_publication, accepted, independence_group, publication_permission,
+  adapter, first_seen_at, last_seen_at)
+VALUES ('local-a', 'Synthetic local source', 'MANUAL_DATA', 'primary', 0, 0, 'group-a', 'not_applicable', 'manual',
+  '${at}', '${at}');
+INSERT INTO competitions (id, name, created_at, updated_at) VALUES ('c1', 'Liga Sintética', '${at}', '${at}');
+INSERT INTO competition_seasons (id, competition_id, label, normalized_label, created_at)
+VALUES ('s1', 'c1', '2026/27', '2026/27', '${at}');
+INSERT INTO imports (id, source_id, channel, file_name, declared_source, competition_id, season_id, original_path,
+  original_sha256, original_bytes, received_at)
+VALUES ('i1', 'local-a', 'form', NULL, NULL, 'c1', 's1', 'imports/i1.json', '${'a'.repeat(64)}', 10, '${at}');
+INSERT INTO content_generation_batches (id, import_id, request_key, request_hash, competition_id, competition_name,
+  season_id, season_label, stage_id, stage_name, round_id, round_name, selection_label, language, created_at)
+VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga Sintética', 's1', '2026/27', NULL, NULL, 'r1', 'Jornada 1',
+  'Jornada 1', 'es', '${at}');`);
+      item(old.db, 'it1', 1, 'round_results', 'no_eligible_matches');
+      item(old.db, 'it2', 2, 'match_result', 'score_missing');
+      item(old.db, 'it3', 3, 'round_calendar', 'already_finished');
+      // Version 36 refuses the new reason.
+      expect(refusal(() => item(old.db, 'it4', 4, 'match_result', 'score_not_supported'))).toBe('check');
+      before = rows(old.db);
+    } finally {
+      old.db.close();
+    }
+
+    const migrated = openMigratedDatabase({ location, now: () => FIXED_NOW });
+    try {
+      expect(migrated.report).toEqual({
+        applied: [{ version: 37, name: 'content_skip_reason_score_not_supported' }],
+        currentVersion: 37,
+      });
+      expect(rows(migrated.db)).toEqual(before);
+      expect(refusal(() => item(migrated.db, 'it4', 4, 'match_result', 'score_not_supported'))).toBe('accepted');
+      // The other reasons and the constraints stay as they were.
+      expect(refusal(() => item(migrated.db, 'it5', 5, 'match_result', 'unknown_score'))).toBe('check');
+      expect(refusal(() => item(migrated.db, 'it6', 4, 'match_result', 'score_missing'))).toBe('unique');
+      expect(
+        migrated.db.prepare("SELECT name FROM sqlite_master WHERE name LIKE 'content_generation_%_new'").all(),
+      ).toEqual([]);
+      expect(
+        migrated.db
+          .prepare(
+            "SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'idx_content_generation_item_matches_match'",
+          )
+          .all(),
+      ).toHaveLength(1);
+      expect(migrated.db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
+      expect(migrated.db.prepare('PRAGMA integrity_check').all()).toEqual([{ integrity_check: 'ok' }]);
+    } finally {
+      migrated.db.close();
     }
   });
 });
@@ -1430,8 +1526,9 @@ describe('migration 0031_reconcile_field_provenance_references.sql', () => {
           { version: 34, name: 'editorial_naming_reconcile' },
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
+          { version: 37, name: 'content_skip_reason_score_not_supported' },
         ],
-        currentVersion: 36,
+        currentVersion: 37,
       });
       for (const table of ['sports_field_provenance', 'sports_field_provenance_events'])
         expect(references(db, table)).toEqual([{ table: 'competitions', from: 'competition_id' }]);
@@ -1533,8 +1630,9 @@ describe('migration 0032_engine_slide_type_templates.sql (decision 01G-D-3)', ()
           { version: 34, name: 'editorial_naming_reconcile' },
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
+          { version: 37, name: 'content_skip_reason_score_not_supported' },
         ],
-        currentVersion: 36,
+        currentVersion: 37,
       });
       expect(db.prepare('SELECT * FROM visual_templates ORDER BY id').all()).toEqual(templates);
       expect(db.prepare('SELECT * FROM visual_template_versions ORDER BY id').all()).toEqual(versions);

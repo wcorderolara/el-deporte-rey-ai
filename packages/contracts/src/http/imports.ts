@@ -20,6 +20,13 @@ import {
 } from './primitives.js';
 
 /** Format marker of the one normalized import document. */
+/**
+ * The largest score of a team that a form import accepts (`score.home`, `score.away`). The frozen selection of a local
+ * content batch is recorded through this import, so a local result above it is reported as `score_not_supported`
+ * (UI06.3-D06) instead of making the confirmation fail.
+ */
+export const IMPORT_SCORE_MAX = 99;
+
 export const MANUAL_IMPORT_FORMAT = 'edr-manual-import/1';
 
 /** At most 512 KiB of decoded bytes, as standard padded base64 characters (T11H-F01). */
@@ -42,7 +49,9 @@ export const ManualSelectionSchema = z.strictObject({
         away: SlugSchema,
         kickoff: boundedDateTime,
         status: MatchStatusSchema,
-        score: z.strictObject({ home: z.int().min(0).max(99), away: z.int().min(0).max(99) }).nullable(),
+        score: z
+          .strictObject({ home: z.int().min(0).max(IMPORT_SCORE_MAX), away: z.int().min(0).max(IMPORT_SCORE_MAX) })
+          .nullable(),
       }),
     )
     .min(1)

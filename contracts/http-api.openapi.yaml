@@ -4499,7 +4499,7 @@ components:
         status: { $ref: '#/components/schemas/CompetitionMatchStatus' }
         homeScore: { anyOf: [{ type: integer, minimum: 0 }, { type: 'null' }] }
         awayScore: { anyOf: [{ type: integer, minimum: 0 }, { type: 'null' }] }
-        ineligibility: { anyOf: [{ type: string, enum: [not_finished, score_missing, kickoff_missing, team_name_not_supported] }, { type: 'null' }] }
+        ineligibility: { anyOf: [{ type: string, enum: [not_finished, score_missing, kickoff_missing, team_name_not_supported, score_not_supported] }, { type: 'null' }] }
         calendarIneligibility: { anyOf: [{ type: string, enum: [already_finished, not_upcoming, kickoff_missing, team_name_not_supported] }, { type: 'null' }] }
         upcomingIneligibility: { anyOf: [{ type: string, enum: [already_finished, not_upcoming, kickoff_missing, team_name_not_supported] }, { type: 'null' }] }
     ContentPiecePlan:
@@ -4512,7 +4512,7 @@ components:
         title: { type: string, minLength: 1, maxLength: 200 }
         matchIds: { type: array, maxItems: 32, items: { $ref: '#/components/schemas/Uuid' } }
         status: { type: string, enum: [ready, skipped] }
-        skipReason: { anyOf: [{ type: string, enum: [not_finished, score_missing, kickoff_missing, team_name_not_supported, no_eligible_matches, context_not_supported, not_upcoming, already_finished] }, { type: 'null' }] }
+        skipReason: { anyOf: [{ type: string, enum: [not_finished, score_missing, kickoff_missing, team_name_not_supported, no_eligible_matches, context_not_supported, not_upcoming, already_finished, score_not_supported] }, { type: 'null' }] }
     ContentBatchPreview:
       type: object
       required: [context, selectionLabel, language, matches, templates, visualTemplates, pieces, totals]
@@ -4544,7 +4544,7 @@ components:
         title: { type: string, minLength: 1, maxLength: 200 }
         matchIds: { type: array, maxItems: 32, items: { $ref: '#/components/schemas/Uuid' } }
         status: { type: string, enum: [skipped, pending, running, completed, failed, deleted] }
-        skipReason: { anyOf: [{ type: string, enum: [not_finished, score_missing, kickoff_missing, team_name_not_supported, no_eligible_matches, context_not_supported, not_upcoming, already_finished] }, { type: 'null' }] }
+        skipReason: { anyOf: [{ type: string, enum: [not_finished, score_missing, kickoff_missing, team_name_not_supported, no_eligible_matches, context_not_supported, not_upcoming, already_finished, score_not_supported] }, { type: 'null' }] }
         failure: { anyOf: [{ $ref: '#/components/schemas/Failure' }, { type: 'null' }] }
         projectId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
         runId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
@@ -5905,7 +5905,15 @@ components:
               name:
                 type: string
                 enum: [headline, body, question, hashtags, copy, headline_1, headline_2, headline_3, title, description]
-              text: { type: string, minLength: 1, maxLength: 5000, pattern: '^(?:[^\p{Cc}\p{Cf}]|\n)+$' }
+              text:
+                description: >-
+                  The edited text. Line feeds and U+200D ZERO WIDTH JOINER are the only control or format characters
+                  accepted (UI-06.3), so that an emoji sequence the writer may produce can be saved again; the content
+                  checks still flag a joiner outside an emoji sequence (T10-A1-05).
+                type: string
+                minLength: 1
+                maxLength: 5000
+                pattern: '^(?:[^\p{Cc}\p{Cf}]|\n|\u200D)+$'
     DesignPricing:
       description: Prices per million tokens as configured from the provider's published price list, with its source and date.
       type: object

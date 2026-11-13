@@ -418,6 +418,45 @@ test.describe('Accessibility @a11y', () => {
     await expectAccessible(page);
   });
 
+  test('section error page inside a studio route: readable link, visible focus and the way back (UI-06.3)', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { level: 1, name: 'Tu próximo contenido empieza aquí' })).toBeVisible();
+    // The code of the next section fails to load, so the router shows the section error page inside the shell, on
+    // the studio surface of /exports.
+    const failing = /\/assets\/.*\.js$/;
+    await page.route(failing, (route) => route.abort('failed'));
+    await page
+      .getByRole('navigation', { name: 'Navegación principal' })
+      .getByRole('link', { name: 'Exportaciones', exact: true })
+      .click();
+    const main = page.getByRole('main');
+    await expect(main.getByRole('heading', { level: 1, name: 'No se pudo mostrar esta sección' })).toBeVisible();
+    await expect(main.getByRole('alert')).toBeVisible();
+    await expectAccessible(page);
+    // The link back: studio link colour and studio focus ring on the dark surface, reached with the keyboard.
+    const back = main.getByRole('link', { name: 'Volver a la lista de proyectos' });
+    await page.keyboard.press('Tab');
+    for (let stop = 0; stop < 10 && !(await back.evaluate((link) => link === document.activeElement)); stop += 1) {
+      await page.keyboard.press('Tab');
+    }
+    await expect(back).toBeFocused();
+    const style = await back.evaluate((link) => {
+      const computed = getComputedStyle(link);
+      return { color: computed.color, outlineColor: computed.outlineColor, outlineStyle: computed.outlineStyle };
+    });
+    expect(style).toEqual({
+      color: 'rgb(176, 198, 255)',
+      outlineColor: 'rgb(176, 198, 255)',
+      outlineStyle: 'solid',
+    });
+    await page.unroute(failing);
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Tu próximo contenido empieza aquí' })).toBeVisible();
+  });
+
   test('positive control: the scan reports a seeded low-contrast text', async ({ page }) => {
     await page.setContent(
       '<!doctype html><html lang="es"><head><title>Control</title></head><body><main><h1>Control</h1>' +

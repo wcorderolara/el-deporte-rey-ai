@@ -108,7 +108,11 @@ function preview(matchIds: string[]): ContentBatchPreview {
   };
 }
 
-function batch(state: ContentBatch['state'], status: ContentBatch['items'][number]['status']): ContentBatch {
+function batch(
+  state: ContentBatch['state'],
+  status: ContentBatch['items'][number]['status'],
+  skipReason: ContentBatch['items'][number]['skipReason'] = 'score_missing',
+): ContentBatch {
   return {
     id: BATCH,
     requestKey: uuid(50),
@@ -144,7 +148,7 @@ function batch(state: ContentBatch['state'], status: ContentBatch['items'][numbe
         title: 'Club Epsilon - Club Zeta',
         matchIds: [uuid(13)],
         status: 'skipped',
-        skipReason: 'score_missing',
+        skipReason,
         failure: null,
         projectId: null,
         runId: null,
@@ -582,6 +586,19 @@ describe('double submission (PD-ARCH-01E-A)', () => {
 });
 
 describe('content batch result (PD-ARCH-01E-A)', () => {
+  it('explains a piece left out because this route cannot record its score, without calling the score wrong (UI06.3-D06)', async () => {
+    const server = fakeServer({
+      [`GET /api/v1/content-batches/${BATCH}`]: () => json(batch('completed', 'completed', 'score_not_supported')),
+    });
+    renderApp(`/projects/batches/${BATCH}`, server);
+    expect(await screen.findByText('Completada')).toBeTruthy();
+    const items = screen.getByRole('heading', { name: 'Piezas' }).closest('section') as HTMLElement;
+    expect(within(items).getByText('Omitida')).toBeTruthy();
+    const reason = within(items).getByText(/Este recorrido no admite marcadores de más de 99 goles por equipo/);
+    expect(reason.textContent).toContain('el resultado se conserva sin cambios en Competiciones');
+    expect(reason.textContent).not.toMatch(/desconocido|inválid|falso|error/i);
+  });
+
   it('polls while pieces are pending and reports the real result of every piece', async () => {
     let calls = 0;
     const server = fakeServer({

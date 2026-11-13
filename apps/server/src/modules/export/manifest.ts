@@ -40,6 +40,7 @@ import {
 import { z } from 'zod';
 
 import { type ElementText, fieldText } from '../content/index.js';
+import { stageDisplay } from '../../platform/format/index.js';
 
 /** Identifier of the manifest format. */
 export const MANIFEST_FORMAT = 'edr-export-manifest/1';
@@ -269,7 +270,10 @@ export function editorialCopyText(plan: Pick<ExportPlan, 'project' | 'editorial'
     (entry) =>
       `${SECTION_RULE}\n${EDITORIAL_SECTION_TITLES[entry.deliverable]}\n${SECTION_RULE}\n\n${deliverableTextOf(entry)}`,
   );
-  const heading = `COPY EDITORIAL APROBADO\n${project.competitionName} · ${project.stageLabel} · ${project.seasonLabel}`;
+  // «competición · jornada o fase · temporada» (REVIEW-APPROVAL-01): the matchday of a matchday project, with its
+  // stage as the project title shows it; the stage alone otherwise. In Spanish, like the rest of the file (UI-06.3).
+  const selection = stageDisplay(project.stageLabel, project.matchday, 'es');
+  const heading = `COPY EDITORIAL APROBADO\n${project.competitionName} · ${selection} · ${project.seasonLabel}`;
   return `${[heading, ...sections].join('\n\n')}\n`;
 }
 

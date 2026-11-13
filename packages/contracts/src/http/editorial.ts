@@ -316,7 +316,7 @@ export const EditorialGenerationResultSchema = z.strictObject({
 
 export const EditorialEditFieldSchema = z.strictObject({
   name: EditorialFieldNameSchema,
-  text: z.string().min(1).max(MAX_EDITORIAL_FIELD_TEXT).regex(contractRegExp('Note')),
+  text: z.string().min(1).max(MAX_EDITORIAL_FIELD_TEXT).regex(contractRegExp('EditorialText')),
 });
 
 export const EditorialEditCreateSchema = z.strictObject({

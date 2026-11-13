@@ -1,0 +1,30 @@
+# UI-06.3 — UI06.3-D06: marcador por encima de 99 en un lote de contenido local, 2026-11-13.
+
+## Antes (cc0182d..3c11a9a)
+Un resultado local 100-0 (admitido por CompetitionMatchResultUpdate, sin máximo) aparecía como «ready» en la vista
+previa; la confirmación congelaba la selección con una importación de formulario (marcadores 0 a 99) que fallaba, y el
+lote entero respondía 409 CONTENT_BATCH_NOT_GENERATABLE («Ninguna pieza de la selección se puede generar…»), sin
+generar tampoco las piezas válidas. Prueba: `it.fails` «DEFECT UI06.3-D06…» en extreme-sports-data.test.ts.
+
+## Corrección (autorizada por el Product Owner el 2026-11-13)
+- Contrato (aditivo): `score_not_supported` en ContentMatchIneligibility y ContentPieceSkipReason (Zod y OpenAPI).
+- Servidor: localResultIneligibility → `score_not_supported` si un marcador supera IMPORT_SCORE_MAX (99).
+- Migración 0037: la restricción CHECK de content_generation_items acepta el motivo; filas conservadas.
+- Web: «Este recorrido no admite marcadores de más de 99 goles por equipo; el resultado se conserva sin cambios en
+  Competiciones.»
+
+## Regresión (extreme-sports-data.test.ts, «UI06.3-D06: a score above 99 is excluded…»), datos sintéticos
+Partidos: 99-98, 100-0, 3-250 y 12-11 de una jornada; piezas round_results y match_result.
+Vista previa: ineligibility {99-98: null, 100-0: score_not_supported, 3-250: score_not_supported, 12-11: null}
+  round_results [99-98, 12-11] ready | match_result 99-98 ready | 100-0 skipped score_not_supported |
+  3-250 skipped score_not_supported | 12-11 ready; totals {requested 5, ready 3, skipped 2}
+Confirmación: 202; mismas piezas (3 completed, 2 skipped con el motivo y sin proyecto); 3 proyectos; la portada de
+  jornada solo muestra 99-98 y 12-11; ningún contenido contiene 100-0 ni 3-250; resultados locales sin cambios.
+Todos incompatibles: vista previa {requested 3, ready 0, skipped 3}; confirmación 409 CONTENT_BATCH_NOT_GENERATABLE;
+  nada guardado.
+Recuperación: al registrar 10-0 el partido vuelve a ser compatible y se genera; el proyecto anterior no cambia.
+
+## Migración 0037 sobre una copia de la base local (data/edr.sqlite con WAL, copiada; la real no se tocó)
+Versión 36; 9 piezas y 48 partidos de lotes. Aplicada en una transacción con claves foráneas: filas idénticas,
+foreign_key_check vacío, integrity_check ok, sin tablas temporales, índice presente, y la definición solo cambia en
+`'already_finished'` → `'already_finished', 'score_not_supported'`.

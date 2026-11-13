@@ -145,14 +145,19 @@ describe('buildStructuredModel', () => {
         ? {
             ...item,
             style: { ...STYLE, uppercase: true, effect: 'soft_shadow' as const },
-            run: { ...item.run, text: 'Atlético de Madrid' },
+            run: { ...item.run, text: 'Atlético Sintético Centro' },
           }
         : item,
     );
     const { model } = buildStructuredModel(document({ items }), { palette, fonts });
     const text = model.elements[2];
-    expect(text).toMatchObject({ kind: 'text', text: 'Atlético de Madrid', uppercase: true, effect: 'soft_shadow' });
-    expect(text?.kind === 'text' ? text.lines.join(' ') : '').toBe('ATLÉTICO DE MADRID');
+    expect(text).toMatchObject({
+      kind: 'text',
+      text: 'Atlético Sintético Centro',
+      uppercase: true,
+      effect: 'soft_shadow',
+    });
+    expect(text?.kind === 'text' ? text.lines.join(' ') : '').toBe('ATLÉTICO SINTÉTICO CENTRO');
     const plain = buildStructuredModel(document(), { palette, fonts }).model.elements[2];
     expect(plain).not.toHaveProperty('effect');
     expect(plain).not.toHaveProperty('uppercase');

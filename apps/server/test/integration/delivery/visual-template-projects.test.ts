@@ -104,7 +104,7 @@ interface Seed {
   readonly seasonId: string;
   readonly roundId: string;
   readonly teams: Readonly<Record<string, string>>;
-  /** A: Atlético de Madrid 1-2 FC Barcelona; B: Real Madrid 0-0 Atlético de Madrid; C: Wolverhampton 12-11 Mönchengladbach. */
+  /** A: Atlético Sintético Centro 1-2 FC Sintético Norte; B: Real Sintético 0-0 Atlético Sintético Centro; C: Wanderers 12-11 Mönchtal. */
   readonly matches: { readonly a: string; readonly b: string; readonly c: string };
 }
 
@@ -128,11 +128,11 @@ async function seed(t: TestApp): Promise<Seed> {
   const base = `/competitions/${competition.id}/seasons/${season.id}`;
   const teams: Record<string, string> = {};
   for (const name of [
-    'Atlético de Madrid',
-    'FC Barcelona',
-    'Real Madrid',
-    'Wolverhampton Wanderers',
-    'Borussia Mönchengladbach',
+    'Atlético Sintético Centro',
+    'FC Sintético Norte',
+    'Real Sintético',
+    'Wanderers Sintético Oeste',
+    'Borussia Sintética Mönchtal',
   ]) {
     const team = await ok<{ id: string }>(t.send('POST', '/teams', { name }));
     await ok(t.send('POST', `/competitions/${competition.id}/teams`, { teamId: team.id }));
@@ -153,14 +153,18 @@ async function seed(t: TestApp): Promise<Seed> {
     await ok(t.send('POST', `${base}/matches/${created.id}/result`, { status: 'finished', homeScore, awayScore }));
     return created.id;
   };
-  const a = await match('Atlético de Madrid', 'FC Barcelona', '2026-10-20T18:00:00.000Z', 1, 2);
-  const b = await match('Real Madrid', 'Atlético de Madrid', '2026-10-21T18:00:00.000Z', 0, 0);
-  const c = await match('Wolverhampton Wanderers', 'Borussia Mönchengladbach', '2026-10-22T18:00:00.000Z', 12, 11);
-  // Badges by team: solid colours, one half transparent, Mönchengladbach without a badge.
-  await uploadBadge(t, teams['Atlético de Madrid'] ?? '', png({ width: 64, height: 64, rgba: [...RED, 255] }));
-  await uploadBadge(t, teams['FC Barcelona'] ?? '', png({ width: 64, height: 64, rgba: [...BLUE, 255] }));
-  await uploadBadge(t, teams['Real Madrid'] ?? '', png({ width: 64, height: 64, rgba: [255, 255, 255, 128] }));
-  await uploadBadge(t, teams['Wolverhampton Wanderers'] ?? '', png({ width: 64, height: 64, rgba: [...ORANGE, 255] }));
+  const a = await match('Atlético Sintético Centro', 'FC Sintético Norte', '2026-10-20T18:00:00.000Z', 1, 2);
+  const b = await match('Real Sintético', 'Atlético Sintético Centro', '2026-10-21T18:00:00.000Z', 0, 0);
+  const c = await match('Wanderers Sintético Oeste', 'Borussia Sintética Mönchtal', '2026-10-22T18:00:00.000Z', 12, 11);
+  // Badges by team: solid colours, one half transparent, Mönchtal without a badge.
+  await uploadBadge(t, teams['Atlético Sintético Centro'] ?? '', png({ width: 64, height: 64, rgba: [...RED, 255] }));
+  await uploadBadge(t, teams['FC Sintético Norte'] ?? '', png({ width: 64, height: 64, rgba: [...BLUE, 255] }));
+  await uploadBadge(t, teams['Real Sintético'] ?? '', png({ width: 64, height: 64, rgba: [255, 255, 255, 128] }));
+  await uploadBadge(
+    t,
+    teams['Wanderers Sintético Oeste'] ?? '',
+    png({ width: 64, height: 64, rgba: [...ORANGE, 255] }),
+  );
   return { competitionId: competition.id, seasonId: season.id, roundId: round.id, teams, matches: { a, b, c } };
 }
 
@@ -378,11 +382,11 @@ describe('generation with a published visual template (PD-ARCH-01G-D)', { timeou
     expect(batch.items.map((item) => item.status)).toEqual(['completed', 'completed', 'completed']);
 
     const expected = [
-      { home: 'Atlético de Madrid', away: 'FC Barcelona', scores: ['1', '2'], badges: [RED, BLUE] },
-      { home: 'Real Madrid', away: 'Atlético de Madrid', scores: ['0', '0'], badges: ['half', RED] },
+      { home: 'Atlético Sintético Centro', away: 'FC Sintético Norte', scores: ['1', '2'], badges: [RED, BLUE] },
+      { home: 'Real Sintético', away: 'Atlético Sintético Centro', scores: ['0', '0'], badges: ['half', RED] },
       {
-        home: 'Wolverhampton Wanderers',
-        away: 'Borussia Mönchengladbach',
+        home: 'Wanderers Sintético Oeste',
+        away: 'Borussia Sintética Mönchtal',
         scores: ['12', '11'],
         badges: [ORANGE, null],
       },
@@ -464,7 +468,11 @@ describe('generation with a published visual template (PD-ARCH-01G-D)', { timeou
     await ok(
       t.send('POST', `/visual-templates/${templateId}/versions/${next.id}/release`, { revision: changed.revision }),
     );
-    await uploadBadge(t, s.teams['Atlético de Madrid'] ?? '', png({ width: 64, height: 64, rgba: [0, 200, 0, 255] }));
+    await uploadBadge(
+      t,
+      s.teams['Atlético Sintético Centro'] ?? '',
+      png({ width: 64, height: 64, rgba: [0, 200, 0, 255] }),
+    );
     // Archived and deleted afterwards (01G-D-4), the template still draws the projects that used it.
     await ok(t.send('POST', `/visual-templates/${templateId}/archive`));
     expect((await t.send('DELETE', `/visual-templates/${templateId}`)).statusCode).toBe(204);
@@ -647,8 +655,12 @@ describe('round calendars with a match list (PD-ARCH-01G-E.2)', { timeout: WORKF
           }),
         )
       ).id;
-    const first = await fixture('FC Barcelona', 'Atlético de Madrid', '2026-12-10T18:00:00.000Z');
-    const second = await fixture('Borussia Mönchengladbach', 'Wolverhampton Wanderers', '2026-12-11T18:00:00.000Z');
+    const first = await fixture('FC Sintético Norte', 'Atlético Sintético Centro', '2026-12-10T18:00:00.000Z');
+    const second = await fixture(
+      'Borussia Sintética Mönchtal',
+      'Wanderers Sintético Oeste',
+      '2026-12-11T18:00:00.000Z',
+    );
     await ok(
       t.send('POST', `${base}/matches/${second}/result`, { status: 'postponed', homeScore: null, awayScore: null }),
     );
@@ -707,7 +719,10 @@ describe('round calendars with a match list (PD-ARCH-01G-E.2)', { timeout: WORKF
       fieldText(page, 'fixtures')
         .split('\n')
         .map((line) => line.split(' · ')[0]),
-    ).toEqual(['FC Barcelona vs Atlético de Madrid', 'Borussia Mönchengladbach vs Wolverhampton Wanderers']);
+    ).toEqual([
+      'FC Sintético Norte vs Atlético Sintético Centro',
+      'Borussia Sintética Mönchtal vs Wanderers Sintético Oeste',
+    ]);
     // Every row is compared with its facts: names, date, time and the postponed status; nothing fails.
     const failures = page.currentVersion.qa.filter(
       (check) => check.outcome === 'fail' && check.check !== 'capitalized_tokens',
@@ -719,7 +734,7 @@ describe('round calendars with a match list (PD-ARCH-01G-E.2)', { timeout: WORKF
         .get([page.currentVersion.id])?.render_model ?? '{}',
     ) as { elements: { id: string; kind: string; text?: string; semantic?: string }[] };
     const ids = model.elements.map((element) => element.id).filter((id) => id.startsWith('layer-partidos-'));
-    // Row 2: Mönchengladbach has no badge, so its badge is not drawn; its name is.
+    // Row 2: Mönchtal has no badge, so its badge is not drawn; its name is.
     expect(ids).toEqual([
       'layer-partidos-r1-home-badge',
       'layer-partidos-r1-away-badge',
@@ -741,7 +756,7 @@ describe('round calendars with a match list (PD-ARCH-01G-E.2)', { timeout: WORKF
         Math.round((0.0278 + (partX + 0.0392) * 0.9444) * 1080),
         Math.round((0.2415 + row * (0.077 + 0.0074) + 0.5 * 0.077) * 1350),
       ] as const;
-    // Barcelona (blue) at home and Atlético (red) away in row 1; Wolverhampton (orange) away in row 2.
+    // Sintético Norte (blue) at home and Atlético Sintético (red) away in row 1; Wanderers (orange) away in row 2.
     expect(pixel(...badgeCentre(0, 0.0157))).toEqual([...BLUE]);
     expect(pixel(...badgeCentre(0, 0.9059))).toEqual([...RED]);
     expect(pixel(...badgeCentre(1, 0.9059))).toEqual([...ORANGE]);

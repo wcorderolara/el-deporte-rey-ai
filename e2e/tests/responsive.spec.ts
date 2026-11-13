@@ -683,6 +683,109 @@ test.describe('Responsive layout and keyboard @a11y', () => {
     }
   });
 
+  test('the editorial copy is chosen, edited and saved with the keyboard (UI-06.3)', async ({ page }) => {
+    const { exported } = data();
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto(`${exported}/review`);
+    await settle(page);
+    const region = await openEditorialMode(page);
+    const deliverables = region.getByRole('tablist', { name: 'Entregables del copy editorial' });
+    await deliverables.getByRole('tab').first().focus();
+    await page.keyboard.press('ArrowRight');
+    const tiktok = deliverables.getByRole('tab', { name: 'TikTok / Reels' });
+    await expect(tiktok).toBeFocused();
+    await expect(tiktok).toHaveAttribute('aria-selected', 'true');
+    const actions = region.getByRole('complementary', { name: /^Acciones del copy: / });
+    const edit = actions.getByRole('button', { name: 'Editar texto' });
+    await edit.focus();
+    await page.keyboard.press('Enter');
+    const save = actions.getByRole('button', { name: 'Guardar cambios' });
+    await expect(save).toBeVisible();
+    const field = region.getByRole('textbox').first();
+    await field.focus();
+    await page.keyboard.press('End');
+    await page.keyboard.type(' (edición con teclado)');
+    expect((await focusState(page)).indicator).toBe(true);
+    await save.focus();
+    await page.keyboard.press('Enter');
+    await expect(edit).toBeVisible();
+    await expect(region).toContainText('(edición con teclado)');
+  });
+
+  test('the template editor works with the keyboard: a layer is selected and moved with the arrows (UI-06.3)', async ({
+    page,
+  }) => {
+    await serveSyntheticTemplate(page);
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto(`/templates/visual/${TEMPLATE_ID}`);
+    const canvas = page.getByRole('group', { name: 'Lienzo de la plantilla' });
+    await expect(canvas).toBeVisible();
+    // Select the layer from the list with Enter.
+    const listed = page
+      .getByRole('list', { name: 'Capas' })
+      .getByRole('button', { name: /Equipo local/ })
+      .first();
+    await listed.focus();
+    await page.keyboard.press('Enter');
+    await expect(listed).toHaveAttribute('aria-pressed', 'true');
+    const properties = page.getByRole('complementary', { name: 'Propiedades' });
+    const x = properties.getByRole('spinbutton', { name: 'X (%)' });
+    await expect(x).toHaveValue('5');
+    // On the canvas, the arrows move the selected layer (Shift for a larger step) and the properties follow.
+    const layer = canvas.getByRole('button', { name: 'Capa «Equipo local»' });
+    await layer.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(x).not.toHaveValue('5');
+    const moved = Number(await x.inputValue());
+    expect(moved).toBeGreaterThan(5);
+    await page.keyboard.press('Shift+ArrowLeft');
+    expect(Number(await x.inputValue())).toBeLessThan(moved);
+    expect((await focusState(page)).indicator).toBe(true);
+  });
+
+  test('forced colours keep the selected tab, the current page and the selected layer distinguishable (UI-06.3)', async ({
+    page,
+  }) => {
+    await serveSyntheticTemplate(page);
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.emulateMedia({ forcedColors: 'active', colorScheme: 'dark' });
+    await page.goto(`/templates/visual/${TEMPLATE_ID}`);
+    await expect(page.getByRole('group', { name: 'Lienzo de la plantilla' })).toBeVisible();
+    await page
+      .getByRole('list', { name: 'Capas' })
+      .getByRole('button', { name: /Equipo local/ })
+      .first()
+      .click();
+    const edge = (locator: Locator, side: 'top' | 'left') =>
+      locator.evaluate((element, which) => getComputedStyle(element).getPropertyValue(`border-${which}-color`), side);
+    const pairs: [string, Locator, Locator, 'top' | 'left'][] = [
+      [
+        'editor mode tab',
+        page.getByRole('tab', { name: 'Diseño', exact: true }),
+        page.getByRole('tab', { name: 'Vista previa', exact: true }),
+        'top',
+      ],
+      [
+        'current page',
+        page.getByRole('navigation', { name: 'Navegación principal' }).getByRole('link', { name: 'Crear plantilla' }),
+        page
+          .getByRole('navigation', { name: 'Navegación principal' })
+          .getByRole('link', { name: 'Plantillas del motor' }),
+        'left',
+      ],
+      [
+        'selected layer',
+        page.getByRole('list', { name: 'Capas' }).getByRole('listitem').filter({ hasText: 'Equipo local' }),
+        page.getByRole('list', { name: 'Capas' }).getByRole('listitem').filter({ hasText: 'Equipo visitante' }),
+        'left',
+      ],
+    ];
+    for (const [name, selected, other, side] of pairs) {
+      expect(await edge(selected, side), name).not.toBe(await edge(other, side));
+    }
+    await page.screenshot({ path: evidencePath('UI-06.3', 'colores-forzados-editor.png') });
+  });
+
   test('text spacing (WCAG 1.4.12) and reduced motion keep the screens usable', async ({ page }) => {
     test.setTimeout(240_000);
     const { pending, exportDetail } = data();

@@ -1,0 +1,43 @@
+# UI-06.3 — verificaciones del cierre, con D06, D07 y D08, 2026-11-13. Un comando por gate; código de salida y totales. Árbol de UI-06.3 sobre 3c11a9a.
+
+== typecheck
+exit 0
+== lint
+exit 0
+All matched files use Prettier code style!
+== unit
+exit 0
+ Test Files  149 passed (149)
+      Tests  2597 passed (2597)
+== integration
+exit 0
+ Test Files  66 passed (66)
+      Tests  730 passed (730)
+== contract
+exit 0
+ Test Files  7 passed (7)
+      Tests  2419 passed (2419)
+== build
+exit 0
+== e2e
+exit 0
+  22 passed (32.4s)
+== a11y
+exit 0
+  44 passed (2.3m)
+== audit
+exit 0
+11 moderate severity vulnerabilities
+== secrets
+exit 0
+secret-scan: findings: 0
+RESULT: PASS
+== diffcheck
+exit 0
+== contract-id
+file    8cadafd1c2c1cb73ff9f513cf506a02fa710d6b8e033566d5741bb8bf2a77a5a
+config  8cadafd1c2c1cb73ff9f513cf506a02fa710d6b8e033566d5741bb8bf2a77a5a
+== install (PRJ-INSTALL)
+npm ci --ignore-scripts con el package-lock.json nuevo en una copia aislada: exit 0; @fastify/static 10.1.11, glob 14.0.6
+== migrations
+nueva: 0037_content_skip_reason_score_not_supported.sql; anteriores sin cambios: 0 archivos modificados

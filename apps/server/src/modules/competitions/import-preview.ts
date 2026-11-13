@@ -12,6 +12,7 @@ import { HttpProblem } from '../../platform/http/problem.js';
 import { ContractResponseError } from '../projects/respond.js';
 import { SourceError } from '../../providers/sports/ingestion/errors.js';
 import { type IngestionSource, type SourceRef, type SourceStage } from '../../providers/sports/ingestion/index.js';
+import { normalizeKickoff, previewIncomplete } from './import-transform.js';
 
 const TTL_MS = 30 * 60 * 1000;
 const RESOURCE_ORDER: readonly ImportResource[] = [
@@ -146,6 +147,7 @@ export class CompetitionImportPreviewService {
       const checked = ImportPreviewSchema.safeParse(JSON.parse(row.preview_json));
       if (
         checked.success &&
+        !previewIncomplete(checked.data) &&
         checked.data.resources.length === resourceSet.size &&
         checked.data.resources.every((resource) => resourceSet.has(resource)) &&
         row.local_fingerprint === this.#fingerprint(competitionId, input.destinationSeasonId ?? null)
@@ -470,12 +472,16 @@ export class CompetitionImportPreviewService {
           for (const match of snapshot.matches) {
             const home = teamByKey.get(match.homeTeamKey)?.name ?? 'Equipo local no identificado';
             const away = teamByKey.get(match.awayTeamKey)?.name ?? 'Equipo visitante no identificado';
+            // The same instant in another spelling (a provider's `…:00Z` against the stored `…:00.000Z`) is the same
+            // kickoff: compared as a string it hid the conflict with a protected local value (UI-06.3).
+            const kickoff = normalizeKickoff(match.kickoff);
             const candidate =
               localMatches.find(
                 (item) =>
                   normalize(item.home) === normalize(home) &&
                   normalize(item.away) === normalize(away) &&
-                  item.kickoff_at === match.kickoff,
+                  kickoff !== undefined &&
+                  normalizeKickoff(item.kickoff_at) === kickoff,
               ) ?? null;
             const mapped = this.#localStatus(match.status);
             const roundLabel = snapshot.stage.matchday === null ? null : `Jornada ${snapshot.stage.matchday}`;

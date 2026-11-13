@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@edr/contracts": "0.0.0",
-    "@fastify/static": "10.1.6",
+    "@fastify/static": "10.1.11",
     "@resvg/resvg-js": "2.6.2",
     "fastify": "5.12.7",
     "opentype.js": "2.0.0",

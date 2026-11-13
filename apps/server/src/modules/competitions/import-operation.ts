@@ -6,6 +6,7 @@ import { HttpProblem, sanitizeText } from '../../platform/http/problem.js';
 import { SourceError } from '../../providers/sports/ingestion/errors.js';
 import type { ImportPreviewCreate } from '@edr/contracts';
 import type { CompetitionImportPreviewService } from './import-preview.js';
+import { previewIncomplete } from './import-transform.js';
 
 export type PreviewStage = 'fetching' | 'normalizing' | 'comparing' | 'preparing_preview';
 export type OperationStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
@@ -232,7 +233,8 @@ export class ImportPreviewOperationService {
       if (row.status === 'completed' && row.preview_id) {
         try {
           const preview = this.#previews.get(competitionId, row.preview_id);
-          if (!preview.stale) return this.#view(row);
+          // An incomplete snapshot is never reused: the advised retry asks the provider again (UI-06.3).
+          if (!preview.stale && !previewIncomplete(preview)) return this.#view(row);
         } catch {
           /* Expired snapshots are never reused. */
         }

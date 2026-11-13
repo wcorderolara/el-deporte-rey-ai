@@ -117,9 +117,10 @@ const NAV_ENTRY_CLASS =
 function navEntryClassName(current: boolean): string {
   return classNames(
     NAV_ENTRY_CLASS,
+    // In forced colours the gold edge and the background are lost: the current page keeps a Highlight edge (UI-06.3).
     current
-      ? 'border-brand-gold bg-surface-overlay font-bold text-brand-gold'
-      : 'border-transparent text-text-secondary hover:bg-surface-card hover:text-text-primary',
+      ? 'border-brand-gold bg-surface-overlay font-bold text-brand-gold forced-colors:border-[Highlight]'
+      : 'border-transparent text-text-secondary hover:bg-surface-card hover:text-text-primary forced-colors:border-[Canvas]',
   );
 }
 
@@ -204,7 +205,7 @@ function MainNavigation({ pathname }: { pathname: string }) {
                     className={classNames(
                       'focus-studio flex min-h-touch items-center gap-3 rounded-control border-l-2 px-3 py-1.5 font-sans text-body-sm no-underline transition-colors',
                       entry.isCurrent(pathname)
-                        ? 'border-brand-gold font-bold text-text-primary'
+                        ? 'border-brand-gold font-bold text-text-primary forced-colors:border-[Highlight]'
                         : 'border-border-subtle text-text-secondary hover:bg-surface-card hover:text-text-primary',
                     )}
                     to={entry.to}

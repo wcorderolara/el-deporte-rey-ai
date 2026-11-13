@@ -35,6 +35,7 @@ interface ProvenanceRow {
   updated_at: string;
 }
 
+/** The mapping resource of an entity type: imports store a match and its result under `matches` (UI-06.3). */
 const resourceOf = (entityType: SportsEntityType) =>
   entityType === 'team'
     ? 'teams'
@@ -42,7 +43,7 @@ const resourceOf = (entityType: SportsEntityType) =>
       ? 'stages'
       : entityType === 'round'
         ? 'rounds'
-        : entityType === 'result'
+        : entityType === 'result' || entityType === 'match'
           ? 'matches'
           : entityType;
 

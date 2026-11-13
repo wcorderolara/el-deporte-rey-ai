@@ -36,7 +36,10 @@ function rowClassName(selected: boolean): string {
   return classNames(
     // Preflight is not loaded: `border-0` clears the default width of the other sides before the left edge.
     'flex min-w-0 items-center gap-1 rounded-control border-0 border-l-4 border-solid py-1 pr-1 pl-2 transition-colors duration-fast ease-standard',
-    selected ? 'border-brand-gold bg-surface-overlay' : 'border-transparent hover:bg-surface-card',
+    // In forced colours the background is lost: the selected layer keeps a Highlight edge, the others none (UI-06.3).
+    selected
+      ? 'border-brand-gold bg-surface-overlay forced-colors:border-[Highlight]'
+      : 'border-transparent hover:bg-surface-card forced-colors:border-[Canvas]',
   );
 }
 

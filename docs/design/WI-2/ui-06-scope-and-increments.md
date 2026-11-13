@@ -2,8 +2,8 @@
 
 **Estado:** UI-06.1 aceptado por el Product Owner y cerrado el 2026-11-13 en `bcdecc7` (recuperación de las suites y
 corrección de E2E-F01). UI-06.2 aceptado por el Product Owner y cerrado el 2026-11-13 en `c2defce` (responsive,
-accesibilidad, O-1 y O-2). UI-06.3 no iniciado; empieza solo con la validación del Product Owner. UI-06 no está
-terminado.
+accesibilidad, O-1 y O-2). UI-06.3 aceptado por el Product Owner y cerrado el 2026-11-13 como incremento técnico. Con él UI-06 queda terminado;
+WCAG 2.2 AA no se declara y la v1.0 no ha pasado la validación manual.
 **Rama:** `work/WI-2-UI-06`, creada desde `9f5963fa0517ac4220acf4577fe92f3188c6217f` (cierre de REVIEW-APPROVAL-01).
 **Origen:** instrucción del Product Owner «WI-2 / UI-06 — Estabilización, responsive y accesibilidad» (2026-11-13) y la
 sección UI-06 de [`incremental-ux-ui-implementation-plan.md`](incremental-ux-ui-implementation-plan.md).
@@ -118,7 +118,18 @@ Criterios de aceptación:
 1. Todos los gates configurados pasan, o cada excepción queda documentada con su decisión.
 2. Las limitaciones conocidas quedan registradas en la fuente de verdad.
 
+Instrucción del Product Owner del 2026-11-13 («WI-2 / UI-06.3 — Regresión integral y estabilización final»): define la
+v1.0 (registrada como PD-36), autoriza evaluar y aplicar solo `@fastify/static` 10.1.11, pide escenarios extremos de
+carrusel, datos deportivos y copy, errores y recuperación, una disputa entre fuentes, la auditoría de CSS Modules, una
+revisión estructurada de accesibilidad y la página de error de sección, con los criterios AC-01 a AC-12, sin commit
+hasta su aceptación.
+
+Resultado: aceptado por el Product Owner y cerrado el 2026-11-13 como incremento técnico, con D06, D07 y D08
+corregidos y TEAM-DISPLAY-01 separado como iniciativa posterior. Informe:
+[`ui-06-3-regression-stabilization-report.md`](ui-06-3-regression-stabilization-report.md) (sección 22).
+
 ## 4. Documentos
 
 - Informe de UI-06.1: [`ui-06-1-e2e-a11y-recovery-report.md`](ui-06-1-e2e-a11y-recovery-report.md).
 - Informe de UI-06.2: [`ui-06-2-responsive-a11y-report.md`](ui-06-2-responsive-a11y-report.md).
+- Informe de UI-06.3: [`ui-06-3-regression-stabilization-report.md`](ui-06-3-regression-stabilization-report.md).

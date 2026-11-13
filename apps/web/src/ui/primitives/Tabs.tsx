@@ -89,7 +89,7 @@ export function Tabs<Value extends string>({
             aria-selected={selected}
             aria-controls={tabPanelId(id, option.value)}
             tabIndex={selected ? 0 : -1}
-            className={`inline-flex min-h-touch items-center gap-2 rounded-lg border py-2 font-bold transition-colors focus-studio ${size === 'lg' ? 'px-4 sm:px-5' : size === 'sm' ? 'px-3' : 'px-4'} ${selected ? 'border-border-strong bg-surface-overlay text-text-primary shadow-control' : 'border-transparent bg-transparent text-text-secondary hover:border-border-subtle hover:bg-surface-card hover:text-text-primary'}`}
+            className={`inline-flex min-h-touch items-center gap-2 rounded-lg border py-2 font-bold transition-colors focus-studio ${size === 'lg' ? 'px-4 sm:px-5' : size === 'sm' ? 'px-3' : 'px-4'} ${selected ? 'border-border-strong bg-surface-overlay text-text-primary shadow-control forced-colors:border-[Highlight]' : 'border-transparent bg-transparent text-text-secondary hover:border-border-subtle hover:bg-surface-card hover:text-text-primary forced-colors:border-[Canvas]'}`}
             onClick={() => onChange(option.value)}
             onKeyDown={(event) => handleKeyDown(event, index)}
           >

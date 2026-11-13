@@ -17,6 +17,12 @@ export const ContractPatterns = {
   Label: '^[^\\p{Cc}\\p{Cf}]{1,80}$',
   /** Printable multi-line text: line feeds allowed, every other control or format character refused. */
   Note: '^(?:[^\\p{Cc}\\p{Cf}]|\\n)+$',
+  /**
+   * An edited editorial text (UI-06.3): `Note` plus U+200D ZERO WIDTH JOINER, so that an emoji sequence the writer may
+   * produce can be saved again. The content checks still flag a joiner outside an emoji sequence (T10-A1-05); every
+   * other control or format character stays refused.
+   */
+  EditorialText: '^(?:[^\\p{Cc}\\p{Cf}]|\\n|\\u200D)+$',
   DisplayName: "^[\\p{L}\\p{M}\\p{N} .'&()/-]{1,80}$",
   StageName: "^[\\p{L}\\p{M}\\p{N} .'&()/_-]{1,80}$",
   TeamName: "^[\\p{L}\\p{M}\\p{N} .'&()-]{1,64}$",

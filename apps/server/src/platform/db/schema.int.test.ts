@@ -966,6 +966,7 @@ describe('structure of the migrated schema', () => {
       { version: 34, name: 'editorial_naming_reconcile' },
       { version: 35, name: 'qa_team_badges' },
       { version: 36, name: 'export_editorial_copy' },
+      { version: 37, name: 'content_skip_reason_score_not_supported' },
     ]);
   });
 

@@ -5,20 +5,23 @@
  *
  * - only a `finished` match is a result; a past kickoff never makes a match finished;
  * - a finished match needs both scores: `null/null` is an unknown result and is never shown as 0-0;
+ * - each score must fit the frozen selection (at most `IMPORT_SCORE_MAX`): a larger one is `score_not_supported`, kept
+ *   as recorded and never changed; this route cannot record it (UI06.3-D06);
  * - the snapshot requires a kickoff instant;
  * - team names must satisfy the contract team-name rule, otherwise the snapshot would be refused.
  *
  * The batch preview and the frozen selection of a confirmed batch use the same function, so what the operator
  * confirms is exactly what research later retrieves. Nothing here is filled, derived or invented.
  */
-import { TeamNameSchema } from '@edr/contracts';
+import { IMPORT_SCORE_MAX, TeamNameSchema } from '@edr/contracts';
 
 import { type SourceRef, asSourceRef } from './types.js';
 
 export type LocalMatchStatus = 'scheduled' | 'in_progress' | 'finished' | 'postponed' | 'cancelled';
 
 /** Why a local match cannot be part of a results piece. */
-export type LocalMatchIneligibility = 'not_finished' | 'score_missing' | 'kickoff_missing' | 'team_name_not_supported';
+export type LocalMatchIneligibility =
+  'not_finished' | 'score_missing' | 'score_not_supported' | 'kickoff_missing' | 'team_name_not_supported';
 
 export interface LocalMatchValues {
   readonly status: LocalMatchStatus;
@@ -36,6 +39,9 @@ export function localResultIneligibility(match: LocalMatchValues): LocalMatchIne
   }
   if (match.homeScore === null || match.awayScore === null) {
     return 'score_missing';
+  }
+  if (match.homeScore > IMPORT_SCORE_MAX || match.awayScore > IMPORT_SCORE_MAX) {
+    return 'score_not_supported';
   }
   if (match.kickoffAt === null) {
     return 'kickoff_missing';

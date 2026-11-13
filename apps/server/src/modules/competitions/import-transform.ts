@@ -192,6 +192,13 @@ function sameRef(a: Ref | null, b: Ref | null) {
 function existingId(ref: Ref | null): string | null {
   return ref && 'id' in ref ? ref.id : null;
 }
+/**
+ * A preview the source could not deliver whole (skipped selections or an error warning): the plan never applies it,
+ * and a new preview of the same scope asks the source again instead of reusing it (UI-06.3).
+ */
+export function previewIncomplete(preview: Pick<ImportPreview, 'summary' | 'warnings'>): boolean {
+  return preview.summary.skipped > 0 || preview.warnings.some((warning) => warning.severity === 'error');
+}
 export function normalizeKickoff(value: unknown): string | null | undefined {
   if (value === null) return null;
   if (typeof value !== 'string' || Number.isNaN(Date.parse(value))) return undefined;
@@ -1179,7 +1186,7 @@ export function transformSnapshot(input: TransformInput): ImportPlan {
   for (const key of decisionByKey.keys())
     if (!consumed.has(key))
       block('DECISION_NOT_APPLICABLE', 'Una decisión no corresponde a ningún registro de esta vista previa.');
-  if (snapshot.summary.skipped > 0 || snapshot.warnings.some((warning) => warning.severity === 'error'))
+  if (previewIncomplete(snapshot))
     block(
       'SOURCE_INCOMPLETE',
       'Algunas selecciones no pudieron consultarse. Genera otra vista previa para importar el alcance completo.',

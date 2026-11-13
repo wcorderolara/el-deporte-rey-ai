@@ -81,6 +81,26 @@ describe('static UI', () => {
     expect(response.statusCode).not.toBe(500);
   });
 
+  // @fastify/static 10.1.11 (UI-06.3): non-canonical paths and other spellings of a file are refused, so they never
+  // reach a file through an alias; the answer is the product's 404 problem, never a 500.
+  it.each(['/assets//app.js', '//assets/app.js', '/ASSETS/app.js', '/assets/APP.JS', '/assets/app.js%3Fx'])(
+    'answers the non-canonical or differently spelled path %s with the 404 problem',
+    async (url) => {
+      const response = await get(url);
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toMatchObject({ code: 'NOT_FOUND' });
+      expect(response.body).not.toContain('console.log');
+    },
+  );
+
+  it('still serves an asset requested with a query string and a normalized path', async () => {
+    for (const url of ['/assets/app.js?v=1', '/assets/./app.js']) {
+      const response = await get(url);
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toBe('console.log("app");');
+    }
+  });
+
   it('lists no directory', async () => {
     const response = await get('/assets/');
     expect(response.body).not.toContain('app.js');

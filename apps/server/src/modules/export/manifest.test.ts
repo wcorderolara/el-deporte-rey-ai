@@ -247,6 +247,26 @@ describe('approved editorial copy in the export (REVIEW-APPROVAL-01, amendment o
     expect(manifest).not.toHaveProperty('editorial');
   });
 
+  it('heads copy-editorial.txt with the matchday of a matchday project and with the stage of a stage project', () => {
+    const matchday = editorialCopyText(plan({ editorial: [FACEBOOK] }));
+    expect(matchday.split('\n').slice(0, 2)).toEqual([
+      'COPY EDITORIAL APROBADO',
+      'Liga Sintética · Fase regular · Jornada 3 · 2026/27',
+    ]);
+    // A stage without matchdays (a knockout round) or a local selection, whose label is already the round's name.
+    const base = plan({ editorial: [FACEBOOK] });
+    for (const [stageLabel, line] of [
+      ['Octavos de final', 'Liga Sintética · Octavos de final · 2026/27'],
+      ['Jornada 7', 'Liga Sintética · Jornada 7 · 2026/27'],
+    ] as const) {
+      const stage = editorialCopyText({ ...base, project: { ...base.project, stageLabel, matchday: null } });
+      expect(stage.split('\n').slice(0, 2)).toEqual(['COPY EDITORIAL APROBADO', line]);
+    }
+    // An English project keeps the Spanish heading of the accepted format.
+    const english = editorialCopyText({ ...base, project: { ...base.project, language: 'en' } });
+    expect(english.split('\n')[1]).toBe('Liga Sintética · Fase regular · Jornada 3 · 2026/27');
+  });
+
   it('adds copy-editorial.txt after the caption with only the approved deliverables, and lists their versions', () => {
     const files = exportFiles(plan({ editorial: [FACEBOOK, HEADLINES] }));
     expect(files.map((file) => [file.position, file.fileName, file.kind, file.elementVersionId])).toEqual([
@@ -261,7 +281,7 @@ describe('approved editorial copy in the export (REVIEW-APPROVAL-01, amendment o
     const rule = '='.repeat(40);
     expect(text).toBe(
       [
-        'COPY EDITORIAL APROBADO\nLiga Sintética · Fase regular · 2026/27',
+        'COPY EDITORIAL APROBADO\nLiga Sintética · Fase regular · Jornada 3 · 2026/27',
         `${rule}\nFacebook / Instagram\n${rule}\n\nGancho sintético\n\nDesarrollo sintético.\n\n¿Pregunta sintética?\n\n` +
           '#futbol #LigaSintetica',
         `${rule}\nTitulares virales\n${rule}\n\n1. Uno\n2. Dos\n3. Tres`,

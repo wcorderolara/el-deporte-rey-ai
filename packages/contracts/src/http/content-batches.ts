@@ -40,12 +40,17 @@ export const ContentPieceKindSchema = z.enum([
   'match_preview',
 ]);
 
-/** Why a selected match cannot be shown as a result (`null/null` is unknown, never 0-0). */
+/**
+ * Why a selected match cannot be shown as a result (`null/null` is unknown, never 0-0). `score_not_supported`
+ * (UI06.3-D06): a recorded score above the largest one the frozen selection accepts (`IMPORT_SCORE_MAX`); the score
+ * is not wrong, this route cannot record it, and the local result is kept as it is.
+ */
 export const ContentMatchIneligibilitySchema = z.enum([
   'not_finished',
   'score_missing',
   'kickoff_missing',
   'team_name_not_supported',
+  'score_not_supported',
 ]);
 
 /** Why a selected match cannot be part of a piece about matches not played yet (PD-ARCH-01E-B). */
@@ -66,6 +71,7 @@ export const ContentPieceSkipReasonSchema = z.enum([
   'context_not_supported',
   'not_upcoming',
   'already_finished',
+  'score_not_supported',
 ]);
 
 /** The explicit sports selection of a batch; the stage, when given, must be the round's stage. */

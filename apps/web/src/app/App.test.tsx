@@ -8,6 +8,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { contentVariantOf } from './AppShell';
+import { RouteErrorPage } from './pages';
 import { appRoutes, featurePaths } from './routes';
 
 afterEach(cleanup);
@@ -304,5 +305,38 @@ describe('Route table: lazy feature stubs', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Página no encontrada' })).toBeTruthy();
     expect(screen.getByRole('navigation', { name: 'Navegación principal' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Volver a la lista de proyectos' }).getAttribute('href')).toBe('/');
+  });
+});
+
+describe('Section error page (UI-06.3)', () => {
+  function failAt(path: string) {
+    const router = createMemoryRouter(
+      [
+        {
+          path: '*',
+          ErrorBoundary: RouteErrorPage,
+          Component: () => {
+            throw new Error('the section failed');
+          },
+        },
+      ],
+      { initialEntries: [path] },
+    );
+    render(<RouterProvider router={router} />);
+  }
+
+  it('gives its link the studio colours and focus ring on a studio route', async () => {
+    failAt('/exports');
+    const link = await screen.findByRole('link', { name: 'Volver a la lista de proyectos' });
+    expect(link.className).toContain('text-text-link');
+    expect(link.className).toContain('focus-studio');
+    expect(link.getAttribute('href')).toBe('/');
+    expect(document.body.textContent).not.toContain('the section failed');
+  });
+
+  it('keeps the light panel link on a legacy route', async () => {
+    failAt('/imports');
+    const link = await screen.findByRole('link', { name: 'Volver a la lista de proyectos' });
+    expect(link.className).toBe('');
   });
 });
