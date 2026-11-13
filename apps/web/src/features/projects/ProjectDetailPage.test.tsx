@@ -101,7 +101,7 @@ describe('Project detail: selection and links (R-200, R-269)', () => {
     expect(server.unexpected).toEqual([]);
   });
 
-  it('offers the download of the selected approved carousel, reusing its current export', async () => {
+  it('offers the download of the selected approved carousel, written by the server from the current state', async () => {
     const base = activeDraft();
     const [first] = base.carousels;
     if (first === undefined) throw new Error('the fixture has no carousel');
@@ -112,12 +112,15 @@ describe('Project detail: selection and links (R-200, R-269)', () => {
       versionSetSha256: 'a'.repeat(64),
       valid: true,
     };
-    const current = { ...exportRecord(), carouselId: first.id, finalApprovalId: approval.id };
+    // An export of the same final approval exists, but its copy may differ from the copy approved now (E2E-F01).
+    const earlier = { ...exportRecord(), carouselId: first.id, finalApprovalId: approval.id };
+    const written = { ...earlier, id: 'e1000000-0000-4000-8000-0000000000aa', exportedAt: '2026-10-27T16:00:00Z' };
     const server = fakeServer({
       [PROJECT]: () => json(project({ activeDraftId: base.id, approvalState: 'final_approved' })),
       [ACTIVE_DRAFT]: () => json({ ...base, carousels: [{ ...first, finalApproval: approval }] }),
-      [`GET /api/v1/projects/${PROJECT_ID}/exports`]: () => json({ exports: [current] }),
-      [`GET /api/v1/exports/${current.id}/download`]: () =>
+      [`GET /api/v1/projects/${PROJECT_ID}/exports`]: () => json({ exports: [earlier] }),
+      [`POST /api/v1/carousels/${first.id}/exports`]: () => json(written, 201),
+      [`GET /api/v1/exports/${written.id}/download`]: () =>
         new Response(new Uint8Array([80, 75]), { status: 200, headers: { 'Content-Type': 'application/zip' } }),
     });
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:detail-download');
@@ -128,8 +131,9 @@ describe('Project detail: selection and links (R-200, R-269)', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Descargar carrusel' }));
 
     expect(await screen.findByText('La descarga está lista.')).toBeTruthy();
-    expect(server.callsTo('GET', `/api/v1/exports/${current.id}/download`)).toHaveLength(1);
-    expect(server.calls.some((call) => call.method === 'POST')).toBe(false);
+    expect(server.callsTo('POST', `/api/v1/carousels/${first.id}/exports`)).toHaveLength(1);
+    expect(server.callsTo('GET', `/api/v1/exports/${written.id}/download`)).toHaveLength(1);
+    expect(server.callsTo('GET', `/api/v1/exports/${earlier.id}/download`)).toHaveLength(0);
     expect(screen.getByRole('link', { name: 'Revisar contenido' }).getAttribute('href')).toBe(
       `/projects/${PROJECT_ID}/review`,
     );

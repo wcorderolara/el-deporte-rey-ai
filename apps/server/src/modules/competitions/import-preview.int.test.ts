@@ -42,9 +42,14 @@ async function makeCompetition() {
 describe('competition read-normalize-preview API', () => {
   it('normalizes an external stage title and reuses a valid preview for the same scope', async () => {
     const stub = stubAdapter('test-live', 'LIVE_DATA');
-    stub.documents.set('stub-a', fixtureDocument([competition('copa-stub', 'Copa Stub', [
-      season('2026', [stage({ id: 'regular', name: 'REGULAR_SEASON', order: 1, matchdays: [1] })]),
-    ])]));
+    stub.documents.set(
+      'stub-a',
+      fixtureDocument([
+        competition('copa-stub', 'Copa Stub', [
+          season('2026', [stage({ id: 'regular', name: 'REGULAR_SEASON', order: 1, matchdays: [1] })]),
+        ]),
+      ]),
+    );
     h = await projectsTestApp({ includeCompetitions: true, sources: testSources({ stubBEnabled: false }), stub });
     const id = await makeCompetition();
     const path = `/api/v1/competitions/${id}/import-previews`;
@@ -63,12 +68,18 @@ describe('competition read-normalize-preview API', () => {
     expect(second.statusCode, second.body).toBe(201);
     expect(ImportPreviewResponseSchema.parse(second.json()).preview.previewId).toBe(original.previewId);
     expect(h.stub.count('stub-a', 'fetchSelection')).toBe(reads);
-    expect(h.db.prepare<{ count: number }>('SELECT COUNT(*) AS count FROM competition_import_previews').get()?.count).toBe(1);
-    h.db.prepare('UPDATE competition_import_previews SET expires_at = ? WHERE id = ?').run(['2000-01-01T00:00:00.000Z', original.previewId]);
+    expect(
+      h.db.prepare<{ count: number }>('SELECT COUNT(*) AS count FROM competition_import_previews').get()?.count,
+    ).toBe(1);
+    h.db
+      .prepare('UPDATE competition_import_previews SET expires_at = ? WHERE id = ?')
+      .run(['2000-01-01T00:00:00.000Z', original.previewId]);
     const afterExpiry = await h.inject({ method: 'POST', url: path, headers: WRITE_HEADERS, payload });
     expect(afterExpiry.statusCode, afterExpiry.body).toBe(201);
     expect(ImportPreviewResponseSchema.parse(afterExpiry.json()).preview.previewId).not.toBe(original.previewId);
-    expect(h.db.prepare<{ count: number }>('SELECT COUNT(*) AS count FROM competition_import_previews').get()?.count).toBe(1);
+    expect(
+      h.db.prepare<{ count: number }>('SELECT COUNT(*) AS count FROM competition_import_previews').get()?.count,
+    ).toBe(1);
   });
   it('lists external seasons and season-specific resource capabilities', async () => {
     h = await projectsTestApp({ includeCompetitions: true, sources: testSources({ stubBEnabled: false }) });
@@ -177,13 +188,15 @@ describe('competition read-normalize-preview API', () => {
     const selectionsBefore = h.stub.count('stub-a', 'fetchSelection');
     const legacyPreview = {
       ...preview,
-      warnings: Array.from({ length: 29 }, () => 'Una o más selecciones no contienen resultados finalizados disponibles.'),
+      warnings: Array.from(
+        { length: 29 },
+        () => 'Una o más selecciones no contienen resultados finalizados disponibles.',
+      ),
       items: preview.items.map(({ relationships: _relationships, ...item }) => item),
     };
-    h.db.prepare('UPDATE competition_import_previews SET preview_json = ? WHERE id = ?').run([
-      JSON.stringify(legacyPreview),
-      preview.previewId,
-    ]);
+    h.db
+      .prepare('UPDATE competition_import_previews SET preview_json = ? WHERE id = ?')
+      .run([JSON.stringify(legacyPreview), preview.previewId]);
     const opened = await h.inject({ method: 'GET', url: `${path}/${preview.previewId}`, headers: READ_HEADERS });
     expect(opened.statusCode).toBe(200);
     const reopenedPreview = ImportPreviewResponseSchema.parse(opened.json()).preview;
@@ -256,6 +269,10 @@ describe('competition read-normalize-preview API', () => {
     const preview = ImportPreviewResponseSchema.parse(response.json()).preview;
     expect(preview.destinationSeasonId).toBeNull();
     expect(preview.items[0]).toMatchObject({ resource: 'season', operation: 'new', localCandidate: null });
-    expect(h.db.prepare<{ count: number }>('SELECT COUNT(*) AS count FROM competition_seasons WHERE competition_id = ?').get([id])?.count).toBe(0);
+    expect(
+      h.db
+        .prepare<{ count: number }>('SELECT COUNT(*) AS count FROM competition_seasons WHERE competition_id = ?')
+        .get([id])?.count,
+    ).toBe(0);
   });
 });

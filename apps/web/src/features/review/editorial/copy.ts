@@ -56,7 +56,8 @@ export const editorialCopy = {
   regenerateWith: (writer: Pick<EditorialWriter, 'kind'>): string =>
     writer.kind === 'test' ? 'Regenerar texto de prueba' : 'Regenerar con IA',
   approvalTitle: 'Aprobación editorial',
-  approvalScope: 'Cada texto se aprueba por separado. El copy editorial no forma parte de la descarga del carrusel.',
+  approvalScope:
+    'Cada texto se aprueba por separado. Los textos editoriales aprobados y listos para publicar se incluyen en la descarga del carrusel. Puedes aprobarlos después y volver a descargar el contenido.',
   editingHold: 'Guarda o descarta los cambios antes de aprobar o regenerar este texto.',
   editingStale:
     'El texto cambió en el servidor desde que empezaste a editar: al guardar se rechazará. Descarta tus cambios para ver la versión actual.',

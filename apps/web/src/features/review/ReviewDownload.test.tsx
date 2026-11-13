@@ -1,8 +1,8 @@
 /**
  * Review context and integrated download (PD-ARCH-01F): the review names its project and leads back to it; a carousel
- * with a valid final approval is downloaded from the review, reusing an export made from that approval, exporting
- * first when there is none, never reusing an export of an earlier approval, and always for the selected carousel.
- * All data is synthetic.
+ * with a valid final approval is downloaded from the review. Every download asks the server to write the export from
+ * the current state first (E2E-F01, WI-2 UI-06.1): an earlier export, of this or of an earlier approval, is never
+ * downloaded in its place; the download is always for the selected carousel. All data is synthetic.
  */
 import type { Export, FinalApproval } from '@edr/contracts';
 import { cleanup, screen, within } from '@testing-library/react';
@@ -90,21 +90,31 @@ describe('review context (PD-ARCH-01F)', () => {
 });
 
 describe('download from the review (PD-ARCH-01F)', () => {
-  it('downloads the existing export of the current final approval without exporting again', async () => {
-    const existing = exportOf('e1000000-0000-4000-8000-000000000001', CAROUSEL_ID, CURRENT.id);
+  it('writes a new export even when one of the current final approval exists, and downloads the new one', async () => {
+    // The earlier export may hold editorial copy that is no longer the approved copy (E2E-F01): only the server, when
+    // it writes the export, knows the copy exportable now.
+    const earlier = exportOf('e1000000-0000-4000-8000-000000000001', CAROUSEL_ID, CURRENT.id);
+    const written = exportOf('e1000000-0000-4000-8000-000000000005', CAROUSEL_ID, CURRENT.id);
     const server = fakeServer({
       [DRAFT_PATH]: draftResponse(draft({ carousels: [approvedCarousel(CAROUSEL_ID, 1, 1, CURRENT)] })),
-      [EXPORTS]: () => json({ exports: [existing] }),
-      [`GET ${API}/exports/${existing.id}/download`]: ZIP,
+      [EXPORTS]: () => json({ exports: [earlier] }),
+      [`POST ${API}/carousels/${CAROUSEL_ID}/exports`]: () => json(written, 201),
+      [`GET ${API}/exports/${written.id}/download`]: ZIP,
     });
     renderApp(REVIEW, server);
+    const download = await screen.findByRole('button', { name: 'Descargar carrusel' });
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Descargar carrusel' }));
-
+    await userEvent.click(download);
     // The success is announced to assistive technology only (Product Owner, 2026-11-10).
     expect((await screen.findByText('La descarga está lista.')).className).toBe('sr-only');
-    expect(server.callsTo('GET', `${API}/exports/${existing.id}/download`)).toHaveLength(1);
-    expect(server.callsTo('POST', `${API}/carousels/${CAROUSEL_ID}/exports`)).toHaveLength(0);
+    // A second download without changes asks the server again: nothing is reused on the web side.
+    await userEvent.click(download);
+
+    await vi.waitFor(() => {
+      expect(server.callsTo('POST', `${API}/carousels/${CAROUSEL_ID}/exports`)).toHaveLength(2);
+      expect(server.callsTo('GET', `${API}/exports/${written.id}/download`)).toHaveLength(2);
+    });
+    expect(server.callsTo('GET', `${API}/exports/${earlier.id}/download`)).toHaveLength(0);
   });
 
   it('never reuses an export of an earlier final approval: it exports the current version first', async () => {
@@ -163,5 +173,23 @@ describe('download from the review (PD-ARCH-01F)', () => {
 
     expect(await screen.findByText(/La aprobación final ya no es válida/)).toBeTruthy();
     expect(server.callsTo('GET', `${API}/projects/${PROJECT_ID}/draft`).length).toBeGreaterThan(1);
+  });
+
+  it('reports editorial copy that changed while the export was written, without claiming the approval is invalid', async () => {
+    const server = fakeServer({
+      [DRAFT_PATH]: draftResponse(draft({ carousels: [approvedCarousel(CAROUSEL_ID, 1, 1, CURRENT)] })),
+      [`POST ${API}/carousels/${CAROUSEL_ID}/exports`]: () =>
+        problem({ status: 409, code: 'VERSION_CONFLICT', detail: 'synthetic' }),
+    });
+    renderApp(REVIEW, server);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Descargar carrusel' }));
+
+    expect(
+      await screen.findByText(
+        'El copy editorial cambió mientras se preparaba la descarga. Vuelve a descargar el carrusel.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText(/La aprobación final ya no es válida/)).toBeNull();
   });
 });

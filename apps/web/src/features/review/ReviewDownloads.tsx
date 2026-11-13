@@ -9,7 +9,6 @@ import { currentEditorialVersions, hasValidFinalApproval } from './model';
 import { useReviewDependencies } from './ReviewContext';
 
 export interface ReviewDownloadsProps {
-  projectId: string;
   carousel: Carousel;
   onExported: (written: Export) => void;
   /** The server reports the final approval as no longer valid. */
@@ -20,11 +19,11 @@ export interface ReviewDownloadsProps {
 
 /**
  * The download of an approved carousel without leaving the review (PD-ARCH-01F, UX-REVIEW-01): the existing carousel
- * download, which reuses the export of the current final approval or writes it first with the existing export
- * operation. Its success is announced to assistive technology only; failures stay visible. Nothing is shown before a
- * valid final approval.
+ * download, which has the existing export operation write the export from the current state first (E2E-F01). Its
+ * success is announced to assistive technology only; failures stay visible. Nothing is shown before a valid final
+ * approval.
  */
-export function ReviewDownloads({ projectId, carousel, onExported, onStale, menu }: ReviewDownloadsProps) {
+export function ReviewDownloads({ carousel, onExported, onStale, menu }: ReviewDownloadsProps) {
   const approval = carousel.finalApproval;
   if (approval === null || !hasValidFinalApproval(carousel)) {
     return null;
@@ -33,7 +32,6 @@ export function ReviewDownloads({ projectId, carousel, onExported, onStale, menu
     <div className="grid justify-items-stretch gap-1 lg:justify-items-end">
       <div className="flex flex-wrap items-start gap-2 lg:justify-end">
         <CarouselDownload
-          projectId={projectId}
           carousel={carousel}
           onExported={onExported}
           onStale={onStale}

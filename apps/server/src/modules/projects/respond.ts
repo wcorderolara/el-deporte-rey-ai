@@ -21,7 +21,10 @@ export class ContractResponseError extends Error {
 export function contractResponse<T>(schema: z.ZodType<T>, value: unknown, contract?: string): T {
   const parsed = schema.safeParse(value);
   if (!parsed.success) {
-    throw new ContractResponseError(contract, parsed.error.issues.slice(0, 12).map((issue) => issue.path.join('.') || 'root'));
+    throw new ContractResponseError(
+      contract,
+      parsed.error.issues.slice(0, 12).map((issue) => issue.path.join('.') || 'root'),
+    );
   }
   return parsed.data;
 }

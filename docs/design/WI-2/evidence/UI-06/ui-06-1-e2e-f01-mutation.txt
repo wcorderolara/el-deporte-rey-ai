@@ -1,0 +1,28 @@
+# UI-06.1 — E2E-F01: la prueba de regresión detecta un paquete editorial desactualizado, 2026-11-13.
+#
+# Comprobación de que la prueba falla si vuelve el defecto. En una copia temporal de
+# apps/web/src/features/history/CarouselDownload.tsx se reintrodujo la reutilización: la primera exportación escrita
+# para la aprobación final se volvía a descargar sin pedir una nueva al servidor. Después se ejecutó
+# `npm run build` y `node e2e/run.mjs --grep-invert @a11y e2e/tests/content-journey.spec.ts`.
+# Al terminar se restauró el archivo corregido (sin rastro de la mutación en el código ni en apps/web/dist) y se
+# volvió a compilar. Salida de Playwright (líneas relevantes):
+
+  ✓  1 [chromium] › e2e/tests/content-journey.spec.ts:115:3 › Creator journey: local competition to downloaded carousel with approved copy › create, review, approve slides and copy independently, download and verify the export (4.6s)
+  ✘  2 [chromium] › e2e/tests/content-journey.spec.ts:221:3 › Creator journey: local competition to downloaded carousel with approved copy › every download carries the copy approved now, without a new final approval or touching earlier ZIPs (E2E-F01) (671ms)
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "Facebook / Instagram",
+    +   "TikTok / Reels",
+      ]
+
+  1 failed
+  1 passed (6.3s)
+
+# Lectura: tras editar el texto aprobado de TikTok / Reels (escenario C), el ZIP reutilizado seguía trayendo la
+# sección «TikTok / Reels» del texto anterior. Con la corrección, la misma prueba pasa
+# (ui-06-1-e2e-final.txt) y el ZIP de ese paso solo trae «Facebook / Instagram» (ui-06-1-e2e-f01-zips.json).

@@ -167,7 +167,6 @@ function ProjectReview({ projectId }: { projectId: string }) {
             onRefused={() => void request.refresh()}
           />
           <ReviewDownloads
-            projectId={projectId}
             carousel={carousel}
             menu={menu}
             onExported={() => setExportsWritten((count) => count + 1)}

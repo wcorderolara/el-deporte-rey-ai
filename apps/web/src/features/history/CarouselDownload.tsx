@@ -3,20 +3,21 @@
  * export preparation and download stay separate operations, connected here:
  *
  * - shown only for a carousel with a valid final approval (the server still decides every export);
- * - an existing export of this carousel made from its current final approval is downloaded again as is;
- * - otherwise the existing export operation writes it first, then it is downloaded;
- * - an export made from an earlier final approval (for example before a regeneration) is never reused.
+ * - every download asks the server to write the export first (exportCarousel), then downloads that export. The server
+ *   plans it from the current state: the version set of the valid final approval and the editorial copy exportable
+ *   at that moment (REVIEW-APPROVAL-01), re-checked when it records the export. The web never decides by itself that
+ *   an earlier export still holds the current content (E2E-F01, WI-2 UI-06.1): copy approved, edited or withdrawn
+ *   after an export reaches the next download, and the earlier exports stay in the history as they were written;
+ * - an export of an earlier final approval (for example before a regeneration) is never downloaded from here.
  */
 import type { Carousel, Export } from '@edr/contracts';
 import { useState } from 'react';
 
 import { ApiError } from '../../api/client';
 import { buttonClassName } from '../../ui';
-import { downloadExport, exportCarousel, loadProjectExports, saveExportZip, useHistoryApi } from './api';
-import { useLoad } from './useLoad';
+import { downloadExport, exportCarousel, saveExportZip, useHistoryApi } from './api';
 
 export interface CarouselDownloadProps {
-  projectId: string;
   carousel: Carousel;
   /** Called after a new export was written (to refresh a history list). */
   onExported?: (written: Export) => void;
@@ -27,7 +28,10 @@ export interface CarouselDownloadProps {
   quietSuccess?: boolean;
 }
 
-/** The export of the carousel made from its current valid final approval, newest first; null when there is none. */
+/**
+ * The newest export of the carousel made from its current valid final approval (the history marks it Vigente); null
+ * when there is none. The download never reuses it: it only names the latest export of the valid approval.
+ */
 export function currentExport(exports: readonly Export[], carousel: Carousel): Export | null {
   const approval = carousel.finalApproval;
   if (approval === null || !approval.valid) {
@@ -36,10 +40,7 @@ export function currentExport(exports: readonly Export[], carousel: Carousel): E
   return exports.find((item) => item.carouselId === carousel.id && item.finalApprovalId === approval.id) ?? null;
 }
 
-const STALE_CODES = new Set(['FINAL_APPROVAL_REQUIRED', 'VERSION_CONFLICT']);
-
 export function CarouselDownload({
-  projectId,
   carousel,
   onExported,
   onStale,
@@ -48,10 +49,6 @@ export function CarouselDownload({
 }: CarouselDownloadProps) {
   const client = useHistoryApi();
   const approval = carousel.finalApproval;
-  const exports = useLoad(
-    `carousel-exports\u0000${projectId}\u0000${carousel.id}\u0000${approval?.id ?? ''}`,
-    (signal) => loadProjectExports(client, projectId, signal),
-  );
   const [step, setStep] = useState<'idle' | 'exporting' | 'downloading'>('idle');
   const [message, setMessage] = useState('');
   const [succeeded, setSucceeded] = useState(false);
@@ -67,21 +64,22 @@ export function CarouselDownload({
     setMessage('');
     setSucceeded(false);
     try {
-      let target = currentExport(exports.latest ?? [], carousel);
-      if (target === null) {
-        setStep('exporting');
-        target = await exportCarousel(client, carousel.id);
-        onExported?.(target);
-        exports.reload();
-      }
+      // The server writes the export from the current state (E2E-F01); an earlier export is never reused here.
+      setStep('exporting');
+      const target = await exportCarousel(client, carousel.id);
+      onExported?.(target);
       setStep('downloading');
       saveExportZip(await downloadExport(client, target.id), target.id);
       setMessage('La descarga está lista.');
       setSucceeded(true);
     } catch (error) {
       const code = error instanceof ApiError ? error.problem?.code : undefined;
-      if (code !== undefined && STALE_CODES.has(code)) {
+      if (code === 'FINAL_APPROVAL_REQUIRED') {
         setMessage('La aprobación final ya no es válida. Vuelve a aprobar el carrusel para descargarlo.');
+        onStale?.();
+      } else if (code === 'VERSION_CONFLICT') {
+        // The approved editorial copy changed while the export was written (REVIEW-APPROVAL-01): nothing was recorded.
+        setMessage('El copy editorial cambió mientras se preparaba la descarga. Vuelve a descargar el carrusel.');
         onStale?.();
       } else if (code === 'EXPORT_FILES_MISSING' || code === 'EXPORT_FILES_CORRUPT') {
         setMessage('Los archivos de esta exportación no están disponibles o no se pudieron verificar.');
@@ -93,13 +91,12 @@ export function CarouselDownload({
     }
   }
 
-  const ready = exports.state.status !== 'loading' || exports.latest !== null;
   return (
     <span className="grid gap-1">
       <button
         type="button"
         className={className ?? buttonClassName('primary', 'md')}
-        disabled={step !== 'idle' || !ready}
+        disabled={step !== 'idle'}
         aria-busy={step !== 'idle'}
         onClick={() => void download()}
       >

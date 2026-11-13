@@ -127,9 +127,14 @@ export function sendProblem(reply: FastifyReply, problem: HttpProblem): FastifyR
 export function errorHandler(error: FastifyError | Error, request: FastifyRequest, reply: FastifyReply): FastifyReply {
   const problem = toProblem(error);
   if (problem.status >= 500) {
-    request.log.error({ err: error, route: request.routeOptions.url ?? null,
-      ...(error instanceof ContractResponseError ? { contract: error.contract, responsePaths: error.paths } : {}),
-    }, 'request failed');
+    request.log.error(
+      {
+        err: error,
+        route: request.routeOptions.url ?? null,
+        ...(error instanceof ContractResponseError ? { contract: error.contract, responsePaths: error.paths } : {}),
+      },
+      'request failed',
+    );
   } else {
     request.log.debug({ problem: problem.code }, 'request refused');
   }

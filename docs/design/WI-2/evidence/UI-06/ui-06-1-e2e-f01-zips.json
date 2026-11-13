@@ -1,0 +1,96 @@
+[
+  {
+    "download": "A0 primera descarga",
+    "finalApprovalSameAsFirst": true,
+    "editorialSections": [
+      "Facebook / Instagram"
+    ],
+    "editorialVersions": [
+      "facebook_instagram v1"
+    ],
+    "files": [
+      "01.png 6f1be4eaa30790fa",
+      "02.png c5e7afe5892c5b25",
+      "03.png 65118fa0921f3b4c",
+      "04.png 6f4e6f3e32890dc7",
+      "copy-editorial.txt d831a9944de02f82",
+      "manifest.json 30b4199145f01046"
+    ],
+    "downloadsAgainUnchanged": true
+  },
+  {
+    "download": "A nueva aprobación",
+    "finalApprovalSameAsFirst": true,
+    "editorialSections": [
+      "Facebook / Instagram",
+      "TikTok / Reels"
+    ],
+    "editorialVersions": [
+      "facebook_instagram v1",
+      "tiktok_reels v1"
+    ],
+    "files": [
+      "01.png 6f1be4eaa30790fa",
+      "02.png c5e7afe5892c5b25",
+      "03.png 65118fa0921f3b4c",
+      "04.png 6f4e6f3e32890dc7",
+      "copy-editorial.txt 74851d527cc45fc0",
+      "manifest.json b1d9fe09aec5fbc9"
+    ],
+    "downloadsAgainUnchanged": true
+  },
+  {
+    "download": "D repetida",
+    "finalApprovalSameAsFirst": true,
+    "editorialSections": [
+      "Facebook / Instagram",
+      "TikTok / Reels"
+    ],
+    "editorialVersions": [
+      "facebook_instagram v1",
+      "tiktok_reels v1"
+    ],
+    "files": [
+      "01.png 6f1be4eaa30790fa",
+      "02.png c5e7afe5892c5b25",
+      "03.png 65118fa0921f3b4c",
+      "04.png 6f4e6f3e32890dc7",
+      "copy-editorial.txt 74851d527cc45fc0",
+      "manifest.json df77f69d470de57c"
+    ],
+    "downloadsAgainUnchanged": true
+  },
+  {
+    "download": "C copy editado",
+    "finalApprovalSameAsFirst": true,
+    "editorialSections": [
+      "Facebook / Instagram"
+    ],
+    "editorialVersions": [
+      "facebook_instagram v1"
+    ],
+    "files": [
+      "01.png 6f1be4eaa30790fa",
+      "02.png c5e7afe5892c5b25",
+      "03.png 65118fa0921f3b4c",
+      "04.png 6f4e6f3e32890dc7",
+      "copy-editorial.txt d831a9944de02f82",
+      "manifest.json 2cade67f4be205f1"
+    ],
+    "downloadsAgainUnchanged": true
+  },
+  {
+    "download": "B aprobación retirada",
+    "finalApprovalSameAsFirst": true,
+    "editorialSections": [],
+    "editorialVersions": [],
+    "files": [
+      "01.png 6f1be4eaa30790fa",
+      "02.png c5e7afe5892c5b25",
+      "03.png 65118fa0921f3b4c",
+      "04.png 6f4e6f3e32890dc7",
+      "manifest.json bbce492a81daa627"
+    ],
+    "downloadsAgainUnchanged": true
+  }
+]

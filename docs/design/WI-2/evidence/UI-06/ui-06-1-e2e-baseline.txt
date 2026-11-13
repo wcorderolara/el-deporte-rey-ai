@@ -1,0 +1,382 @@
+# UI-06.1 — línea base E2E en 9f5963f (npm run test:e2e), 2026-11-13. Registro de Playwright sin las líneas del servidor.
+
+
+> el-deporte-rey-ai@0.0.0 test:e2e
+> npm run build && node e2e/run.mjs --grep-invert @a11y
+
+
+> el-deporte-rey-ai@0.0.0 build
+> npm run build --workspaces --if-present
+
+
+> @edr/server@0.0.0 build
+> tsc -b
+
+
+> @edr/web@0.0.0 build
+> vite build
+
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 405 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                  0.45 kB │ gzip:   0.28 kB
+dist/assets/Inter-Regular-C_F0_eS_.ttf         342.40 kB
+dist/assets/Montserrat-ExtraBold-Cwewate7.ttf  344.05 kB
+dist/assets/Inter-Bold-CGGXExDp.ttf            344.07 kB
+dist/assets/history-4fCns-h4.css                 3.50 kB │ gzip:   0.98 kB
+dist/assets/EvidenceTable-xVavn_bA.css           3.76 kB │ gzip:   1.06 kB
+dist/assets/imports-BM1-vuj7.css                 5.10 kB │ gzip:   1.29 kB
+dist/assets/useLoad-RxhGBgC3.css                 8.15 kB │ gzip:   1.94 kB
+dist/assets/projects-Dr9ncrh6.css               11.92 kB │ gzip:   2.58 kB
+dist/assets/index-DthZCNwR.css                  51.41 kB │ gzip:  10.10 kB
+dist/assets/PreviewImage-jMIIy0R8.js             0.50 kB │ gzip:   0.34 kB
+dist/assets/TeamBadge-97bq72nT.js                1.06 kB │ gzip:   0.68 kB
+dist/assets/paths-wL3T20--.js                    1.49 kB │ gzip:   0.85 kB
+dist/assets/api-CBwC5hMh.js                      8.86 kB │ gzip:   2.04 kB
+dist/assets/facts-BQ9p3u2h.js                   13.01 kB │ gzip:   4.12 kB
+dist/assets/useResource-DyGZ65YX.js             13.56 kB │ gzip:   5.45 kB
+dist/assets/EvidenceTable-CMCp4JJS.js           15.12 kB │ gzip:   5.17 kB
+dist/assets/history-BprEAKSK.js                 17.35 kB │ gzip:   5.56 kB
+dist/assets/copy-Va2OMTOl.js                    17.65 kB │ gzip:   6.59 kB
+dist/assets/useDraft-G9CBN1q0.js                20.86 kB │ gzip:   7.42 kB
+dist/assets/useLoad-mNjBZ7e2.js                 25.46 kB │ gzip:   9.11 kB
+dist/assets/brand-BaUWQ73r.js                   30.06 kB │ gzip:   7.32 kB
+dist/assets/review--5sqlA2H.js                  59.96 kB │ gzip:  17.02 kB
+dist/assets/imports-lntTTT6P.js                 62.34 kB │ gzip:  16.76 kB
+dist/assets/projects-CLqurEJ6.js                67.62 kB │ gzip:  17.19 kB
+dist/assets/templates-CN1skRJs.js              136.94 kB │ gzip:  34.34 kB
+dist/assets/competitions-DVz2_G0a.js           137.59 kB │ gzip:  29.43 kB
+dist/assets/index-CGjofkGu.js                  545.42 kB │ gzip: 161.94 kB
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 266ms
+
+> @edr/contracts@0.0.0 build
+> tsc -b
+
+[e2e] Ensuring Chromium in .cache/ms-playwright (downloaded on first use only).
+[e2e] Configuration generated from fixtures/config/demo-manual.config.json in a temporary directory: sources demo-a, demo-b, manual, stub AI provider.
+[e2e] Starting the built server entry (apps/server/dist/src/main.js).
+[e2e] Server listening on http://127.0.0.1:4310.
+
+Running 17 tests using 1 worker
+
+  ✘   1 [chromium] › e2e/tests/brand.spec.ts:13:3 › Brand assets and templates (R-231) › registering a brand asset offers no badge option; badge slots stay empty (5.3s)
+  ✘   2 [chromium] › e2e/tests/catalogue.spec.ts:26:3 › Catalogue and project creation › the catalogue shows both fixture competitions, their sources and the manual source (30.0s)
+  ✘   3 [chromium] › e2e/tests/catalogue.spec.ts:49:3 › Catalogue and project creation › a league matchday project shows its selection, source, mode and demonstration label (R-200, R-243, R-269) (1.5m)
+  ✘   4 [chromium] › e2e/tests/catalogue.spec.ts:129:3 › Catalogue and project creation › a knockout stage project: stages by the source names, standings not available, no standings slide, English drafting (R-236, R-283, R-284) (2.0m)
+  ✘   5 [chromium] › e2e/tests/creation-visual.spec.ts:20:1 › UI-03 guided creation visual evidence (5.2s)
+  ✘   6 [chromium] › e2e/tests/creation-visual.spec.ts:42:1 › UI-03 automatic data availability, empty catalogue, and catalogue error evidence (5.2s)
+  ✘   7 [chromium] › e2e/tests/dashboard.spec.ts:49:1 › dashboard primary creation action opens the existing form (5.3s)
+  ✘   8 [chromium] › e2e/tests/delivery.spec.ts:47:3 › Delivery journey (DEMO_DATA league matchday) › research, review, preview, approval, export, history, reopen and trace (4.0m)
+  ✘   9 [chromium] › e2e/tests/failure-restart.spec.ts:28:3 › Research failure and restart (journey-owned server) › a simulated source failure, a restart after recovery, and a blocked approval naming the fact (4.0m)
+  ✓  10 [chromium] › e2e/tests/harness.spec.ts:16:3 › End-to-end harness › forwards no credential or live-test variable (15ms)
+  ✓  11 [chromium] › e2e/tests/harness.spec.ts:24:3 › End-to-end harness › uses the project-local browser cache (8ms)
+  ✓  12 [chromium] › e2e/tests/harness.spec.ts:28:3 › End-to-end harness › serves the application on the loopback address (15ms)
+  ✓  13 [chromium] › e2e/tests/harness.spec.ts:35:3 › End-to-end harness › generates the DEMO_DATA plus MANUAL_DATA configuration; scenario overrides reach only fixture sources (11ms)
+  ✘  14 [chromium] › e2e/tests/manual-import.spec.ts:58:3 › Manual import journey (MANUAL_DATA) › import with errors, corrected file, form entry, versions, project, manual approval still blocked (4.0m)
+  ✘  15 [chromium] › e2e/tests/shell-responsive.spec.ts:39:1 › shell links to existing brand sections and restores heading focus (30.0s)
+  ✘  16 [chromium] › e2e/tests/smoke.spec.ts:12:3 › Application shell (R-235) › opens on the project list without login (5.3s)
+  ✓  17 [chromium] › e2e/tests/smoke.spec.ts:30:3 › Application shell (R-235) › shows no login, account or sign-in element (328ms)
+
+
+  1) [chromium] › e2e/tests/brand.spec.ts:13:3 › Brand assets and templates (R-231) › registering a brand asset offers no badge option; badge slots stay empty 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('heading', { name: 'Marca y plantillas', level: 1 })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('heading', { name: 'Marca y plantillas', level: 1 }) with timeout 5000ms
+      - waiting for getByRole('heading', { name: 'Marca y plantillas', level: 1 })
+
+
+      13 |   test('registering a brand asset offers no badge option; badge slots stay empty', async ({ page }) => {
+      14 |     await page.goto('/brand');
+    > 15 |     await expect(page.getByRole('heading', { level: 1, name: 'Marca y plantillas' })).toBeVisible();
+         |                                                                                       ^
+      16 |     await expect(page.getByText(/No se registran escudos de clubes, marcas de competiciones/)).toBeVisible();
+      17 |
+      18 |     const form = page.getByRole('form', { name: 'Registrar un recurso de marca' });
+        at e2e/tests/brand.spec.ts:15:87
+
+    Error Context: .cache/e2e/test-results/brand-Brand-assets-and-tem-e03d0-tion-badge-slots-stay-empty-chromium/error-context.md
+
+  2) [chromium] › e2e/tests/catalogue.spec.ts:26:3 › Catalogue and project creation › the catalogue shows both fixture competitions, their sources and the manual source 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByText('Ver disponibilidad y fuentes')
+
+
+      26 |   test('the catalogue shows both fixture competitions, their sources and the manual source', async ({ page }) => {
+      27 |     await page.goto('/projects/new');
+    > 28 |     await page.getByText('Ver disponibilidad y fuentes').click();
+         |                                                          ^
+      29 |     const sources = page.getByRole('region', { name: 'Fuentes de datos del catálogo' });
+      30 |     await expect(sources.getByRole('listitem').filter({ hasText: 'Synthetic source A' })).toContainText(
+      31 |       'Datos de demostración',
+        at e2e/tests/catalogue.spec.ts:28:58
+
+    Error Context: .cache/e2e/test-results/catalogue-Catalogue-and-pr-61f00-urces-and-the-manual-source-chromium/error-context.md
+
+  3) [chromium] › e2e/tests/catalogue.spec.ts:49:3 › Catalogue and project creation › a league matchday project shows its selection, source, mode and demonstration label (R-200, R-243, R-269) 
+
+    Test timeout of 90000ms exceeded.
+
+    Error: locator.check: Test timeout of 90000ms exceeded.
+    Call log:
+      - waiting for getByRole('radio', { name: /^Liga Demo/ })
+
+
+       at ../support/app.ts:47
+
+      45 |   const continueButton = page.getByRole('button', { name: 'Continuar' });
+      46 |   await expect(continueButton).toBeDisabled();
+    > 47 |   await page.getByRole('radio', { name: selection.competition }).check();
+         |                                                                  ^
+      48 |   await expect(continueButton).toBeDisabled();
+      49 |   const season = page.getByRole('combobox', { name: 'Temporada' });
+      50 |   await expect(season.locator('option').nth(1)).toBeAttached();
+        at fillProjectForm (e2e/support/app.ts:47:66)
+        at e2e/tests/catalogue.spec.ts:53:5
+
+    Error Context: .cache/e2e/test-results/catalogue-Catalogue-and-pr-4de6c-on-label-R-200-R-243-R-269--chromium/error-context.md
+
+  4) [chromium] › e2e/tests/catalogue.spec.ts:129:3 › Catalogue and project creation › a knockout stage project: stages by the source names, standings not available, no standings slide, English drafting (R-236, R-283, R-284) 
+
+    Test timeout of 120000ms exceeded.
+
+    Error: locator.check: Test timeout of 120000ms exceeded.
+    Call log:
+      - waiting for getByRole('radio', { name: /^Copa Demo/ })
+
+
+      132 |     test.setTimeout(120_000);
+      133 |     await page.goto('/projects/new');
+    > 134 |     await page.getByRole('radio', { name: /^Copa Demo/ }).check();
+          |                                                           ^
+      135 |     await page.getByRole('combobox', { name: 'Temporada' }).selectOption({ label: '2025/26 (actual)' });
+      136 |     const stages = page.getByRole('group', { name: 'Fase' });
+      137 |     // Every stage the source reports, by its own names and in its order, including those after the league phase.
+        at e2e/tests/catalogue.spec.ts:134:59
+
+    Error Context: .cache/e2e/test-results/catalogue-Catalogue-and-pr-848aa-drafting-R-236-R-283-R-284--chromium/error-context.md
+
+  5) [chromium] › e2e/tests/creation-visual.spec.ts:20:1 › UI-03 guided creation visual evidence ───
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('group', { name: 'Competición' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('group', { name: 'Competición' }) with timeout 5000ms
+      - waiting for getByRole('group', { name: 'Competición' })
+
+
+      22 |   await page.setViewportSize({ width: 1440, height: 1000 });
+      23 |   await page.goto('/projects/new');
+    > 24 |   await expect(page.getByRole('group', { name: 'Competición' })).toBeVisible();
+         |                                                                  ^
+      25 |   await page.screenshot({ path: join(evidence, 'step-1-desktop.png'), fullPage: true });
+      26 |
+      27 |   await chooseDemoScope(page);
+        at e2e/tests/creation-visual.spec.ts:24:66
+
+    Error Context: .cache/e2e/test-results/creation-visual-UI-03-guided-creation-visual-evidence-chromium/error-context.md
+
+  6) [chromium] › e2e/tests/creation-visual.spec.ts:42:1 › UI-03 automatic data availability, empty catalogue, and catalogue error evidence 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('group', { name: 'Competición' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('group', { name: 'Competición' }) with timeout 5000ms
+      - waiting for getByRole('group', { name: 'Competición' })
+
+
+       9 | async function chooseDemoScope(page: Page) {
+      10 |   await page.goto('/projects/new');
+    > 11 |   await expect(page.getByRole('group', { name: 'Competición' })).toBeVisible();
+         |                                                                  ^
+      12 |   await page.getByRole('radio', { name: /^Copa Demo/ }).check();
+      13 |   await page.getByRole('combobox', { name: 'Temporada' }).selectOption({ index: 1 });
+      14 |   await page.getByRole('radio', { name: 'Octavos de Final', exact: true }).check();
+        at chooseDemoScope (e2e/tests/creation-visual.spec.ts:11:66)
+        at e2e/tests/creation-visual.spec.ts:56:3
+
+    Error Context: .cache/e2e/test-results/creation-visual-UI-03-auto-62e26-nd-catalogue-error-evidence-chromium/error-context.md
+
+  7) [chromium] › e2e/tests/dashboard.spec.ts:49:1 › dashboard primary creation action opens the existing form 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/projects\/new$/
+    Received string:  "http://127.0.0.1:4310/projects/generate"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        14 × locator resolved to <html lang="es">…</html>
+           - unexpected value "http://127.0.0.1:4310/projects/generate"
+
+
+      50 |   await page.goto('/');
+      51 |   await page.getByRole('main').getByRole('link', { name: 'Crear contenido', exact: true }).first().click();
+    > 52 |   await expect(page).toHaveURL(/\/projects\/new$/);
+         |                      ^
+      53 |   await expect(page.getByRole('heading', { name: 'Crear contenido' })).toBeVisible();
+      54 | });
+      55 |
+        at e2e/tests/dashboard.spec.ts:52:22
+
+    Error Context: .cache/e2e/test-results/dashboard-dashboard-primar-6de64-ion-opens-the-existing-form-chromium/error-context.md
+
+  8) [chromium] › e2e/tests/delivery.spec.ts:47:3 › Delivery journey (DEMO_DATA league matchday) › research, review, preview, approval, export, history, reopen and trace 
+
+    Test timeout of 240000ms exceeded.
+
+    Error: locator.check: Test timeout of 240000ms exceeded.
+    Call log:
+      - waiting for getByRole('radio', { name: /^Liga Demo/ })
+
+
+       at ../support/app.ts:47
+
+      45 |   const continueButton = page.getByRole('button', { name: 'Continuar' });
+      46 |   await expect(continueButton).toBeDisabled();
+    > 47 |   await page.getByRole('radio', { name: selection.competition }).check();
+         |                                                                  ^
+      48 |   await expect(continueButton).toBeDisabled();
+      49 |   const season = page.getByRole('combobox', { name: 'Temporada' });
+      50 |   await expect(season.locator('option').nth(1)).toBeAttached();
+        at fillProjectForm (e2e/support/app.ts:47:66)
+        at createProject (e2e/support/app.ts:82:3)
+        at e2e/tests/delivery.spec.ts:54:23
+
+    Error Context: .cache/e2e/test-results/delivery-Delivery-journey--956fb-rt-history-reopen-and-trace-chromium/error-context.md
+
+  9) [chromium] › e2e/tests/failure-restart.spec.ts:28:3 › Research failure and restart (journey-owned server) › a simulated source failure, a restart after recovery, and a blocked approval naming the fact 
+
+    Test timeout of 240000ms exceeded.
+
+    Error: locator.check: Test timeout of 240000ms exceeded.
+    Call log:
+      - waiting for getByRole('radio', { name: /^Liga Demo/ })
+
+
+       at ../support/app.ts:47
+
+      45 |   const continueButton = page.getByRole('button', { name: 'Continuar' });
+      46 |   await expect(continueButton).toBeDisabled();
+    > 47 |   await page.getByRole('radio', { name: selection.competition }).check();
+         |                                                                  ^
+      48 |   await expect(continueButton).toBeDisabled();
+      49 |   const season = page.getByRole('combobox', { name: 'Temporada' });
+      50 |   await expect(season.locator('option').nth(1)).toBeAttached();
+        at fillProjectForm (e2e/support/app.ts:47:66)
+        at createProject (e2e/support/app.ts:82:3)
+        at e2e/tests/failure-restart.spec.ts:35:23
+
+    Error Context: .cache/e2e/test-results/failure-restart-Research-f-b2397-ed-approval-naming-the-fact-chromium/error-context.md
+
+  10) [chromium] › e2e/tests/manual-import.spec.ts:58:3 › Manual import journey (MANUAL_DATA) › import with errors, corrected file, form entry, versions, project, manual approval still blocked 
+
+    Test timeout of 240000ms exceeded.
+
+    Error: locator.click: Test timeout of 240000ms exceeded.
+    Call log:
+      - waiting for getByRole('group', { name: 'Competición' }).getByRole('listitem').filter({ has: getByRole('radio', { name: /^Liga Manual Sintética/ }) }).getByText('Ver disponibilidad de esta competición')
+
+
+      175 |       .getByRole('listitem')
+      176 |       .filter({ has: page.getByRole('radio', { name: /^Liga Manual Sintética/ }) });
+    > 177 |     await manualCompetition.getByText('Ver disponibilidad de esta competición').click();
+          |                                                                                 ^
+      178 |     await expect(manualCompetition.getByRole('listitem')).toHaveText([/Operator import\s*Datos manuales/]);
+      179 |     const projectId = await createProject(page, {
+      180 |       competition: /^Liga Manual Sintética/,
+        at e2e/tests/manual-import.spec.ts:177:81
+
+    Error Context: .cache/e2e/test-results/manual-import-Manual-impor-c7d6b-nual-approval-still-blocked-chromium/error-context.md
+
+  11) [chromium] › e2e/tests/shell-responsive.spec.ts:39:1 › shell links to existing brand sections and restores heading focus 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('navigation', { name: 'Navegación principal' }).getByRole('link', { name: 'Plantillas', exact: true })
+
+
+      44 |     ['Mi marca', 'brand-assets-title'],
+      45 |   ]) {
+    > 46 |     await nav.getByRole('link', { name, exact: true }).click();
+         |                                                        ^
+      47 |     await expect(page).toHaveURL(new RegExp(`/brand#${hash}$`));
+      48 |     await expect(page.locator(`#${hash}`)).toBeFocused();
+      49 |     await expect(nav.getByRole('link', { name, exact: true })).toHaveAttribute('aria-current', 'page');
+        at e2e/tests/shell-responsive.spec.ts:46:56
+
+    Error Context: .cache/e2e/test-results/shell-responsive-shell-lin-77156--and-restores-heading-focus-chromium/error-context.md
+
+  12) [chromium] › e2e/tests/smoke.spec.ts:12:3 › Application shell (R-235) › opens on the project list without login 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('navigation', { name: 'Navegación principal' }).getByRole('link', { name: 'Plantillas', exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('navigation', { name: 'Navegación principal' }).getByRole('link', { name: 'Plantillas', exact: true }) with timeout 5000ms
+      - waiting for getByRole('navigation', { name: 'Navegación principal' }).getByRole('link', { name: 'Plantillas', exact: true })
+
+
+      22 |     await expect(navigation.getByRole('link')).toHaveCount(6);
+      23 |     for (const name of ['Inicio', 'Crear contenido', 'Mis proyectos', 'Plantillas', 'Mi marca', 'Datos']) {
+    > 24 |       await expect(navigation.getByRole('link', { name, exact: true })).toBeVisible();
+         |                                                                         ^
+      25 |     }
+      26 |     await expect(navigation.getByRole('link', { name: 'Inicio', exact: true })).toHaveAttribute('aria-current', 'page');
+      27 |     await expect(page.getByRole('main')).toBeVisible();
+        at e2e/tests/smoke.spec.ts:24:73
+
+    Error Context: .cache/e2e/test-results/smoke-Application-shell-R--d5518--project-list-without-login-chromium/error-context.md
+
+  12 failed
+    [chromium] › e2e/tests/brand.spec.ts:13:3 › Brand assets and templates (R-231) › registering a brand asset offers no badge option; badge slots stay empty 
+    [chromium] › e2e/tests/catalogue.spec.ts:26:3 › Catalogue and project creation › the catalogue shows both fixture competitions, their sources and the manual source 
+    [chromium] › e2e/tests/catalogue.spec.ts:49:3 › Catalogue and project creation › a league matchday project shows its selection, source, mode and demonstration label (R-200, R-243, R-269) 
+    [chromium] › e2e/tests/catalogue.spec.ts:129:3 › Catalogue and project creation › a knockout stage project: stages by the source names, standings not available, no standings slide, English drafting (R-236, R-283, R-284) 
+    [chromium] › e2e/tests/creation-visual.spec.ts:20:1 › UI-03 guided creation visual evidence ────
+    [chromium] › e2e/tests/creation-visual.spec.ts:42:1 › UI-03 automatic data availability, empty catalogue, and catalogue error evidence 
+    [chromium] › e2e/tests/dashboard.spec.ts:49:1 › dashboard primary creation action opens the existing form 
+    [chromium] › e2e/tests/delivery.spec.ts:47:3 › Delivery journey (DEMO_DATA league matchday) › research, review, preview, approval, export, history, reopen and trace 
+    [chromium] › e2e/tests/failure-restart.spec.ts:28:3 › Research failure and restart (journey-owned server) › a simulated source failure, a restart after recovery, and a blocked approval naming the fact 
+    [chromium] › e2e/tests/manual-import.spec.ts:58:3 › Manual import journey (MANUAL_DATA) › import with errors, corrected file, form entry, versions, project, manual approval still blocked 
+    [chromium] › e2e/tests/shell-responsive.spec.ts:39:1 › shell links to existing brand sections and restores heading focus 
+    [chromium] › e2e/tests/smoke.spec.ts:12:3 › Application shell (R-235) › opens on the project list without login 
+  5 passed (17.1m)
+[e2e] Last server log lines (at most 200):
+[e2e] Server stopped and temporary directory removed.
+exit 1

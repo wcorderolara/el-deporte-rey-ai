@@ -3,6 +3,8 @@ export declare const VERIFICATION_PORT: number;
 export declare const LOOPBACK_HOST: string;
 export declare const BASE_CONFIG_CANDIDATES: readonly string[];
 export declare const INCLUDED_MODES: readonly string[];
+export declare const LOCAL_SOURCE_CONFIG: string;
+export declare const LOCAL_ADAPTER: string;
 export declare const AI_PROVIDER: Readonly<{ adapter: string; options: Readonly<{ scenario: string }> }>;
 export declare const BROWSERS_DIRECTORY: string;
 export declare const BLOCKED_VARIABLES: readonly string[];
@@ -29,6 +31,8 @@ export declare function childEnvironment(
   extra?: Readonly<Record<string, string>>,
 ): Record<string, string>;
 export declare function baseConfigPath(rootDir: string): string;
+export declare function localSource(rootDir: string): unknown;
+export declare function runBaseDocument(rootDir: string): unknown;
 export declare function enabledSources(document: unknown): unknown[];
 export declare function withScenarios(sources: readonly unknown[], scenarios?: ScenarioOverrides): unknown[];
 export declare function serverConfigDocument(base: unknown, port: number, scenarios?: ScenarioOverrides): unknown;

@@ -61,7 +61,6 @@ function ProjectPreviewActions({
     <div className="grid gap-2">
       {approved ? (
         <CarouselDownload
-          projectId={project.id}
           carousel={carousel}
           onExported={onExported}
           onStale={onStale}

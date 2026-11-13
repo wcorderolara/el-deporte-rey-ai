@@ -1,0 +1,35 @@
+# UI-06.1 — E2E tras los cambios (node e2e/run.mjs --grep-invert @a11y sobre el build de npm run test:e2e), 2026-11-13.
+
+[e2e] Ensuring Chromium in .cache/ms-playwright (downloaded on first use only).
+[e2e] Configuration generated from fixtures/config/demo-manual.config.json in a temporary directory: sources demo-a, demo-b, manual, local, stub AI provider.
+[e2e] Starting the built server entry (apps/server/dist/src/main.js).
+[e2e] Server listening on http://127.0.0.1:4310.
+
+Running 22 tests using 1 worker
+
+  ✓   1 [chromium] › e2e/tests/brand.spec.ts:20:3 › Brand assets and team badges (R-231, PD-28) › Mi marca offers no badge category and lists a registered asset (407ms)
+  ✓   2 [chromium] › e2e/tests/brand.spec.ts:43:3 › Brand assets and team badges (R-231, PD-28) › a team badge is uploaded in Competiciones only with its source and the declared authorization (439ms)
+  ✓   3 [chromium] › e2e/tests/brand.spec.ts:81:3 › Brand assets and team badges (R-231, PD-28) › the engine templates name their badge slots (219ms)
+  ✓   4 [chromium] › e2e/tests/content-journey.spec.ts:61:3 › Creator journey: local competition to downloaded carousel with approved copy › create, review, approve slides and copy independently, download and verify the export (4.2s)
+  ✘   5 [chromium] › e2e/tests/content-journey.spec.ts:167:3 › Creator journey: local competition to downloaded carousel with approved copy › a copy approved after the final approval goes into the next download (known defect E2E-F01) (305ms)
+  ✓   6 [chromium] › e2e/tests/creation-entry.spec.ts:17:3 › Content creation entry (PD-ARCH-01F) › the retired catalogue address opens Crear contenido with the local competitions only (226ms)
+  ✓   7 [chromium] › e2e/tests/creation-entry.spec.ts:34:3 › Content creation entry (PD-ARCH-01F) › a plan without compatible matches names each skipped piece and cannot be confirmed (677ms)
+  ✓   8 [chromium] › e2e/tests/creation-entry.spec.ts:67:3 › Content creation entry (PD-ARCH-01F) › a calendar of an upcoming round uses the unplayed matches and is listed with its sports context (3.1s)
+  ✓   9 [chromium] › e2e/tests/creation-visual.spec.ts:18:1 › Crear contenido steps: visual evidence and reflow at 1440, 768 and 390 px (1.0s)
+  ✓  10 [chromium] › e2e/tests/creation-visual.spec.ts:61:1 › Crear contenido without local competitions, and with a failed competition list (343ms)
+  ✓  11 [chromium] › e2e/tests/dashboard.spec.ts:70:1 › dashboard primary creation action opens Crear contenido (PD-ARCH-01F) (327ms)
+  ✓  12 [chromium] › e2e/tests/delivery.spec.ts:45:3 › Delivery of a catalogue project (DEMO_DATA league matchday) › run, verified facts, review, approval, download, history, reopen and trace (3.7s)
+  ✓  13 [chromium] › e2e/tests/failure-restart.spec.ts:34:3 › Research failure and restart (journey-owned server) › a simulated source failure, a restart after recovery, and a blocked approval naming the fact (9.7s)
+  ✓  14 [chromium] › e2e/tests/harness.spec.ts:25:3 › End-to-end harness › forwards no credential or live-test variable (4ms)
+  ✓  15 [chromium] › e2e/tests/harness.spec.ts:33:3 › End-to-end harness › uses the project-local browser cache (4ms)
+  ✓  16 [chromium] › e2e/tests/harness.spec.ts:37:3 › End-to-end harness › serves the application on the loopback address (5ms)
+  ✓  17 [chromium] › e2e/tests/harness.spec.ts:44:3 › End-to-end harness › generates the DEMO_DATA plus MANUAL_DATA configuration; scenario overrides reach only fixture sources (4ms)
+  ✓  18 [chromium] › e2e/tests/harness.spec.ts:67:3 › End-to-end harness › adds the locally managed competitions source and configures no paid AI provider (UI-06.1) (4ms)
+  ✓  19 [chromium] › e2e/tests/manual-import.spec.ts:70:3 › Manual import journey (MANUAL_DATA) › import with errors, corrected file, form entry, versions, project, manual approval still blocked (5.3s)
+  ✓  20 [chromium] › e2e/tests/shell-responsive.spec.ts:39:1 › shell groups open the Mi marca and Plantillas pages, mark the current page and move focus to it (534ms)
+  ✓  21 [chromium] › e2e/tests/smoke.spec.ts:11:3 › Application shell (R-235) › opens on the project list without login (237ms)
+  ✓  22 [chromium] › e2e/tests/smoke.spec.ts:34:3 › Application shell (R-235) › shows no login, account or sign-in element (205ms)
+
+  22 passed (31.7s)
+[e2e] Server stopped and temporary directory removed.
+exit 0
