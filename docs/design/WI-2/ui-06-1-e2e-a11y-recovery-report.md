@@ -436,9 +436,9 @@ datos sintéticos y directorios temporales; no tocan `data/edr.sqlite` ni llaman
 ### 10.2 Cierre
 
 Las condiciones de la decisión 7 se cumplen (sección 8). **UI-06.1 queda aceptado por el Product Owner y cerrado**
-(recuperación de las suites y corrección de E2E-F01), en un commit de la rama `work/WI-2-UI-06` sobre `9f5963f` con
-solo los cambios de este incremento. El hash del commit se registra en la fuente de verdad (sección 9, fila UI-06) y en
-el registro de decisiones del Product Owner (sección 7). UI-06 no está terminado: UI-06.2 y UI-06.3 no han empezado y
+(recuperación de las suites y corrección de E2E-F01) en el commit `bcdecc778e4f4680a23ad1c0ae7af35afc63c30a` de la rama
+`work/WI-2-UI-06`, sobre `9f5963f` y solo con los cambios de este incremento. El hash se registra también en la fuente
+de verdad (sección 9, fila UI-06) y en el registro de decisiones del Product Owner (sección 7). UI-06 no está terminado: UI-06.2 y UI-06.3 no han empezado y
 necesitan la validación del Product Owner.
 
 ### 10.3 Decisiones abiertas

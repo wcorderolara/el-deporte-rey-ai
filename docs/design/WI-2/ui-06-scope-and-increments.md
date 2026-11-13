@@ -1,7 +1,7 @@
 # UI-06 — Estabilización, responsive y accesibilidad: alcance e incrementos
 
-**Estado:** UI-06.1 aceptado por el Product Owner y cerrado el 2026-11-13 (recuperación de las suites y corrección de
-E2E-F01). UI-06.2 y UI-06.3 no iniciados; empiezan solo con la validación del Product Owner. UI-06 no está terminado.
+**Estado:** UI-06.1 aceptado por el Product Owner y cerrado el 2026-11-13 en `bcdecc7` (recuperación de las suites y
+corrección de E2E-F01). UI-06.2 y UI-06.3 no iniciados; empiezan solo con la validación del Product Owner. UI-06 no está terminado.
 **Rama:** `work/WI-2-UI-06`, creada desde `9f5963fa0517ac4220acf4577fe92f3188c6217f` (cierre de REVIEW-APPROVAL-01).
 **Origen:** instrucción del Product Owner «WI-2 / UI-06 — Estabilización, responsive y accesibilidad» (2026-11-13) y la
 sección UI-06 de [`incremental-ux-ui-implementation-plan.md`](incremental-ux-ui-implementation-plan.md).
