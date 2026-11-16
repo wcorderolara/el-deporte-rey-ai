@@ -26,6 +26,8 @@ automáticamente**: tú descargas los archivos y los publicas a mano.
 10. [Pruebas y comandos](#10-pruebas-y-comandos)
 11. [Problemas frecuentes](#11-problemas-frecuentes)
 12. [Estructura del repositorio y documentación](#12-estructura-del-repositorio-y-documentación)
+13. [Continuar el desarrollo con agentes de código (Claude Code, Codex)](#13-continuar-el-desarrollo-con-agentes-de-código-claude-code-codex)
+14. [Estándar de ramas, commits y Pull Requests](#14-estándar-de-ramas-commits-y-pull-requests)
 
 ---
 
@@ -541,5 +543,189 @@ data/              tus datos (se crea al arrancar; ignorada por Git)
 
 - [docs/local-setup.md](docs/local-setup.md): instalación, puertos, credenciales y condiciones de uso.
 - [.orchestrate/source-of-truth.md](.orchestrate/source-of-truth.md): decisiones, reglas de negocio y contrato.
+- [AGENTS.md](AGENTS.md) y [CLAUDE.md](CLAUDE.md): instrucciones para agentes de código (sección 13).
 - [docs/design/](docs/design/): diseño e informes de cada fase (por ejemplo, `TEAM-DISPLAY-01` para los nombres de
   presentación).
+
+## 13. Continuar el desarrollo con agentes de código (Claude Code, Codex)
+
+El proyecto se ha desarrollado con agentes de código bajo la supervisión de un Product Owner. Cualquier persona puede
+continuarlo con Claude Code, Codex u otro agente, siempre que el agente trabaje con el mismo contexto y las mismas
+reglas que se describen aquí.
+
+### 13.1 Qué debe leer el agente antes de cambiar nada
+
+| Archivo | Para qué |
+| --- | --- |
+| `README.md` | Instalación, funcionamiento, comandos y el estándar de la sección 14. |
+| `CLAUDE.md` | Instrucciones del proyecto para agentes. Claude Code lo lee automáticamente. |
+| [`AGENTS.md`](AGENTS.md) | Las mismas reglas, resumidas para Codex y otros agentes que leen ese archivo. |
+| [`.orchestrate/source-of-truth.md`](.orchestrate/source-of-truth.md) | Stack, arquitectura, decisiones (PD, AD, OD), reglas de negocio (BR), restricciones de seguridad (SC), contrato y pendientes (sección 9). Es la referencia principal. |
+| [`.orchestrate/config.json`](.orchestrate/config.json) | Formato de ramas, gates obligatorios, hash del contrato y autorizaciones de merge, push y deploy. |
+| [`contracts/http-api.openapi.yaml`](contracts/http-api.openapi.yaml) | Contrato HTTP declarado. Su SHA-256 está registrado en `.orchestrate/config.json`. |
+| [`docs/design/`](docs/design/) | Un informe por iniciativa: qué se decidió, qué se implementó y qué límites tiene. |
+| [`docs/local-setup.md`](docs/local-setup.md) | Puertos, credenciales y condiciones de uso. |
+
+### 13.2 Preparar el entorno del agente
+
+1. Clona el repositorio. Ejecuta `nvm use` para usar Node 22.22.2 y luego `npm ci` (sección 2).
+2. Antes del primer cambio, crea la rama de trabajo según la sección 14.
+3. Usa `config/dev.config.json`, que es la configuración por defecto de `npm run dev`:
+   - usa datos sintéticos y textos de diapositivas `stub`;
+   - no activa la IA de imágenes ni la del copy editorial, así que no hace llamadas pagadas.
+4. Dale al agente una carpeta de datos desechable: `EDR_DATA_DIR=/tmp/edr-agente npm run dev`.
+   - Nunca uses tu carpeta `data/` real: en modo desarrollo el servidor aplica las migraciones nuevas al reiniciarse
+     (sección 11).
+5. No pongas claves reales en el entorno del agente, salvo que la tarea lo necesite y el Product Owner lo autorice.
+   `.env.local` nunca se sube al repositorio.
+
+### 13.3 Reglas que el agente debe respetar
+
+- **Migraciones.** No modifiques las migraciones existentes (`apps/server/migrations/NNNN_*.sql`). Un cambio de esquema
+  es una migración nueva con el número siguiente. El servidor no arranca si el historial no coincide.
+- **Contrato HTTP.** No lo cambies sin una decisión del Product Owner. Las pruebas de contrato y la comprobación de su
+  hash lo verifican.
+- **Dependencias.** No añadas ninguna sin decisión. Las versiones son exactas (`save-exact`) y
+  `npm audit --audit-level=high` debe quedar limpio.
+- **Secretos.** Solo en variables de entorno (`.env.local`). La configuración JSON rechaza claves con nombre de
+  secreto.
+- **Pruebas.** Solo con datos sintéticos y sin red: la configuración de Vitest bloquea las conexiones. Ninguna prueba
+  llama a OpenAI ni a football-data.org. No elimines una prueba porque falle: corrige la causa.
+- **Invariantes de la versión 1.0 (PD-36):**
+  - la IA de imágenes solo genera propuestas para plantillas;
+  - las diapositivas finales las renderiza Satori/resvg de forma determinista, sin IA de imágenes;
+  - la IA editorial solo escribe textos;
+  - las aprobaciones gráficas y editoriales son independientes;
+  - las exportaciones históricas no se modifican.
+- **Datos.** No introduzcas datos de personas (PD-04, SC-07). Los escudos solo se cargan a mano, nunca desde un
+  proveedor ni una URL (PD-28).
+- **Decisiones.** El agente no decide cambios de reglas de negocio, de arquitectura o de seguridad. Los propone; el
+  Product Owner los aprueba y quedan registrados en el Source of Truth.
+- **Autorizaciones.** No hagas merge a `main`, push ni deploy sin autorización explícita del Product Owner
+  (`policy.authorizations` en `.orchestrate/config.json`).
+
+### 13.4 Flujo recomendado para una tarea
+
+1. Elige o registra la iniciativa en la sección 9 de `.orchestrate/source-of-truth.md` (por ejemplo, `FU-16`). Crea
+   la rama `work/<ID>`.
+2. Pide primero un análisis o un plan, sin cambios, y revísalo.
+3. Autoriza la implementación con un alcance y unas restricciones explícitos.
+4. El agente implementa con pruebas y ejecuta los gates (sección 14.4).
+5. El agente escribe un informe en `docs/design/<ID>/`: qué se decidió, qué cambió, qué pruebas hay y qué límites
+   quedan. Si hubo decisiones, actualiza el Source of Truth.
+6. El Product Owner valida el resultado. Después vienen el commit de cierre y el Pull Request.
+
+Plantilla para la primera instrucción (sirve para Claude Code y para Codex):
+
+```text
+Contexto: proyecto El Deporte Rey AI Studio. Antes de cambiar nada, lee README.md, AGENTS.md, CLAUDE.md,
+.orchestrate/source-of-truth.md, .orchestrate/config.json y los informes relacionados de docs/design/.
+Iniciativa: <ID> — <objetivo en una frase>.
+Rama: work/<ID>, creada desde main actualizado.
+Alcance: <qué sí>. Fuera de alcance: <qué no>.
+Restricciones: no modificar migraciones existentes ni el contrato sin decisión; ninguna dependencia nueva sin
+decisión; solo datos sintéticos; ninguna llamada pagada; EDR_DATA_DIR desechable; sin merge, push ni deploy.
+Entrega: cambios con pruebas, los gates de la sección 14.4 del README en verde y un informe en docs/design/<ID>/.
+Detente y pregunta antes de cualquier decisión de producto, arquitectura, contrato o seguridad.
+```
+
+### 13.5 Particularidades de cada herramienta
+
+- **Claude Code.** Lee `CLAUDE.md` al iniciar. El proyecto usa el framework de orquestación multiagente *orchestrate*
+  (versión 3.0.0, carpeta `.orchestrate/`).
+  - Si lo tienes instalado, sus comandos `/orchestrate:*` aplican el proceso completo: planificación, delegación, gates
+    y cierre.
+  - Si no lo tienes, sigue las reglas de este README y del Source of Truth, que son las que el framework hace cumplir.
+- **Codex.** Lee automáticamente [`AGENTS.md`](AGENTS.md), que resume las reglas y lo dirige a este README, a
+  `CLAUDE.md` y a la fuente de verdad. Para una tarea concreta, usa además la plantilla de la sección 13.4.
+- **Cualquier agente.** Trabaja en su propia rama o en un worktree propio. Los worktrees locales de los agentes (por
+  ejemplo `.claude/worktrees/`) están ignorados por Git y no se suben.
+
+## 14. Estándar de ramas, commits y Pull Requests
+
+El estándar sale de `.orchestrate/config.json` (`branches`, `worktreeNames`, `gates` y `policy`) y de la historia del
+repositorio. Un Pull Request que no lo cumple no se acepta.
+
+### 14.1 Ramas
+
+| Rama | Formato | Uso |
+| --- | --- | --- |
+| Principal | `main` | Rama por defecto. Solo recibe merges autorizados por el Product Owner. Nunca se hace commit directo. |
+| Iniciativa | `work/<ID>` | Una iniciativa o work item completo. Ejemplos: `work/TEAM-DISPLAY-01`, `work/CLOUD-ARCH-01`, `work/FU-16`. |
+| Tarea | `task/<ID>/<taskId>` | Una tarea delegada dentro de una iniciativa. Se integra en `work/<ID>`, no en `main`. |
+
+- **El ID.** `<ID>` es el identificador registrado en `.orchestrate/source-of-truth.md`. Usa mayúsculas, números y
+  guiones, como `TEAM-DISPLAY-01` o `FU-16`.
+  - Una iniciativa nueva se registra con su ID antes de crear la rama.
+  - Los work items nuevos usan el prefijo `WI-` (`idPolicy`).
+  - Si una iniciativa grande se entrega por incrementos, el ID puede incluir el incremento, como en `work/WI-2-UI-06`.
+- **Siempre desde `main` actualizado:**
+  `git switch main && git pull && git switch -c work/<ID>`.
+- **Una iniciativa por rama.** No mezcles cambios de otra iniciativa.
+- **Sin reescribir historia publicada.** Nada de `rebase` ni `push --force` sobre ramas compartidas. Para traer cambios
+  de `main`, haz merge.
+- **Worktrees locales.** Se nombran `<ID>-integration`, `<ID>-<taskId>`, `<ID>-verify` y `<ID>-demo`
+  (`worktreeNames`). No se suben.
+
+### 14.2 Commits
+
+- **Formato.** Conventional Commits, en inglés y en imperativo: `tipo(alcance): descripción`.
+  - Tipos en uso: `feat`, `fix`, `docs`, `test` y `chore`. Los merges usan `merge: <ID> into main`.
+  - El alcance es el ID de la iniciativa o el área. Ejemplos: `feat(teams): ... (TEAM-DISPLAY-01)` y
+    `docs(CLOUD-ARCH-01): ...`.
+- **Cuerpo.** Explica el porqué y lo que no cambia (contrato, migraciones, datos).
+- **Coautoría.** Si un agente coescribió el commit, añade su línea `Co-Authored-By:`.
+- **Cierre de una iniciativa.** Primero un commit de cierre. Después, un segundo commit de documentación que registra
+  el hash del cierre en el Source of Truth, en el informe y en el registro de decisiones.
+- **Lo que nunca se sube:** `data/`, `.env.local`, `node_modules/`, `dist/` ni archivos del entorno local. Ya están en
+  `.gitignore`.
+
+### 14.3 Pull Requests
+
+- **Origen y destino.** Desde `work/<ID>` hacia `main`.
+- **Título.** Con el formato de commit.
+- **Descripción mínima:**
+  - el ID, el objetivo y las decisiones del Source of Truth que aplica o propone (PD, AD, SC);
+  - qué cambia, por área, y qué no cambia;
+  - las migraciones nuevas y los cambios de contrato, si los hay, con su autorización;
+  - el resultado de los gates de la sección 14.4, con el número de pruebas;
+  - capturas o pasos de validación para los cambios de interfaz;
+  - riesgos, limitaciones y pendientes.
+- **Aceptación.** El Product Owner valida y aprueba. El merge se hace con `--no-ff`, para que la rama se vea en la
+  historia, y solo con su autorización. Lo mismo aplica al push y al deploy.
+
+### 14.4 Criterios para aceptar un Pull Request
+
+Los gates obligatorios de `.orchestrate/config.json` deben estar en verde:
+
+```bash
+npm ci
+npm run typecheck
+npm run lint
+npm run test:unit
+npm run test:integration
+npm run test:contract
+npm run build
+npm run test:e2e
+npm run test:a11y
+npm audit --audit-level=high
+node scripts/security-checks.mjs secret-scan
+git diff --check main...HEAD
+```
+
+**Identidad del contrato.** `shasum -a 256 contracts/http-api.openapi.yaml` debe coincidir con
+`contracts[0].sha256` de `.orchestrate/config.json`. La única excepción es un cambio de contrato autorizado, que
+actualiza las dos cosas.
+
+Lista de comprobación:
+
+- [ ] No se modificó ninguna migración existente. Las nuevas siguen la numeración.
+- [ ] No hay cambios de contrato sin autorización.
+- [ ] No hay dependencias nuevas sin autorización, y todas tienen versión exacta.
+- [ ] No hay secretos ni datos reales.
+- [ ] Hay pruebas nuevas o actualizadas para el cambio, y ninguna prueba se eliminó por fallar.
+- [ ] Hay un informe en `docs/design/<ID>/`, y el Source of Truth está actualizado si hubo decisiones.
+- [ ] La rama está al día con `main` y no tiene conflictos.
+
+El repositorio no tiene integración continua configurada (no hay `.github/workflows`). Por eso quien abre el Pull
+Request adjunta el resultado de los gates.

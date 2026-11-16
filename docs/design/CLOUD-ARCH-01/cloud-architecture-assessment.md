@@ -978,4 +978,5 @@ Instrucción «CLOUD-ARCH-01 — Aceptación y cierre formal».
 - El mecanismo local de respaldo y restauración queda registrado como la mejora futura **FU-16** en la fuente de
   verdad. No ha empezado y no empieza automáticamente.
 - **Commit de cierre:** `4430e98` (`4430e98295b6c8384e9e6e50d780af6cbafad4d9`), en `work/CLOUD-ARCH-01` sobre `471aeab`.
-- No se implementó PostgreSQL, Supabase, Neon, Cloudinary ni almacenamiento remoto. No hay merge, push ni deploy.
+- No se implementó PostgreSQL, Supabase, Neon, Cloudinary ni almacenamiento remoto. No hay deploy.
+- **Integración:** el mismo día, por instrucción del Product Owner, se integró en `main` con el merge `2bfdde2`.
