@@ -43,6 +43,7 @@ const season: ManagedSeason = {
 const team: ManagedTeam = {
   id: '33333333-3333-4333-8333-333333333333',
   name: 'Club Uno',
+  displayName: null,
   region: null,
   badge: null,
   createdAt: first.createdAt,
@@ -770,7 +771,12 @@ describe('competition foundation page', () => {
     );
     await userEvent.click(within(editDialog).getByRole('button', { name: 'Guardar cambios' }));
     expect(await screen.findByRole('rowheader', { name: updated.name })).toBeTruthy();
-    expect(api.updateTeam).toHaveBeenCalledWith(team.id, { name: updated.name, region: updated.region });
+    // TEAM-DISPLAY-01: the dialog sends the whole form; an empty presentation-name field means none.
+    expect(api.updateTeam).toHaveBeenCalledWith(team.id, {
+      name: updated.name,
+      region: updated.region,
+      displayName: null,
+    });
 
     // The name follows the team's current name.
     await userEvent.click(screen.getByRole('button', { name: `Quitar de competición: ${updated.name}` }));
@@ -779,6 +785,49 @@ describe('competition foundation page', () => {
     await userEvent.click(within(removeDialog).getByRole('button', { name: 'Quitar de competición' }));
     expect(api.removeCompetitionTeam).toHaveBeenCalledWith(first.id, team.id);
     expect(await screen.findByText('Aún no hay equipos asociados')).toBeTruthy();
+  });
+
+  it('sets and removes the optional presentation name without changing the official name (TEAM-DISPLAY-01)', async () => {
+    const association = { team, associatedAt: first.createdAt };
+    const withDisplay = { ...team, displayName: 'Uno' };
+    const api = apiStub({
+      get: vi.fn().mockResolvedValue(first),
+      listCompetitionTeams: vi.fn().mockResolvedValue([association]),
+      listTeams: vi.fn().mockResolvedValue([team]),
+      updateTeam: vi.fn().mockResolvedValueOnce(withDisplay).mockResolvedValueOnce(team),
+    });
+    render(
+      <MemoryRouter initialEntries={[`/competitions/${first.id}/teams`]}>
+        <CompetitionsProvider api={api}>
+          <Routes>
+            <Route path="/competitions/:competitionId/teams" element={<CompetitionTeamsPage />} />
+          </Routes>
+        </CompetitionsProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByRole('rowheader', { name: 'Club Uno' });
+    await userEvent.click(screen.getByRole('button', { name: 'Editar equipo: Club Uno' }));
+    let dialog = screen.getByRole('dialog');
+    const field = within(dialog).getByRole('textbox', { name: 'Nombre para mostrar (opcional)' });
+    expect((field as HTMLInputElement).value).toBe('');
+    expect(field.getAttribute('maxlength')).toBe('32');
+    const save = within(dialog).getByRole('button', { name: 'Guardar cambios' });
+    expect((save as HTMLButtonElement).disabled).toBe(true);
+    await userEvent.type(field, '  Uno ');
+    expect((save as HTMLButtonElement).disabled).toBe(false);
+    await userEvent.click(save);
+    expect(api.updateTeam).toHaveBeenNthCalledWith(1, team.id, { name: 'Club Uno', region: null, displayName: 'Uno' });
+    // The list keeps showing the official name: the presentation name is only for the images.
+    expect(await screen.findByRole('rowheader', { name: 'Club Uno' })).toBeTruthy();
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+
+    await userEvent.click(screen.getByRole('button', { name: 'Editar equipo: Club Uno' }));
+    dialog = screen.getByRole('dialog');
+    const stored = within(dialog).getByRole('textbox', { name: 'Nombre para mostrar (opcional)' });
+    expect((stored as HTMLInputElement).value).toBe('Uno');
+    await userEvent.clear(stored);
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Guardar cambios' }));
+    expect(api.updateTeam).toHaveBeenNthCalledWith(2, team.id, { name: 'Club Uno', region: null, displayName: null });
   });
 
   it('adds multiple competition-associated teams to a season in one action', async () => {

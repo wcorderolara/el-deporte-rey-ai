@@ -77,6 +77,7 @@ export function CompetitionTeamsPage() {
   const [alreadyAssociated, setAlreadyAssociated] = useState(false);
   const [editName, setEditName] = useState('');
   const [editRegion, setEditRegion] = useState('');
+  const [editDisplayName, setEditDisplayName] = useState('');
   const [view, setView] = useState<'table' | 'cards'>('table');
 
   const load = useCallback(
@@ -177,6 +178,8 @@ export function CompetitionTeamsPage() {
       const updated = await api.updateTeam(editingTeam.team.id, {
         name: editName.trim(),
         region: editRegion.trim() || null,
+        // TEAM-DISPLAY-01: an empty field removes the presentation name; the images then use the official name.
+        displayName: editDisplayName.trim() || null,
       });
       setTeams((current) => current.map((item) => (item.team.id === updated.id ? { ...item, team: updated } : item)));
       setCatalogue((current) => current.map((team) => (team.id === updated.id ? updated : team)));
@@ -214,6 +217,7 @@ export function CompetitionTeamsPage() {
     setModalError(undefined);
     setEditName(item.team.name);
     setEditRegion(item.team.region ?? '');
+    setEditDisplayName(item.team.displayName ?? '');
     setEditingTeam(item);
   }
   function actions(item: CompetitionTeam) {
@@ -540,6 +544,13 @@ export function CompetitionTeamsPage() {
               value={editRegion}
               onChange={(event) => setEditRegion(event.target.value)}
             />
+            <Input
+              id="edit-team-display-name"
+              label="Nombre para mostrar (opcional)"
+              maxLength={32}
+              value={editDisplayName}
+              onChange={(event) => setEditDisplayName(event.target.value)}
+            />
             {modalProblem ? (
               <p role="alert" className="m-0 text-body-sm text-status-danger">
                 {modalProblem.message}
@@ -551,7 +562,9 @@ export function CompetitionTeamsPage() {
                 disabled={
                   busy ||
                   !editName.trim() ||
-                  (editName.trim() === editingTeam.team.name && (editRegion.trim() || null) === editingTeam.team.region)
+                  (editName.trim() === editingTeam.team.name &&
+                    (editRegion.trim() || null) === editingTeam.team.region &&
+                    (editDisplayName.trim() || null) === editingTeam.team.displayName)
                 }
               >
                 {busy ? 'Guardando…' : 'Guardar cambios'}

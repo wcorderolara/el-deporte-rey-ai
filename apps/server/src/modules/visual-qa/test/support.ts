@@ -307,6 +307,8 @@ export interface InputOptions {
   readonly aliases?: readonly { teamId: string; alias: string }[];
   readonly checks?: readonly QaCheck[];
   readonly labels?: VisualQaInput['labels'];
+  /** TEAM-DISPLAY-01: the presentation name of team-name facts, by fact ID (none by default). */
+  readonly teamDisplayNames?: Readonly<Record<string, string>>;
 }
 
 /** A QA input over the versions and facts; the carousel templates are those of the versions' render models. */
@@ -326,6 +328,7 @@ export function qaInput(
     },
     facts: [...facts],
     teamAliases: [...(options.aliases ?? [])],
+    teamDisplayNames: { ...(options.teamDisplayNames ?? {}) },
     checks: [...(options.checks ?? QA_CHECKS)],
     carouselTemplates: versions.flatMap((version) =>
       version.renderModel === null

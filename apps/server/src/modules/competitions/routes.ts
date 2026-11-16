@@ -83,6 +83,10 @@ function httpError(error: unknown): unknown {
       return new HttpProblem(400, 'VALIDATION_FAILED', 'Revisa la zona o ciudad del equipo.', {
         errors: [{ path: '/region', message: 'La zona debe contener texto o dejarse vacía.' }],
       });
+    case 'invalid_team_display_name':
+      return new HttpProblem(400, 'VALIDATION_FAILED', 'Revisa el nombre para mostrar del equipo.', {
+        errors: [{ path: '/displayName', message: 'El nombre para mostrar debe contener texto o quitarse.' }],
+      });
   }
 }
 
@@ -143,7 +147,7 @@ export function registerCompetitionRoutes(
   app.post('/teams', async (request, reply) =>
     translated(() => {
       const body = ManagedTeamCreateSchema.parse(request.body);
-      const team = administration.createTeam(body.name, body.region ?? null);
+      const team = administration.createTeam(body.name, body.region ?? null, body.displayName);
       return reply.code(201).send(contractResponse(ManagedTeamSchema, team));
     }),
   );
@@ -157,7 +161,10 @@ export function registerCompetitionRoutes(
     translated(() => {
       const { teamId } = ManagedTeamParamsSchema.parse(request.params);
       const body = ManagedTeamUpdateSchema.parse(request.body);
-      return contractResponse(ManagedTeamSchema, administration.updateTeam(teamId, body.name, body.region));
+      return contractResponse(
+        ManagedTeamSchema,
+        administration.updateTeam(teamId, body.name, body.region, body.displayName),
+      );
     }),
   );
   app.get('/competitions/:competitionId/teams', async (request) =>

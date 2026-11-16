@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 
 import { formatDate } from '../../platform/format/index.js';
 import { commentary, fact, template } from '../rendering/test/support.js';
+import { presentedText } from '../visual-templates/project.js';
 
 import {
   CHECK_SEVERITY,
@@ -330,6 +331,79 @@ describe('team_names (blocking; R-237)', () => {
     const version = slideVersion(2, 'match_result', text, { language });
     const result = check(version, qaInput([version], matchFacts(sample), { language }));
     expect(failedChecks(result)).toEqual([]);
+  });
+
+  describe('presentation names of the project snapshot (TEAM-DISPLAY-01, PD-37)', () => {
+    const NAMES = { [uuid(11)]: 'Ñandú', [uuid(12)]: 'Árbol' };
+    /**
+     * A version whose stored text is official and whose image is drawn as the rendering stage draws it with `names`
+     * (`presentedText`: the team fields and the team placeholders of the AI text), except that its team-name elements
+     * show `home` and `away`.
+     */
+    function drawnWith(home: string, away = MATCH_A.away, names: Record<string, string> = NAMES) {
+      const presented = presentedText(matchText(MATCH_A), names);
+      const fields = presented.fields.map((field) =>
+        field.field === 'team_home'
+          ? { ...field, segments: [fact(home, uuid(11))] }
+          : field.field === 'team_away'
+            ? { ...field, segments: [fact(away, uuid(12))] }
+            : field,
+      );
+      return { ...match(2, { ...presented, fields }), text: matchText(MATCH_A) };
+    }
+
+    it('accepts the snapshot name of each team, and still its official name', () => {
+      for (const version of [drawnWith('Ñandú', 'Árbol'), drawnWith(MATCH_A.home, 'Árbol'), drawnWith(MATCH_A.home)]) {
+        const result = check(version, qaInput([version], FACTS, { teamDisplayNames: NAMES }));
+        expect(failedChecks(result), JSON.stringify(resultOf(result, 'team_names').details)).toEqual([]);
+      }
+    });
+
+    it.each([
+      ['another team’s snapshot name', 'Árbol'],
+      ['an upper-cased snapshot name', 'ÑANDÚ'],
+      ['the snapshot name without its accents', 'Nandu'],
+      ['a part of the official name', 'Atlético Ñandú'],
+    ])('fails %s', (_case, written) => {
+      const version = drawnWith(written);
+      const result = check(version, qaInput([version], FACTS, { teamDisplayNames: NAMES }));
+      expect(failedChecks(result)).toEqual(['team_names']);
+      expect(resultOf(result, 'team_names').details).toEqual({
+        mismatches: [{ elementId: 'team-home', factId: uuid(11), expected: 'Ñandú', actual: written }],
+      });
+    });
+
+    it('fails a presentation name the snapshot did not record (an earlier project, or a team without one)', () => {
+      for (const names of [{}, { [uuid(12)]: 'Árbol' }]) {
+        const version = drawnWith('Ñandú', MATCH_A.away, names);
+        const result = check(version, qaInput([version], FACTS, { teamDisplayNames: names }));
+        expect(resultOf(result, 'team_names').details).toEqual({
+          mismatches: [{ elementId: 'team-home', factId: uuid(11), expected: MATCH_A.home, actual: 'Ñandú' }],
+        });
+      }
+    });
+
+    it('compares the drawn AI text with the stored text drawn with the recorded names, and nothing else', () => {
+      // The headline drawn with the presentation names passes; drawn with the official names while a name is recorded,
+      // or with a name the project did not record, it fails data_match.
+      const presented = drawnWith('Ñandú', 'Árbol');
+      expect(failedChecks(check(presented, qaInput([presented], FACTS, { teamDisplayNames: NAMES })))).toEqual([]);
+      const official = drawnWith('Ñandú', 'Árbol', {});
+      const stale = check(official, qaInput([official], FACTS, { teamDisplayNames: NAMES }));
+      expect(failedChecks(stale)).toEqual(['data_match']);
+      const other = drawnWith('Ñandú', 'Árbol', { [uuid(11)]: 'Otro Nombre', [uuid(12)]: 'Árbol' });
+      expect(failedChecks(check(other, qaInput([other], FACTS, { teamDisplayNames: NAMES })))).toEqual(['data_match']);
+    });
+
+    it('never accepts it in the AI text: a team name there stays the official name', () => {
+      const text = matchTextWith(MATCH_A, { headline: [fact('Ñandú', uuid(11)), commentary(' gana en casa')] });
+      const version = match(2, text);
+      const result = check(version, qaInput([version], FACTS, { teamDisplayNames: NAMES }));
+      expect(failedChecks(result)).toContain('team_names');
+      expect(resultOf(result, 'team_names').details).toEqual({
+        mismatches: [{ elementId: 'headline', factId: uuid(11), expected: MATCH_A.home, actual: 'Ñandú' }],
+      });
+    });
   });
 
   it('uses the candidate name of an unverified team and fails any other form', () => {

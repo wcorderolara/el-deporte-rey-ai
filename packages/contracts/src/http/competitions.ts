@@ -7,6 +7,7 @@ import {
   DisplayNameSchema,
   LabelSchema,
   Sha256Schema,
+  TeamDisplayNameSchema,
   TeamNameSchema,
   UuidSchema,
   SourceIdSchema,
@@ -172,14 +173,21 @@ export const ManagedSeasonSchema = z.strictObject({
 });
 export const ManagedSeasonListResponseSchema = z.strictObject({ seasons: z.array(ManagedSeasonSchema) });
 
-/** A global local team identity; provider-specific IDs are intentionally absent. */
+/**
+ * A global local team identity; provider-specific IDs are intentionally absent. `displayName` (TEAM-DISPLAY-01,
+ * PD-37), in a creation and in an update: omitted keeps the current value (none for a new team), so a client that does
+ * not know the field never clears it; `null` removes it (the official name is used again); a name sets it. An empty
+ * or blank name is refused: removing it is always an explicit `null`.
+ */
 export const ManagedTeamCreateSchema = z.strictObject({
   name: TeamNameSchema,
   region: DisplayNameSchema.nullable().optional(),
+  displayName: TeamDisplayNameSchema.nullable().optional(),
 });
 export const ManagedTeamUpdateSchema = z.strictObject({
   name: TeamNameSchema,
   region: DisplayNameSchema.nullable(),
+  displayName: TeamDisplayNameSchema.nullable().optional(),
 });
 /**
  * The active badge of a team (PD-ARCH-01G-D, PD-28): uploaded manually by the operator as a PNG or JPEG file, with the
@@ -199,8 +207,11 @@ export const TeamBadgeSchema = z.strictObject({
 
 export const ManagedTeamSchema = z.strictObject({
   id: UuidSchema,
+  /** The official name: the team's sports identity, used for matching, verification and the editorial copy. */
   name: TeamNameSchema,
   region: DisplayNameSchema.nullable(),
+  /** The presentation name for images, or null when none is configured (the official name is used). */
+  displayName: TeamDisplayNameSchema.nullable(),
   /** The active badge, or null when the team has none (no badge is ever invented). */
   badge: TeamBadgeSchema.nullable(),
   createdAt: DateTimeSchema,
@@ -217,9 +228,10 @@ export const ManagedTeamListResponseSchema = z.strictObject({ teams: z.array(Man
 /** Links one reusable global Team identity to a competition. */
 export const CompetitionTeamSchema = z.strictObject({ team: ManagedTeamSchema, associatedAt: DateTimeSchema });
 export const CompetitionTeamListResponseSchema = z.strictObject({ teams: z.array(CompetitionTeamSchema) });
+/** The quick creation from a competition keeps its earlier shape: the presentation name is set from the team dialog. */
 export const CompetitionTeamAddSchema = z.union([
   z.strictObject({ teamId: UuidSchema }),
-  ManagedTeamCreateSchema,
+  ManagedTeamCreateSchema.omit({ displayName: true }),
 ]);
 export const CompetitionTeamsParamsSchema = z.strictObject({ competitionId: UuidSchema });
 export const CompetitionTeamParamsSchema = z.strictObject({ competitionId: UuidSchema, teamId: UuidSchema });

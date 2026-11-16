@@ -510,6 +510,75 @@ describe('confirmed import application', () => {
     ).toEqual([{ action: 'accept_incoming', external_id: 'm1:result' }]);
   });
 
+  it('never writes a presentation name and keeps the one the operator set when the provider renames the team (TEAM-DISPLAY-01)', async () => {
+    const competitionId = await setup('hybrid');
+    await apply(competitionId, (await preview(competitionId)).previewId);
+    const teamRow = () =>
+      h!.db
+        .prepare<{ id: string; name: string; display_name: string | null }>(
+          "SELECT t.id, t.name, t.display_name FROM managed_teams t JOIN external_identity_mappings m ON m.local_id = t.id WHERE m.resource = 'teams' AND m.external_id = 'alfa'",
+        )
+        .get()!;
+    const provenance = (teamId: string) =>
+      h!.db
+        .prepare<{ field_name: string; origin: string; manual_override: number }>(
+          "SELECT field_name, origin, manual_override FROM sports_field_provenance WHERE competition_id = ? AND entity_type = 'team' AND entity_id = ? ORDER BY field_name",
+        )
+        .all([competitionId, teamId]);
+    // An import creates every team without a presentation name, whatever the provider sends.
+    expect(
+      h!.db.prepare<{ n: number }>('SELECT COUNT(*) AS n FROM managed_teams WHERE display_name IS NOT NULL').get()!.n,
+    ).toBe(0);
+    const imported = teamRow();
+    expect(imported).toMatchObject({ name: 'Club Alfa', display_name: null });
+    const baseline = provenance(imported.id);
+    expect(baseline).toEqual([{ field_name: 'name', origin: 'provider', manual_override: 0 }]);
+
+    // The operator sets only the presentation name: the official name stays a provider value, not a manual edit.
+    const set = await h!.inject({
+      method: 'PATCH',
+      url: `/api/v1/teams/${imported.id}`,
+      headers: WRITE_HEADERS,
+      payload: { name: 'Club Alfa', region: null, displayName: 'Alfa' },
+    });
+    expect(set.statusCode, set.body).toBe(200);
+    expect(set.json()).toMatchObject({ name: 'Club Alfa', displayName: 'Alfa' });
+    expect(provenance(imported.id)).toEqual(baseline);
+
+    // The provider renames the team: the official name follows it, the presentation name is kept.
+    const renamed = (value: unknown): unknown => {
+      if (Array.isArray(value)) return value.map(renamed);
+      if (typeof value !== 'object' || value === null) return value;
+      const entries = Object.entries(value as Record<string, unknown>).map(([field, inner]) => [field, renamed(inner)]);
+      const object = Object.fromEntries(entries) as Record<string, unknown>;
+      return object['teamKey'] === 'alfa' && typeof object['name'] === 'string'
+        ? { ...object, name: 'Club Alfa Renovado' }
+        : object;
+    };
+    h!.stub.documents.set('stub-a', renamed(document()) as ReturnType<typeof document>);
+    const snapshot = await preview(competitionId);
+    const current = await plan(competitionId, snapshot.previewId);
+    expect(itemFor(current, 'teams', 'alfa')).toMatchObject({ action: 'update' });
+    const updated = await apply(competitionId, snapshot.previewId);
+    expect(updated.status, updated.errorMessage ?? '').toBe('completed');
+    expect(teamRow()).toEqual({ id: imported.id, name: 'Club Alfa Renovado', display_name: 'Alfa' });
+
+    // A manual change of the official name is still a protected manual edit (name and region, as before), and keeps
+    // the presentation name.
+    const manual = await h!.inject({
+      method: 'PATCH',
+      url: `/api/v1/teams/${imported.id}`,
+      headers: WRITE_HEADERS,
+      payload: { name: 'Club Alfa Local', region: null },
+    });
+    expect(manual.statusCode, manual.body).toBe(200);
+    expect(manual.json()).toMatchObject({ name: 'Club Alfa Local', displayName: 'Alfa' });
+    expect(provenance(imported.id)).toEqual([
+      { field_name: 'name', origin: 'manual_override', manual_override: 1 },
+      { field_name: 'region', origin: 'manual_override', manual_override: 1 },
+    ]);
+  });
+
   it('never merges a same-name local team without an explicit decision', async () => {
     const competitionId = await setup();
     const manual = await h!.inject({

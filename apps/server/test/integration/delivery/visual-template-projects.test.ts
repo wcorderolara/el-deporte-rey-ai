@@ -490,6 +490,47 @@ describe('generation with a published visual template (PD-ARCH-01G-D)', { timeou
     ]);
   });
 
+  it('draws the presentation name of the project snapshot in the team-name layers, the official name in the stored values (TEAM-DISPLAY-01)', async () => {
+    const { t } = await app();
+    const s = await seed(t);
+    const centro = s.teams['Atlético Sintético Centro'] ?? '';
+    await ok(
+      t.send('PATCH', `/teams/${centro}`, { name: 'Atlético Sintético Centro', region: null, displayName: 'Centro' }),
+    );
+    const { version } = await publishedTemplate(t);
+    const selection = {
+      competitionId: s.competitionId,
+      seasonId: s.seasonId,
+      stageId: null,
+      roundId: s.roundId,
+      matchIds: [s.matches.a],
+      kinds: ['match_result'],
+      visualTemplateVersionIds: [version.id],
+    };
+    const batch = await settled(
+      t,
+      ContentBatchSchema.parse(await ok(t.send('POST', '/content-batches', { requestKey: requestKey(), selection }))),
+    );
+    const projectId = batch.items[0]?.projectId ?? '';
+    const slide = resultSlide(await draftOf(t, projectId));
+    // The stored values keep the official names; the image draws the snapshot name.
+    expect(fieldText(slide, 'team_home')).toBe('Atlético Sintético Centro');
+    expect(fieldText(slide, 'team_away')).toBe('FC Sintético Norte');
+    const model = JSON.parse(
+      t.container.db
+        .prepare<{ render_model: string }>('SELECT render_model FROM element_versions WHERE id = ?')
+        .get([slide.currentVersion.id])?.render_model ?? '{}',
+    ) as { elements: { id: string; semantic?: string; text?: string }[] };
+    const layerText = (id: string) => model.elements.find((element) => element.id === id)?.text;
+    expect(layerText('layer-home-team')).toBe('Centro');
+    expect(layerText('layer-away-team')).toBe('FC Sintético Norte');
+    const failures = slide.currentVersion.qa.filter(
+      (result) => result.outcome === 'fail' && result.check !== 'capitalized_tokens',
+    );
+    expect(failures, JSON.stringify(failures)).toEqual([]);
+    expect(slide.currentVersion.qa.find((result) => result.check === 'team_names')?.outcome).toBe('pass');
+  });
+
   it('refuses a version that is not published, of another content type or format, and keeps projects without a template unchanged', async () => {
     const { t } = await app();
     const s = await seed(t);

@@ -100,6 +100,12 @@ export const VisualQaInputSchema = z.strictObject({
   labels: QaLabelsSchema,
   facts: ContentInputSchema.shape.facts,
   teamAliases: ContentInputSchema.shape.teamAliases,
+  /**
+   * TEAM-DISPLAY-01: the presentation name of each team-name fact whose team had one when the project was created
+   * (snapshot version 4), by fact ID; `team_names` accepts it, besides the official name, in the image's team-name
+   * elements only. Empty for every earlier project.
+   */
+  teamDisplayNames: z.record(UuidSchema, z.string().min(1).max(32)),
   /** The checks whose results the database accepts (`qa_results.check_name`). */
   checks: z.array(QaCheckSchema).max(QA_CHECKS.length),
   carouselTemplates: z.array(CarouselTemplateSchema).max(MAX_VERSIONS),

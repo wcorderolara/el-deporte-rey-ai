@@ -350,7 +350,14 @@ export function CarouselReview({
             : workspaceCopy.bulkNone}
         </p>
         {held === 0 ? null : <p className="m-0">{workspaceCopy.bulkHeld(held)}</p>}
-        <Button variant="secondary" size="sm" className="w-full" disabled={bulkRunning} onClick={openBulk}>
+        {/* The main action when slides can be approved (gold); «Ver motivos» stays secondary. */}
+        <Button
+          variant={approvalSummary.eligible.length > 0 ? 'primary' : 'secondary'}
+          size="sm"
+          className="w-full"
+          disabled={bulkRunning}
+          onClick={openBulk}
+        >
           {approvalSummary.eligible.length > 0
             ? workspaceCopy.approveAllCount(approvalSummary.eligible.length)
             : carouselCopy.bulkReasons}

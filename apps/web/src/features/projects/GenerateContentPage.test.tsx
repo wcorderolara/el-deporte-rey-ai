@@ -30,7 +30,7 @@ const BATCH = uuid(9);
 const BASE = `/api/v1/competitions/${COMPETITION}/seasons/${SEASON}`;
 
 function team(n: number, name: string) {
-  return { id: uuid(100 + n), name, region: null, badge: null, createdAt: T, updatedAt: T };
+  return { id: uuid(100 + n), name, displayName: null, region: null, badge: null, createdAt: T, updatedAt: T };
 }
 
 function match(n: number, home: string, away: string, values: Partial<CompetitionMatch> = {}): CompetitionMatch {

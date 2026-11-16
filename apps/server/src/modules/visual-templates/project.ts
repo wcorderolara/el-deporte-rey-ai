@@ -17,6 +17,11 @@
  *   found the same way, from the team-name fact segments of its line.
  *   A badge is read from its confined file with its hash checked; a file that does not match fails the render, and
  *   nothing is substituted.
+ * - TEAM-DISPLAY-01 (PD-37): the presentation names of the project's snapshot (version 4) are drawn wherever an image
+ *   shows a team-name fact: the team fields, the home and away names of each calendar row, the standings team cells
+ *   and the team placeholders of the headline and the description. The team is found through the same identity
+ *   (fact → evidence → local team ID), never by comparing names. The stored text keeps the official names; only the
+ *   drawn text changes (`presentedText`).
  * - Nothing here calls an AI provider or the network. This file imports the renderer modules directly (not the
  *   rendering module index) so the rendering stage can use it without an import cycle.
  */
@@ -162,6 +167,84 @@ export async function loadProjectBadges(container: AppContainer, projectId: stri
     teams.set(teamId, ref);
   }
   return { engineSlots: snapshot.engineSlots, calendarRows: snapshot.calendarRows, teams, files };
+}
+
+/**
+ * The presentation names of a project's snapshot (TEAM-DISPLAY-01) by local team ID: empty for a project created
+ * before snapshot version 4 or without a snapshot, so those projects keep drawing the official names.
+ */
+export function loadProjectDisplayNames(db: Db, projectId: string): ReadonlyMap<string, string> {
+  const row = db.prepare<{ badge_snapshot_json: string | null }>(SQL.badges).get([projectId]);
+  return new Map(Object.entries(parseBadgeSnapshot(row?.badge_snapshot_json).displayNames));
+}
+
+/** The fact IDs of every fact segment of a slide's text, each once. */
+function factIdsOf(texts: Iterable<StoredElementText>): Set<string> {
+  const ids = new Set<string>();
+  for (const text of texts) {
+    for (const field of text.fields) {
+      for (const segment of field.segments) {
+        if (segment.provenance === 'fact' && segment.factId !== null) {
+          ids.add(segment.factId);
+        }
+      }
+    }
+  }
+  return ids;
+}
+
+/**
+ * The presentation name to draw for each team-name fact of the given slides (TEAM-DISPLAY-01), by fact ID: the
+ * snapshot name of the fact's local team, found through its evidence. Only a team-name fact has a team (its evidence
+ * is a team observation), so no other fact is ever listed; a fact whose team has no snapshot name is left out, so it
+ * is drawn with the official name.
+ */
+export function displayNamesOfSlides(
+  db: Db,
+  texts: Iterable<StoredElementText>,
+  names: ReadonlyMap<string, string>,
+): Record<string, string> {
+  return names.size === 0 ? {} : displayNamesOfFacts(db, factIdsOf(texts), names);
+}
+
+/**
+ * The presentation name of each given team-name fact (TEAM-DISPLAY-01), by fact ID, for the visual QA: the snapshot
+ * name of the fact's local team. A fact whose team has none is left out.
+ */
+export function displayNamesOfFacts(
+  db: Db,
+  factIds: Iterable<string>,
+  names: ReadonlyMap<string, string>,
+): Record<string, string> {
+  const byFact: Record<string, string> = {};
+  if (names.size === 0) {
+    return byFact;
+  }
+  for (const factId of factIds) {
+    const teamId = teamOfFact(db, factId);
+    const name = teamId === null ? undefined : names.get(teamId);
+    if (name !== undefined) byFact[factId] = name;
+  }
+  return byFact;
+}
+
+/**
+ * The text a slide is drawn with (TEAM-DISPLAY-01): the stored text with every fact segment of a team-name fact that
+ * has a presentation name drawn with that name, keeping the fact ID and provenance. That covers the team fields, the
+ * home and away names of the calendar rows, the standings team cells, and the team names the AI text holds as
+ * `{{t:<teamId>}}` placeholders (fact segments of the headline and the description). Commentary, template text and
+ * every other fact are drawn as stored: the swap goes by fact, never by comparing text.
+ * With no name the stored text itself is returned.
+ */
+export function presentedText(text: StoredElementText, byFact: Readonly<Record<string, string>>): StoredElementText {
+  if (Object.keys(byFact).length === 0) {
+    return text;
+  }
+  const swap = (segment: StoredSegment): StoredSegment => {
+    const name = segment.provenance === 'fact' && segment.factId !== null ? byFact[segment.factId] : undefined;
+    return name === undefined ? segment : { ...segment, text: name };
+  };
+  return { ...text, fields: text.fields.map((field) => ({ ...field, segments: field.segments.map(swap) })) };
 }
 
 function sideOf(badges: ProjectBadges, teamId: string | null): { teamId: string | null; badge: AssetRef | null } {

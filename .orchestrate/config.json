@@ -82,7 +82,7 @@
       "id": "http-api",
       "kind": "http-api",
       "path": "contracts/http-api.openapi.yaml",
-      "sha256": "8cadafd1c2c1cb73ff9f513cf506a02fa710d6b8e033566d5741bb8bf2a77a5a",
+      "sha256": "0566f05075c2bfe71389cfe279e22b5889521c27afcf03cb6b0b3a91029939c2",
       "status": "current",
       "frozenSnapshots": []
     }

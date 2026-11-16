@@ -42,8 +42,26 @@ export const editorialCopy = {
   instructionsUsed: (text: string) => `Instrucción: «${text}»`,
   copy: 'Copiar',
   copyAll: 'Copiar texto',
-  download: 'Descargar copys (.txt)',
+  downloadTitle: 'Descargas',
+  downloadOne: 'Descargar este copy (.txt)',
+  download: 'Descargar todos los copys (.txt)',
   downloaded: 'Copys descargados.',
+  downloadedOne: 'Copy descargado.',
+  downloadScope: 'Solo el texto, aparte de las diapositivas.',
+  bulkTitle: 'Aprobación masiva',
+  bulkReady: (count: number) =>
+    count === 1 ? '1 copy listo para aprobar' : `${String(count)} copys listos para aprobar`,
+  bulkNone: 'Ningún copy está listo para aprobar.',
+  bulkHeld: (count: number) =>
+    count === 1
+      ? '1 copy necesita revisión (avisos o cambios sin guardar).'
+      : `${String(count)} copys necesitan revisión (avisos o cambios sin guardar).`,
+  approveAll: (count: number) => `Aprobar todos los copys (${String(count)})`,
+  approveAllTitle: '¿Aprobar todos los copys?',
+  approveAllBody: 'Se aprobará la versión actual de estos textos:',
+  approveAllConfirm: (count: number) => (count === 1 ? 'Aprobar 1 copy' : `Aprobar ${String(count)} copys`),
+  approvingAll: 'Aprobando copys…',
+  approvedAll: (count: number) => (count === 1 ? '1 copy aprobado.' : `${String(count)} copys aprobados.`),
   copied: 'Copiado al portapapeles.',
   copyFailed: 'No se pudo copiar. Selecciona el texto y cópialo a mano.',
   approve: 'Aprobar copy',
@@ -57,7 +75,7 @@ export const editorialCopy = {
     writer.kind === 'test' ? 'Regenerar texto de prueba' : 'Regenerar con IA',
   approvalTitle: 'Aprobación editorial',
   approvalScope:
-    'Cada texto se aprueba por separado. Los textos editoriales aprobados y listos para publicar se incluyen en la descarga del carrusel. Puedes aprobarlos después y volver a descargar el contenido.',
+    'Cada texto se aprueba por separado o todos a la vez con «Aprobación masiva». Los textos editoriales aprobados y listos para publicar se incluyen en la descarga del carrusel. Puedes aprobarlos después y volver a descargar el contenido.',
   editingHold: 'Guarda o descarta los cambios antes de aprobar o regenerar este texto.',
   editingStale:
     'El texto cambió en el servidor desde que empezaste a editar: al guardar se rechazará. Descarta tus cambios para ver la versión actual.',

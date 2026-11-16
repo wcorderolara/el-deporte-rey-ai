@@ -9,6 +9,9 @@
  *   that draws badges: the slides of a visual template, the engine match slides when the snapshot covers the engine
  *   templates (PD-ARCH-01G-E.1), and the rows of the engine round calendars when it covers the calendar rows
  *   (PD-ARCH-01G-E.2). The teams are found through the facts' evidence, never by a name.
+ * - `load` also reads the presentation names of the project's snapshot (version 4, TEAM-DISPLAY-01) as the name to
+ *   draw for each team-name fact of the slides; `run` draws them in the team-name fields only (`presentedText`). The
+ *   stored text, and so the review, the copy and the checks of the AI text, keep the official names.
  * - `run` is the pure core: one render model and one PNG per slide, at the configured size, with the current
  *   templates (no database writes).
  * - `persist` writes each PNG to `renders/<projectId>/<versionId>.png` with the exclusive flag (T10-F13), then
@@ -49,9 +52,12 @@ import {
   type SlideTeams,
   engineRowBadges,
   engineSlideBadges,
+  displayNamesOfSlides,
   loadProjectBadges,
+  loadProjectDisplayNames,
   loadProjectTemplatePlans,
   planOf,
+  presentedText,
   projectSlideDocument,
   slideTeams,
 } from '../visual-templates/project.js';
@@ -117,6 +123,11 @@ export const RenderingInputSchema = z.strictObject({
         .optional(),
     }),
   ),
+  /**
+   * TEAM-DISPLAY-01: the presentation name to draw for each team-name fact of the slides, by fact ID, from the
+   * project's snapshot (empty for a project created before snapshot version 4).
+   */
+  teamDisplayNames: z.record(UuidSchema, z.string().min(1).max(32)),
 });
 export type RenderingInput = z.infer<typeof RenderingInputSchema>;
 
@@ -325,6 +336,11 @@ export function createRenderingStage(options: RenderingOptions = {}): Stage<Rend
         templates,
         badges,
         slideTeams: teamsOfSlides(ctx.container, resolved.registry, templates, badges, slides),
+        teamDisplayNames: displayNamesOfSlides(
+          ctx.container.db,
+          slides.map((slide) => slide.text),
+          loadProjectDisplayNames(ctx.container.db, ctx.projectId),
+        ),
       };
     },
 
@@ -338,10 +354,11 @@ export function createRenderingStage(options: RenderingOptions = {}): Stage<Rend
         const path = `/slides/${String(index)}/text`;
         const plan = planOf(input.templates, slide.slideType);
         const teams = input.slideTeams[slide.versionId] ?? NO_TEAMS;
+        const drawn = { ...slide, text: presentedText(slide.text, input.teamDisplayNames) };
         const render =
           plan !== null
-            ? await renderTemplateSlide(plan, { text: slide.text, teams }, input.language, deps, path)
-            : await renderContent(slideContent(input, slide, teams), deps, path);
+            ? await renderTemplateSlide(plan, { text: drawn.text, teams }, input.language, deps, path)
+            : await renderContent(slideContent(input, drawn, teams), deps, path);
         renders.push({ versionId: slide.versionId, ...render });
       }
       return { projectId: input.projectId, renders };
@@ -419,9 +436,14 @@ export async function renderElementVersion(
   const teams = drawsBadges(resolved.registry, templates, badges, version.slideType)
     ? slideTeams(container.db, version.text)
     : NO_TEAMS;
+  // TEAM-DISPLAY-01: the team-name fields drawn with the project's presentation names; the stored text is unchanged.
+  const text = presentedText(
+    version.text,
+    displayNamesOfSlides(container.db, [version.text], loadProjectDisplayNames(container.db, version.projectId)),
+  );
   const render =
     plan !== null
-      ? await renderTemplateSlide(plan, { text: version.text, teams }, version.language, deps, '/text')
+      ? await renderTemplateSlide(plan, { text, teams }, version.language, deps, '/text')
       : await renderContent(
           slideContent(
             {
@@ -430,7 +452,7 @@ export async function renderElementVersion(
               standingsAsOf: repository.standingsAsOf(version.factsRunId),
               badges,
             },
-            { elementId: version.elementId, versionId, slideType: version.slideType, text: version.text },
+            { elementId: version.elementId, versionId, slideType: version.slideType, text },
             teams,
           ),
           deps,

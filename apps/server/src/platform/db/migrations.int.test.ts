@@ -119,6 +119,7 @@ const COMMITTED = [
   { version: 35, name: 'qa_team_badges' },
   { version: 36, name: 'export_editorial_copy' },
   { version: 37, name: 'content_skip_reason_score_not_supported' },
+  { version: 38, name: 'team_display_names' },
 ];
 
 describe('committed migrations', () => {
@@ -189,6 +190,7 @@ describe('committed migrations', () => {
         name: 'content_skip_reason_score_not_supported',
         fileName: '0037_content_skip_reason_score_not_supported.sql',
       },
+      { version: 38, name: 'team_display_names', fileName: '0038_team_display_names.sql' },
     ]);
   });
 
@@ -266,8 +268,9 @@ describe('committed migrations', () => {
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
           { version: 37, name: 'content_skip_reason_score_not_supported' },
+          { version: 38, name: 'team_display_names' },
         ],
-        currentVersion: 37,
+        currentVersion: 38,
       });
       expect(
         db
@@ -337,8 +340,9 @@ describe('committed migrations', () => {
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
           { version: 37, name: 'content_skip_reason_score_not_supported' },
+          { version: 38, name: 'team_display_names' },
         ],
-        currentVersion: 37,
+        currentVersion: 38,
       });
       expect(JSON.stringify(snapshot())).toBe(before);
       for (const table of [
@@ -405,8 +409,9 @@ CREATE INDEX idx_content_generation_item_matches_match ON content_generation_ite
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
           { version: 37, name: 'content_skip_reason_score_not_supported' },
+          { version: 38, name: 'team_display_names' },
         ],
-        currentVersion: 37,
+        currentVersion: 38,
       });
       expect(columns(empty.db)).toContain('import_id');
       expect(empty.db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
@@ -495,8 +500,9 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga', 's1', '2026/27', NU
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
           { version: 37, name: 'content_skip_reason_score_not_supported' },
+          { version: 38, name: 'team_display_names' },
         ],
-        currentVersion: 37,
+        currentVersion: 38,
       });
       expect(
         JSON.stringify(reconciled.db.prepare('SELECT rowid, * FROM content_generation_items ORDER BY rowid, id').all()),
@@ -526,20 +532,20 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga', 's1', '2026/27', NU
     const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
     const first = openMigratedDatabase({ location, now: () => FIXED_NOW });
     try {
-      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 37 });
+      expect(first.report).toEqual({ applied: COMMITTED, currentVersion: 38 });
       expect(first.db.prepare('PRAGMA journal_mode').get()).toEqual({ journal_mode: 'wal' });
       expect(first.db.prepare('PRAGMA foreign_keys').get()).toEqual({ foreign_keys: 1 });
       expect(appliedMigrations(first.db)).toEqual(
         COMMITTED.map((record) => ({ ...record, appliedAt: '2026-10-27T16:32:21.123Z' })),
       );
-      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 37 });
+      expect(runMigrations(first.db)).toEqual({ applied: [], currentVersion: 38 });
     } finally {
       first.db.close();
     }
 
     const second = openMigratedDatabase({ location });
     try {
-      expect(second.report).toEqual({ applied: [], currentVersion: 37 });
+      expect(second.report).toEqual({ applied: [], currentVersion: 38 });
       expect(tableExists(second.db, 'competition_teams')).toBe(true);
       expect(tableExists(second.db, 'facts')).toBe(true);
       expect(tableExists(second.db, 'competitions')).toBe(true);
@@ -642,8 +648,9 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga', 's1', '2026/27', NU
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
           { version: 37, name: 'content_skip_reason_score_not_supported' },
+          { version: 38, name: 'team_display_names' },
         ],
-        currentVersion: 37,
+        currentVersion: 38,
       });
       expect(db.prepare('SELECT competition_id, team_id FROM competition_teams ORDER BY team_id').all()).toEqual([
         { competition_id: 'c1', team_id: 't1' },
@@ -1008,8 +1015,9 @@ describe('migrations 0021 and 0022 upgrade a database at version 20 (PD-ARCH-01E
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
           { version: 37, name: 'content_skip_reason_score_not_supported' },
+          { version: 38, name: 'team_display_names' },
         ],
-        currentVersion: 37,
+        currentVersion: 38,
       });
 
       expect(JSON.stringify(snapshot())).toBe(before);
@@ -1107,8 +1115,9 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
           { version: 37, name: 'content_skip_reason_score_not_supported' },
+          { version: 38, name: 'team_display_names' },
         ],
-        currentVersion: 37,
+        currentVersion: 38,
       });
 
       expect(db.prepare(QA_RESULT_BYTES).all()).toEqual(bytesBefore);
@@ -1145,7 +1154,7 @@ describe('migration 0002_qa_capitalized_tokens.sql upgrades a database at versio
     // Reopening applies nothing more.
     const reopened = openMigratedDatabase({ location });
     try {
-      expect(reopened.report).toEqual({ applied: [], currentVersion: 37 });
+      expect(reopened.report).toEqual({ applied: [], currentVersion: 38 });
     } finally {
       reopened.db.close();
     }
@@ -1314,8 +1323,9 @@ describe('migration 0036_export_editorial_copy.sql (REVIEW-APPROVAL-01, amendmen
         applied: [
           { version: 36, name: 'export_editorial_copy' },
           { version: 37, name: 'content_skip_reason_score_not_supported' },
+          { version: 38, name: 'team_display_names' },
         ],
-        currentVersion: 37,
+        currentVersion: 38,
       });
       expect(db.prepare(EXPORT_FILE_BYTES).all()).toEqual(bytesBefore);
       // The only change is the fourth kind of the kind list.
@@ -1394,8 +1404,11 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga Sintética', 's1', '2
     const migrated = openMigratedDatabase({ location, now: () => FIXED_NOW });
     try {
       expect(migrated.report).toEqual({
-        applied: [{ version: 37, name: 'content_skip_reason_score_not_supported' }],
-        currentVersion: 37,
+        applied: [
+          { version: 37, name: 'content_skip_reason_score_not_supported' },
+          { version: 38, name: 'team_display_names' },
+        ],
+        currentVersion: 38,
       });
       expect(rows(migrated.db)).toEqual(before);
       expect(refusal(() => item(migrated.db, 'it4', 4, 'match_result', 'score_not_supported'))).toBe('accepted');
@@ -1412,6 +1425,75 @@ VALUES ('b1', 'i1', 'k1', '${'b'.repeat(64)}', 'c1', 'Liga Sintética', 's1', '2
           )
           .all(),
       ).toHaveLength(1);
+      expect(migrated.db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
+      expect(migrated.db.prepare('PRAGMA integrity_check').all()).toEqual([{ integrity_check: 'ok' }]);
+    } finally {
+      migrated.db.close();
+    }
+  });
+});
+
+describe('migration 0038_team_display_names.sql (TEAM-DISPLAY-01)', () => {
+  it('adds an optional display_name to every team, null for the existing ones, and keeps every row as it was', () => {
+    const committed = defaultMigrationsDirectory();
+    const read = (name: string) => readFileSync(path.join(committed, name), 'utf8');
+    const upTo37 = migrationDir(
+      Object.fromEntries(
+        readMigrations(committed)
+          .filter((migration) => migration.version <= 37)
+          .map((migration) => [migration.fileName, read(migration.fileName)]),
+      ),
+    );
+    const location = path.join(freshDir('data'), DATABASE_FILE_NAME);
+    const at = FIXED_NOW.toISOString();
+    const team = (db: SqliteDatabase, id: string, name: string, displayName?: string | null): void => {
+      if (displayName === undefined) {
+        db.prepare(
+          'INSERT INTO managed_teams (id, name, normalized_name, region, normalized_region, created_at, updated_at) VALUES (?, ?, ?, NULL, ?, ?, ?)',
+        ).run([id, name, name.toLowerCase(), '', at, at]);
+        return;
+      }
+      db.prepare(
+        'INSERT INTO managed_teams (id, name, normalized_name, display_name, region, normalized_region, created_at, updated_at) VALUES (?, ?, ?, ?, NULL, ?, ?, ?)',
+      ).run([id, name, name.toLowerCase(), displayName, '', at, at]);
+    };
+    const teams = (db: SqliteDatabase) =>
+      db
+        .prepare(
+          'SELECT rowid, id, name, normalized_name, region, normalized_region, created_at, updated_at FROM managed_teams ORDER BY rowid',
+        )
+        .all();
+    let before: unknown[];
+    const old = openMigratedDatabase({ location, directory: upTo37 });
+    try {
+      expect(old.report.currentVersion).toBe(37);
+      team(old.db, 't1', 'Club Sintético Uno');
+      team(old.db, 't2', 'Club Sintético Dos de la Ciudad Ficticia');
+      // Version 37 has no presentation name.
+      expect(refusal(() => team(old.db, 't3', 'Club Sintético Tres', 'Tres'))).not.toBe('accepted');
+      before = teams(old.db);
+    } finally {
+      old.db.close();
+    }
+
+    const migrated = openMigratedDatabase({ location, now: () => FIXED_NOW });
+    try {
+      expect(migrated.report).toEqual({
+        applied: [{ version: 38, name: 'team_display_names' }],
+        currentVersion: 38,
+      });
+      expect(teams(migrated.db)).toEqual(before);
+      expect(migrated.db.prepare('SELECT id, display_name FROM managed_teams ORDER BY rowid').all()).toEqual([
+        { id: 't1', display_name: null },
+        { id: 't2', display_name: null },
+      ]);
+      expect(refusal(() => team(migrated.db, 't3', 'Club Sintético Tres', 'Tres'))).toBe('accepted');
+      expect(refusal(() => team(migrated.db, 't4', 'Club Sintético Cuatro', null))).toBe('accepted');
+      expect(refusal(() => team(migrated.db, 't5', 'Club Sintético Cinco', 'x'.repeat(32)))).toBe('accepted');
+      expect(refusal(() => team(migrated.db, 't6', 'Club Sintético Seis', ''))).toBe('check');
+      expect(refusal(() => team(migrated.db, 't7', 'Club Sintético Siete', 'x'.repeat(33)))).toBe('check');
+      // The identity rule is unchanged: the presentation name takes no part in it.
+      expect(refusal(() => team(migrated.db, 't8', 'Club Sintético Uno', 'Otro'))).toBe('unique');
       expect(migrated.db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
       expect(migrated.db.prepare('PRAGMA integrity_check').all()).toEqual([{ integrity_check: 'ok' }]);
     } finally {
@@ -1527,8 +1609,9 @@ describe('migration 0031_reconcile_field_provenance_references.sql', () => {
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
           { version: 37, name: 'content_skip_reason_score_not_supported' },
+          { version: 38, name: 'team_display_names' },
         ],
-        currentVersion: 37,
+        currentVersion: 38,
       });
       for (const table of ['sports_field_provenance', 'sports_field_provenance_events'])
         expect(references(db, table)).toEqual([{ table: 'competitions', from: 'competition_id' }]);
@@ -1631,8 +1714,9 @@ describe('migration 0032_engine_slide_type_templates.sql (decision 01G-D-3)', ()
           { version: 35, name: 'qa_team_badges' },
           { version: 36, name: 'export_editorial_copy' },
           { version: 37, name: 'content_skip_reason_score_not_supported' },
+          { version: 38, name: 'team_display_names' },
         ],
-        currentVersion: 37,
+        currentVersion: 38,
       });
       expect(db.prepare('SELECT * FROM visual_templates ORDER BY id').all()).toEqual(templates);
       expect(db.prepare('SELECT * FROM visual_template_versions ORDER BY id').all()).toEqual(versions);

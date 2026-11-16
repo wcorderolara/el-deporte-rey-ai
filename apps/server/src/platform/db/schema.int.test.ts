@@ -585,7 +585,17 @@ const EXPECTED_COLUMNS: Readonly<Record<string, readonly string[]>> = {
   ],
   content_generation_item_matches: ['item_id', 'match_id', 'position'],
   competition_seasons: ['id', 'competition_id', 'label', 'normalized_label', 'created_at'],
-  managed_teams: ['id', 'name', 'normalized_name', 'region', 'normalized_region', 'created_at', 'updated_at'],
+  // TEAM-DISPLAY-01 (0038): display_name is added last.
+  managed_teams: [
+    'id',
+    'name',
+    'normalized_name',
+    'region',
+    'normalized_region',
+    'created_at',
+    'updated_at',
+    'display_name',
+  ],
   season_participants: ['season_id', 'team_id', 'joined_at'],
   competition_stages: ['id', 'season_id', 'name', 'normalized_name', 'display_order', 'created_at'],
   competition_rounds: ['id', 'season_id', 'stage_id', 'name', 'normalized_name', 'display_order', 'created_at'],
@@ -967,6 +977,7 @@ describe('structure of the migrated schema', () => {
       { version: 35, name: 'qa_team_badges' },
       { version: 36, name: 'export_editorial_copy' },
       { version: 37, name: 'content_skip_reason_score_not_supported' },
+      { version: 38, name: 'team_display_names' },
     ]);
   });
 

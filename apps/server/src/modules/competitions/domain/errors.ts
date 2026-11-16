@@ -13,7 +13,8 @@ export type CompetitionAdministrationErrorCode =
   | 'competition_team_in_use'
   | 'invalid_season_label'
   | 'invalid_team_name'
-  | 'invalid_team_region';
+  | 'invalid_team_region'
+  | 'invalid_team_display_name';
 
 /** Application-facing domain failure; the HTTP adapter maps this to the public problem contract. */
 export class CompetitionAdministrationError extends Error {

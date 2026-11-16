@@ -83,6 +83,101 @@ describe('competition seasons, local teams and participants', () => {
     ).toBe('Equipo Renombrado');
   });
 
+  it('stores an optional presentation name: omitted keeps it, null removes it, a value is normalized and blank or long values are refused (TEAM-DISPLAY-01)', async () => {
+    h = await projectsTestApp({ includeCompetitions: true });
+    const patch = (teamId: string, payload: Record<string, unknown>) =>
+      h!.inject({ method: 'PATCH', url: `/api/v1/teams/${teamId}`, headers: WRITE_HEADERS, payload });
+    const get = async (teamId: string) =>
+      ManagedTeamSchema.parse(
+        (await h!.inject({ method: 'GET', url: `/api/v1/teams/${teamId}`, headers: READ_HEADERS })).json(),
+      );
+
+    // A team created without one has none; one created with one keeps the official name as its identity.
+    const plain = ManagedTeamSchema.parse((await createTeam('Club Sintético Sin Alias')).json());
+    expect(plain.displayName).toBeNull();
+    const created = await h.inject({
+      method: 'POST',
+      url: '/api/v1/teams',
+      headers: WRITE_HEADERS,
+      payload: { name: 'Club Sintético de la Ciudad Ficticia', region: null, displayName: '  Ficticia   CF ' },
+    });
+    expect(created.statusCode, created.body).toBe(201);
+    const team = ManagedTeamSchema.parse(created.json());
+    expect(team).toMatchObject({ name: 'Club Sintético de la Ciudad Ficticia', displayName: 'Ficticia CF' });
+
+    // Omitted: kept (an import never sends it). Name and region change as before.
+    const renamed = await patch(team.id, { name: 'Club Sintético Ficticio', region: 'Ciudad Ficticia' });
+    expect(renamed.statusCode, renamed.body).toBe(200);
+    expect(ManagedTeamSchema.parse(renamed.json())).toMatchObject({
+      name: 'Club Sintético Ficticio',
+      region: 'Ciudad Ficticia',
+      displayName: 'Ficticia CF',
+    });
+    // A value replaces it; null removes it.
+    expect(
+      ManagedTeamSchema.parse(
+        (
+          await patch(team.id, { name: 'Club Sintético Ficticio', region: 'Ciudad Ficticia', displayName: 'Ficticio' })
+        ).json(),
+      ).displayName,
+    ).toBe('Ficticio');
+    expect(
+      ManagedTeamSchema.parse(
+        (
+          await patch(team.id, { name: 'Club Sintético Ficticio', region: 'Ciudad Ficticia', displayName: null })
+        ).json(),
+      ).displayName,
+    ).toBeNull();
+
+    // Blank, too long, outside the name characters or an unknown field: refused, nothing changes.
+    await patch(team.id, { name: 'Club Sintético Ficticio', region: 'Ciudad Ficticia', displayName: 'Ficticio' });
+    for (const displayName of ['   ', '', 'x'.repeat(33), 'Ficticio 🏆', 'Ficticio<script>']) {
+      const refused = await patch(team.id, { name: 'Club Sintético Ficticio', region: 'Ciudad Ficticia', displayName });
+      expect(refused.statusCode, JSON.stringify(displayName)).toBe(400);
+      expect(ProblemSchema.parse(refused.json()).code).toBe('VALIDATION_FAILED');
+    }
+    const blank = await patch(team.id, {
+      name: 'Club Sintético Ficticio',
+      region: 'Ciudad Ficticia',
+      displayName: '  ',
+    });
+    expect(ProblemSchema.parse(blank.json()).errors).toEqual([
+      { path: '/displayName', message: 'El nombre para mostrar debe contener texto o quitarse.' },
+    ]);
+    expect(await get(team.id)).toMatchObject({ name: 'Club Sintético Ficticio', displayName: 'Ficticio' });
+
+    // It takes no part in the identity: two teams may share one, and the duplicate rule is still by name and region.
+    const other = await h.inject({
+      method: 'POST',
+      url: '/api/v1/teams',
+      headers: WRITE_HEADERS,
+      payload: { name: 'Club Sintético Otro', displayName: 'Ficticio' },
+    });
+    expect(other.statusCode, other.body).toBe(201);
+    const duplicate = await h.inject({
+      method: 'POST',
+      url: '/api/v1/teams',
+      headers: WRITE_HEADERS,
+      payload: { name: 'Club Sintético Ficticio', region: 'Ciudad Ficticia', displayName: 'Distinto' },
+    });
+    expect(duplicate.statusCode).toBe(409);
+
+    // The quick creation from a competition keeps its earlier body: no presentation name there.
+    const competition = await createCompetition('Liga Sintética de Alias');
+    const quick = await h.inject({
+      method: 'POST',
+      url: `/api/v1/competitions/${competition.id}/teams`,
+      headers: WRITE_HEADERS,
+      payload: { name: 'Club Sintético Rápido', displayName: 'Rápido' },
+    });
+    expect(quick.statusCode).toBe(400);
+    const listed = ManagedTeamListResponseSchema.parse(
+      (await h.inject({ method: 'GET', url: '/api/v1/teams', headers: READ_HEADERS })).json(),
+    ).teams;
+    expect(listed.find((item) => item.id === plain.id)?.displayName).toBeNull();
+    expect(listed.find((item) => item.id === team.id)?.displayName).toBe('Ficticio');
+  });
+
   it('removes only an unused competition team association and blocks teams with season participation', async () => {
     h = await projectsTestApp({ includeCompetitions: true });
     const competition = await createCompetition('Liga para desvincular');

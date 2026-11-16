@@ -255,6 +255,20 @@ describe('links, mentions and markup (FORBIDDEN_CONTENT)', () => {
     expect(codes('Síguenos en \uFF20OtraCuenta', NONE, 'caption')).toEqual(['FORBIDDEN_CONTENT']);
   });
 
+  it('allows the brand handle at the end of a sentence, and still flags any other handle there', () => {
+    for (const text of [
+      'Síguenos en @SyntheticBrand.',
+      'Síguenos en @SyntheticBrand...',
+      'Síguenos en @SyntheticBrand, y comenta.',
+      'Más en @SyntheticBrand. ¡Comenta!',
+    ]) {
+      expect(codes(text, NONE, 'caption'), text).toEqual([]);
+    }
+    const flags = checkText('caption', 'Saludos a @OtraCuenta.', NONE, CONTEXT);
+    expect(flags).toEqual([{ code: 'FORBIDDEN_CONTENT', field: 'caption', excerpt: '@OtraCuenta' }]);
+    expect(codes('Síguenos en @SyntheticBrand.extra', NONE, 'caption')).toEqual(['FORBIDDEN_CONTENT']);
+  });
+
   it('flags text over the field limit', () => {
     expect(checkLength('headline', 'x'.repeat(80), 80)).toEqual([]);
     expect(checkLength('headline', 'x'.repeat(81), 80).map((flag) => flag.code)).toEqual(['FORBIDDEN_CONTENT']);

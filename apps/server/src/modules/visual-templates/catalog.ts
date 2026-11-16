@@ -8,6 +8,9 @@
  *   the same display forms (`platform/format`): nothing is derived from a name, guessed or invented.
  * - A binding without a value (no stage, no kickoff, no final score) resolves to null.
  * - Scores are values only of a finished match, as the results of PD-ARCH-01E.
+ * - Team names (TEAM-DISPLAY-01, PD-37): a team with a presentation name is previewed with it, by its local ID, as a
+ *   project created now would draw it (its snapshot records the current names); a team without one keeps its
+ *   official name. The synthetic stress values stay examples.
  */
 import {
   type Language,
@@ -79,6 +82,13 @@ export interface LocalSelectionData {
   readonly match: LocalMatchRecord | null;
   /** The matches of the selected round, in calendar order (empty without a round). */
   readonly roundMatches: readonly LocalMatchRecord[];
+  /** TEAM-DISPLAY-01: the current presentation name of each team of `match` and `roundMatches` that has one. */
+  readonly displayNames: Readonly<Record<string, string>>;
+}
+
+/** The name a preview draws for a team (TEAM-DISPLAY-01): its presentation name, else its official name. */
+export function previewTeamName(data: Pick<LocalSelectionData, 'displayNames'>, teamId: string, name: string): string {
+  return data.displayNames[teamId] ?? name;
 }
 
 const SQL = {
@@ -120,7 +130,8 @@ export function readSelection(
   if (season === undefined) {
     throw notFound();
   }
-  const matches = new ContentBatchRepository(db).seasonMatches(selection.seasonId);
+  const repository = new ContentBatchRepository(db);
+  const matches = repository.seasonMatches(selection.seasonId);
   const match = matchId === null ? null : (matches.find((candidate) => candidate.id === matchId) ?? null);
   if (matchId !== null && match === null) {
     throw notFound();
@@ -136,13 +147,18 @@ export function readSelection(
       throw notFound();
     }
   }
+  const roundMatches = roundId === null ? [] : matches.filter((candidate) => candidate.roundId === roundId);
+  const teamIds = new Set(
+    [...(match === null ? [] : [match]), ...roundMatches].flatMap((record) => [record.homeTeamId, record.awayTeamId]),
+  );
   return {
     competitionName: season.competition_name,
     seasonLabel: season.season_label,
     stageName: round?.stage_name ?? null,
     roundName: round?.round_name ?? null,
     match,
-    roundMatches: roundId === null ? [] : matches.filter((candidate) => candidate.roundId === roundId),
+    roundMatches,
+    displayNames: repository.teamDisplayNames(teamIds),
   };
 }
 
@@ -171,9 +187,9 @@ export function resolveBinding(
     case 'round.name':
       return data.roundName;
     case 'match.homeTeam.name':
-      return match?.homeTeamName ?? null;
+      return match === null ? null : previewTeamName(data, match.homeTeamId, match.homeTeamName);
     case 'match.awayTeam.name':
-      return match?.awayTeamName ?? null;
+      return match === null ? null : previewTeamName(data, match.awayTeamId, match.awayTeamName);
     case 'match.kickoffDate':
       return match === null || match.kickoffAt === null
         ? null
@@ -197,7 +213,8 @@ export function resolveBinding(
         : data.roundMatches
             .map(
               (fixture) =>
-                `${fixture.homeTeamName} ${text.versus} ${fixture.awayTeamName}` +
+                `${previewTeamName(data, fixture.homeTeamId, fixture.homeTeamName)} ${text.versus} ` +
+                previewTeamName(data, fixture.awayTeamId, fixture.awayTeamName) +
                 (fixture.kickoffAt === null ? '' : ` · ${formatDate(fixture.kickoffAt, language, utcOffsetMinutes)}`),
             )
             .join('\n');

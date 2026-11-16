@@ -49,6 +49,14 @@ Always install with `npm ci` from the committed `package-lock.json`.
   The verification (`4310`) and demonstration (`4320`) configurations list their own port in the same way.
 - Data: `data/` in the working tree (git-ignored), or the directory named by `EDR_DATA_DIR`; created with mode 0700.
   Tests use temporary directories that are removed after the run.
+- Migrations in watch mode: the API applies every pending migration of `apps/server/migrations` at startup, and in
+  `npm run dev` it restarts whenever `apps/server/dist` changes (`tsc --watch` and `node --watch` over the working
+  tree). So a new migration file in the checkout the development server runs from is applied to `data/edr.sqlite` (or
+  `EDR_DATA_DIR`) at the next restart, before the change is committed or accepted; a migration is never edited after
+  that (a new one corrects it). Once applied, a build without that migration file (for example an older branch)
+  refuses to start on that database (`migration_unknown_applied`). To keep the database out of work in progress, stop
+  the development server or run it with another `EDR_DATA_DIR` while the work is not accepted. This happened with
+  migration 0038 of TEAM-DISPLAY-01 (`docs/design/TEAM-DISPLAY-01/team-display-01-implementation-report.md`, section 9).
 - Other environment variables: `EDR_CONFIG` (alternative configuration file), `EDR_DATA_DIR`, `EDR_PORT`. The `dev:api` script
   honors an explicit `EDR_CONFIG`; when unset it uses `config/dev.config.json`.
 

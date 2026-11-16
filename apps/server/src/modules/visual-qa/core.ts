@@ -149,6 +149,8 @@ export interface QaContext {
   readonly settings: QaSettings;
   readonly facts: ReadonlyMap<string, ContentFact>;
   readonly teams: readonly TeamRule[];
+  /** TEAM-DISPLAY-01: the snapshot presentation name of team-name facts, by fact ID (images only). */
+  readonly teamDisplayNames: ReadonlyMap<string, string>;
   readonly fonts: FontSet;
   /** Folded tokens `capitalized_tokens` accepts: the word list, verified team names, labels and brand terms. */
   readonly allowedTokens: ReadonlySet<string>;
@@ -211,6 +213,7 @@ export function qaContext(input: VisualQaInput, fonts: FontSet): QaContext {
     settings: input.settings,
     facts: new Map(input.facts.map((fact) => [fact.id, fact])),
     teams,
+    teamDisplayNames: new Map(Object.entries(input.teamDisplayNames)),
     fonts,
     allowedTokens: allowedTokensOf(input.facts, input.labels, input.settings.brand),
     verifiedHashtags,
@@ -260,6 +263,20 @@ function segmentsOf(version: VersionToCheck, field: string): readonly Segment[] 
 }
 
 /** The AI-written text of a field with every substituted segment replaced by a space (as the content checks see it). */
+/**
+ * The AI text of a field as the image draws it (TEAM-DISPLAY-01): every fact segment of a team-name fact with a
+ * recorded presentation name takes that name; every other segment is drawn as stored.
+ */
+function presentedAiText(segments: readonly Segment[], displayNames: ReadonlyMap<string, string>): string {
+  return segments
+    .map((segment) =>
+      segment.provenance === 'fact' && segment.factId !== null
+        ? (displayNames.get(segment.factId) ?? segment.text)
+        : segment.text,
+    )
+    .join('');
+}
+
 function aiTextOf(segments: readonly Segment[]): string {
   return segments.map((segment) => (segment.provenance === 'commentary' ? segment.text : ' ')).join('');
 }
@@ -438,10 +455,13 @@ export function dataMatch(version: VersionToCheck, model: RenderModel, ctx: QaCo
     }
   }
 
-  // AI fields: the drawn text is the stored text, and every substituted value is a display form of its fact.
+  // AI fields: the drawn text is the stored text, and every substituted value is a display form of its fact. From
+  // TEAM-DISPLAY-01 (PD-37) a team placeholder of the AI text is drawn with the presentation name the project recorded
+  // for that fact's team, so the drawn text is the stored text with exactly those segments replaced; nothing else may
+  // differ. The stored segments themselves still hold the official names (checked by team_names).
   for (const field of SLIDE_AI_FIELDS) {
     const segments = segmentsOf(version, field);
-    const stored = segments.map((segment) => segment.text).join('');
+    const stored = presentedAiText(segments, ctx.teamDisplayNames);
     const element = texts.find((candidate) => candidate.field === field);
     if (structured && element === undefined) {
       // A visual template does not draw the AI text (decision D9).
@@ -509,6 +529,12 @@ function nameVariants(
   return variants;
 }
 
+/**
+ * `team_names`: a team-name element of the image draws exactly one team-name fact, with its official name or, from
+ * TEAM-DISPLAY-01 (PD-37), the presentation name the project's snapshot recorded for that fact's team, and no other
+ * form. The stored AI text (headline, description) must hold the official names, as before; the image draws its team
+ * placeholders with the presentation name, which `data_match` compares.
+ */
 export function teamNames(version: VersionToCheck, model: RenderModel, ctx: QaContext): QaResult {
   const mismatches = new Mismatches();
   for (const element of textElements(model)) {
@@ -517,8 +543,9 @@ export function teamNames(version: VersionToCheck, model: RenderModel, ctx: QaCo
     }
     const [factId] = element.factIds;
     const expected = factId === undefined || element.factIds.length !== 1 ? null : officialName(ctx.facts.get(factId));
-    if (expected === null || element.text !== expected) {
-      mismatches.add(element.id, factId ?? null, expected ?? '', element.text);
+    const presented = factId === undefined || expected === null ? undefined : ctx.teamDisplayNames.get(factId);
+    if (expected === null || (element.text !== expected && element.text !== presented)) {
+      mismatches.add(element.id, factId ?? null, presented ?? expected ?? '', element.text);
     }
   }
   for (const field of SLIDE_AI_FIELDS) {

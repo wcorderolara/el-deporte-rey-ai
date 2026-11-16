@@ -35,6 +35,8 @@ import {
   ErrorBanner,
   formatDateTime,
   Icon,
+  Modal,
+  ModalFooter,
   Tabs,
   tabId,
   tabPanelId,
@@ -223,6 +225,13 @@ export function EditorialCopy({
   }
   const anyDirty = DELIVERABLE_TAB_ORDER.some(isDirty);
   const anyEditing = DELIVERABLE_TAB_ORDER.some((deliverable) => drafts[deliverable] !== undefined);
+  // Bulk approval: the current version of every deliverable that is ready (no flags) and not being edited.
+  const pendingDeliverables = deliverableTabs.filter((deliverable) => versionOf(deliverable)?.state !== 'approved');
+  const approvable = pendingDeliverables.filter(
+    (deliverable) => versionOf(deliverable)?.state === 'ready' && drafts[deliverable] === undefined,
+  );
+  const held = pendingDeliverables.length - approvable.length;
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   useEffect(() => {
     onDirtyChange?.(anyDirty);
@@ -269,6 +278,51 @@ export function EditorialCopy({
           ...(writer.requiresCostConfirmation ? { confirmCost: confirmed } : {}),
         }),
       editorialCopy.generating,
+    );
+  }
+
+  /** Approves the current version of every approvable deliverable, one approval each (the server checks each one). */
+  function approveAll(): void {
+    const targets = approvable.flatMap((deliverable) => {
+      const version = versionOf(deliverable);
+      return version === null ? [] : [{ deliverable, versionId: version.id }];
+    });
+    void act(async () => {
+      for (const target of targets) {
+        await api.approve(projectId, target.deliverable, target.versionId);
+      }
+    }, editorialCopy.approvingAll).then((done) => {
+      setBulkOpen(false);
+      if (done) setStatus(editorialCopy.approvedAll(targets.length));
+    });
+  }
+
+  /** Saves the text of one deliverable, or of all of them, apart from the slides. */
+  function download(only?: EditorialDeliverable): void {
+    if (pkg === null) return;
+    const text = editorialText(pkg, new Date(), only);
+    if (text !== null) {
+      saveTextFile(text, editorialFileName(pkg, only));
+      setStatus(only === undefined ? editorialCopy.downloaded : editorialCopy.downloadedOne);
+    }
+  }
+
+  /** «Aprobación masiva» of the copy, as for the slides; hidden once every copy is approved. */
+  function bulkBlock(): ReactNode {
+    if (pendingDeliverables.length === 0) return null;
+    return (
+      <section className="grid gap-1.5 rounded-control border border-border-subtle bg-surface-card p-2 text-caption text-text-secondary">
+        <p className="m-0 font-bold tracking-label text-text-primary uppercase">{editorialCopy.bulkTitle}</p>
+        <p className="m-0">
+          {approvable.length > 0 ? editorialCopy.bulkReady(approvable.length) : editorialCopy.bulkNone}
+        </p>
+        {held === 0 ? null : <p className="m-0">{editorialCopy.bulkHeld(held)}</p>}
+        {approvable.length === 0 ? null : (
+          <Button variant="primary" size="sm" className="w-full" disabled={busy} onClick={() => setBulkOpen(true)}>
+            {editorialCopy.approveAll(approvable.length)}
+          </Button>
+        )}
+      </section>
     );
   }
 
@@ -424,23 +478,6 @@ export function EditorialCopy({
   function footer(): ReactNode {
     return (
       <>
-        {pkg !== null && hasVersions ? (
-          <Button
-            variant="secondary"
-            className="w-full"
-            disabled={busy}
-            leadingIcon={<Icon name="text" size={18} />}
-            onClick={() => {
-              const text = editorialText(pkg, new Date());
-              if (text !== null) {
-                saveTextFile(text, editorialFileName(pkg));
-                setStatus(editorialCopy.downloaded);
-              }
-            }}
-          >
-            {editorialCopy.download}
-          </Button>
-        ) : null}
         <p role="status" aria-live="polite" className="m-0 text-body-sm text-text-secondary">
           {status}
         </p>
@@ -538,6 +575,7 @@ export function EditorialCopy({
         </div>
 
         <aside aria-label={editorialCopy.actionsLabel(deliverableTitle[deliverable])} className={actionsColumn}>
+          {bulkBlock()}
           <section className="grid gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className={eyebrow}>{editorialCopy.approvalTitle}</p>
@@ -630,6 +668,29 @@ export function EditorialCopy({
             </Button>
           </section>
 
+          <section className="grid gap-2">
+            <p className={eyebrow}>{editorialCopy.downloadTitle}</p>
+            <Button
+              variant="secondary"
+              className="w-full"
+              disabled={busy}
+              leadingIcon={<Icon name="text" size={18} />}
+              onClick={() => download(deliverable)}
+            >
+              {editorialCopy.downloadOne}
+            </Button>
+            <Button
+              variant="secondary"
+              className="w-full"
+              disabled={busy}
+              leadingIcon={<Icon name="text" size={18} />}
+              onClick={() => download()}
+            >
+              {editorialCopy.download}
+            </Button>
+            <p className="m-0 text-caption text-text-secondary">{editorialCopy.downloadScope}</p>
+          </section>
+
           {regenerateBlock(deliverable)}
           {footer()}
         </aside>
@@ -710,6 +771,36 @@ export function EditorialCopy({
       >
         {content}
       </div>
+      {bulkOpen ? (
+        <Modal
+          title={editorialCopy.approveAllTitle}
+          closeDisabled={busy}
+          onClose={() => {
+            if (!busy) setBulkOpen(false);
+          }}
+        >
+          <div className="grid gap-3 text-body-sm">
+            <p className="m-0">{editorialCopy.approveAllBody}</p>
+            <ul className="m-0 grid list-disc gap-1 pl-5">
+              {approvable.map((deliverable) => (
+                <li key={deliverable}>{deliverableTitle[deliverable]}</li>
+              ))}
+            </ul>
+            {held === 0 ? null : <p className="m-0 text-text-secondary">{editorialCopy.bulkHeld(held)}</p>}
+            <ModalFooter onCancel={() => setBulkOpen(false)} cancelDisabled={busy}>
+              <Button
+                variant="primary"
+                disabled={busy || approvable.length === 0}
+                isLoading={busy}
+                loadingLabel={editorialCopy.approvingAll}
+                onClick={approveAll}
+              >
+                {editorialCopy.approveAllConfirm(approvable.length)}
+              </Button>
+            </ModalFooter>
+          </div>
+        </Modal>
+      ) : null}
     </section>
   );
 }

@@ -1033,6 +1033,7 @@ export const componentSamples: Record<ComponentName, unknown> = {
   DisplayName: 'Liga Demo 2026/27',
   StageName: 'Fase_de liga (A)',
   TeamName: "Club Atlético O'Demo & Co.",
+  TeamDisplayName: "O'Demo & Co.",
   FileName: 'jornada-3.csv',
   DataMode: 'DEMO_DATA',
   MatchStatus: 'finished',
@@ -1315,6 +1316,7 @@ export const componentSamples: Record<ComponentName, unknown> = {
   ManagedTeam: {
     id: uuid(82),
     name: 'Club Local',
+    displayName: 'Local',
     region: 'Ciudad Ficticia',
     badge: teamBadge,
     createdAt: T1,
@@ -1324,6 +1326,7 @@ export const componentSamples: Record<ComponentName, unknown> = {
     team: {
       id: uuid(82),
       name: 'Club Local',
+      displayName: null,
       region: 'Ciudad Ficticia',
       badge: teamBadge,
       createdAt: T1,
@@ -1335,6 +1338,7 @@ export const componentSamples: Record<ComponentName, unknown> = {
     team: {
       id: uuid(82),
       name: 'Club Local',
+      displayName: null,
       region: 'Ciudad Ficticia',
       badge: teamBadge,
       createdAt: T1,
@@ -1360,6 +1364,7 @@ export const componentSamples: Record<ComponentName, unknown> = {
     homeTeam: {
       id: uuid(82),
       name: 'Club Local',
+      displayName: 'Local',
       region: 'Ciudad Ficticia',
       badge: teamBadge,
       createdAt: T1,
@@ -1368,6 +1373,7 @@ export const componentSamples: Record<ComponentName, unknown> = {
     awayTeam: {
       id: uuid(86),
       name: 'Club Visitante',
+      displayName: null,
       region: 'Otra Ciudad Ficticia',
       badge: null,
       createdAt: T1,
@@ -1691,7 +1697,7 @@ export const requestSamples: Partial<Record<OperationId, unknown>> = {
   createManagedSeason: { label: '2026/27' },
   updateManagedSeason: { label: '2026/27 actualizada' },
   createManagedTeam: { name: 'Club Local', region: 'Ciudad Ficticia' },
-  updateManagedTeam: { name: 'Club Local actualizado', region: 'Ciudad Ficticia' },
+  updateManagedTeam: { name: 'Club Local actualizado', region: 'Ciudad Ficticia', displayName: 'Local' },
   addSeasonParticipant: { teamId: uuid(82) },
   addCompetitionTeam: { teamId: uuid(82) },
   addSeasonParticipantsBatch: { teamIds: [uuid(82), uuid(86)] },
@@ -1889,6 +1895,7 @@ export const responseSamples: Partial<Record<OperationId, unknown>> = {
     homeTeam: {
       id: uuid(82),
       name: 'Club Local',
+      displayName: null,
       region: 'Ciudad Ficticia',
       badge: teamBadge,
       createdAt: T1,
@@ -1897,6 +1904,7 @@ export const responseSamples: Partial<Record<OperationId, unknown>> = {
     awayTeam: {
       id: uuid(86),
       name: 'Club Visitante',
+      displayName: null,
       region: 'Otra Ciudad Ficticia',
       badge: null,
       createdAt: T1,

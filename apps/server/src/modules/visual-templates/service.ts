@@ -62,7 +62,7 @@ import {
   renderSlide,
 } from '../rendering/index.js';
 
-import { type LocalSelectionData, readSelection, resolveBinding } from './catalog.js';
+import { type LocalSelectionData, previewTeamName, readSelection, resolveBinding } from './catalog.js';
 import { type LuminanceSampler, backgroundSampler } from './contrast.js';
 import type { VisualTemplateRepository } from './repository.js';
 import { type StoredBackground, type TemplateRecord, type VersionRecord } from './repository.js';
@@ -671,6 +671,8 @@ export class VisualTemplateService {
       selection.roundId ?? '',
       selection.matchId ?? '',
       language,
+      // TEAM-DISPLAY-01: the presentation names drawn, so a changed name is never served from an earlier image.
+      JSON.stringify(data.displayNames),
     ].join('|');
     return this.#previews.get(key, async () => {
       const prepared = await this.#prepare(template, version, selection, language, true, data);
@@ -943,8 +945,8 @@ export class VisualTemplateService {
     const rows = (): ComposeRow[] =>
       version.layers.some((layer) => layer.type === 'fixture_list')
         ? data.roundMatches.slice(0, VISUAL_TEMPLATE_FIXTURE_LIST_ROWS).map((match) => ({
-            homeName: previewRun(match.homeTeamName),
-            awayName: previewRun(match.awayTeamName),
+            homeName: previewRun(previewTeamName(data, match.homeTeamId, match.homeTeamName)),
+            awayName: previewRun(previewTeamName(data, match.awayTeamId, match.awayTeamName)),
             kickoffDate: previewRun(
               match.kickoffAt === null ? null : formatDate(match.kickoffAt, language, this.#utcOffsetMinutes),
             ),

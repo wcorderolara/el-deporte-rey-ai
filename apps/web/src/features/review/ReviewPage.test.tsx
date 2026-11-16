@@ -213,7 +213,10 @@ describe('Review workspace navigation and hierarchy', () => {
     });
     renderApp(REVIEW, server);
     await screen.findByRole('heading', { level: 3, name: 'Diapositiva 1: Portada' });
-    await userEvent.click(screen.getByRole('button', { name: 'Aprobar todas (3)' }));
+    // With slides ready it is the main action of the panel: the gold primary button.
+    const approveAll = screen.getByRole('button', { name: 'Aprobar todas (3)' });
+    expect(approveAll.className).toContain('bg-button-primary-bg');
+    await userEvent.click(approveAll);
     const dialog = await screen.findByRole('dialog', { name: 'Confirmar aprobación de diapositivas' });
     expect(dialog.textContent).toContain('3 listas para aprobar');
     expect(dialog.textContent).toContain('No aprueba el copy editorial ni el texto del carrusel.');
@@ -244,7 +247,9 @@ describe('Review workspace navigation and hierarchy', () => {
     expect(screen.getByRole('navigation', { name: 'Diapositivas del carrusel' }).textContent).toContain(
       'Ninguna diapositiva está lista para la aprobación masiva.',
     );
-    await userEvent.click(screen.getByRole('button', { name: 'Ver motivos' }));
+    const reasons = screen.getByRole('button', { name: 'Ver motivos' });
+    expect(reasons.className).toContain('bg-button-secondary-bg');
+    await userEvent.click(reasons);
     const dialog = await screen.findByRole('dialog', { name: 'Confirmar aprobación de diapositivas' });
     expect(dialog.textContent).toContain('Advertencias sin confirmar');
     expect(dialog.textContent).toContain('Diapositiva 1: Portada');

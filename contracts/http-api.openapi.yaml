@@ -1273,6 +1273,9 @@ paths:
               properties:
                 name: { $ref: '#/components/schemas/TeamName' }
                 region: { anyOf: [{ $ref: '#/components/schemas/DisplayName' }, { type: 'null' }] }
+                displayName:
+                  description: Optional presentation name; omitted or null means none.
+                  anyOf: [{ $ref: '#/components/schemas/TeamDisplayName' }, { type: 'null' }]
       responses:
         '201':
           description: Local team created.
@@ -1322,6 +1325,12 @@ paths:
               properties:
                 name: { $ref: '#/components/schemas/TeamName' }
                 region: { anyOf: [{ $ref: '#/components/schemas/DisplayName' }, { type: 'null' }] }
+                displayName:
+                  description: >-
+                    The presentation name (TEAM-DISPLAY-01). Omitted keeps the current value, so a client that does not
+                    send it never clears it; null removes it (the official name is used again); a name sets it. An
+                    empty or blank name is refused.
+                  anyOf: [{ $ref: '#/components/schemas/TeamDisplayName' }, { type: 'null' }]
       responses:
         '200': { description: Updated global team., content: { application/json: { schema: { $ref: '#/components/schemas/ManagedTeam' } } } }
         '400': { $ref: '#/components/responses/Problem' }
@@ -3926,12 +3935,17 @@ components:
         uploadedAt: { type: string, format: date-time }
     ManagedTeam:
       type: object
-      required: [id, name, region, badge, createdAt, updatedAt]
+      required: [id, name, region, displayName, badge, createdAt, updatedAt]
       additionalProperties: false
       properties:
         id: { $ref: '#/components/schemas/Uuid' }
-        name: { $ref: '#/components/schemas/TeamName' }
+        name:
+          description: The official name, the team's sports identity (matching, verification, editorial copy).
+          allOf: [{ $ref: '#/components/schemas/TeamName' }]
         region: { anyOf: [{ $ref: '#/components/schemas/DisplayName' }, { type: 'null' }] }
+        displayName:
+          description: The presentation name drawn in the images of new projects (TEAM-DISPLAY-01), or null when none is configured and the official name is used.
+          anyOf: [{ $ref: '#/components/schemas/TeamDisplayName' }, { type: 'null' }]
         badge:
           description: The active badge, or null when the team has none (no badge is ever invented).
           anyOf: [{ $ref: '#/components/schemas/TeamBadge' }, { type: 'null' }]
@@ -4035,6 +4049,12 @@ components:
       minLength: 1
       maxLength: 64
       pattern: '^[\p{L}\p{M}\p{N} .''&()-]{1,64}$'
+    TeamDisplayName:
+      description: A team's presentation name (TEAM-DISPLAY-01), set by the operator; the TeamName characters, 1 to 32 of them. Never used to identify or match a team.
+      type: string
+      minLength: 1
+      maxLength: 32
+      pattern: '^[\p{L}\p{M}\p{N} .''&()-]{1,32}$'
     FileName:
       description: 'Name of an imported file, without any path; extension .json or .csv. Metadata only, never used as a path. Combining marks are accepted so that decomposed (NFD) names are not refused; the UI sends names normalized to NFC (T11H-F20).'
       type: string

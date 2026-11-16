@@ -132,6 +132,7 @@ const SQL = {
     'h.name AS home_name, a.id AS away_id, a.name AS away_name FROM competition_matches m JOIN match_results mr ON mr.match_id = m.id ' +
     'JOIN managed_teams h ON h.id = m.home_team_id JOIN managed_teams a ON a.id = m.away_team_id ' +
     'WHERE m.season_id = ? ORDER BY m.kickoff_at IS NULL, m.kickoff_at, m.created_at, m.id',
+  teamDisplayName: 'SELECT display_name FROM managed_teams WHERE id = ?',
   insertBatch: `INSERT INTO content_generation_batches (${BATCH_COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   insertItem: `INSERT INTO content_generation_items (${ITEM_COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   insertItemMatch: 'INSERT INTO content_generation_item_matches (item_id, match_id, position) VALUES (?, ?, ?)',
@@ -179,6 +180,22 @@ export class ContentBatchRepository {
   context(competitionId: string, seasonId: string, roundId: string): LocalContextRecord | null {
     const row = this.#db.prepare<ContextRow>(SQL.context).get([competitionId, seasonId, roundId]);
     return row === undefined ? null : contextOf(row);
+  }
+
+  /**
+   * The current presentation name of each given team that has one (TEAM-DISPLAY-01), for the project snapshot; a team
+   * without one (or not found) is left out.
+   */
+  teamDisplayNames(teamIds: Iterable<string>): Record<string, string> {
+    const statement = this.#db.prepare<{ display_name: string | null }>(SQL.teamDisplayName);
+    const names: Record<string, string> = {};
+    for (const teamId of teamIds) {
+      const name = statement.get([teamId])?.display_name ?? null;
+      if (name !== null) {
+        names[teamId] = name;
+      }
+    }
+    return names;
   }
 
   /** Every match of the season with its current effective values, in calendar order. */

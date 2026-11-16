@@ -73,9 +73,9 @@ describe('contract document', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('has 214 component schemas', () => {
+  it('has 215 component schemas', () => {
     // PD-ARCH-01G-E.2 adds the three schemas of the match list of a round calendar.
-    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(214);
+    expect(Object.keys(child(document, 'components', 'schemas'))).toHaveLength(215);
   });
 });
 
@@ -567,6 +567,8 @@ describe('promoted contract and accepted proposal (V-29, T10-F03, T10-F17)', () 
       '/components/schemas/CompetitionMatchStatus: added',
       '/components/schemas/CompetitionMatch: added',
       '/components/schemas/MatchResultHistory: added',
+      // TEAM-DISPLAY-01: optional presentation name of a team (Product Owner, 2026-11-13).
+      '/components/schemas/TeamDisplayName: added',
       '/components/schemas/ProjectSportsContext: added',
       '/components/schemas/ContentBatchSelection: added',
       '/components/schemas/ContentBatchCreate: added',

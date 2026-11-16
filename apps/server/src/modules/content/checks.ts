@@ -25,8 +25,8 @@
  * 6. `UNPLAYED_RESULT_CLAIM` (content about matches not played yet only, PD-ARCH-01E-B): a word that states or
  *    predicts a result (won, beat, draw, favourite, odds, ... in Spanish or English; `words.ts`).
  * 5. `FORBIDDEN_CONTENT`: URLs and domain names, e-mail addresses, `@` mentions other than the configured brand
- *    handle, HTML or Markdown control sequences, and text over the field limit (`checkLength`, on the substituted
- *    text).
+ *    handle (in any letter case, and with the dots that close a sentence after it), HTML or Markdown control
+ *    sequences, and text over the field limit (`checkLength`, on the substituted text).
  *
  * Hashtags (architecture.md section 8.2): the exact hashtag-safe form of an official name (`hashtagFor`) is allowed;
  * every other hashtag must match `^#[\p{L}\p{N}_]{1,60}$` and pass the same checks.
@@ -356,8 +356,10 @@ function checkForbidden(field: CheckedField, text: string, brandHandle: string, 
   }
   const handle = brandHandle.toLowerCase();
   for (const mention of normalized.matchAll(MENTION)) {
-    if (mention[0].toLowerCase() !== handle) {
-      flags.add('FORBIDDEN_CONTENT', field, mention[0]);
+    // A handle never ends with a dot: the dots after it close the sentence («Síguenos en @ElDeporteReyGT.»).
+    const written = mention[0].replace(/\.+$/u, '');
+    if (written.toLowerCase() !== handle) {
+      flags.add('FORBIDDEN_CONTENT', field, written);
     }
   }
   const markup = MARKUP.exec(normalized);

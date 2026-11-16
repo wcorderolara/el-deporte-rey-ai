@@ -13,6 +13,7 @@ import {
   BrandAssetDetailSchema,
   BrandAssetSchema,
   DesignGenerationStartSchema,
+  ManagedTeamSchema,
   VisualTemplateDetailSchema,
   VisualTemplateListSchema,
   VisualTemplatePreviewSchema,
@@ -744,6 +745,48 @@ describe('previews with local sports data', () => {
     });
     expect(unknown.statusCode).toBe(404);
     expect(imageRequests(egress)).toBe(before);
+  });
+
+  it('previews a team with its current presentation name, as a project created now would draw it, and a new image after a change (TEAM-DISPLAY-01)', async () => {
+    const { app } = await start();
+    const detail = await create(app, { sourceProposalId: await proposal(app) });
+    const templateId = detail.template.id;
+    const draft = await version(app, templateId, detail.template.draftVersionId ?? '');
+    const local = await sportsData(app);
+    await save(app, draft, draft.layers);
+    const selection = { competitionId: local.competitionId, seasonId: local.seasonId, matchId: local.matchId };
+    const previewNow = async () => {
+      const response = await app.send('POST', `/visual-templates/${templateId}/versions/${draft.id}/previews`, {
+        selection,
+      });
+      expect(response.statusCode, response.body).toBe(200);
+      const preview = VisualTemplatePreviewSchema.parse(response.json());
+      const image = await app.get(preview.imageUrl.replace('/api/v1', ''));
+      expect(image.statusCode, image.body).toBe(200);
+      return { values: preview.values, png: sha256(image.rawPayload) };
+    };
+    const official = await previewNow();
+    expect(official.values.find((value) => value.binding === 'match.homeTeam.name')?.value).toBe(
+      'Club Plantilla Local',
+    );
+
+    const renamed = await app.send('PATCH', `/teams/${local.teams[0] ?? ''}`, {
+      name: 'Club Plantilla Local',
+      region: null,
+      displayName: 'Plantilla',
+    });
+    expect(renamed.statusCode, renamed.body).toBe(200);
+    const presented = await previewNow();
+    expect(presented.values.find((value) => value.binding === 'match.homeTeam.name')?.value).toBe('Plantilla');
+    expect(presented.values.find((value) => value.binding === 'match.awayTeam.name')?.value).toBe(
+      'Club Plantilla Visitante',
+    );
+    // The image is drawn again with the name, never served from the earlier one.
+    expect(presented.png).not.toBe(official.png);
+    // The administrative data keeps the official name.
+    expect(ManagedTeamSchema.parse((await app.get(`/teams/${local.teams[0] ?? ''}`)).json()).name).toBe(
+      'Club Plantilla Local',
+    );
   });
 
   it('reports a required value the data lacks and a text that overflows with the real value', async () => {

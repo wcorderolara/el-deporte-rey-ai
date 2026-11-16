@@ -2,7 +2,12 @@ import type { CompetitionTeam, LocalSeason, LocalTeam, SeasonParticipant } from 
 import type { Db } from '../../../platform/db/db.js';
 import { constraintKind } from '../../../platform/db/errors.js';
 import { CompetitionAdministrationError as AdminError } from '../domain/errors.js';
-import type { CompetitionAdministrationPort, NewManagedSeason, NewManagedTeam } from '../domain/ports.js';
+import type {
+  CompetitionAdministrationPort,
+  NewManagedSeason,
+  NewManagedTeam,
+  TeamDisplayNameChange,
+} from '../domain/ports.js';
 import { badgeJson, badgeOf } from '../badges/sql.js';
 
 interface SeasonRow {
@@ -14,6 +19,7 @@ interface SeasonRow {
 interface TeamRow {
   id: string;
   name: string;
+  display_name: string | null;
   region: string | null;
   badge_json: string | null;
   created_at: string;
@@ -27,11 +33,11 @@ interface CompetitionTeamRow extends TeamRow {
 }
 
 /** Team queries with the active badge of each team (PD-ARCH-01G-D); constants, values bound (T10-F14). */
-const TEAMS_SQL = `SELECT t.id, t.name, t.region, ${badgeJson('t')} AS badge_json, t.created_at, t.updated_at FROM managed_teams t ORDER BY t.normalized_name, t.normalized_region, t.id`;
-const TEAM_SQL = `SELECT t.id, t.name, t.region, ${badgeJson('t')} AS badge_json, t.created_at, t.updated_at FROM managed_teams t WHERE t.id = ?`;
-const COMPETITION_TEAMS_SQL = `SELECT t.id, t.name, t.region, ${badgeJson('t')} AS badge_json, t.created_at, t.updated_at, ct.associated_at FROM competition_teams ct JOIN managed_teams t ON t.id = ct.team_id WHERE ct.competition_id = ? ORDER BY t.normalized_name, t.normalized_region, t.id`;
-const PARTICIPANTS_SQL = `SELECT t.id, t.name, t.region, ${badgeJson('t')} AS badge_json, t.created_at, t.updated_at, p.joined_at FROM season_participants p JOIN managed_teams t ON t.id = p.team_id JOIN competition_seasons s ON s.id = p.season_id JOIN competition_teams ct ON ct.competition_id = s.competition_id AND ct.team_id = p.team_id WHERE p.season_id = ? ORDER BY t.normalized_name, t.normalized_region, t.id`;
-const PARTICIPANT_SQL = `SELECT t.id, t.name, t.region, ${badgeJson('t')} AS badge_json, t.created_at, t.updated_at, p.joined_at FROM season_participants p JOIN managed_teams t ON t.id = p.team_id WHERE p.season_id = ? AND p.team_id = ?`;
+const TEAMS_SQL = `SELECT t.id, t.name, t.display_name, t.region, ${badgeJson('t')} AS badge_json, t.created_at, t.updated_at FROM managed_teams t ORDER BY t.normalized_name, t.normalized_region, t.id`;
+const TEAM_SQL = `SELECT t.id, t.name, t.display_name, t.region, ${badgeJson('t')} AS badge_json, t.created_at, t.updated_at FROM managed_teams t WHERE t.id = ?`;
+const COMPETITION_TEAMS_SQL = `SELECT t.id, t.name, t.display_name, t.region, ${badgeJson('t')} AS badge_json, t.created_at, t.updated_at, ct.associated_at FROM competition_teams ct JOIN managed_teams t ON t.id = ct.team_id WHERE ct.competition_id = ? ORDER BY t.normalized_name, t.normalized_region, t.id`;
+const PARTICIPANTS_SQL = `SELECT t.id, t.name, t.display_name, t.region, ${badgeJson('t')} AS badge_json, t.created_at, t.updated_at, p.joined_at FROM season_participants p JOIN managed_teams t ON t.id = p.team_id JOIN competition_seasons s ON s.id = p.season_id JOIN competition_teams ct ON ct.competition_id = s.competition_id AND ct.team_id = p.team_id WHERE p.season_id = ? ORDER BY t.normalized_name, t.normalized_region, t.id`;
+const PARTICIPANT_SQL = `SELECT t.id, t.name, t.display_name, t.region, ${badgeJson('t')} AS badge_json, t.created_at, t.updated_at, p.joined_at FROM season_participants p JOIN managed_teams t ON t.id = p.team_id WHERE p.season_id = ? AND p.team_id = ?`;
 
 function seasonFrom(row: SeasonRow): LocalSeason {
   return { id: row.id, competitionId: row.competition_id, label: row.label, createdAt: row.created_at };
@@ -40,6 +46,7 @@ function teamFrom(row: TeamRow): LocalTeam {
   return {
     id: row.id,
     name: row.name,
+    displayName: row.display_name,
     region: row.region,
     badge: badgeOf(row.badge_json),
     createdAt: row.created_at,
@@ -137,16 +144,17 @@ export class SQLiteCompetitionAdministrationRepository implements CompetitionAdm
     return this.#db.prepare<TeamRow>(TEAMS_SQL).all().map(teamFrom);
   }
 
-  createTeam(input: NewManagedTeam): LocalTeam {
+  createTeam(input: NewManagedTeam, displayName: string | null = null): LocalTeam {
     try {
       this.#db
         .prepare(
-          'INSERT INTO managed_teams (id, name, normalized_name, region, normalized_region, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO managed_teams (id, name, normalized_name, display_name, region, normalized_region, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         )
         .run([
           input.id,
           input.name,
           input.normalizedName,
+          displayName,
           input.region,
           input.normalizedRegion,
           input.createdAt,
@@ -162,13 +170,26 @@ export class SQLiteCompetitionAdministrationRepository implements CompetitionAdm
   updateTeam(
     teamId: string,
     input: Pick<NewManagedTeam, 'name' | 'normalizedName' | 'region' | 'normalizedRegion' | 'updatedAt'>,
+    displayName: TeamDisplayNameChange = { kind: 'keep' },
   ): LocalTeam {
     try {
+      // `keep` binds a flag that leaves display_name as stored (imports never touch it, TEAM-DISPLAY-01).
+      const keep = displayName.kind === 'keep' ? 1 : 0;
+      const value = displayName.kind === 'set' ? displayName.value : null;
       const result = this.#db
         .prepare(
-          'UPDATE managed_teams SET name = ?, normalized_name = ?, region = ?, normalized_region = ?, updated_at = ? WHERE id = ?',
+          'UPDATE managed_teams SET name = ?, normalized_name = ?, display_name = CASE WHEN ? = 1 THEN display_name ELSE ? END, region = ?, normalized_region = ?, updated_at = ? WHERE id = ?',
         )
-        .run([input.name, input.normalizedName, input.region, input.normalizedRegion, input.updatedAt, teamId]);
+        .run([
+          input.name,
+          input.normalizedName,
+          keep,
+          value,
+          input.region,
+          input.normalizedRegion,
+          input.updatedAt,
+          teamId,
+        ]);
       if (result.changes === 0) throw new AdminError('team_not_found');
     } catch (error) {
       if (constraintKind(error) === 'unique') throw new AdminError('duplicate_team');

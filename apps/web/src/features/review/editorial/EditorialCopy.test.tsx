@@ -185,6 +185,60 @@ describe('Editorial copy of the review (PD-ARCH-01H)', () => {
     expect((within(region).getByRole('button', { name: 'Aprobar copy' }) as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it('approves every copy that is ready in one action, after a confirmation, and leaves out the flagged ones', async () => {
+    const flagged = {
+      ...TIKTOK,
+      state: 'flagged' as const,
+      flags: [{ code: 'UNVERIFIED_NUMBER' as const, field: 'copy', excerpt: '3-0' }],
+    };
+    const youtube = version({
+      id: 'b0000000-0000-4000-8000-000000000003',
+      deliverable: 'youtube',
+      fields: [
+        { name: 'title', text: 'Mestalla se apagó', words: 3, characters: 17 },
+        { name: 'description', text: 'Análisis de la jornada.', words: 4, characters: 23 },
+      ],
+    });
+    const approved = (item: EditorialVersion) => ({ ...item, state: 'approved' as const, approvedAt: T1 });
+    const server = fakeServer({
+      [DRAFT_PATH]: draftResponse(),
+      [`GET ${EDITORIAL}`]: [
+        () => json(withVersions({}, [MAIN, flagged, youtube])),
+        () => json(withVersions({}, [approved(MAIN), flagged, approved(youtube)])),
+      ],
+      [`PUT ${EDITORIAL}/deliverables/facebook_instagram/approval`]: () => json(approved(MAIN)),
+      [`PUT ${EDITORIAL}/deliverables/youtube/approval`]: () => json(approved(youtube)),
+    });
+    renderApp(REVIEW, server);
+    const region = await section();
+    await within(region).findByText('NADIE LO VIO VENIR');
+    expect(within(region).getByText('2 copys listos para aprobar')).toBeTruthy();
+    const approveAll = within(region).getByRole('button', { name: 'Aprobar todos los copys (2)' });
+    // The main action of the panel: the gold primary button, as for the slides.
+    expect(approveAll.className).toContain('bg-button-primary-bg');
+    await userEvent.click(approveAll);
+    const dialog = await screen.findByRole('dialog', { name: '¿Aprobar todos los copys?' });
+    expect(dialog.textContent).toContain('Facebook e Instagram');
+    expect(dialog.textContent).toContain('YouTube');
+    expect(dialog.textContent).not.toContain('TikTok');
+    expect(dialog.textContent).toContain('1 copy necesita revisión');
+    // Nothing is approved before the confirmation.
+    expect(server.callsTo('PUT', `${EDITORIAL}/deliverables/facebook_instagram/approval`)).toHaveLength(0);
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Aprobar 2 copys' }));
+    expect(await within(region).findByText('2 copys aprobados.')).toBeTruthy();
+    expect(server.callsTo('PUT', `${EDITORIAL}/deliverables/facebook_instagram/approval`)[0]?.body).toEqual({
+      versionId: MAIN.id,
+    });
+    expect(server.callsTo('PUT', `${EDITORIAL}/deliverables/youtube/approval`)[0]?.body).toEqual({
+      versionId: youtube.id,
+    });
+    expect(server.callsTo('PUT', `${EDITORIAL}/deliverables/tiktok_reels/approval`)).toHaveLength(0);
+    // Only the flagged copy remains: no copy is ready, so there is nothing to approve in bulk.
+    expect(within(region).getByText('Ningún copy está listo para aprobar.')).toBeTruthy();
+    expect(within(region).queryByRole('button', { name: /^Aprobar todos los copys/u })).toBeNull();
+    expect(server.unexpected).toEqual([]);
+  });
+
   it('needs an explicit cost confirmation before a billed generation', async () => {
     const billed = editorialPackage({
       writer: {
@@ -394,19 +448,39 @@ describe('Download of the editorial copy (PD-ARCH-01H)', () => {
     renderApp(REVIEW, server);
     const region = await section();
     await within(region).findByText('NADIE LO VIO VENIR');
-    await userEvent.click(within(region).getByRole('button', { name: 'Descargar copys (.txt)' }));
+    await userEvent.click(within(region).getByRole('button', { name: 'Descargar todos los copys (.txt)' }));
     expect(click).toHaveBeenCalledTimes(1);
     expect(blobs).toHaveLength(1);
     expect(blobs[0]?.type).toBe('text/plain;charset=utf-8');
     expect(await blobs[0]?.text()).toContain('=== TIKTOK Y REELS (Listo para aprobar · Versión 1) ===');
     expect(await within(region).findByText('Copys descargados.')).toBeTruthy();
+
+    // One copy alone, apart from the slides: only the deliverable of the tab, in a file named after it.
+    await userEvent.click(within(region).getByRole('button', { name: 'Descargar este copy (.txt)' }));
+    expect(click).toHaveBeenCalledTimes(2);
+    const one = (await blobs[1]?.text()) ?? '';
+    expect(one).toContain('=== FACEBOOK E INSTAGRAM (Listo para aprobar · Versión 1) ===');
+    expect(one).not.toContain('TIKTOK Y REELS');
+    expect(await within(region).findByText('Copy descargado.')).toBeTruthy();
     expect(server.unexpected).toEqual([]);
+  });
+
+  it('names the file of one copy after the competition, the stage and the deliverable', () => {
+    const pkg = withVersions();
+    expect(editorialFileName(pkg, 'facebook_instagram')).toBe(
+      'copy-editorial-liga-de-prueba-fase-regular-jornada-3-facebook-instagram.txt',
+    );
+    expect(editorialFileName(editorialPackage({ context: null }), 'youtube')).toBe('copy-editorial-youtube.txt');
+    const text = editorialText(pkg, new Date(T1), 'tiktok_reels') ?? '';
+    expect(text).toContain('=== TIKTOK Y REELS (Listo para aprobar · Versión 1) ===');
+    expect(text).not.toContain('FACEBOOK E INSTAGRAM');
   });
 
   it('offers no download before any copy exists', async () => {
     const server = fakeServer({ [DRAFT_PATH]: draftResponse() });
     renderApp(REVIEW, server);
     const region = await section();
-    expect(within(region).queryByRole('button', { name: 'Descargar copys (.txt)' })).toBeNull();
+    expect(within(region).queryByRole('button', { name: 'Descargar todos los copys (.txt)' })).toBeNull();
+    expect(within(region).queryByRole('button', { name: 'Descargar este copy (.txt)' })).toBeNull();
   });
 });

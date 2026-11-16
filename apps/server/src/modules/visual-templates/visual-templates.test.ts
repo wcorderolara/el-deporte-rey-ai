@@ -48,6 +48,7 @@ function data(overrides: Partial<LocalSelectionData> = {}): LocalSelectionData {
     roundName: 'Jornada 9',
     match: match(),
     roundMatches: [match(), match({ homeTeamName: 'Unión Ficticia', awayTeamName: 'Racing Prueba', kickoffAt: null })],
+    displayNames: {},
     ...overrides,
   };
 }
@@ -80,6 +81,21 @@ describe('binding catalogue', () => {
     );
     expect(resolveBinding('round.fixtures', values, 'es', -360)).toBe(
       'Club Deportivo Ejemplo vs Atlético Muestra · 10 may 2027\nUnión Ficticia vs Racing Prueba',
+    );
+  });
+
+  it('previews a team with its presentation name by its local ID, and a team without one with its official name (TEAM-DISPLAY-01)', () => {
+    const named = data({
+      roundMatches: [
+        match(),
+        match({ homeTeamId: '00000000-0000-4000-8000-000000000005', homeTeamName: 'Unión Ficticia' }),
+      ],
+      displayNames: { '00000000-0000-4000-8000-000000000003': 'Ejemplo CD' },
+    });
+    expect(resolveBinding('match.homeTeam.name', named, 'es', -360)).toBe('Ejemplo CD');
+    expect(resolveBinding('match.awayTeam.name', named, 'es', -360)).toBe('Atlético Muestra');
+    expect(resolveBinding('round.fixtures', named, 'es', -360)).toBe(
+      'Ejemplo CD vs Atlético Muestra · 10 may 2027\nUnión Ficticia vs Atlético Muestra · 10 may 2027',
     );
   });
 

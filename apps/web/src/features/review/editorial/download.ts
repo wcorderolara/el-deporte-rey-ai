@@ -23,11 +23,14 @@ export function deliverableText(deliverable: EditorialDeliverable, version: Edit
   return editorialDeliverableText(deliverable, version.fields);
 }
 
-/** The text file of the editorial copy, or null when no deliverable has a version yet. */
-export function editorialText(pkg: EditorialPackage, downloadedAt: Date): string | null {
+/**
+ * The text file of the editorial copy, or null when no deliverable has a version yet: every deliverable, or only
+ * `only` (the download of one copy). It is apart from the carousel download (slides and approved copy in the ZIP).
+ */
+export function editorialText(pkg: EditorialPackage, downloadedAt: Date, only?: EditorialDeliverable): string | null {
   const sections = pkg.deliverables.flatMap((entry) => {
     const version = entry.current;
-    if (version === null) {
+    if (version === null || (only !== undefined && entry.deliverable !== only)) {
       return [];
     }
     const status = `${stateLabel[version.state]} · ${editorialCopy.version(version.versionNumber)}`;
@@ -49,8 +52,11 @@ export function editorialText(pkg: EditorialPackage, downloadedAt: Date): string
   return `${[heading, origin, `Descargado: ${formatDateTime(downloadedAt.toISOString())}`, ...sections].join('\n\n')}\n`;
 }
 
-/** A file name from the competition and stage, ASCII letters, digits and hyphens only. */
-export function editorialFileName(pkg: EditorialPackage): string {
+/**
+ * A file name from the competition and stage, ASCII letters, digits and hyphens only; with `only`, the deliverable
+ * too (`copy-editorial-<context>-youtube.txt`).
+ */
+export function editorialFileName(pkg: EditorialPackage, only?: EditorialDeliverable): string {
   const words = pkg.context === null ? '' : `${pkg.context.competitionName} ${pkg.context.stageLabel}`;
   const slug = words
     .normalize('NFD')
@@ -60,7 +66,8 @@ export function editorialFileName(pkg: EditorialPackage): string {
     .replace(/^-+|-+$/gu, '')
     .slice(0, 60)
     .replace(/-+$/u, '');
-  return slug === '' ? 'copy-editorial.txt' : `copy-editorial-${slug}.txt`;
+  const suffix = only === undefined ? '' : `-${only.replace(/_/gu, '-')}`;
+  return slug === '' ? `copy-editorial${suffix}.txt` : `copy-editorial-${slug}${suffix}.txt`;
 }
 
 /** Copies a text to the clipboard; false when the browser refuses (the operator copies it by hand). */

@@ -574,8 +574,13 @@ export class ContentBatchService {
           this.#projects.assignVisualTemplates(projectId, pieceTemplates);
         }
         // PD-ARCH-01G-D, PD-ARCH-01G-E.1, PD-ARCH-01G-E.2: the badge of each team of the piece, as it is now, for the
-        // visual templates, the badge slots of the engine templates and the calendar rows (snapshot version 3).
-        this.#projects.recordBadgeSnapshot(projectId, badgeSnapshotJson(this.#badgeSnapshot(resolved, piece.matchIds)));
+        // visual templates, the badge slots of the engine templates and the calendar rows. TEAM-DISPLAY-01 (snapshot
+        // version 4): the presentation name of each of those teams that has one, as it is now, for the images.
+        const teamBadges = this.#badgeSnapshot(resolved, piece.matchIds);
+        this.#projects.recordBadgeSnapshot(
+          projectId,
+          badgeSnapshotJson(teamBadges, this.#batches.teamDisplayNames(Object.keys(teamBadges))),
+        );
         const run = this.#runner.start(projectId, 'full');
         this.#batches.insertItem(id, {
           id: itemId,

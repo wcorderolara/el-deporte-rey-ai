@@ -199,6 +199,7 @@ import {
   SourceIdSchema,
   StageNameSchema,
   TeamNameSchema,
+  TeamDisplayNameSchema,
   UuidSchema,
 } from './primitives.js';
 import { ProblemSchema } from './problem.js';
@@ -248,6 +249,7 @@ export const componentSchemas = {
   DisplayName: DisplayNameSchema,
   StageName: StageNameSchema,
   TeamName: TeamNameSchema,
+  TeamDisplayName: TeamDisplayNameSchema,
   FileName: FileNameSchema,
   DataMode: DataModeSchema,
   MatchStatus: MatchStatusSchema,
