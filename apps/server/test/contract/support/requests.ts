@@ -5,7 +5,7 @@
  */
 import { deflateSync } from 'node:zlib';
 
-import type { OperationId } from '@edr/contracts';
+import { operationList, type OperationId } from '@edr/contracts';
 
 import { requestSamples } from './samples.js';
 import { type CallOptions, type ContractSpec, wellFormedParams } from './served.js';
@@ -56,60 +56,14 @@ export function syntheticPng(width = 8, height = 8, note = 'contract'): Buffer {
   ]);
 }
 
-/**
- * The contract operation IDs in document order, listed statically so that `describe.each` can enumerate them before
- * the contract is loaded; a test checks the list against the document.
- */
-export const OPERATION_IDS = [
-  'getHealth',
-  'getSettings',
-  'listCompetitions',
-  'listManagedCompetitions',
-  'createCompetition',
-  'getCompetition',
-  'listSeasons',
-  'listStages',
-  'listProjects',
-  'createProject',
-  'getProject',
-  'updateProject',
-  'listRuns',
-  'startRun',
-  'getRun',
-  'listFacts',
-  'approveFactManually',
-  'revokeManualFactApproval',
-  'getActiveDraft',
-  'setExcludedMatches',
-  'getSlideImage',
-  'regenerateElement',
-  'approveElement',
-  'withdrawElementApproval',
-  'acknowledgeQaWarnings',
-  'approveCarousel',
-  'exportCarousel',
-  'listProjectExports',
-  'getExport',
-  'downloadExport',
-  'traceExportedSlide',
-  'listImports',
-  'createImport',
-  'getImport',
-  'getImportOriginal',
-  'listManualSelections',
-  'getManualVersion',
-  'listBrandAssets',
-  'registerBrandAsset',
-  'updateBrandAsset',
-  'getBrandAssetFile',
-  'listTemplates',
-  'previewTemplate',
-] as const;
+/** All contract operation IDs, enumerated before `describe.each` creates its cases. */
+export const OPERATION_IDS = operationList.map((operation) => operation.operationId);
 
 /** Required query parameters of the operations that have them. */
 export const VALID_QUERY: Partial<Record<OperationId, Record<string, string>>> = {
   listManualSelections: { competitionId: 'sin-registro', seasonId: '2026' },
   registerBrandAsset: { kind: 'decoration', label: 'Adorno de prueba' },
+  uploadTeamBadge: { source: 'Sitio oficial del club', authorized: 'true' },
 };
 
 /** A well-formed request of an operation (it may still answer 404 or 409: the IDs name nothing). */
@@ -123,7 +77,7 @@ export function validRequest(spec: ContractSpec, operationId: string): CallOptio
   if (!spec.hasBody(operationId)) {
     return base;
   }
-  if (operationId === 'registerBrandAsset') {
+  if (operationId === 'registerBrandAsset' || operationId === 'uploadTeamBadge') {
     return { ...base, payload: syntheticPng(), contentType: 'image/png' };
   }
   const sample = requestSamples[id];
@@ -138,13 +92,14 @@ export const BODY_LIMITS: Partial<Record<OperationId, number>> & { readonly defa
   default: 64 * 1024,
   createImport: 1536 * 1024,
   registerBrandAsset: 5 * 1024 * 1024,
+  uploadTeamBadge: 5 * 1024 * 1024,
 };
 
 /** A body one byte over the route limit, in the route's own media type. */
 export function oversizedRequest(spec: ContractSpec, operationId: string): CallOptions {
   const limit = BODY_LIMITS[operationId as OperationId] ?? BODY_LIMITS.default;
   const base = validRequest(spec, operationId);
-  if (operationId === 'registerBrandAsset') {
+  if (operationId === 'registerBrandAsset' || operationId === 'uploadTeamBadge') {
     const png = syntheticPng();
     return { ...base, payload: Buffer.concat([png, Buffer.alloc(limit + 1 - png.length)]), contentType: 'image/png' };
   }

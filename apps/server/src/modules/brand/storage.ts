@@ -1,7 +1,7 @@
 /**
  * Brand asset files under `<dataDir>/brand-assets/` (data-model.md sections 1 and 2; T10-F13; AD-19, OD-08).
  *
- * - File names are generated: `<assetId>.png` or `<assetId>.jpg`, with the ID checked against the UUID pattern
+ * - File names are generated: `<assetId>.png`, `<assetId>.jpg` or `<assetId>.webp`, with the ID checked against the UUID pattern
  *   before any path is built, also for IDs read back from the database.
  * - Containment is checked against `fs.realpath(dataDir)`: the `brand-assets` directory must resolve to
  *   `<realDataDir>/brand-assets` (a symbolic link elsewhere is refused), and a file must resolve inside it.
@@ -12,6 +12,9 @@
  *
  * Errors are `BrandFileError` with fixed messages that never contain a path; the platform answers them with 500
  * `INTERNAL` (T10-F10).
+ *
+ * The same store keeps the AI design proposals (PD-ARCH-01G-B) in their own directory, `design-proposals`, with a
+ * larger file cap: one store class, the same containment rules, never the brand directory.
  */
 import { constants } from 'node:fs';
 import { lstat, mkdir, open, realpath, unlink } from 'node:fs/promises';
@@ -31,7 +34,11 @@ export const BRAND_FILE_MODE = 0o600;
 /** Lowercase UUID (contract schema `Uuid`). */
 export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-const EXTENSIONS: Readonly<Record<BrandAssetMime, string>> = { 'image/png': 'png', 'image/jpeg': 'jpg' };
+const EXTENSIONS: Readonly<Record<BrandAssetMime, string>> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+};
 
 /** A brand file operation failed; the message is fixed text without any path. */
 export class BrandFileError extends Error {
@@ -43,7 +50,7 @@ export function brandFileExtension(mime: BrandAssetMime): string {
   return EXTENSIONS[mime];
 }
 
-/** The generated file name of an asset (`<id>.png` or `<id>.jpg`); refuses an ID that is not a UUID. */
+/** The generated file name of an asset (`<id>.png`, `<id>.jpg` or `<id>.webp`); refuses an ID that is not a UUID. */
 export function brandFileName(assetId: string, mime: BrandAssetMime): string {
   if (!UUID_PATTERN.test(assetId)) {
     throw new BrandFileError('a brand asset ID is not a UUID');
@@ -66,12 +73,34 @@ function isInside(parent: string, child: string): boolean {
   return path !== '' && !path.startsWith('..') && !path.startsWith('/') && path === basename(path);
 }
 
+/** Where a store keeps its files: a plain directory name inside the data directory, and the largest file read. */
+export interface FileStoreLayout {
+  readonly directory: string;
+  readonly maxFileBytes: number;
+}
+
+/** The brand library layout (the default). */
+export const BRAND_FILE_LAYOUT: FileStoreLayout = Object.freeze({
+  directory: BRAND_ASSET_DIRECTORY,
+  maxFileBytes: BRAND_UPLOAD_BODY_LIMIT,
+});
+
 /** Creates, reads and discards brand files under one data directory. */
 export class BrandFileStore {
   readonly #dataDir: string;
+  readonly #layout: FileStoreLayout;
 
-  constructor(dataDir: string) {
+  constructor(dataDir: string, layout: FileStoreLayout = BRAND_FILE_LAYOUT) {
+    if (!/^[a-z][a-z-]{0,40}$/.test(layout.directory)) {
+      throw new BrandFileError('a file store directory is not a plain name');
+    }
     this.#dataDir = dataDir;
+    this.#layout = layout;
+  }
+
+  /** The stored relative path of a file of this store. */
+  relativePath(assetId: string, mime: BrandAssetMime): string {
+    return `${this.#layout.directory}/${brandFileName(assetId, mime)}`;
   }
 
   /** The real path of the brand directory, created with mode 0700 when `create` is set and it is missing. */
@@ -82,7 +111,7 @@ export class BrandFileStore {
     } catch {
       throw new BrandFileError('the data directory is not available');
     }
-    const directory = join(realDataDir, BRAND_ASSET_DIRECTORY);
+    const directory = join(realDataDir, this.#layout.directory);
     if (create) {
       try {
         await mkdir(directory, { mode: BRAND_DIRECTORY_MODE });
@@ -102,7 +131,7 @@ export class BrandFileStore {
     } catch (error) {
       throw error instanceof BrandFileError ? error : new BrandFileError('the brand directory is not available');
     }
-    if (relative(realDataDir, realDirectory) !== BRAND_ASSET_DIRECTORY) {
+    if (relative(realDataDir, realDirectory) !== this.#layout.directory) {
       throw new BrandFileError('the brand directory is outside the data directory');
     }
     return realDirectory;
@@ -137,7 +166,7 @@ export class BrandFileStore {
       await unlink(path).catch(() => undefined);
       throw new BrandFileError('the brand file cannot be written');
     }
-    return brandRelativePath(assetId, mime);
+    return this.relativePath(assetId, mime);
   }
 
   /**
@@ -154,7 +183,7 @@ export class BrandFileStore {
     }
   }
 
-  /** Reads a registered file, confined to the brand directory, at most the upload cap in size. */
+  /** Reads a registered file, confined to the store's directory, at most the store's file cap in size. */
   async read(assetId: string, mime: BrandAssetMime): Promise<Buffer> {
     const name = brandFileName(assetId, mime);
     const directory = await this.#directory(false);
@@ -176,7 +205,7 @@ export class BrandFileStore {
     }
     try {
       const status = await handle.stat();
-      if (!status.isFile() || status.size < 1 || status.size > BRAND_UPLOAD_BODY_LIMIT) {
+      if (!status.isFile() || status.size < 1 || status.size > this.#layout.maxFileBytes) {
         throw new BrandFileError('the brand file is not a regular file within the size cap');
       }
       return await handle.readFile();

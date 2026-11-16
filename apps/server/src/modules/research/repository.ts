@@ -23,7 +23,7 @@ import {
 const STAGE = 'research';
 
 const SQL = {
-  projectSelection: 'SELECT id, source_id, data_mode, selection_ref FROM projects WHERE id = ?',
+  projectSelection: 'SELECT id, source_id, data_mode, selection_ref FROM projects WHERE id = ? AND deleted_at IS NULL',
   insertRetrieval:
     'INSERT INTO retrievals (id, run_id, source_id, data_mode, stage, resource, retrieved_at, from_cache, outcome, ' +
     'failure, import_version_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',

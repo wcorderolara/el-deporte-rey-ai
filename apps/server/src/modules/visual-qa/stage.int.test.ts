@@ -21,7 +21,15 @@ import { FONTS, type WorkflowFixture, qaResultsAsOfMigration, storedQa, workflow
 const AVAILABLE = { available: true, reason: null };
 const NOT_AVAILABLE = { available: false, reason: 'not_provided_for_stage' };
 /** Stored check names in `storedQa` order (by name): a slide has all six checks, the caption `capitalized_tokens`. */
-const SLIDE_CHECKS = ['capitalized_tokens', 'data_match', 'dimensions', 'style_consistency', 'team_names', 'text_fit'];
+const SLIDE_CHECKS = [
+  'capitalized_tokens',
+  'data_match',
+  'dimensions',
+  'style_consistency',
+  'team_badges',
+  'team_names',
+  'text_fit',
+];
 const CAPTION_CHECKS = ['capitalized_tokens'];
 /** The check names of the `qa_results` constraint of migration 0001. */
 const QA_CHECK_NAMES_0001: readonly string[] = [
@@ -93,7 +101,7 @@ describe('visual QA stage after the real content and rendering stages', () => {
         });
       }
     }
-    // Since migration 0002 every check is stored: slides get the six checks, the caption capitalized_tokens.
+    // Since migration 0035 every check is stored: slides get the seven checks, the caption capitalized_tokens.
     expect(versions[0]?.results.map((row) => row.check_name)).toEqual(CAPTION_CHECKS);
     for (const version of versions.slice(1)) {
       expect(version.results.map((row) => row.check_name)).toEqual(SLIDE_CHECKS);
@@ -201,7 +209,10 @@ describe('visual QA stage after the real content and rendering stages', () => {
   });
 
   it('stores capitalized_tokens as an acknowledgeable warning on the migrated schema (OD-26, OD-38, OD-56)', async () => {
-    expect(appliedMigrations(env.fixture.db).map((record) => record.version)).toEqual([1, 2]);
+    expect(appliedMigrations(env.fixture.db).map((record) => record.version)).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+      32, 33, 34, 35, 36, 37, 38,
+    ]);
     const runId = env.run(leagueFacts(), NOT_AVAILABLE);
     await env.draft(runId);
     // A person-like synthetic name in the AI-written description of the closing slide, stored before rendering.
@@ -250,7 +261,7 @@ describe('visual QA stage after the real content and rendering stages', () => {
     const warn = vi.spyOn(container.logger, 'warn');
     await env.qa(runId, { fonts: () => FONTS }, container);
     expect(warn).toHaveBeenCalledWith({ runId, check: 'capitalized_tokens' }, LOG_MESSAGE);
-    // One warning per contract check missing from the 0001 list: capitalized_tokens only.
+    // One warning per contract check missing from the 0001 list: capitalized_tokens and team_badges.
     const unstored = QA_CHECKS.filter((check) => !QA_CHECK_NAMES_0001.includes(check));
     expect(warn.mock.calls.filter((call) => call[1] === LOG_MESSAGE)).toEqual(
       unstored.map((check) => [{ runId, check }, LOG_MESSAGE]),
@@ -258,7 +269,9 @@ describe('visual QA stage after the real content and rendering stages', () => {
     const versions = storedQa(env.fixture, runId);
     expect(versions.find((version) => version.id === caption?.id)).toMatchObject({ qa_status: 'passed', results: [] });
     for (const version of versions.filter((item) => item.kind === 'slide')) {
-      expect(version.results.map((row) => row.check_name)).toEqual(SLIDE_CHECKS.slice(1));
+      expect(version.results.map((row) => row.check_name)).toEqual(
+        SLIDE_CHECKS.filter((check) => QA_CHECK_NAMES_0001.includes(check)),
+      );
     }
   });
 
@@ -313,6 +326,7 @@ describe('qaElementVersion (regeneration of one element, T37)', () => {
       'style_consistency',
       'dimensions',
       'capitalized_tokens',
+      'team_badges',
     ]);
     const stored = storedQa(env.fixture, runId);
     expect(stored.find((version) => version.id === match?.id)?.qa_status).toBe('passed');

@@ -144,6 +144,8 @@ describe('one catalogue of every mode with its sources (R-243, R-282)', () => {
       ['demo-a', 'DEMO_DATA', true],
       ['demo-b', 'DEMO_DATA', true],
       ['manual', 'MANUAL_DATA', true],
+      // The local competitions source (PD-ARCH-01E-A) is listed with no competition of its own.
+      ['local', 'MANUAL_DATA', true],
       [LIVE_SOURCE_ID, 'LIVE_DATA', true],
     ]);
     // Showing the catalogue makes one listing request to the provider, never a per-competition request (R-291).

@@ -4,7 +4,7 @@
  * states), server refusals, content flags, QA results and the acknowledgement of warnings, withdrawal and
  * regeneration of one element only.
  */
-import type { Element, FactRef } from '@edr/contracts';
+import type { Element, FactRef, QaResult } from '@edr/contracts';
 import { cleanup, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -27,6 +27,7 @@ import {
   fakeServer,
   json,
   modeDraft,
+  openCaption,
   PASSING_QA,
   problem,
   PROJECT_ID,
@@ -43,17 +44,21 @@ const DRAFT_GET = `${API}/projects/${PROJECT_ID}/draft`;
 const SLIDE = 'Diapositiva 1: Resultado';
 
 async function card(name = SLIDE): Promise<HTMLElement> {
-  const element = await screen.findByRole('article', { name });
-  const details = within(element).queryByText('Detalles y verificaciones');
-  if (details !== null && details.closest('details')?.open !== true) await userEvent.click(details);
-  return element;
+  return screen.findByRole('article', { name });
+}
+
+/** The inspector of the shown element, inside its workspace. */
+function inspector(container: HTMLElement): HTMLElement {
+  return within(container).getByRole('region', { name: /^Estado y acciones: / });
 }
 
 function button(container: HTMLElement, name: string | RegExp): HTMLButtonElement {
   if (name === 'Aprobar esta versión') {
-    name = container.textContent?.includes('Texto de publicación y hashtags') ? 'Aprobar copy' : 'Aprobar diapositiva';
+    name = container.textContent?.includes('Texto de publicación y hashtags')
+      ? 'Aprobar texto del carrusel'
+      : 'Aprobar diapositiva';
   }
-  if (name === 'Regenerar este elemento') name = /^Regenerar (diapositiva|copy)$/;
+  if (name === 'Regenerar este elemento') name = /^Regenerar (diapositiva|texto del carrusel)$/;
   return within(container).getByRole('button', { name }) as HTMLButtonElement;
 }
 
@@ -125,7 +130,7 @@ describe('Element approval binds to the exact version (R-406)', () => {
     const alert = await within(slideCard).findByRole('alert');
     expect(alert.textContent).toContain('No se pudo aprobar: Diapositiva 1: Resultado');
     expect(alert.textContent).toContain('El contenido cambió mientras tanto');
-    expect(await within(slideCard).findByText(/^Versión 2/)).toBeTruthy();
+    expect(await within(slideCard).findByRole('img', { name: /versión 2$/ })).toBeTruthy();
     expect(within(slideCard).queryByText('Aprobada')).toBeNull();
   });
 });
@@ -148,7 +153,10 @@ describe('Blocked content (R-206): approval refused naming the fact, other conte
     renderApp(REVIEW, server);
     const slideCard = await card();
 
-    expect(within(slideCard).getByText('Bloqueada')).toBeTruthy();
+    // A11Y-02: the inspector and the slide's name in the list state the block, never «Lista para aprobar».
+    expect(within(inspector(slideCard)).getByText('Bloqueada por datos')).toBeTruthy();
+    expect(inspector(slideCard).textContent).not.toContain('Lista para aprobar');
+    expect(screen.getByRole('button', { name: `${SLIDE}, Bloqueada por datos` })).toBeTruthy();
     const blocked = within(slideCard).getByRole('list', { name: 'Datos que bloquean la aprobación' });
     expect(blocked.textContent).toContain('Marcador: 2-1');
     expect(blocked.textContent).toContain('Sin verificar');
@@ -158,8 +166,8 @@ describe('Blocked content (R-206): approval refused naming the fact, other conte
     const description = document.getElementById(approve.getAttribute('aria-describedby') ?? '');
     expect(description?.textContent).toContain('usa datos que no son publicables');
 
-    const captionCard = await card('Texto de publicación y hashtags');
-    expect(within(captionCard).queryByText('Bloqueada')).toBeNull();
+    const captionCard = await openCaption();
+    expect(within(captionCard).queryByText('Bloqueada por datos')).toBeNull();
     await userEvent.click(button(captionCard, 'Aprobar esta versión'));
     expect(await within(captionCard).findByText('Versión 1 aprobada.')).toBeTruthy();
     expect(server.callsTo('PUT', elementPath(CAROUSEL_ID, elementId(1), 'approval'))).toHaveLength(0);
@@ -189,7 +197,7 @@ describe('Blocked content (R-206): approval refused naming the fact, other conte
     expect(refused.textContent).toContain('pendiente de verificación independiente');
     expect(slideCard.innerHTML).not.toContain('<script>');
     // The refresh shows the server's blocked overlay.
-    expect(await within(slideCard).findByText('Bloqueada')).toBeTruthy();
+    expect(await within(inspector(slideCard)).findByText('Bloqueada por datos')).toBeTruthy();
   });
 });
 
@@ -296,11 +304,7 @@ describe('Manually approved facts (R-272, PD-17): both eligibility states, alway
     });
     renderApp(REVIEW, server);
     const slideCard = await card();
-    const text = within(slideCard).getByRole('region', { name: `Texto: ${SLIDE}` });
-    expect(text.textContent).toContain('Dato: aprobado manualmente');
-    expect(text.textContent).toContain('atestiguado por el operador');
-    expect(text.textContent).not.toContain('Dato: verificado');
-    expect(within(slideCard).queryByText('Bloqueada')).toBeNull();
+    expect(within(slideCard).queryByText('Bloqueada por datos')).toBeNull();
     await userEvent.click(button(slideCard, 'Aprobar esta versión'));
     expect(await within(slideCard).findByText('Versión 1 aprobada.')).toBeTruthy();
   });
@@ -350,7 +354,9 @@ describe('Content flags and blocking QA failures (R-207, OD-09)', () => {
     expect(qaRegion.textContent).toContain('esperado «2-1», obtenido «2-7»');
     expect(qaRegion.textContent).toContain('Un fallo bloqueante solo se resuelve regenerando el elemento.');
     expect(within(qaRegion).queryByRole('button')).toBeNull();
-    expect(within(slideCard).getAllByText('Control visual fallido').length).toBeGreaterThan(0);
+    // A11Y-02: the inspector states what the list shows for a failed visual check.
+    expect(within(inspector(slideCard)).getByText('Requiere regenerar')).toBeTruthy();
+    expect(screen.getByRole('button', { name: `${SLIDE}, Requiere regenerar` })).toBeTruthy();
     expect(button(slideCard, 'Aprobar esta versión').disabled).toBe(true);
   });
 });
@@ -398,16 +404,54 @@ describe('QA warnings (OD-09, OD-26, OD-38): acknowledged one check per request'
     expect(slideCard.textContent).toContain('hay advertencias del control visual sin confirmar');
     expect(slideCard.textContent).toContain('Hay 2 advertencias del control visual.');
 
+    // Only the failed checks are listed, next to the actions (PD-ARCH-01E-B review).
+    expect(qaRegion.textContent).not.toContain('Ajuste del texto');
     await userEvent.click(button(qaRegion, 'Confirmar la advertencia: Palabras con mayúscula no reconocidas'));
     expect(await within(slideCard).findByText('Advertencia confirmada.')).toBeTruthy();
     const calls = server.callsTo('POST', elementPath(CAROUSEL_ID, elementId(1), 'qa-acknowledgements'));
     expect(calls.map((call) => call.body)).toEqual([{ versionId: versionId(1), checks: ['capitalized_tokens'] }]);
     expect(calls[0]?.headers['X-EDR-Client']).toBe('web');
-    expect(within(qaRegion).queryByRole('button', { name: /Palabras con mayúscula/ })).toBeNull();
-    expect(qaRegion.textContent).toContain('Confirmada');
-    // The style warning still needs its own acknowledgement.
-    expect(button(qaRegion, 'Confirmar la advertencia: Coherencia visual')).toBeTruthy();
+    // The acknowledged warning leaves the list; the style warning still needs its own acknowledgement.
+    const stillPending = within(slideCard).getByRole('region', { name: `Control visual: ${SLIDE}` });
+    expect(stillPending.textContent).not.toContain('Palabras con mayúscula');
+    expect(button(stillPending, 'Confirmar la advertencia: Coherencia visual')).toBeTruthy();
     expect(button(slideCard, 'Aprobar esta versión').disabled).toBe(true);
+  });
+
+  it('shows the team badges warning with the side left without a badge and acknowledges it (PD-ARCH-01G-E.1)', async () => {
+    const badgeWarning = PASSING_QA.map((result) =>
+      result.check === 'team_badges'
+        ? { ...result, outcome: 'fail' as const, details: { emptyBadgeSlots: ['team-badge-away' as const] } }
+        : result,
+    );
+    const element = slide(1, 1, 'fixture', { qa: badgeWarning });
+    const acknowledged = checkedElement({
+      ...element,
+      currentVersion: {
+        ...element.currentVersion,
+        qa: badgeWarning.map((result) =>
+          result.check === 'team_badges' ? { ...result, acknowledgedAt: '2026-10-27T12:30:00Z' } : result,
+        ),
+      },
+    });
+    const server = fakeServer({
+      [DRAFT_PATH]: [
+        draftResponse(singleSlideDraft({ qa: badgeWarning })),
+        draftResponse(singleSlideDraft({ qa: acknowledged.currentVersion.qa })),
+      ],
+      [`POST ${elementPath(CAROUSEL_ID, elementId(1), 'qa-acknowledgements')}`]: () => json(acknowledged),
+    });
+    renderApp(REVIEW, server);
+    const slideCard = await card();
+    const qaRegion = within(slideCard).getByRole('region', { name: `Control visual: ${SLIDE}` });
+    expect(qaRegion.textContent).toContain('Escudos de equipo');
+    expect(qaRegion.textContent).toContain('Sin escudo: equipo visitante');
+    expect(qaRegion.textContent).toContain('Sube el escudo del equipo en Competiciones');
+    expect(button(slideCard, 'Aprobar esta versión').disabled).toBe(true);
+    await userEvent.click(button(qaRegion, 'Confirmar la advertencia: Escudos de equipo'));
+    expect(await within(slideCard).findByText('Advertencia confirmada.')).toBeTruthy();
+    const calls = server.callsTo('POST', elementPath(CAROUSEL_ID, elementId(1), 'qa-acknowledgements'));
+    expect(calls.map((call) => call.body)).toEqual([{ versionId: versionId(1), checks: ['team_badges'] }]);
   });
 
   it('announces a refused acknowledgement', async () => {
@@ -421,6 +465,54 @@ describe('QA warnings (OD-09, OD-26, OD-38): acknowledged one check per request'
     await userEvent.click(button(slideCard, 'Confirmar la advertencia: Coherencia visual'));
     const alert = await within(slideCard).findByRole('alert');
     expect(alert.textContent).toContain('No se pudo confirmar la advertencia');
+  });
+});
+
+describe('Caption review (PD-ARCH-01E-B)', () => {
+  const CAPTION = 'Texto de publicación y hashtags';
+  const tokenWarning = PASSING_QA.filter((result) => result.check === 'capitalized_tokens').map((result) => ({
+    ...result,
+    outcome: 'fail' as const,
+    details: { tokens: ['Calendario'] },
+  }));
+
+  function captionDraft(qa: QaResult[] = tokenWarning) {
+    return modeDraft('MANUAL_DATA', {
+      carousels: [
+        carousel([slide(1, 1, 'match_result', { state: 'approved' }), caption(2, 2, { state: 'ready', qa })]),
+      ],
+    });
+  }
+
+  it('shows one heading and no technical details, and acknowledges a warning next to the actions', async () => {
+    const element = caption(2, 2, { state: 'ready', qa: tokenWarning });
+    const acknowledged = checkedElement({
+      ...element,
+      currentVersion: {
+        ...element.currentVersion,
+        qa: tokenWarning.map((result) => ({ ...result, acknowledgedAt: '2026-11-05T12:00:00Z' })),
+      },
+    });
+    const server = fakeServer({
+      [DRAFT_PATH]: [draftResponse(captionDraft()), draftResponse(captionDraft(acknowledged.currentVersion.qa))],
+      [`POST ${elementPath(CAROUSEL_ID, elementId(2), 'qa-acknowledgements')}`]: () => json(acknowledged),
+    });
+    renderApp(REVIEW, server);
+    await card('Diapositiva 1: Resultado');
+    const captionCard = await openCaption();
+    const section = captionCard.closest<HTMLElement>('section[aria-label]') ?? captionCard;
+    expect(within(section).getAllByRole('heading', { name: CAPTION })).toHaveLength(1);
+    expect(within(captionCard).queryByText('Detalles y verificaciones')).toBeNull();
+    expect(button(captionCard, 'Aprobar texto del carrusel').disabled).toBe(true);
+
+    const pending = within(captionCard).getByRole('region', { name: `Control visual: ${CAPTION}` });
+    expect(pending.textContent).toContain('Palabras con mayúscula no reconocidas');
+    expect(within(pending).getByText('Calendario')).toBeTruthy();
+    await userEvent.click(button(pending, 'Confirmar la advertencia: Palabras con mayúscula no reconocidas'));
+    expect(await within(captionCard).findByText('Advertencia confirmada.')).toBeTruthy();
+    expect(server.callsTo('POST', elementPath(CAROUSEL_ID, elementId(2), 'qa-acknowledgements'))).toHaveLength(1);
+    expect(within(captionCard).queryByRole('region', { name: `Control visual: ${CAPTION}` })).toBeNull();
+    expect(button(captionCard, 'Aprobar texto del carrusel').disabled).toBe(false);
   });
 });
 
@@ -453,7 +545,6 @@ describe('Regeneration of one element (R-217, R-040)', () => {
 
     expect(await within(slideCard).findByText(/Se creó la versión 2/)).toBeTruthy();
     expect(slideCard.textContent).toContain('necesita una aprobación nueva');
-    expect(slideCard.textContent).toContain('Titular regenerado');
     expect(within(slideCard).getAllByText('Pendiente del control visual').length).toBeGreaterThan(0);
     expect(button(slideCard, 'Aprobar esta versión').disabled).toBe(true);
     expect(document.activeElement).toBe(within(slideCard).getByRole('heading', { name: SLIDE }));
@@ -461,7 +552,7 @@ describe('Regeneration of one element (R-217, R-040)', () => {
     expect(call?.body).toBeUndefined();
     expect(call?.headers['X-EDR-Client']).toBe('web');
 
-    await userEvent.click(screen.getByRole('button', { name: /Diapositiva 2: Cierre/ }));
+    await userEvent.click(screen.getByRole('button', { name: /^Diapositiva 2: Cierre/ }));
     const otherCard = await card('Diapositiva 2: Cierre');
     expect(within(otherCard).getAllByText('Aprobada').length).toBeGreaterThan(0);
     expect(server.callsTo('POST', elementPath(CAROUSEL_ID, elementId(2), 'regenerate'))).toHaveLength(0);

@@ -37,6 +37,11 @@ export interface ResponseSchema<T> {
 export interface RequestOptions<T> {
   /** JSON request body; omitted when undefined. */
   body?: unknown;
+  /**
+   * A binary request body sent as is with its own media type (a PNG or JPEG upload, PD-ARCH-01G-D); takes the place
+   * of `body`.
+   */
+  file?: Blob;
   /** Contract schema that the successful response body must satisfy. */
   schema?: ResponseSchema<T>;
   signal?: AbortSignal;
@@ -268,7 +273,10 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
       redirect: 'error',
       cache: 'no-store',
     };
-    if (init.body !== undefined) {
+    if (init.file !== undefined) {
+      headers['Content-Type'] = init.file.type;
+      requestInit.body = init.file;
+    } else if (init.body !== undefined) {
       headers['Content-Type'] = JSON_TYPE;
       requestInit.body = JSON.stringify(init.body);
     }

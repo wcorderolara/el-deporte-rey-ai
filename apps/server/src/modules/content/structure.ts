@@ -16,6 +16,16 @@
  *   slides are distributed in order; standings slides go to the last carousel (into further carousels only when
  *   they alone exceed one carousel). One slide per match (OD-03).
  *
+ * Matches not played yet (PD-ARCH-01E-B), by the project's content kind:
+ * - `calendar`: cover; round overview pages listing the fixtures (`OVERVIEW_ROWS_PER_SLIDE` each, or
+ *   `CALENDAR_ROWS_PER_SLIDE` in a calendar with rows, PD-ARCH-01G-E.2); one fixture slide per match that is not
+ *   finished; closing. Finished matches are left out as `already_finished`.
+ * - `upcoming`: cover; one fixture slide per `scheduled` or `postponed` match; closing. Any other status is left out
+ *   as `not_upcoming` (a past kickoff never makes a match played).
+ * - `preview`: cover; one match preview slide of the first upcoming match; closing.
+ * A fixture needs its status, teams, both team names and a kickoff; it never shows a score. Fixtures are ordered like
+ * results and split over numbered carousels the same way.
+ *
  * Nothing here depends on a data mode, a provider or a competition.
  */
 import type { LeftOutMatch, MatchStatus, StandingRowValue, StandingsAvailability } from '@edr/contracts';
@@ -130,6 +140,33 @@ export interface MatchPlan {
   readonly kickoff: string | null;
 }
 
+/** The content kind of a project: the results carousel, or one of the kinds of matches not played yet. */
+export type ContentKind = 'results' | 'calendar' | 'upcoming' | 'preview';
+
+/** A match not played yet with every fact its slides show (no score). */
+export interface FixturePlan {
+  /** 1-based position in the draft's fixture order; the placeholder prefix `m<index>`. */
+  readonly index: number;
+  readonly matchKey: string;
+  readonly teamsFactId: string;
+  readonly statusFactId: string;
+  readonly kickoffFactId: string;
+  readonly home: TeamNameView;
+  readonly away: TeamNameView;
+  readonly kickoff: string;
+  readonly status: MatchStatus;
+}
+
+/** Fixtures listed per round overview slide (calendars without rows: every project created before PD-ARCH-01G-E.2). */
+export const OVERVIEW_ROWS_PER_SLIDE = 8;
+
+/**
+ * Fixtures per round overview slide of a calendar with rows (PD-ARCH-01G-E.2, decision DE-E5: six per 1080 x 1350
+ * slide, confirmed with a visual test): the rows of the round calendar template 2.0.0. More fixtures go to further
+ * pages; the calendar is never replaced by a text block.
+ */
+export const CALENDAR_ROWS_PER_SLIDE = 6;
+
 export interface StandingsRowPlan {
   readonly factId: string;
   readonly value: StandingRowValue;
@@ -145,7 +182,15 @@ export type SlidePlan =
       readonly page: number;
       readonly rows: readonly StandingsRowPlan[];
     }
-  | { readonly type: 'closing'; readonly key: 'closing' };
+  | { readonly type: 'closing'; readonly key: 'closing' }
+  | {
+      readonly type: 'round_overview';
+      readonly key: string;
+      readonly page: number;
+      readonly fixtures: readonly FixturePlan[];
+    }
+  | { readonly type: 'fixture'; readonly key: string; readonly fixture: FixturePlan }
+  | { readonly type: 'match_preview'; readonly key: string; readonly fixture: FixturePlan };
 
 export interface CarouselPlan {
   readonly sequence: number;
@@ -162,10 +207,14 @@ export interface DraftPlan {
 }
 
 export interface PlanOptions {
+  /** Default `results` (every project created before PD-ARCH-01E-B). */
+  readonly contentKind?: ContentKind;
   readonly standings: StandingsAvailability | null;
   readonly excludedMatchKeys: readonly string[];
   readonly maxSlidesPerCarousel: number;
   readonly standingsRowsPerSlide: number;
+  /** True for a calendar with rows (PD-ARCH-01G-E.2): `CALENDAR_ROWS_PER_SLIDE` fixtures per overview page. */
+  readonly calendarRows?: boolean;
 }
 
 /** Slide key of a match slide (positional, so that no source key reaches the AI request). */
@@ -177,6 +226,19 @@ export function matchSlideKey(index: number): string {
 export function standingsSlideKey(page: number): string {
   return `standings-${String(page)}`;
 }
+
+/** Slide key of a fixture slide. */
+export function fixtureSlideKey(index: number): string {
+  return `fixture-${String(index)}`;
+}
+
+/** Slide key of a round overview slide. */
+export function overviewSlideKey(page: number): string {
+  return `overview-${String(page)}`;
+}
+
+/** Slide key of the match preview slide. */
+export const PREVIEW_SLIDE_KEY = 'preview-1';
 
 /** Slide key of the caption element. */
 export const CAPTION_KEY = 'caption';
@@ -281,6 +343,97 @@ export function selectMatches(
   return { included, leftOut };
 }
 
+/** Statuses of a match that is still to be played (`upcoming` and `preview`). */
+const UPCOMING_STATUSES: ReadonlySet<MatchStatus> = new Set(['scheduled', 'postponed']);
+
+type FixtureCandidate =
+  | { readonly included: true; readonly plan: Omit<FixturePlan, 'index'> }
+  | { readonly included: false; readonly leftOut: LeftOutMatch };
+
+function examineFixture(
+  index: FactIndex,
+  matchKey: string,
+  excluded: ReadonlySet<string>,
+  kind: Exclude<ContentKind, 'results'>,
+): FixtureCandidate {
+  const statusFact = index.matchFact(matchKey, 'match_status');
+  const status: MatchStatus | null = usableValue<'match_status'>(statusFact)?.matchStatus ?? null;
+  const leftOut = (reason: LeftOutMatch['reason']): FixtureCandidate => ({
+    included: false,
+    leftOut: { matchKey, label: matchLabel(index, matchKey), status, reason },
+  });
+  if (status === null || statusFact === undefined) {
+    return leftOut('not_verified');
+  }
+  if (status === 'finished') {
+    return leftOut('already_finished');
+  }
+  if (kind !== 'calendar' && !UPCOMING_STATUSES.has(status)) {
+    return leftOut('not_upcoming');
+  }
+  const teamsFact = index.matchFact(matchKey, 'match_teams');
+  const kickoffFact = index.matchFact(matchKey, 'match_kickoff');
+  const teams = usableValue<'match_teams'>(teamsFact);
+  const kickoff = usableValue<'match_kickoff'>(kickoffFact)?.kickoff ?? null;
+  const home = teams === null ? null : index.teamName(teams.homeTeamId);
+  const away = teams === null ? null : index.teamName(teams.awayTeamId);
+  if (teamsFact === undefined || kickoffFact === undefined || kickoff === null || home === null || away === null) {
+    return leftOut('not_verified');
+  }
+  if (excluded.has(matchKey)) {
+    return leftOut('excluded_by_operator');
+  }
+  return {
+    included: true,
+    plan: {
+      matchKey,
+      teamsFactId: teamsFact.id,
+      statusFactId: statusFact.id,
+      kickoffFactId: kickoffFact.id,
+      home,
+      away,
+      kickoff,
+      status,
+    },
+  };
+}
+
+/** The fixtures of a content kind of matches not played yet, in slide order, and the left-out matches. */
+export function selectFixtures(
+  index: FactIndex,
+  excludedMatchKeys: readonly string[],
+  kind: Exclude<ContentKind, 'results'>,
+): { readonly included: FixturePlan[]; readonly leftOut: LeftOutMatch[] } {
+  const excluded = new Set(excludedMatchKeys);
+  const examined = index.matchKeys().map((matchKey) => {
+    const candidate = examineFixture(index, matchKey, excluded, kind);
+    const kickoff = usableValue<'match_kickoff'>(index.matchFact(matchKey, 'match_kickoff'))?.kickoff ?? null;
+    const homeName = candidate.included ? candidate.plan.home.name : candidate.leftOut.label;
+    return { candidate, kickoff, homeName, matchKey };
+  });
+  examined.sort(compareMatches);
+  const included: FixturePlan[] = [];
+  const leftOut: LeftOutMatch[] = [];
+  for (const { candidate } of examined) {
+    if (candidate.included) {
+      included.push({ ...candidate.plan, index: included.length + 1 });
+    } else {
+      leftOut.push(candidate.leftOut);
+    }
+  }
+  return { included, leftOut };
+}
+
+/** The round overview pages of a calendar, with rows (PD-ARCH-01G-E.2) or without. */
+export function overviewSlides(fixtures: readonly FixturePlan[], calendarRows = false): SlidePlan[] {
+  return chunks(fixtures, calendarRows ? CALENDAR_ROWS_PER_SLIDE : OVERVIEW_ROWS_PER_SLIDE).map((page, position) => ({
+    type: 'round_overview',
+    key: overviewSlideKey(position + 1),
+    page: position + 1,
+    fixtures: page,
+  }));
+}
+
 /**
  * The standings rows in position order, or null when the run's standings are not available or a row lacks a value
  * or a team name (nothing is invented or derived, R-069, R-254).
@@ -314,8 +467,50 @@ function chunks<T>(items: readonly T[], size: number): T[][] {
   return result;
 }
 
-/** Builds the draft plan from the facts of a run. */
+/** Cover and closing around every group of content slides (at least one carousel). */
+function carouselsOf(groups: SlidePlan[][]): CarouselPlan[] {
+  if (groups.length === 0) {
+    groups.push([]);
+  }
+  const total = groups.length;
+  return groups.map((content, position) => ({
+    sequence: position + 1,
+    total,
+    slides: [{ type: 'cover', key: 'cover' }, ...content, { type: 'closing', key: 'closing' }],
+  }));
+}
+
+/** The draft plan of a content kind of matches not played yet (PD-ARCH-01E-B). */
+function planFixtures(index: FactIndex, options: PlanOptions, kind: Exclude<ContentKind, 'results'>): DraftPlan {
+  const { included, leftOut } = selectFixtures(index, options.excludedMatchKeys, kind);
+  let content: SlidePlan[];
+  if (kind === 'preview') {
+    const [first] = included;
+    content = first === undefined ? [] : [{ type: 'match_preview', key: PREVIEW_SLIDE_KEY, fixture: first }];
+  } else {
+    const fixtures: SlidePlan[] = included.map((fixture) => ({
+      type: 'fixture',
+      key: fixtureSlideKey(fixture.index),
+      fixture,
+    }));
+    content =
+      kind === 'calendar' ? [...overviewSlides(included, options.calendarRows === true), ...fixtures] : fixtures;
+  }
+  const capacity = Math.max(1, options.maxSlidesPerCarousel - 2);
+  return {
+    carousels: carouselsOf(chunks(content, capacity)),
+    leftOutMatches: leftOut,
+    standingsIncluded: false,
+    excludedMatchKeys: [...options.excludedMatchKeys],
+  };
+}
+
+/** Builds the draft plan from the facts of a run, by the project's content kind. */
 export function planDraft(index: FactIndex, options: PlanOptions): DraftPlan {
+  const kind = options.contentKind ?? 'results';
+  if (kind !== 'results') {
+    return planFixtures(index, options, kind);
+  }
   const { included, leftOut } = selectMatches(index, options.excludedMatchKeys);
   const rows = selectStandingsRows(index, options.standings);
   const matchSlides: SlidePlan[] = included.map((match) => ({
@@ -359,6 +554,17 @@ export function planDraft(index: FactIndex, options: PlanOptions): DraftPlan {
     standingsIncluded: standingsSlides.length > 0,
     excludedMatchKeys: [...options.excludedMatchKeys],
   };
+}
+
+/** Rebuilds the fixture plan of a stored fixture or preview slide from the facts (regeneration). */
+export function fixturePlanFor(
+  index: FactIndex,
+  matchKey: string,
+  matchIndex: number,
+  kind: Exclude<ContentKind, 'results'>,
+): FixturePlan | null {
+  const candidate = examineFixture(index, matchKey, new Set(), kind);
+  return candidate.included ? { ...candidate.plan, index: matchIndex } : null;
 }
 
 /** Rebuilds the match plan of a stored match slide from the facts (regeneration). */

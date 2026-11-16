@@ -7,9 +7,18 @@
  * - Text elements carry the source text, the lines measured by `layoutText`, the font size and an `overflow` flag;
  *   `factIds` are the fact segments the text was built from, `semantic` says what the text shows (a team name, a
  *   score, a standings cell...), so that QA can compare each element with the facts.
- * - Image elements carry the asset ID and SHA-256 only; the bytes are embedded as a `data:` URI at render time.
- * - Badge slots are reserved boxes, always empty in the MVP (PD-03, R-050, R-231): the model has no asset field for
- *   them and the renderer draws nothing there.
+ * - Image elements carry the asset ID and SHA-256 only; the bytes are embedded as a `data:` URI at render time. A
+ *   structured visual template (PD-ARCH-01G-C) also draws its `background` and its image `layer`s, with a `fit`
+ *   (`contain` when absent, as before), and its text may carry an effect and be shown in capital letters.
+ * - Badge slots are reserved boxes of the engine match templates. Until PD-ARCH-01G-E.1 they were always empty
+ *   (PD-03, R-050, R-231), and stored models of that time have only `empty: true`. From version 1.1.0 of the match
+ *   templates, in a project whose badge snapshot covers the engine templates (PD-28, decision DE-E3), a slot also
+ *   records its `team`: the team's local ID (null when the slide's team could not be identified) and the badge drawn
+ *   from the snapshot, or null when the team has no badge. The renderer draws the badge from its stored file, scaled
+ *   to fit the slot without distortion; an empty slot draws nothing, and visual QA warns about it (`team_badges`).
+ * - From version 2.0.0 of the round calendar template (PD-ARCH-01G-E.2, decision DE-E6), every row of the calendar has
+ *   its own two badge slots, and each records its `row` (1 for the first match of the slide). Slots without a row are
+ *   the slots of a match slide.
  */
 import { LanguageSchema, SlideTypeSchema, SlugSchema, TextFieldNameSchema, UuidSchema } from '@edr/contracts';
 import { z } from 'zod';
@@ -49,6 +58,14 @@ export type Box = z.infer<typeof BoxSchema>;
 export const ImageSlotSchema = z.enum(['brand_logo', 'mascot']);
 export type ImageSlot = z.infer<typeof ImageSlotSchema>;
 
+/** What an image element draws: an image slot of a template, or the background or an image layer of a visual template. */
+export const ImageElementSlotSchema = z.enum([...ImageSlotSchema.options, 'background', 'layer']);
+export type ImageElementSlot = z.infer<typeof ImageElementSlotSchema>;
+
+/** How an image fills its box (`contain` and `cover` keep the aspect ratio, `fill` stretches). */
+export const ImageFitSchema = z.enum(['contain', 'cover', 'fill']);
+export type ImageFit = z.infer<typeof ImageFitSchema>;
+
 export const BadgeSlotSchema = z.enum(['team-badge-home', 'team-badge-away']);
 export type BadgeSlot = z.infer<typeof BadgeSlotSchema>;
 
@@ -61,7 +78,15 @@ export const TextSemanticSchema = z.enum([
   'title',
   'team_name',
   'score',
+  /** One team's goals or the kickoff time, drawn on their own by a visual template (PD-ARCH-01G-D). */
+  'score_home',
+  'score_away',
+  'kickoff_time',
   'kickoff',
+  /** The status label of a match not played yet (PD-ARCH-01E-B). */
+  'match_status',
+  /** One line of a round overview: two team names and a kickoff (PD-ARCH-01E-B). */
+  'fixture_line',
   'standings_heading',
   'standings_position',
   'standings_cell',
@@ -73,6 +98,21 @@ export const TextSemanticSchema = z.enum([
 export type TextSemantic = z.infer<typeof TextSemanticSchema>;
 
 export const ProvenanceSchema = z.enum(['fact', 'commentary', 'template_text', 'mixed']);
+
+/**
+ * Text effects of structured visual templates (PD-ARCH-01G-C, decision 01G-C-2): shadows, glows and outlines in the
+ * palette colours, drawn by the renderer from this closed list. Absent in the models of the built-in templates.
+ */
+export const TextEffectSchema = z.enum([
+  'none',
+  'soft_shadow',
+  'strong_shadow',
+  'glow_gold',
+  'glow_purple',
+  'outline_dark',
+  'scoreboard_gold',
+]);
+export type TextEffect = z.infer<typeof TextEffectSchema>;
 
 export const TextElementSchema = z.strictObject({
   kind: z.literal('text'),
@@ -95,6 +135,12 @@ export const TextElementSchema = z.strictObject({
   overflow: z.boolean(),
   factIds: z.array(UuidSchema).max(400),
   provenance: ProvenanceSchema,
+  effect: TextEffectSchema.optional(),
+  /**
+   * True when the lines are drawn in capital letters (PD-29): `text` keeps the stored value (an official name stays as
+   * recorded) and `lines` are the measured, uppercased lines.
+   */
+  uppercase: z.boolean().optional(),
 });
 export type TextElement = z.infer<typeof TextElementSchema>;
 
@@ -111,22 +157,56 @@ export type RectElement = z.infer<typeof RectElementSchema>;
 export const ImageElementSchema = z.strictObject({
   kind: z.literal('image'),
   id: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
-  slot: ImageSlotSchema,
+  slot: ImageElementSlotSchema,
   box: BoxSchema,
   assetId: UuidSchema,
   sha256: Sha256Schema,
   mime: z.enum(['image/png', 'image/jpeg']),
+  /** Absent in the models of the built-in templates: `contain`. */
+  fit: ImageFitSchema.optional(),
 });
 export type ImageElement = z.infer<typeof ImageElementSchema>;
 
-export const BadgeSlotElementSchema = z.strictObject({
-  kind: z.literal('badge_slot'),
-  id: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
-  slot: BadgeSlotSchema,
-  box: BoxSchema,
-  /** Always true in the MVP: no authorized badge asset exists (PD-03, R-231). */
-  empty: z.literal(true),
+/** A team badge drawn in a badge slot: a manually uploaded PNG or JPEG of the project's snapshot (PD-28). */
+export const SlotBadgeSchema = z.strictObject({
+  /** The badge ID (`team_badges.id`). */
+  assetId: UuidSchema,
+  sha256: Sha256Schema,
+  mime: z.enum(['image/png', 'image/jpeg']),
 });
+export type SlotBadge = z.infer<typeof SlotBadgeSchema>;
+
+export const BadgeSlotElementSchema = z
+  .strictObject({
+    kind: z.literal('badge_slot'),
+    id: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
+    slot: BadgeSlotSchema,
+    box: BoxSchema,
+    /** True when nothing is drawn in the slot (always, before PD-ARCH-01G-E.1). */
+    empty: z.boolean(),
+    /** PD-ARCH-01G-E.2: the calendar row of the slot, 1 for the first match of the slide; absent on a match slide. */
+    row: z.int().min(1).max(64).optional(),
+    /**
+     * PD-ARCH-01G-E.1: the slot's team and its badge (see the module notes). Absent when the project's badges do not
+     * cover the engine templates, and in every model stored before.
+     */
+    team: z
+      .strictObject({
+        teamId: z.string().min(1).max(64).nullable(),
+        badge: SlotBadgeSchema.nullable(),
+      })
+      .optional(),
+  })
+  // A slot is empty exactly when it has no badge, and a badge always belongs to an identified team.
+  .refine((element) => element.empty === (element.team?.badge === undefined || element.team.badge === null), {
+    message: 'a badge slot is empty exactly when it has no badge',
+  })
+  .refine(
+    (element) => element.team?.badge === undefined || element.team.badge === null || element.team.teamId !== null,
+    {
+      message: 'a badge belongs to an identified team',
+    },
+  );
 export type BadgeSlotElement = z.infer<typeof BadgeSlotElementSchema>;
 
 export const RenderElementSchema = z.discriminatedUnion('kind', [

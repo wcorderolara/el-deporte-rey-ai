@@ -1,0 +1,27 @@
+# UI-06.3 — auditoría de CSS Modules (2026-11-13). Consumidores y clases sin referencia antes de la limpieza.
+
+apps/web/src/features/facts/Facts.module.css: 256 líneas, 24 clases, consumidores: apps/web/src/features/facts/DisputeRecord.tsx, apps/web/src/features/facts/EvidenceTable.tsx, apps/web/src/features/facts/FactCard.tsx, apps/web/src/features/facts/FactsPage.tsx, apps/web/src/features/facts/LeftOutMatches.tsx, apps/web/src/features/facts/ManualApprovalControl.tsx; dinámico: no
+  sin referencia (1): visuallyHidden
+apps/web/src/features/history/History.module.css: 266 líneas, 25 clases, consumidores: apps/web/src/features/history/ExportFiles.tsx, apps/web/src/features/history/TracePage.tsx; dinámico: no
+  sin referencia (12): note, attested, carousels, carousel, muted, result, elements, element, figure, image, fields, segment
+apps/web/src/features/imports/Imports.module.css: 334 líneas, 36 clases, consumidores: apps/web/src/features/imports/FileImportForm.tsx, apps/web/src/features/imports/FormFields.tsx, apps/web/src/features/imports/FormImportForm.tsx, apps/web/src/features/imports/ImportDetailPage.tsx, apps/web/src/features/imports/ImportDetails.tsx, apps/web/src/features/imports/ImportErrorTable.tsx, apps/web/src/features/imports/ImportHistory.tsx, apps/web/src/features/imports/ImportResult.tsx, apps/web/src/features/imports/ImportsPage.tsx, apps/web/src/features/imports/SelectionVersions.tsx, apps/web/src/features/imports/VersionPage.tsx; dinámico: no
+  sin referencia (0): —
+apps/web/src/features/projects/Projects.module.css: 682 líneas, 53 clases, consumidores: apps/web/src/features/projects/ProjectDetailPage.tsx, apps/web/src/features/projects/RunProgress.tsx, apps/web/src/features/projects/SelectionFields.tsx; dinámico: no
+  sin referencia (33): primaryButton, form, detail, details, guided, pageIntro, eyebrow, progress, currentStep, completeStep, sourceDetails, stepPanel, formatCard, scopeSummary, confirmCard, readiness, formatIcon, availableBadge, guidedForm, selectionGrid, confirmGrid, selectionFields, continueButton, backButton, modeChoice, modeChoices, importEntry, readinessMark, nextStep, actions, srOnly, runSummary, sectionLinks
+apps/web/src/features/review/Review.module.css: 447 líneas, 35 clases, consumidores: apps/web/src/features/review/BlockingFacts.tsx, apps/web/src/features/review/CarouselReview.tsx, apps/web/src/features/review/ElementReview.tsx, apps/web/src/features/review/FinalApproval.tsx, apps/web/src/features/review/QaResults.tsx, apps/web/src/features/review/ReviewPage.tsx, apps/web/src/features/review/ReviewThumbnailRail.tsx, apps/web/src/features/review/ValidationSummary.tsx; dinámico: no
+  sin referencia (0): —
+apps/web/src/ui/ErrorBanner.module.css: 51 líneas, 5 clases, consumidores: apps/web/src/ui/ErrorBanner.tsx; dinámico: no
+  sin referencia (2): tableWrapper, table
+apps/web/src/ui/Notice.module.css: 59 líneas, 8 clases, consumidores: apps/web/src/ui/AvailabilityNote.tsx, apps/web/src/ui/DemoBanner.tsx, apps/web/src/ui/ListingProvenance.tsx, apps/web/src/ui/SafeReference.tsx; dinámico: no
+  sin referencia (0): —
+apps/web/src/ui/StatusBadge.module.css: 54 líneas, 9 clases, consumidores: apps/web/src/ui/StatusBadge.tsx; dinámico: sí
+  sin referencia (0): —
+
+# Verificación de la limpieza: huellas de estilo calculado (25 propiedades por elemento, ancho y alto excluidos por
+# depender de los nombres sintéticos de cada ejecución) de seis páginas, antes y después, a 1280 x 900.
+proyecto: 264 elementos, 0 diferencias
+datos-verificacion: 865 elementos, 0 diferencias
+exportacion: 85 elementos, 0 diferencias
+trazabilidad: 363 elementos, 0 diferencias
+crear: 34 elementos, 0 diferencias
+datos-error: 241 elementos, 0 diferencias

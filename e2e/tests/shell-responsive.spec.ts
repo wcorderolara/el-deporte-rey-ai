@@ -1,6 +1,7 @@
 import { axeScan, expect, test } from '../support/test.js';
 
-for (const width of [1440, 768, 390]) {
+// The five widths of UI-06.2: the navigation is a fixed column from 1200 px and a menu below.
+for (const width of [1440, 1280, 1024, 768, 390]) {
   test(`shell navigation at ${width}px @a11y`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto('/');
@@ -36,16 +37,43 @@ for (const width of [1440, 768, 390]) {
   });
 }
 
-test('shell links to existing brand sections and restores heading focus', async ({ page }) => {
+test('shell groups open the Mi marca and Plantillas pages, mark the current page and move focus to it', async ({
+  page,
+}) => {
   await page.goto('/');
   const nav = page.getByRole('navigation', { name: 'Navegación principal' });
-  for (const [name, hash] of [
-    ['Plantillas', 'brand-templates-title'],
-    ['Mi marca', 'brand-assets-title'],
-  ]) {
-    await nav.getByRole('link', { name, exact: true }).click();
-    await expect(page).toHaveURL(new RegExp(`/brand#${hash}$`));
-    await expect(page.locator(`#${hash}`)).toBeFocused();
-    await expect(nav.getByRole('link', { name, exact: true })).toHaveAttribute('aria-current', 'page');
+  for (const [group, entries] of [
+    [
+      'Mi marca',
+      [
+        ['Recursos', '/brand/resources', 'Recursos'],
+        ['Identidad visual', '/brand/identity', 'Identidad visual'],
+      ],
+    ],
+    [
+      'Plantillas',
+      [
+        ['Crear plantilla', '/templates/create', 'Crear plantilla'],
+        ['Plantillas del motor', '/templates/engine', 'Plantillas del motor'],
+      ],
+    ],
+  ] as const) {
+    const toggle = nav.getByRole('button', { name: group, exact: true });
+    const submenu = nav.getByRole('list', { name: group, exact: true });
+    if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
+      await toggle.click();
+    }
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    for (const [name, path, heading] of entries) {
+      await submenu.getByRole('link', { name, exact: true }).click();
+      await expect(page).toHaveURL(new RegExp(`${path}$`));
+      await expect(page.getByRole('main')).toBeFocused();
+      if (heading !== null) {
+        await expect(page.getByRole('heading', { level: 1, name: heading, exact: true })).toBeVisible();
+      }
+      // The group of the current page stays open and its entry is the current page.
+      await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      await expect(submenu.getByRole('link', { name, exact: true })).toHaveAttribute('aria-current', 'page');
+    }
   }
 });

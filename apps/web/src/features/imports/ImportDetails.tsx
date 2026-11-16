@@ -4,7 +4,8 @@ import { Link } from 'react-router';
 import { formatDateTime } from '../../ui';
 import { channelLabel, historyCopy, resultCopy, selectionName } from './copy';
 import styles from './Imports.module.css';
-import { newProjectPath, versionPath } from './paths';
+import { featurePaths } from '../../app/routes';
+import { versionPath } from './paths';
 
 export interface ImportDetailsProps {
   summary: ImportSummary;
@@ -46,7 +47,7 @@ export function ImportDetails({ summary }: ImportDetailsProps) {
         ))}
       </ul>
       <p>
-        <Link to={newProjectPath}>{resultCopy.createProject(summary.competitionName)}</Link>
+        <Link to={`${featurePaths.projects}/generate`}>{resultCopy.createContent}</Link>
       </p>
       <p className={styles.hint}>{resultCopy.createProjectHint}</p>
     </>

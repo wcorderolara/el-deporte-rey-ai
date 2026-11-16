@@ -2,9 +2,10 @@
 //
 // - Environment filtering: provider credentials and live-test switches never reach the server, the Playwright runner,
 //   its workers or the browser (T10-F11, AD-30, R-257, R-258).
-// - Generated configuration: the DEMO_DATA fixture sources, the MANUAL_DATA import source and the stub AI adapter,
-//   bound to 127.0.0.1 on the verification port, with Host and Origin allow-lists listing exactly that port
-//   (architecture.md section 12.1). Written to a temporary directory outside the repository; the committed
+// - Generated configuration: the DEMO_DATA fixture sources, the MANUAL_DATA import source, the MANUAL_DATA source of
+//   the locally managed competitions (PD-ARCH-01E; since PD-ARCH-01F the only way the studio creates content) and the
+//   stub AI adapter, bound to 127.0.0.1 on the verification port, with Host and Origin allow-lists listing exactly that
+//   port (architecture.md section 12.1). Written to a temporary directory outside the repository; the committed
 //   configuration files are only read. A journey that needs another DEMO_DATA scenario (a simulated source failure,
 //   a source missing a match) overrides `options.scenario` of named fixture sources; the scenario files are the
 //   committed ones under `fixtures/sports/`.
@@ -30,6 +31,16 @@ export const BASE_CONFIG_CANDIDATES = ['fixtures/config/demo-manual.config.json'
  * import source (OD-44, after T50). LIVE_DATA is never kept: no run can reach a provider.
  */
 export const INCLUDED_MODES = Object.freeze(['DEMO_DATA', 'MANUAL_DATA']);
+
+/**
+ * Committed configuration whose locally managed competitions source the generated configuration adds when the base
+ * document has none (UI-06.1): the T23 base `fixtures/config/demo-manual.config.json` predates PD-ARCH-01E, while
+ * `config/app.config.json`, the committed default, declares it. The source is copied as committed, never edited.
+ */
+export const LOCAL_SOURCE_CONFIG = 'config/app.config.json';
+
+/** Adapter kind of the locally managed competitions (PD-ARCH-01E). */
+export const LOCAL_ADAPTER = 'local-competitions';
 
 /** AI provider of every run: the deterministic stub (no network). */
 export const AI_PROVIDER = Object.freeze({ adapter: 'stub', options: Object.freeze({ scenario: 'default' }) });
@@ -70,6 +81,32 @@ export function baseConfigPath(rootDir) {
     }
   }
   throw new Error(`No base configuration found (looked for ${BASE_CONFIG_CANDIDATES.join(', ')}).`);
+}
+
+/** The enabled locally managed competitions source of the committed default configuration. */
+export function localSource(rootDir) {
+  const document = JSON.parse(readFileSync(resolve(rootDir, LOCAL_SOURCE_CONFIG), 'utf8'));
+  const source = enabledSources(document).find((candidate) => candidate.adapter === LOCAL_ADAPTER);
+  if (source === undefined) {
+    throw new Error(`${LOCAL_SOURCE_CONFIG} declares no enabled ${LOCAL_ADAPTER} source.`);
+  }
+  return source;
+}
+
+/**
+ * The base configuration document of a run: the first existing base configuration, with the locally managed
+ * competitions source of `localSource` appended when it declares none.
+ */
+export function runBaseDocument(rootDir) {
+  const base = JSON.parse(readFileSync(resolve(rootDir, baseConfigPath(rootDir)), 'utf8'));
+  const sources = base?.providers?.sports?.sources ?? [];
+  if (sources.some((source) => source?.adapter === LOCAL_ADAPTER)) {
+    return base;
+  }
+  return {
+    ...base,
+    providers: { ...base.providers, sports: { ...base.providers.sports, sources: [...sources, localSource(rootDir)] } },
+  };
 }
 
 /** Enabled sources of a configuration document. */
@@ -134,7 +171,7 @@ export function serverConfigDocument(base, port, scenarios = {}) {
  */
 export function prepareRunDirectory(rootDir, port, scenarios = {}) {
   const source = baseConfigPath(rootDir);
-  const base = JSON.parse(readFileSync(resolve(rootDir, source), 'utf8'));
+  const base = runBaseDocument(rootDir);
   const dir = mkdtempSync(join(tmpdir(), 'edr-e2e-'));
   const configFile = join(dir, 'app.config.json');
   const dataDir = join(dir, 'data');

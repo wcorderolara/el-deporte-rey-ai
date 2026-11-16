@@ -1,5 +1,6 @@
 import { errorCopy } from './copy';
 import { describeError } from './errorMessage';
+import { Button } from './primitives/Button';
 import styles from './ErrorBanner.module.css';
 
 export interface ErrorBannerProps {
@@ -42,9 +43,9 @@ export function ErrorBanner({ error, onRetry, title = errorCopy.title }: ErrorBa
         </>
       )}
       {description.retryable && onRetry !== undefined ? (
-        <button type="button" className={styles.retry} onClick={onRetry}>
+        <Button type="button" variant="secondary" className="mt-2" onClick={onRetry}>
           {errorCopy.retry}
-        </button>
+        </Button>
       ) : null}
     </div>
   );

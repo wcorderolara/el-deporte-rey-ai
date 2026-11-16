@@ -3,7 +3,7 @@
  * sections 1 and 2; AD-17, AD-19; T10-F13, T10-F15).
  *
  * - Paths are built only from IDs checked against the UUID pattern (also IDs read back from the database) and from
- *   the fixed file names of an export (`01.png` to `99.png`, `caption.txt`, `manifest.json`).
+ *   the fixed file names of an export (`01.png` to `99.png`, `caption.txt`, `copy-editorial.txt`, `manifest.json`).
  * - Containment is checked against `fs.realpath(dataDir)`: `exports` and the project directory must be plain
  *   directories (not links) that resolve to `<realDataDir>/exports/<projectId>`.
  * - Every export gets a fresh directory: it is created with `mkdir` without `recursive`, so an existing directory or
@@ -28,7 +28,7 @@ export const EXPORT_FILE_MODE = 0o600;
 export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 /** The file names an export may contain (contract `ExportFile.fileName`). */
-export const EXPORT_FILE_NAME_PATTERN = /^([0-9]{2}\.png|caption\.txt|manifest\.json)$/;
+export const EXPORT_FILE_NAME_PATTERN = /^([0-9]{2}\.png|caption\.txt|copy-editorial\.txt|manifest\.json)$/;
 
 /** An export file operation failed; the message is fixed text without any path. */
 export class ExportFileError extends Error {

@@ -125,7 +125,8 @@ describe.each(ids)('operation %s', (id) => {
     const responses = child(operation.operation, 'responses');
     const success = Object.keys(responses).filter((code) => Number(code) < 400);
     expect(success).toEqual([String(definition.success.status)]);
-    const content = child(responses, String(definition.success.status), 'content');
+    const successResponse = child(responses, String(definition.success.status));
+    const content = isObject(successResponse['content']) ? successResponse['content'] : {};
     expect([...definition.success.mediaTypes].sort()).toEqual(Object.keys(content).sort());
     expect(definition.success.schema === null).toBe(!Object.hasOwn(content, 'application/json'));
     const problems = Object.keys(responses)

@@ -1,0 +1,27 @@
+{
+  "O-1 nota": "Solo se registran recursos autorizados de El Deporte Rey GT. No se registran escudos de clubes, marcas de competiciones ni imágenes sin autorización: los nombres de equipos y competiciones aparecen como texto.",
+  "O-2 tabla": [
+    "Editar equipo",
+    "Quitar de competición",
+    "Editar equipo",
+    "Quitar de competición",
+    "Editar equipo",
+    "Quitar de competición",
+    "Editar equipo",
+    "Quitar de competición"
+  ],
+  "O-2 tarjetas": [
+    "Editar equipo",
+    "Quitar de competición",
+    "Editar equipo",
+    "Quitar de competición",
+    "Editar equipo",
+    "Quitar de competición",
+    "Editar equipo",
+    "Quitar de competición"
+  ],
+  "O-2 tooltip visible": [
+    "Vista de tabla",
+    "Editar equipo"
+  ]
+}

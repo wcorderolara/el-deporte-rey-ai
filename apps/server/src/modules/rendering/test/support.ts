@@ -13,7 +13,7 @@ import type { DataMode, Language, SlideType } from '@edr/contracts';
 import type { AppContainer, Clock } from '../../../container.js';
 import type { AppConfig, BrandConfig } from '../../../platform/config/index.js';
 import { type SqliteDatabase, DATABASE_FILE_NAME, openMigratedDatabase } from '../../../platform/db/index.js';
-import { formatDate, formatScore, stageDisplay, templateText } from '../../../platform/format/index.js';
+import { formatDate, formatScore, formatTime, stageDisplay, templateText } from '../../../platform/format/index.js';
 import { createLogger } from '../../../platform/http/index.js';
 import { config as buildConfig, demoSource } from '../../../providers/sports/test/synthetic.js';
 import type { RenderSettings } from '../core.js';
@@ -153,6 +153,94 @@ export function matchText(match: MatchSample, extra: Partial<Record<'headline' |
       segments: [fact(match.home, uuid(match.factBase + 1)), commentary(extra.headline ?? ' se impone en casa')],
     },
     { field: 'description', segments: [commentary(extra.description ?? 'Partido sintético de prueba.')] },
+  ]);
+}
+
+/**
+ * A match not played yet (PD-ARCH-01E-B) as the content stage stores it: the fixture or preview title, the local
+ * status, the teams and the kickoff; never a score.
+ */
+export function fixtureText(
+  match: MatchSample,
+  slideType: 'fixture' | 'match_preview' = 'fixture',
+  status: keyof ReturnType<typeof templateText>['matchStatus'] = 'scheduled',
+): StoredElementText {
+  const words = templateText(match.language);
+  const fields: StoredTextField[] = [
+    {
+      field: 'title',
+      segments: [template(slideType === 'fixture' ? words.fixtureTitle : `${words.previewTitle} · Jornada 20`)],
+    },
+    { field: 'match_status', segments: [fact(words.matchStatus[status], uuid(match.factBase + 5))] },
+    { field: 'team_home', segments: [fact(match.home, uuid(match.factBase + 1))] },
+    { field: 'team_away', segments: [fact(match.away, uuid(match.factBase + 2))] },
+    {
+      field: 'kickoff',
+      segments: [fact(formatDate(match.kickoff, match.language, UTC_OFFSET), uuid(match.factBase + 4))],
+    },
+  ];
+  if (slideType === 'match_preview') {
+    fields.push({ field: 'footer', segments: [template('Liga Sintética · 2026/27')] });
+  }
+  fields.push(...ai('Partido de la jornada', 'Encuentro sintético programado.'));
+  return text(fields);
+}
+
+/** The round overview of a calendar: one line per match, home versus away and kickoff. */
+export function overviewText(matches: readonly MatchSample[]): StoredElementText {
+  const words = templateText('es');
+  const segments: StoredSegment[] = [];
+  matches.forEach((match, index) => {
+    if (index > 0) {
+      segments.push(template('\n'));
+    }
+    segments.push(
+      fact(match.home, uuid(match.factBase + 1)),
+      template(` ${words.versus} `),
+      fact(match.away, uuid(match.factBase + 2)),
+      template(' · '),
+      fact(formatDate(match.kickoff, match.language, UTC_OFFSET), uuid(match.factBase + 4)),
+    );
+  });
+  return text([
+    { field: 'title', segments: [template(`${words.calendarTitle} · Jornada 20`)] },
+    { field: 'fixtures', segments },
+    ...ai('Así se juega la jornada', 'Calendario sintético de prueba.'),
+  ]);
+}
+
+/**
+ * The round overview of a calendar with rows (PD-ARCH-01G-E.2): per match, the home and away names, the kickoff date
+ * and time, and the status of a match that is not scheduled (`statuses`, by row index).
+ */
+export function calendarRowsText(
+  matches: readonly MatchSample[],
+  statuses: Readonly<Record<number, keyof ReturnType<typeof templateText>['matchStatus']>> = {},
+): StoredElementText {
+  const words = templateText('es');
+  const segments: StoredSegment[] = [];
+  matches.forEach((match, index) => {
+    if (index > 0) {
+      segments.push(template('\n'));
+    }
+    segments.push(
+      fact(match.home, uuid(match.factBase + 1)),
+      template(` ${words.versus} `),
+      fact(match.away, uuid(match.factBase + 2)),
+      template(' · '),
+      fact(formatDate(match.kickoff, match.language, UTC_OFFSET), uuid(match.factBase + 4)),
+      template(' · '),
+      fact(formatTime(match.kickoff, UTC_OFFSET), uuid(match.factBase + 4)),
+    );
+    const status = statuses[index];
+    if (status !== undefined) {
+      segments.push(template(' · '), fact(words.matchStatus[status], uuid(match.factBase + 5)));
+    }
+  });
+  return text([
+    { field: 'title', segments: [template(`${words.calendarTitle} · Jornada 20`)] },
+    { field: 'fixtures', segments },
+    ...ai('Así se juega la jornada', 'Calendario sintético de prueba.'),
   ]);
 }
 

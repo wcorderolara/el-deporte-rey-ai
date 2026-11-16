@@ -2,22 +2,19 @@ import type { ExportDetail, TextField } from '@edr/contracts';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 
-import { appCopy, Badge, ErrorBanner, formatDateTime } from '../../ui';
+import { appCopy, buttonClassName, ErrorBanner, formatDateTime, Icon, StatusBadge } from '../../ui';
 import { loadExport, slideImageSource, useHistoryApi } from './api';
-import { exportUsesAttestedFacts } from './attested';
-import { AttestedNote } from './AttestedNote';
 import { detailCopy, historyCopy, textFieldLabel } from './copy';
 import { DownloadExportButton } from './DownloadExportButton';
 import { ReviewThumbnailRail, type ReviewThumbnail } from '../review/ReviewThumbnailRail';
-import { ReviewWorkspace } from '../review/ReviewWorkspace';
-import reviewStyles from '../review/Review.module.css';
+import { SlidePanel, SlideWorkspace } from '../review/SlideWorkspace';
 import { exportsPath, isUuid, projectPath } from './paths';
 import { useLoad } from './useLoad';
 
 /**
  * Route component: one export reopened with the exact exported slides and caption (`.../exports/:exportId`, R-220),
- * its folder and files (R-218), the demonstration label (R-269), the operator-attested label (OD-28) and a trace
- * link per slide (R-221).
+ * in the layout of the content review (UX-REVIEW-01), with the demonstration label (R-269). The operator-attested
+ * label is not shown here (Product Owner, 2026-11-11); the export manifest still states it (OD-28).
  */
 export function ExportDetailPage() {
   const { projectId, exportId } = useParams();
@@ -94,8 +91,13 @@ function ExportContent({ projectId, detail }: { projectId: string; detail: Expor
   const slides = detail.elements.filter((element) => element.kind === 'slide').sort((a, b) => a.position - b.position);
   const caption = detail.elements.find((element) => element.kind === 'caption');
   const [selectedPosition, setSelectedPosition] = useState(slides[0]?.position ?? 1);
-  const selectedSlide = slides.find((element) => element.position === selectedPosition) ?? slides[0];
-  const selectedFields = selectedSlide?.version.fields ?? [];
+  const selectedIndex = Math.max(
+    0,
+    slides.findIndex((element) => element.position === selectedPosition),
+  );
+  const selectedSlide = slides[selectedIndex];
+  const previousSlide = slides[selectedIndex - 1];
+  const nextSlide = slides[selectedIndex + 1];
   const items: ReviewThumbnail[] = slides.map((element) => ({
     id: String(element.position),
     position: element.position,
@@ -111,61 +113,66 @@ function ExportContent({ projectId, detail }: { projectId: string; detail: Expor
           Datos sintéticos · no verificados ni publicables.
         </p>
       ) : null}
-      {exportUsesAttestedFacts(detail) ? <AttestedNote /> : null}
       {slides.length === 0 ? <p className="m-0 text-text-secondary">{detailCopy.noElements}</p> : null}
       {selectedSlide ? (
-        <ReviewWorkspace
-          labelledBy="export-title"
-          navigation={
-            <ReviewThumbnailRail
-              label="Diapositivas del carrusel"
-              heading={`${slideCount} diapositivas`}
-              items={items}
-              selectedId={String(selectedSlide.position)}
-              onSelect={(id) => setSelectedPosition(Number(id))}
-            />
-          }
-        >
-          <section className={reviewStyles.elementPreview} aria-label="Vista previa del carrusel exportado">
-            <header className={reviewStyles.elementHeader}>
-              <div>
-                <p className={reviewStyles.elementEyebrow}>Carrusel de Instagram · 4:5</p>
-                <h2>Diapositiva {selectedSlide.position}</h2>
-              </div>
-              <Badge tone="success">Exportado</Badge>
-            </header>
-            <figure data-testid="selected-slide-preview" className={reviewStyles.figure}>
-              {selectedSlide.version.imageUrl ? (
-                <img
-                  className={reviewStyles.slideImage}
-                  src={slideImageSource(selectedSlide.version.id)}
-                  alt={detailCopy.imageAlt(selectedSlide.position, selectedSlide.version.versionNumber)}
-                  width={selectedSlide.version.width ?? undefined}
-                  height={selectedSlide.version.height ?? undefined}
-                />
-              ) : (
-                <p className="m-0 p-8 text-center text-text-secondary">{detailCopy.noImage}</p>
-              )}
-            </figure>
-          </section>
-          <section aria-label="Resumen de la diapositiva" className={reviewStyles.reviewPanel}>
-            <div>
-              <p className="m-0 text-caption font-bold tracking-label text-brand-gold uppercase">Resumen</p>
-              <p className="m-0 mt-1 text-body-sm text-text-secondary">
-                <time dateTime={detail.exportedAt}>{formatDateTime(detail.exportedAt)}</time> · {slideCount}{' '}
-                {slideCount === 1 ? 'imagen' : 'imágenes'}
-              </p>
-            </div>
-            <SummaryFields fields={selectedFields} />
-            <DownloadExportButton exportId={detail.id} />
-            <Link
-              className="focus-studio text-body-sm text-text-link underline decoration-border-strong underline-offset-4 hover:text-text-primary"
-              to={projectPath(projectId)}
-            >
-              Volver al proyecto
-            </Link>
-          </section>
-        </ReviewWorkspace>
+        <>
+          <h2 className="sr-only">{detailCopy.previewTitle}</h2>
+          <SlideWorkspace
+            aria-labelledby="export-title"
+            navigation={
+              <ReviewThumbnailRail
+                label="Diapositivas del carrusel"
+                heading={`${slideCount} diapositivas`}
+                items={items}
+                selectedId={String(selectedSlide.position)}
+                onSelect={(id) => setSelectedPosition(Number(id))}
+                fill
+              />
+            }
+            preview={{
+              name: detailCopy.slide(selectedSlide.position),
+              typeLabel: null,
+              version: selectedSlide.version,
+              imageSource: selectedSlide.version.imageUrl ? slideImageSource(selectedSlide.version.id) : null,
+              imageAlt: detailCopy.imageAlt(selectedSlide.position, selectedSlide.version.versionNumber),
+              noImageText: detailCopy.noImage,
+              pager: {
+                position: selectedSlide.position,
+                total: slides.length,
+                ...(previousSlide ? { onPrevious: () => setSelectedPosition(previousSlide.position) } : {}),
+                ...(nextSlide ? { onNext: () => setSelectedPosition(nextSlide.position) } : {}),
+              },
+            }}
+            panel={
+              <SlidePanel
+                label="Resumen de la diapositiva"
+                eyebrow="Resumen"
+                badges={<StatusBadge label="Exportado" tone="positive" symbol="✓" />}
+                title={detailCopy.slide(selectedSlide.position)}
+                meta={
+                  <p className="m-0 text-body-sm text-text-secondary">
+                    <time dateTime={detail.exportedAt}>{formatDateTime(detail.exportedAt)}</time> · {slideCount}{' '}
+                    {slideCount === 1 ? 'imagen' : 'imágenes'}
+                  </p>
+                }
+              >
+                <SummaryFields fields={selectedSlide.version.fields} />
+                <div className="grid gap-2">
+                  <DownloadExportButton
+                    exportId={detail.id}
+                    className={buttonClassName('primary', 'md', 'w-full')}
+                    containerClassName="grid gap-1"
+                    statusClassName="text-caption text-text-secondary"
+                  />
+                  <Link className={buttonClassName('secondary', 'md', 'w-full')} to={projectPath(projectId)}>
+                    <Icon name="arrow-left" size={16} />
+                    {historyCopy.backToProject}
+                  </Link>
+                </div>
+              </SlidePanel>
+            }
+          />
+        </>
       ) : null}
       {caption ? (
         <details className="rounded-card border-hairline border-border-subtle bg-surface-raised p-4">

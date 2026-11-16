@@ -1,7 +1,6 @@
 /**
- * Smoke journey (R-235): the application opens directly on the project list, with no login, account or sign-in
- * element. It asserts only the shell and the project-list page heading, so that it keeps passing while the feature
- * modules are integrated one by one.
+ * Smoke journey (R-235): the application opens directly on Inicio, with no login, account or sign-in element. It
+ * asserts only the shell, its menu and the page heading, so that it keeps passing while features change.
  */
 import { expect, test } from '../support/test.js';
 
@@ -17,11 +16,16 @@ test.describe('Application shell (R-235)', () => {
 
     await expect(page.getByRole('heading', { level: 1, name: 'Tu próximo contenido empieza aquí' })).toBeVisible();
 
+    // The menu of the current shell (UI-01B as extended by PD-ARCH-01E to 01G): six links, and Mi marca and Plantillas
+    // as collapsed groups whose sub-pages are links shown once the group is opened.
     const navigation = page.getByRole('navigation', { name: 'Navegación principal' });
     await expect(navigation).toBeVisible();
     await expect(navigation.getByRole('link')).toHaveCount(6);
-    for (const name of ['Inicio', 'Crear contenido', 'Mis proyectos', 'Plantillas', 'Mi marca', 'Datos']) {
+    for (const name of ['Inicio', 'Crear contenido', 'Mis proyectos', 'Competiciones', 'Exportaciones', 'Datos']) {
       await expect(navigation.getByRole('link', { name, exact: true })).toBeVisible();
+    }
+    for (const name of ['Mi marca', 'Plantillas']) {
+      await expect(navigation.getByRole('button', { name, exact: true })).toHaveAttribute('aria-expanded', 'false');
     }
     await expect(navigation.getByRole('link', { name: 'Inicio', exact: true })).toHaveAttribute('aria-current', 'page');
     await expect(page.getByRole('main')).toBeVisible();

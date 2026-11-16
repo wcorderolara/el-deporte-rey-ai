@@ -4,14 +4,18 @@
  * `export_files`; T10-F14, T10-F15).
  *
  * Reads what an export writes (the final-approval row with its stored version-set text, the versions of the set,
- * their fact references, the facts' keys, kinds and evidence sources, the project and its source) and records an
- * export with its files. Every statement is a constant with bound parameters; enumerations and IDs are validated on
+ * their fact references, the facts' keys, kinds and evidence sources, the project and its source, and the approved
+ * current editorial versions of the carousel's draft, REVIEW-APPROVAL-01) and records an export with its files. Every statement is a constant with bound parameters; enumerations and IDs are validated on
  * read (IDs against the UUID pattern before any path is built from them, T10-F13); rows are never updated or deleted
  * (OD-08). The export record and its guard run in one transaction of the caller (`Db.transaction`).
  */
 import {
   DataModeSchema,
   type DataMode,
+  EDITORIAL_DELIVERABLES,
+  type EditorialDeliverable,
+  EditorialDeliverableSchema,
+  EditorialFieldNameSchema,
   FactKindSchema,
   LanguageSchema,
   Sha256Schema,
@@ -21,15 +25,16 @@ import {
 } from '@edr/contracts';
 import { z } from 'zod';
 
-import type { Db } from '../../platform/db/index.js';
+import { type Db, readJsonColumn } from '../../platform/db/index.js';
 
 const SQL = {
   project:
     'SELECT p.id AS id, p.competition_id AS competition_id, p.competition_name AS competition_name, ' +
     'p.source_id AS source_id, p.data_mode AS data_mode, p.season_id AS season_id, p.season_label AS season_label, ' +
     'p.stage_id AS stage_id, p.stage_label AS stage_label, p.matchday AS matchday, p.language AS language, ' +
-    's.name AS source_name, s.mode AS source_mode FROM projects p JOIN sources s ON s.id = p.source_id WHERE p.id = ?',
-  projectExists: 'SELECT id FROM projects WHERE id = ?',
+    's.name AS source_name, s.mode AS source_mode FROM projects p JOIN sources s ON s.id = p.source_id ' +
+    'WHERE p.id = ? AND p.deleted_at IS NULL',
+  projectExists: 'SELECT id FROM projects WHERE id = ? AND deleted_at IS NULL',
   validFinalApprovals:
     'SELECT id, carousel_id, version_set, version_set_sha256, approved_at FROM final_approvals ' +
     'WHERE carousel_id = ? AND invalidated_at IS NULL ORDER BY approved_at DESC, rowid DESC',
@@ -57,15 +62,22 @@ const SQL = {
     'x.exported_at AS exported_at, x.directory AS directory, x.manifest_sha256 AS manifest_sha256, ' +
     'x.data_mode AS data_mode, d.project_id AS project_id FROM exports x ' +
     'JOIN carousels c ON c.id = x.carousel_id JOIN content_drafts d ON d.id = c.draft_id ' +
+    'JOIN projects p ON p.id = d.project_id AND p.deleted_at IS NULL ' +
     'WHERE d.project_id = ? ORDER BY x.exported_at DESC, x.rowid DESC',
   export:
     'SELECT x.id AS id, x.carousel_id AS carousel_id, x.final_approval_id AS final_approval_id, ' +
     'x.exported_at AS exported_at, x.directory AS directory, x.manifest_sha256 AS manifest_sha256, ' +
     'x.data_mode AS data_mode, d.project_id AS project_id FROM exports x ' +
-    'JOIN carousels c ON c.id = x.carousel_id JOIN content_drafts d ON d.id = c.draft_id WHERE x.id = ?',
+    'JOIN carousels c ON c.id = x.carousel_id JOIN content_drafts d ON d.id = c.draft_id ' +
+    'JOIN projects p ON p.id = d.project_id AND p.deleted_at IS NULL WHERE x.id = ?',
   exportFiles:
     'SELECT position, kind, element_version_id, file_name, sha256 FROM export_files WHERE export_id = ? ' +
     'ORDER BY position, file_name',
+  carouselDraft: 'SELECT draft_id FROM carousels WHERE id = ?',
+  // The current, approved version of each editorial deliverable of a draft (PD-ARCH-01H; REVIEW-APPROVAL-01).
+  approvedEditorialVersions:
+    'SELECT id, deliverable, version_number, fields, flags, fact_ids, approved_at FROM editorial_versions ' +
+    'WHERE draft_id = ? AND superseded_at IS NULL AND approved_at IS NOT NULL',
 } as const;
 
 type Row = Record<string, unknown>;
@@ -75,8 +87,10 @@ const TimeSchema = z.string().min(1).max(40);
 const TextSchema = z.string().min(1);
 const ElementKindSchema = z.enum(['slide', 'caption']);
 const RelationSchema = z.enum(['supports', 'disagrees', 'consulted']);
-const FileKindSchema = z.enum(['slide_image', 'caption_text', 'manifest']);
-const FileNameSchema = z.string().regex(/^([0-9]{2}\.png|caption\.txt|manifest\.json)$/);
+const FileKindSchema = z.enum(['slide_image', 'caption_text', 'manifest', 'editorial_text']);
+const FileNameSchema = z.string().regex(/^([0-9]{2}\.png|caption\.txt|copy-editorial\.txt|manifest\.json)$/);
+const EditorialFieldsSchema = z.array(z.looseObject({ name: EditorialFieldNameSchema, text: z.string() })).min(1);
+const FactIdsSchema = z.array(UuidSchema);
 
 /** A project with its chosen source (R-287). */
 export interface ExportProject {
@@ -157,6 +171,17 @@ export interface StoredExportFile {
   readonly elementVersionId: string | null;
   readonly fileName: string;
   readonly sha256: string;
+}
+
+/** An approved current version of an editorial deliverable of a draft (REVIEW-APPROVAL-01). */
+export interface ApprovedEditorialVersion {
+  readonly id: string;
+  readonly deliverable: EditorialDeliverable;
+  readonly versionNumber: number;
+  readonly approvedAt: string;
+  readonly fields: readonly { readonly name: z.infer<typeof EditorialFieldNameSchema>; readonly text: string }[];
+  readonly flagCount: number;
+  readonly factIds: readonly string[];
 }
 
 /** The record of a new export with its files. */
@@ -335,6 +360,32 @@ export class ExportRepository {
   }
 
   /** The exports of a project, newest first (R-220). */
+  /** The draft of a carousel, or null. */
+  carouselDraftId(carouselId: string): string | null {
+    const row = this.#db.prepare<Row>(SQL.carouselDraft).get([carouselId]);
+    return row === undefined ? null : UuidSchema.parse(row['draft_id']);
+  }
+
+  /** The approved current versions of the editorial deliverables of a draft, in the contract's deliverable order. */
+  approvedEditorialVersions(draftId: string): ApprovedEditorialVersion[] {
+    return this.#db
+      .prepare<Row>(SQL.approvedEditorialVersions)
+      .all([draftId])
+      .map((row) => ({
+        id: UuidSchema.parse(row['id']),
+        deliverable: EditorialDeliverableSchema.parse(row['deliverable']),
+        versionNumber: IntSchema.min(1).parse(row['version_number']),
+        approvedAt: TimeSchema.parse(row['approved_at']),
+        fields: readJsonColumn(EditorialFieldsSchema, TextSchema.parse(row['fields']), 'fields').map((field) => ({
+          name: field.name,
+          text: field.text,
+        })),
+        flagCount: readJsonColumn(z.array(z.unknown()), TextSchema.parse(row['flags']), 'flags').length,
+        factIds: readJsonColumn(FactIdsSchema, TextSchema.parse(row['fact_ids']), 'fact_ids'),
+      }))
+      .sort((a, b) => EDITORIAL_DELIVERABLES.indexOf(a.deliverable) - EDITORIAL_DELIVERABLES.indexOf(b.deliverable));
+  }
+
   exportsOfProject(projectId: string): StoredExport[] {
     return this.#db.prepare<Row>(SQL.exportsOfProject).all([projectId]).map(storedExport);
   }

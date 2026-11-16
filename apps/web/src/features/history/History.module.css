@@ -36,28 +36,6 @@
   overflow-wrap: anywhere;
 }
 
-.note {
-  margin: 0 0 1rem;
-  padding: 0.5rem 0.75rem;
-  border-left: 0.25rem solid var(--edr-color-accent);
-  background: var(--edr-color-surface);
-}
-
-/* Operator-attested content (OD-28): dashed, unlike anything verified. */
-.attested {
-  margin: 0 0 1rem;
-  padding: 0.5rem 0.75rem;
-  border: 2px dashed #4a2a7a;
-  border-left-width: 0.5rem;
-  border-radius: 0.25rem;
-  color: #4a2a7a;
-  background: #f3edfb;
-}
-
-.attested p {
-  margin: 0.25rem 0;
-}
-
 .section {
   margin: 1.5rem 0;
 }
@@ -67,70 +45,9 @@
   font-size: 1.25rem;
 }
 
-.carousels {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.carousel {
-  margin: 0 0 0.75rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--edr-color-border);
-  border-radius: 0.25rem;
-}
-
-.carousel h3 {
-  margin: 0 0 0.25rem;
-  font-size: 1rem;
-}
-
-.carousel p {
-  margin: 0.25rem 0;
-}
-
-.muted {
-  color: var(--edr-color-muted);
-}
-
-.button {
-  min-height: 2.75rem;
-  padding: 0.5rem 0.875rem;
-  border: 1px solid var(--edr-color-accent);
-  border-radius: 0.25rem;
-  color: var(--edr-color-background);
-  background: var(--edr-color-accent);
-  cursor: pointer;
-}
-
-.button:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.button:focus-visible,
-.section a:focus-visible,
-.result a:focus-visible {
+.section a:focus-visible {
   outline: 3px solid var(--edr-color-focus, var(--edr-color-accent));
   outline-offset: 3px;
-}
-
-.result {
-  margin: 1rem 0;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--edr-color-accent);
-  border-radius: 0.25rem;
-  background: var(--edr-color-surface);
-}
-
-.result h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1rem;
-}
-
-.result h3:focus {
-  outline: 3px solid var(--edr-color-focus);
-  outline-offset: 2px;
 }
 
 .directory {
@@ -178,53 +95,6 @@
   font-size: 0.75rem;
   overflow-wrap: anywhere;
   word-break: break-all;
-}
-
-.elements {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.element {
-  margin: 0 0 1.25rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--edr-color-border);
-  border-radius: 0.25rem;
-}
-
-.element h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1.0625rem;
-}
-
-.figure {
-  margin: 0 0 0.75rem;
-}
-
-.image {
-  display: block;
-  max-width: min(100%, 27rem);
-  height: auto;
-  border: 1px solid var(--edr-color-border);
-}
-
-.fields {
-  margin: 0.5rem 0;
-}
-
-.fields dt {
-  font-weight: 700;
-}
-
-.fields dd {
-  margin: 0 0 0.5rem;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.segment {
-  margin-right: 0.375rem;
 }
 
 .factList {

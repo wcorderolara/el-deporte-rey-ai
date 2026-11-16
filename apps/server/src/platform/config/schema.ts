@@ -192,6 +192,8 @@ const sourceSchema = z.strictObject({
   ).optional(),
   adapter: pattern(ADAPTER_KIND_PATTERN, 41),
   options: adapterOptions.default({}),
+  /** MANUAL_DATA whose values the operator validated before generation (PD-ARCH-01E-PD-01). */
+  operatorValidated: z.boolean().default(false),
 });
 
 export type RawSource = z.output<typeof sourceSchema>;
@@ -242,6 +244,14 @@ export const appDocumentSchema = z.strictObject({
   providers: z.strictObject({
     sports: z.strictObject({ sources: z.array(sourceSchema).max(32) }),
     ai: z.strictObject({ adapter: pattern(ADAPTER_KIND_PATTERN, 41), options: adapterOptions.default({}) }),
+    /** Image generation for design proposals (PD-ARCH-01G-B); `disabled` unless configured. */
+    images: z
+      .strictObject({ adapter: pattern(ADAPTER_KIND_PATTERN, 41), options: adapterOptions.default({}) })
+      .prefault({ adapter: 'disabled' }),
+    /** Editorial copy writer (PD-ARCH-01H); the free deterministic `stub` unless configured (PD-30). */
+    editorial: z
+      .strictObject({ adapter: pattern(ADAPTER_KIND_PATTERN, 41), options: adapterOptions.default({}) })
+      .prefault({ adapter: 'stub' }),
   }),
   verificationPolicy: verificationPolicySchema.prefault({}),
   catalogue: z.strictObject({ linksFile: filePath }).optional(),

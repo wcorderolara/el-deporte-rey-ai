@@ -346,6 +346,10 @@ export const UNKNOWN_IDS: Readonly<Record<string, string>> = Object.freeze({
   Uuid: '00000000-0000-4000-8000-0000000000ff',
   Slug: 'sin-registro',
   SourceId: 'fuente-sin-registro',
+  ExternalSeasonId: '9999',
+  /** A closed enum: a well-formed value (the unknown project ID makes the request a 404). */
+  EditorialDeliverable: 'tiktok_reels',
+  string: 'match',
   integer: '7',
 });
 

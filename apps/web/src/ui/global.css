@@ -23,8 +23,10 @@
   --edr-color-warning-text: var(--color-legacy-warning-text);
   --edr-color-warning-surface: var(--color-legacy-warning-surface);
   --edr-font-family: var(--font-legacy);
-  color: var(--edr-color-text);
-  background: var(--edr-color-background);
+  /* The document shows the studio canvas and text, those of the shell: content past the frame or an overscroll never
+     shows a white page under light studio text (R-03). The legacy panel paints its own light surface and text. */
+  color: var(--color-text-primary);
+  background: var(--color-surface-canvas);
   font-family: var(--edr-font-family);
   line-height: 1.5;
 }

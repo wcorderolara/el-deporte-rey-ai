@@ -40,9 +40,9 @@ export const listCopy = {
 } as const;
 
 export const createCopy = {
-  title: 'Crear contenido',
+  title: 'Crear desde el catálogo',
   intro:
-    'Define el carrusel y el periodo deportivo que quieres trabajar. Revisarás el alcance y el modo de datos antes de continuar.',
+    'Usa una fuente del catálogo (demostración, importación manual o proveedor) para definir el carrusel y el periodo deportivo. Revisarás el alcance y el modo de datos antes de continuar.',
   stepDefinition: 'Definir contenido',
   stepConfirmation: 'Confirmar resultados',
   formatTitle: 'Formato',

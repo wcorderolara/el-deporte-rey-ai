@@ -59,7 +59,7 @@ function recordingEnvironment(values: Record<string, string>): { env: Record<str
 describe('committed configuration (config/app.config.json)', () => {
   const config = loadConfig({ rootDir: repoRoot, env: {} });
 
-  it('enables the DEMO_DATA sources demo-a and demo-b, the MANUAL_DATA source manual and the stub AI only', () => {
+  it('enables the DEMO_DATA sources demo-a and demo-b, the MANUAL_DATA sources manual and local and the stub AI only', () => {
     expect(
       config.providers.sports.sources.map((source) => [
         source.id,
@@ -73,6 +73,7 @@ describe('committed configuration (config/app.config.json)', () => {
       ['demo-a', 'DEMO_DATA', 'primary', true, false, true],
       ['demo-b', 'DEMO_DATA', 'verification', true, true, true],
       ['manual', 'MANUAL_DATA', 'primary', false, false, true],
+      ['local', 'MANUAL_DATA', 'primary', false, false, true],
     ]);
     expect(config.providers.sports.sources.some((source) => source.mode === 'LIVE_DATA')).toBe(false);
     expect(config.providers.ai.adapter).toBe('stub');
@@ -142,6 +143,40 @@ describe('committed development configuration (config/dev.config.json)', () => {
   it('loads through EDR_CONFIG', () => {
     const config = loadConfig({ rootDir: repoRoot, env: { EDR_CONFIG: 'config/dev.config.json' } });
     expect(config.server.allowedOrigins).toContain('http://localhost:5173');
+  });
+
+  it('loads the Vite development configuration with a live data source enabled', () => {
+    const config = loadConfig({ rootDir: repoRoot, env: { EDR_CONFIG: 'config/dev-live.config.json' } });
+    const source = config.providers.sports.sources.find((item) => item.mode === 'LIVE_DATA');
+    expect(source).toMatchObject({ enabled: true, mode: 'LIVE_DATA' });
+    expect(config.server.allowedOrigins).toContain('http://127.0.0.1:5173');
+    expect(config.paths.dataDir).toBe(join(repoRoot, 'data'));
+  });
+
+  it('loads the Vite development configuration with the OpenAI image adapter (PD-ARCH-01G-B)', () => {
+    const config = loadConfig({ rootDir: repoRoot, env: { EDR_CONFIG: 'config/dev-images.config.json' } });
+    expect(config.providers.images.adapter).toBe('openai');
+    expect(config.providers.images.options['baseUrl']).toBe('https://api.openai.com/v1');
+    expect(JSON.stringify(config.providers.images)).not.toMatch(/api_?key|secret|bearer|sk-/i);
+    const development = loadConfig({ rootDir: repoRoot, env: { EDR_CONFIG: 'config/dev.config.json' } });
+    expect({ ...config, providers: { ...config.providers, images: development.providers.images } }).toEqual(
+      development,
+    );
+    expect(development.providers.images).toEqual({ adapter: 'disabled', options: {} });
+  });
+
+  it('loads the full Vite development configuration: the live sports source, the OpenAI image adapter and the editorial writer together', () => {
+    const config = loadConfig({ rootDir: repoRoot, env: { EDR_CONFIG: 'config/dev-full.config.json' } });
+    const live = loadConfig({ rootDir: repoRoot, env: { EDR_CONFIG: 'config/dev-live.config.json' } });
+    const images = loadConfig({ rootDir: repoRoot, env: { EDR_CONFIG: 'config/dev-images.config.json' } });
+    expect(config.providers.sports).toEqual(live.providers.sports);
+    expect(config.providers.images).toEqual(images.providers.images);
+    // PD-ARCH-01H (PD-30): only dev-full adds the hosted editorial writer.
+    expect(config.providers.editorial.adapter).toBe('openai-compatible');
+    expect({
+      ...config,
+      providers: { ...config.providers, images: live.providers.images, editorial: live.providers.editorial },
+    }).toEqual(live);
   });
 });
 

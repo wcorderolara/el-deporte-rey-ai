@@ -34,7 +34,13 @@ import type { StageName } from '../../src/modules/module-kit.js';
 import { type ProjectsModule, createProjectsModule } from '../../src/modules/projects/index.js';
 import { serverModules } from '../../src/modules/registry.js';
 import type { EgressClient } from '../../src/platform/net/index.js';
-import { type AiTextProvider, type DraftRequest, createAiProvider } from '../../src/providers/ai/index.js';
+import {
+  type AiTextProvider,
+  type DraftRequest,
+  createAiProvider,
+  createEditorialWriter,
+} from '../../src/providers/ai/index.js';
+import { createImageProvider } from '../../src/providers/images/index.js';
 import { type AdapterRegistration, createSportsSources } from '../../src/providers/sports/index.js';
 import type { AnyStage } from '../../src/workflow/index.js';
 
@@ -66,6 +72,8 @@ export interface TestAppOptions {
   readonly dataDir?: string;
   /** Egress client handed to the providers instead of the configured one (it is still recorded). */
   readonly egress?: EgressClient;
+  /** Egress client handed to the image provider instead of the configured image client (PD-ARCH-01G-B). */
+  readonly imageEgress?: EgressClient;
   /** Extra process environment entries (for example `EDR_AI_API_KEY` for the AI adapter). */
   readonly env?: Readonly<Record<string, string>>;
   /** Test-only adapter kinds; default `[testLiveAdapter]`. */
@@ -216,6 +224,11 @@ export async function startTestApp(options: TestAppOptions = {}): Promise<TestAp
         createSportsSources(appConfig, { ...deps, egress: egressFor(deps.egress) }, { extraAdapters }),
       createAiProvider: (appConfig, deps) =>
         recordingAi(createAiProvider(appConfig, { ...deps, egress: egressFor(deps.egress) }), aiRequests),
+      createImageProvider: (appConfig, deps) =>
+        createImageProvider(appConfig, { ...deps, egress: options.imageEgress ?? deps.egress }),
+      // The editorial writer (PD-ARCH-01H) shares the providers' recorded egress client, like the draft writer.
+      createEditorialWriter: (appConfig, deps) =>
+        createEditorialWriter(appConfig, { ...deps, egress: egressFor(deps.egress) }),
     };
 
     const stages = workflowStages(serverModules, options.stageOverrides);

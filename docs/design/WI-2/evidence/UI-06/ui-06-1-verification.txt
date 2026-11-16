@@ -1,0 +1,32 @@
+# UI-06.1 — verificaciones del repositorio tras los cambios, 2026-11-13.
+
+== typecheck
+exit 0
+== eslint
+exit 0
+== prettier
+Checking formatting...
+All matched files use Prettier code style!
+== unit
+ Test Files  145 passed (145)
+      Tests  2562 passed (2562)
+== integration
+ Test Files  58 passed (58)
+      Tests  697 passed (697)
+== contract
+ Test Files  7 passed (7)
+      Tests  2419 passed (2419)
+== build
+exit 0
+== audit
+exit 0
+  npm audit fix --force
+== secret-scan
+secret-scan: findings: 0
+RESULT: PASS
+== contract-id
+file 9bf188ca5d2c2c905405e701ac3283f483cf0ba5e206a5289796ebc0d4ed22bc
+conf 9bf188ca5d2c2c905405e701ac3283f483cf0ba5e206a5289796ebc0d4ed22bc
+== diff-check
+clean
+done

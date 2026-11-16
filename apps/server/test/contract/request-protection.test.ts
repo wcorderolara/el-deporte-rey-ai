@@ -19,6 +19,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { startTestApp, type TestApp } from '../support/index.js';
 
+import { operations } from '@edr/contracts';
+
 import { OPERATION_IDS, oversizedRequest, syntheticPng, validRequest } from './support/requests.js';
 import { requestSamples } from './support/samples.js';
 import {
@@ -64,8 +66,8 @@ function withHeaders(options: CallOptions, headers: Record<string, string | unde
   return { ...options, headers: { ...options.headers, ...headers } };
 }
 
-it('lists the contract operations in the order of the document', () => {
-  expect([...OPERATION_IDS]).toEqual(spec.operationIds);
+it('covers exactly the contract operations', () => {
+  expect([...OPERATION_IDS].sort()).toEqual([...spec.operationIds].sort());
 });
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -81,35 +83,13 @@ function hasBody(operationId: string): boolean {
   return (WITH_BODY as readonly string[]).includes(operationId);
 }
 
-const MUTATING = [
-  'createProject',
-  'updateProject',
-  'startRun',
-  'approveFactManually',
-  'revokeManualFactApproval',
-  'setExcludedMatches',
-  'regenerateElement',
-  'approveElement',
-  'withdrawElementApproval',
-  'acknowledgeQaWarnings',
-  'approveCarousel',
-  'exportCarousel',
-  'createImport',
-  'registerBrandAsset',
-  'updateBrandAsset',
-] as const;
+const MUTATING = Object.values(operations)
+  .filter((operation) => operation.method !== 'get')
+  .map((operation) => operation.operationId);
 
-const WITH_BODY = [
-  'createProject',
-  'updateProject',
-  'startRun',
-  'setExcludedMatches',
-  'approveElement',
-  'acknowledgeQaWarnings',
-  'createImport',
-  'registerBrandAsset',
-  'updateBrandAsset',
-] as const;
+const WITH_BODY = Object.values(operations)
+  .filter((operation) => operation.body !== null)
+  .map((operation) => operation.operationId);
 
 describe.each(OPERATION_IDS)('request protection of %s', (operationId) => {
   it('answers 421 MISDIRECTED_HOST for a Host outside the allow-list', async () => {
@@ -216,22 +196,7 @@ const POSITION_PROBES: readonly string[] = ['0', '100', '-1', '1.5', 'abc', '1e1
 /** Over-long probes beyond the router's parameter length (Fastify `maxParamLength`, 100). */
 const OVERLONG_PROBES: readonly string[] = ['a'.repeat(101), 'a'.repeat(300), `..%2F${'a'.repeat(200)}`];
 
-const WITH_PATH_PARAMS = OPERATION_IDS.filter(
-  (id) =>
-    ![
-      'getHealth',
-      'getSettings',
-      'listCompetitions',
-      'listProjects',
-      'createProject',
-      'listImports',
-      'createImport',
-      'listManualSelections',
-      'listBrandAssets',
-      'registerBrandAsset',
-      'listTemplates',
-    ].includes(id),
-);
+const WITH_PATH_PARAMS = OPERATION_IDS.filter((id) => operations[id as keyof typeof operations].params !== null);
 
 describe.each(WITH_PATH_PARAMS)('path parameters of %s (T10-F03, R-224)', (operationId) => {
   it('reaches the handler with well-formed unknown IDs', async () => {
@@ -246,11 +211,13 @@ describe.each(WITH_PATH_PARAMS)('path parameters of %s (T10-F03, R-224)', (opera
     const egress = t.egress.requests.length;
     for (const parameter of spec.pathParameters(operationId)) {
       const probes =
-        parameter.schema === 'integer'
-          ? POSITION_PROBES
-          : parameter.schema === 'Uuid'
-            ? [...ID_PROBES, ...UUID_PROBES]
-            : ID_PROBES;
+        parameter.schema === 'ExternalSeasonId'
+          ? ['bad id', 'bad!id']
+          : parameter.schema === 'integer'
+            ? POSITION_PROBES
+            : parameter.schema === 'Uuid'
+              ? [...ID_PROBES, ...UUID_PROBES]
+              : ID_PROBES;
       for (const probe of probes) {
         const problem = await expectProblem(
           operationId,
@@ -300,7 +267,9 @@ describe.each(WITH_PATH_PARAMS)('path parameters of %s (T10-F03, R-224)', (opera
     const request = validRequest(spec, operationId);
     const before = t.databaseText();
     for (const parameter of spec.pathParameters(operationId)) {
-      for (const probe of OVERLONG_PROBES) {
+      const overlongProbes =
+        parameter.schema === 'ExternalSeasonId' ? ['x'.repeat(121), 'x'.repeat(300)] : OVERLONG_PROBES;
+      for (const probe of overlongProbes) {
         const exchange = await client.call(operationId, { ...request, rawParams: { [parameter.name]: probe } });
         expect(exchange.violations, describeExchange(exchange)).toEqual([]);
         expect(exchange.status, describeExchange(exchange)).toBe(400);
@@ -393,20 +362,20 @@ describe('request bodies (R-224)', () => {
     ],
     updateProject: [{}, { language: 'fr' }, { language: 'es', title: 'x' }],
     startRun: [{}, { kind: 'publish' }, { kind: 'full', extra: true }],
-    setExcludedMatches: [
-      {},
-      { excludedMatchKeys: ['../m1'] },
-      { excludedMatchKeys: ['m1', 'm1'] },
-      { excludedMatchKeys: Array.from({ length: 65 }, (_, index) => `m${String(index)}`) },
-      { excludedMatchKeys: ['M1'] },
-    ],
     approveElement: [{}, { versionId: '00000000-0000-4000-8000-00000000000A' }, { versionId: '..%2F..' }],
     acknowledgeQaWarnings: [
       { versionId: '00000000-0000-4000-8000-000000000001', checks: [] },
       { versionId: '00000000-0000-4000-8000-000000000001', checks: ['text_fit'] },
       { versionId: '00000000-0000-4000-8000-000000000001', checks: ['style_consistency', 'capitalized_tokens'] },
     ],
-    updateBrandAsset: [{}, { active: 'yes' }, { active: true, label: 'x' }],
+    updateBrandAsset: [
+      {},
+      { active: 'yes' },
+      { active: true, kind: 'mascot' },
+      { usagePolicy: 'everything' },
+      { description: '' },
+    ],
+    updateBrandIdentity: [{ palette: [] }, { description: '' }, { colorUsage: { gold: 'Dorado' } }, { name: 'Otra' }],
   };
 
   it.each(Object.keys(invalidBodies))(

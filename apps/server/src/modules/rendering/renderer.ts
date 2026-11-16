@@ -2,12 +2,17 @@
  * PNG renderer (architecture.md section 9; AD-07; T10-F09).
  *
  * The render model becomes a Satori element tree built from plain objects (no React runtime on the server): one
- * absolutely positioned, non-wrapping node per measured text line, one box per rectangle, one `img` per image slot.
+ * absolutely positioned, non-wrapping node per measured text line, one box per rectangle, one `img` per image element
+ * (fitted as the element says, `contain` by default).
  * Satori lays the tree out with the bundled fonts and draws glyphs as paths (no `<text>` element), then resvg
  * rasterizes the SVG at the canvas size.
  *
- * Data only (T10-F09): image slots receive only `data:` URIs built from stored, hash-checked asset bytes, never a URL
- * or a file path; Satori gets no `loadAdditionalAsset` callback (a glyph missing from the bundled fonts is not
+ * Team badges (PD-ARCH-01G-E.1; PD-28): a badge slot with a badge draws it from its stored file like an image
+ * element, centred and scaled to fit the slot (`contain`: proportional, never cropped or stretched; a PNG keeps its
+ * transparency); an empty slot draws nothing.
+ *
+ * Data only (T10-F09): image slots and badge slots receive only `data:` URIs built from stored, hash-checked bytes,
+ * never a URL or a file path; Satori gets no `loadAdditionalAsset` callback (a glyph missing from the bundled fonts is not
  * fetched); resvg runs with `loadSystemFonts: false`, the bundled font files as its only `fontFiles` and no resources
  * directory. Text reaches Satori only as text content. The renderer opens no socket.
  *
@@ -20,7 +25,7 @@ import { renderAsync } from '@resvg/resvg-js';
 import satori, { type SatoriOptions } from 'satori';
 
 import type { FontSet } from './fonts.js';
-import type { RenderElement, RenderModel, TextElement } from './render-model.js';
+import type { Palette, RenderElement, RenderModel, TextEffect, TextElement } from './render-model.js';
 
 /** An image asset for an image slot: hash-checked bytes and their MIME type. */
 export interface EmbeddedAsset {
@@ -32,7 +37,10 @@ export interface EmbeddedAsset {
 
 export interface RenderResources {
   readonly fonts: FontSet;
-  /** Assets by ID; every image element of the model must have its asset here, with the same SHA-256. */
+  /**
+   * Assets by ID; every image element and every drawn badge of the model must have its file here, with the same
+   * SHA-256.
+   */
   readonly assets: ReadonlyMap<string, EmbeddedAsset>;
 }
 
@@ -70,8 +78,61 @@ function dataUri(assets: ReadonlyMap<string, EmbeddedAsset>, assetId: string, ex
 
 const JUSTIFY = { left: 'flex-start', center: 'center', right: 'flex-end' } as const;
 
-function textNodes(element: TextElement): SatoriNode[] {
+/** A length in pixels, a fraction of the font size, rounded to hundredths (deterministic output). */
+function px(fontSize: number, factor: number): string {
+  return `${String(Math.round(fontSize * factor * 100) / 100)}px`;
+}
+
+/** A shadow in each of eight directions at a distance: an outline without the inner marks of a text stroke. */
+function outline(fontSize: number, factor: number, color: string): string[] {
+  const d = Math.max(1, Math.round(fontSize * factor * 100) / 100);
+  const diagonal = Math.round(d * 0.75 * 100) / 100;
+  return [
+    [d, 0],
+    [-d, 0],
+    [0, d],
+    [0, -d],
+    [diagonal, diagonal],
+    [-diagonal, -diagonal],
+    [diagonal, -diagonal],
+    [-diagonal, diagonal],
+  ].map(([x, y]) => `${String(x)}px ${String(y)}px 0px ${color}`);
+}
+
+/**
+ * The CSS text shadow of a text effect (decision 01G-C-2), in the palette colours and scaled with the font size; null
+ * for no effect.
+ */
+export function textShadowOf(effect: TextEffect | undefined, fontSize: number, palette: Palette): string | null {
+  const shade = 'rgba(0, 0, 0, 0.85)';
+  switch (effect) {
+    case undefined:
+    case 'none':
+      return null;
+    case 'soft_shadow':
+      return `0px ${px(fontSize, 0.06)} ${px(fontSize, 0.22)} ${shade}`;
+    case 'strong_shadow':
+      return `0px ${px(fontSize, 0.1)} 0px ${palette.primaryDark}, 0px 0px ${px(fontSize, 0.4)} ${shade}`;
+    case 'glow_gold':
+      return `0px 0px ${px(fontSize, 0.3)} ${palette.accent}, 0px 0px ${px(fontSize, 0.12)} ${palette.accent}`;
+    case 'glow_purple':
+      return `0px 0px ${px(fontSize, 0.3)} ${palette.primary}, 0px 0px ${px(fontSize, 0.12)} ${palette.primary}`;
+    case 'outline_dark':
+      return [
+        ...outline(fontSize, 0.05, palette.primaryDark),
+        `0px ${px(fontSize, 0.08)} ${px(fontSize, 0.2)} ${shade}`,
+      ].join(', ');
+    case 'scoreboard_gold':
+      return [
+        ...outline(fontSize, 0.03, palette.accent),
+        `0px ${px(fontSize, 0.07)} ${px(fontSize, 0.12)} ${shade}`,
+      ].join(', ');
+  }
+}
+
+function textNodes(element: TextElement, palette: Palette): SatoriNode[] {
   const { box, lineHeight, lines } = element;
+  const shadow = textShadowOf(element.effect, element.fontSize, palette);
   const blockHeight = lines.length * lineHeight;
   const offset =
     element.verticalAlign === 'top'
@@ -101,6 +162,7 @@ function textNodes(element: TextElement): SatoriNode[] {
                 fontSize: element.fontSize,
                 lineHeight: `${String(lineHeight)}px`,
                 color: element.color,
+                ...(shadow === null ? {} : { textShadow: shadow }),
               },
               children: line,
             },
@@ -109,7 +171,7 @@ function textNodes(element: TextElement): SatoriNode[] {
   );
 }
 
-function elementNodes(element: RenderElement, resources: RenderResources): SatoriNode[] {
+function elementNodes(element: RenderElement, resources: RenderResources, palette: Palette): SatoriNode[] {
   switch (element.kind) {
     case 'rect':
       return [
@@ -129,7 +191,7 @@ function elementNodes(element: RenderElement, resources: RenderResources): Sator
         },
       ];
     case 'text':
-      return textNodes(element);
+      return textNodes(element, palette);
     case 'image':
       return [
         {
@@ -144,14 +206,36 @@ function elementNodes(element: RenderElement, resources: RenderResources): Sator
               top: element.box.y,
               width: element.box.width,
               height: element.box.height,
+              objectFit: element.fit ?? 'contain',
+            },
+          },
+        },
+      ];
+    case 'badge_slot': {
+      // An empty slot draws nothing (PD-28 point 4: no substitute); a badge is drawn from its file (PD-ARCH-01G-E.1).
+      const badge = element.team?.badge ?? null;
+      if (element.empty || badge === null) {
+        return [];
+      }
+      return [
+        {
+          type: 'img',
+          props: {
+            src: dataUri(resources.assets, badge.assetId, badge.sha256),
+            width: element.box.width,
+            height: element.box.height,
+            style: {
+              position: 'absolute',
+              left: element.box.x,
+              top: element.box.y,
+              width: element.box.width,
+              height: element.box.height,
               objectFit: 'contain',
             },
           },
         },
       ];
-    case 'badge_slot':
-      // Reserved and always empty (PD-03, R-231): nothing is drawn.
-      return [];
+    }
   }
 }
 
@@ -167,7 +251,7 @@ export function satoriTree(model: RenderModel, resources: RenderResources): Sato
         height: model.canvas.height,
         backgroundColor: model.background.color,
       },
-      children: model.elements.flatMap((element) => elementNodes(element, resources)),
+      children: model.elements.flatMap((element) => elementNodes(element, resources, model.palette)),
     },
   };
 }

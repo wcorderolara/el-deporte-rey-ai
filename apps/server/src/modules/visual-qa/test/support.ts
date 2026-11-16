@@ -41,9 +41,12 @@ import { type VisualQaOptions, createVisualQaStage } from '../stage.js';
 export {
   MATCH_A,
   SELECTION_A,
+  calendarRowsText,
   closingText,
   coverText,
+  fixtureText,
   matchText,
+  overviewText,
   standingsRows,
   standingsText,
   uuid,
@@ -130,6 +133,17 @@ export function matchFacts(
   ];
 }
 
+/** The facts a fixture or preview slide of `fixtureText(match)` shows: teams, kickoff and status, no score (PD-ARCH-01E-B). */
+export function fixtureFacts(match: MatchSample, status = 'scheduled'): ContentFact[] {
+  const matchKey = `md-${String(match.factBase)}`;
+  return [
+    teamFact(uuid(match.factBase + 1), match.home),
+    teamFact(uuid(match.factBase + 2), match.away),
+    viewFact(uuid(match.factBase + 4), 'match_kickoff', { matchKey }, { kickoff: match.kickoff }, 'verified'),
+    viewFact(uuid(match.factBase + 5), 'match_status', { matchKey }, { matchStatus: status }, 'verified'),
+  ];
+}
+
 /** The facts a standings slide of `standingsText(rows, language, factBase)` shows. */
 export function standingsFacts(rows: readonly RowSample[], factBase = 500): ContentFact[] {
   return rows.flatMap((row, index) => {
@@ -173,9 +187,12 @@ export interface ModelOptions {
   readonly height?: number;
 }
 
-/** The render model the current template builds for a stored text (as the rendering stage does). */
+/**
+ * The render model the current template builds for a stored text without badges (as the rendering stage does for a
+ * project whose badges do not cover the engine templates, decision DE-E3 of PD-ARCH-01G-E).
+ */
 export function modelOf(slideType: SlideType, text: ElementText, options: ModelOptions = {}): RenderModel {
-  return registry.current(slideType).build(
+  return registry.currentWithoutBadges(slideType).build(
     content(slideType, text, {
       demonstration: options.demonstration ?? false,
       language: options.language ?? 'es',
@@ -232,6 +249,42 @@ export function captionVersion(n: number, caption: string, hashtags: readonly st
   };
 }
 
+/**
+ * A round calendar page with rows (PD-ARCH-01G-E.2): the stored text of `calendarRowsText` drawn by the round calendar
+ * template 2.0.0, each row's home and away team with the given badge IDs (null for a team without a badge).
+ */
+export function calendarVersion(
+  n: number,
+  text: ElementText,
+  badges: readonly { readonly home: string | null; readonly away: string | null }[],
+): VersionToCheck {
+  const side = (row: number, home: boolean, badgeId: string | null) => ({
+    teamId: uuid(700 + row * 2 + (home ? 0 : 1)),
+    badge: badgeId === null ? null : { id: badgeId, sha256: 'a'.repeat(64), mime: 'image/png' as const },
+  });
+  const slide = {
+    ...content('round_overview', text, { demonstration: false, language: 'es' }),
+    rowBadges: badges.map((row, index) => ({ home: side(index, true, row.home), away: side(index, false, row.away) })),
+  };
+  const renderModel = registry.forContent(slide).build(slide, {
+    canvas: { width: 1080, height: 1350 },
+    palette: { ...PALETTE },
+    fonts: FONTS,
+    assets: {},
+    utcOffsetMinutes: UTC_OFFSET,
+  });
+  return {
+    versionId: uuid(9000 + n),
+    elementId: uuid(8000 + n),
+    carouselId: CAROUSEL,
+    kind: 'slide',
+    slideType: 'round_overview',
+    text,
+    renderModel,
+    image: { width: 1080, height: 1350 },
+  };
+}
+
 /** A copy of a version whose render model is changed by `change` (seeded defects). */
 export function withModel(version: VersionToCheck, change: (model: RenderModel) => void): VersionToCheck {
   const model = structuredClone(version.renderModel) as RenderModel;
@@ -254,6 +307,8 @@ export interface InputOptions {
   readonly aliases?: readonly { teamId: string; alias: string }[];
   readonly checks?: readonly QaCheck[];
   readonly labels?: VisualQaInput['labels'];
+  /** TEAM-DISPLAY-01: the presentation name of team-name facts, by fact ID (none by default). */
+  readonly teamDisplayNames?: Readonly<Record<string, string>>;
 }
 
 /** A QA input over the versions and facts; the carousel templates are those of the versions' render models. */
@@ -273,6 +328,7 @@ export function qaInput(
     },
     facts: [...facts],
     teamAliases: [...(options.aliases ?? [])],
+    teamDisplayNames: { ...(options.teamDisplayNames ?? {}) },
     checks: [...(options.checks ?? QA_CHECKS)],
     carouselTemplates: versions.flatMap((version) =>
       version.renderModel === null

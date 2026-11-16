@@ -1,8 +1,9 @@
 /**
  * Template routes (contract operations listTemplates and previewTemplate; OD-13, R-031, R-050).
  *
- * - listTemplates returns the current version of each template with its badge slots (always reserved, empty while no
- *   authorized badge exists) and image slots; the body is checked against the contract schema before it is sent.
+ * - listTemplates returns the current version of each template with its badge slots (filled with the badges recorded
+ *   with a project since PD-ARCH-01G-E.1, empty for a team without a badge) and image slots; the body is checked
+ *   against the contract schema before it is sent. The previews use synthetic sample data, so their slots stay empty.
  * - previewTemplate validates the slug parameter and the optional `language` query with the contract schemas
  *   (400 `VALIDATION_FAILED`), answers 404 `NOT_FOUND` for an unknown template, and serves the PNG with
  *   `Cache-Control: no-store` (OD-41), the sandboxed file CSP of T19 and an inline disposition. GET handlers only

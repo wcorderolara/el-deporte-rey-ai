@@ -1,5 +1,7 @@
 import { serverModule as brand } from './brand/index.js';
 import { serverModule as content } from './content/index.js';
+import { serverModule as design } from './design/index.js';
+import { serverModule as editorial } from './editorial/index.js';
 import { serverModule as competitions } from './competitions/index.js';
 import { serverModule as exportModule } from './export/index.js';
 import { serverModule as imports } from './imports/index.js';
@@ -9,6 +11,7 @@ import { serverModule as rendering } from './rendering/index.js';
 import { serverModule as research } from './research/index.js';
 import { serverModule as review } from './review/index.js';
 import { serverModule as verification } from './verification/index.js';
+import { serverModule as visualTemplates } from './visual-templates/index.js';
 import { serverModule as visualQa } from './visual-qa/index.js';
 
 /**
@@ -23,8 +26,11 @@ export const serverModules: readonly ServerModule[] = [
   verification,
   content,
   brand,
+  design,
+  visualTemplates,
   rendering,
   visualQa,
   review,
+  editorial,
   exportModule,
 ];

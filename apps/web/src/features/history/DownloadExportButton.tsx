@@ -7,11 +7,14 @@ export function DownloadExportButton({
   exportId,
   className,
   containerClassName,
+  statusClassName,
   label = 'Descargar carrusel',
 }: {
   exportId: string;
   className?: string;
   containerClassName?: string;
+  /** Style of the download message (ready or failed). */
+  statusClassName?: string;
   label?: string;
 }) {
   const client = useHistoryApi();
@@ -46,7 +49,7 @@ export function DownloadExportButton({
       <button type="button" className={className} onClick={() => void download()} disabled={busy}>
         {busy ? 'Preparando descarga…' : label}
       </button>
-      <span role="status" aria-live="polite">
+      <span role="status" aria-live="polite" className={statusClassName}>
         {message}
       </span>
     </span>

@@ -12,8 +12,9 @@
  *   meantime fails the stage with `run_superseded` and nothing is recorded.
  *
  * The checks run and stored are those the `qa_results.check_name` constraint accepts (`storableChecks`): every
- * contract check, `capitalized_tokens` included, since migration 0002 (OD-56). A contract check the constraint does
- * not accept is logged (check name and run ID, no text) and neither run nor stored.
+ * contract check, `capitalized_tokens` included since migration 0002 (OD-56) and `team_badges` since migration 0035
+ * (PD-ARCH-01G-E.1). A contract check the constraint does not accept is logged (check name and run ID, no text) and
+ * neither run nor stored.
  *
  * QA findings are results, not stage failures: a slide that fails a blocking check stays blocked until a regenerated
  * version passes (OD-09); a warning is acknowledged by the operator (review module, T37).
@@ -29,6 +30,7 @@ import { StageFailure } from '../../workflow/index.js';
 import { ContentRepository } from '../content/index.js';
 import type { Stage, StageContext } from '../module-kit.js';
 import { type FontSet, fontSetFor, loadBundledFaces, pngSize, readSlideImage } from '../rendering/index.js';
+import { displayNamesOfFacts, loadProjectDisplayNames } from '../visual-templates/project.js';
 
 import { checkVersion, qaContext, runVisualQa } from './core.js';
 import { type StoredVersion, VisualQaRepository } from './repository.js';
@@ -91,6 +93,7 @@ async function buildInput(
     throw new StageFailure('no_data');
   }
   const { config } = container;
+  const facts = content.facts(request.factsRunId);
   const versions = [];
   for (const version of request.versions) {
     versions.push({
@@ -118,8 +121,16 @@ async function buildInput(
       seasonLabel: labels.seasonLabel,
       stageLabel: labels.stageLabel,
     },
-    facts: content.facts(request.factsRunId),
+    facts,
     teamAliases: content.teamAliases(request.factsRunId),
+    // TEAM-DISPLAY-01: the snapshot presentation name of each team-name fact's team (empty before snapshot version 4).
+    teamDisplayNames: displayNamesOfFacts(
+      container.db,
+      facts.flatMap((fact) =>
+        fact['kind'] === 'team_official_name' && typeof fact['id'] === 'string' ? [fact['id']] : [],
+      ),
+      loadProjectDisplayNames(container.db, request.projectId),
+    ),
     checks: new VisualQaRepository(container.db).storableChecks(),
     carouselTemplates: [...request.carouselTemplates],
     versions,

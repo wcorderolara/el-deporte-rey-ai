@@ -9,7 +9,9 @@
  *   `{{f:m<n>:result}}` for its result relation, a deterministic phrase computed from the score (the AI never
  *   derives a result; fixed template text states it on the slide, T10-F06);
  * - `{{f:row:<teamId>:position}}`, `{{f:row:<teamId>:points}}` for a standings row;
- * - `{{f:competition}}`, `{{f:stage}}`, `{{f:season}}` for the selection labels.
+ * - `{{f:competition}}`, `{{f:stage}}`, `{{f:season}}` for the selection labels;
+ * - for a match not played yet (PD-ARCH-01E-B), `{{f:m<n>:kickoff}}` and `{{f:m<n>:status}}` (the status label of the
+ *   local status, never inferred from the date): a fixture has no score and no result placeholder.
  *
  * The request holds only these placeholders and display values, the slide keys and types (positional keys, never a
  * source or match key), the language, the brand name and handle and the limits. It never holds a source reference,
@@ -27,7 +29,7 @@ import {
   templateText,
 } from '../../platform/format/index.js';
 
-import type { CarouselPlan, MatchPlan, SlidePlan, StandingsRowPlan } from './structure.js';
+import type { CarouselPlan, FixturePlan, MatchPlan, SlidePlan, StandingsRowPlan } from './structure.js';
 
 /** Field limits of the AI text (code points). The text-fit check of visual QA re-measures the rendered text. */
 export const DRAFT_LIMITS: Readonly<DraftLimits> = Object.freeze({
@@ -58,6 +60,10 @@ export interface DraftContext {
   readonly stageLabel: string;
   readonly matchday: number | null;
   readonly brand: { readonly name: string; readonly handle: string };
+  /** Store the values a visual template draws independently (PD-ARCH-01G-D); false when absent. */
+  readonly templateFields?: boolean;
+  /** Calendar rows (PD-ARCH-01G-E.2): each overview line also stores the time and the status; false when absent. */
+  readonly calendarRows?: boolean;
 }
 
 function fact(placeholder: string, kind: string, text: string, factId: string): PlaceholderBinding {
@@ -112,6 +118,22 @@ export function matchBindings(match: MatchPlan, context: DraftContext): Placehol
   return bindings;
 }
 
+/** The status label of a match status in the language. */
+export function statusDisplay(status: FixturePlan['status'], language: Language): string {
+  return templateText(language).matchStatus[status];
+}
+
+/** Bindings of one match not played yet: its teams, kickoff and status (no score, no result). */
+export function fixtureBindings(fixture: FixturePlan, context: DraftContext): PlaceholderBinding[] {
+  const prefix = `m${String(fixture.index)}`;
+  return [
+    fact(teamPlaceholder(fixture.home.teamId), 'team', fixture.home.name, fixture.home.factId),
+    fact(teamPlaceholder(fixture.away.teamId), 'team', fixture.away.name, fixture.away.factId),
+    fact(`{{f:${prefix}:kickoff}}`, 'date', kickoffDisplay(fixture.kickoff, context), fixture.kickoffFactId),
+    fact(`{{f:${prefix}:status}}`, 'status', statusDisplay(fixture.status, context.language), fixture.statusFactId),
+  ];
+}
+
 /** Bindings of one standings row. */
 export function rowBindings(row: StandingsRowPlan): PlaceholderBinding[] {
   const prefix = `row:${row.team.teamId}`;
@@ -145,13 +167,23 @@ export function slideBindings(slide: SlidePlan, context: DraftContext): Placehol
       return unique(slide.rows.flatMap(rowBindings));
     case 'closing':
       return [];
+    case 'round_overview':
+      return unique(slide.fixtures.flatMap((fixture) => fixtureBindings(fixture, context)));
+    case 'fixture':
+      return fixtureBindings(slide.fixture, context);
+    case 'match_preview':
+      return unique([...labelBindings(context), ...fixtureBindings(slide.fixture, context)]);
   }
 }
 
 /** The fact set of a carousel's caption: the selection labels and every match of the carousel. */
 export function captionBindings(carousel: CarouselPlan, context: DraftContext): PlaceholderBinding[] {
   const matches = carousel.slides.flatMap((slide) =>
-    slide.type === 'match_result' ? matchBindings(slide.match, context) : [],
+    slide.type === 'match_result'
+      ? matchBindings(slide.match, context)
+      : slide.type === 'fixture' || slide.type === 'match_preview'
+        ? fixtureBindings(slide.fixture, context)
+        : [],
   );
   return unique([...labelBindings(context), ...matches]);
 }

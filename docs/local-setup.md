@@ -33,6 +33,9 @@ Always install with `npm ci` from the committed `package-lock.json`.
 | Use | Command | Address |
 | --- | ------- | ------- |
 | Development | `npm run dev` | API `http://127.0.0.1:4300` (watch mode) and Vite `http://127.0.0.1:5173` with `/api` proxied to the API |
+| Development with football-data.org | `EDR_CONFIG=config/dev-live.config.json npm run dev` | Same separate API + Vite workflow; uses the existing `data/` database |
+| Development with AI design proposals (OpenAI) | `EDR_CONFIG=config/dev-images.config.json npm run dev` | Same workflow; adds the OpenAI image adapter (`EDR_IMAGE_API_KEY` in `.env.local`) |
+| Full development (football-data.org and OpenAI together) | `EDR_CONFIG=config/dev-full.config.json npm run dev` | Same workflow; football-data.org, the OpenAI images and the OpenAI editorial copy (`FOOTBALL_DATA_API_TOKEN`, `EDR_IMAGE_API_KEY` and `EDR_AI_API_KEY` in `.env.local`) |
 | Local use | `npm run build`, then `npm start` | UI and API on `http://127.0.0.1:4300` |
 | Verification runs (gates, verify worktree) | started by the end-to-end runner | `http://127.0.0.1:4310` |
 | Product Owner demonstration (demo worktree) | started for the demonstration only | `http://127.0.0.1:4320` |
@@ -46,7 +49,16 @@ Always install with `npm ci` from the committed `package-lock.json`.
   The verification (`4310`) and demonstration (`4320`) configurations list their own port in the same way.
 - Data: `data/` in the working tree (git-ignored), or the directory named by `EDR_DATA_DIR`; created with mode 0700.
   Tests use temporary directories that are removed after the run.
-- Other environment variables: `EDR_CONFIG` (alternative configuration file), `EDR_DATA_DIR`, `EDR_PORT`.
+- Migrations in watch mode: the API applies every pending migration of `apps/server/migrations` at startup, and in
+  `npm run dev` it restarts whenever `apps/server/dist` changes (`tsc --watch` and `node --watch` over the working
+  tree). So a new migration file in the checkout the development server runs from is applied to `data/edr.sqlite` (or
+  `EDR_DATA_DIR`) at the next restart, before the change is committed or accepted; a migration is never edited after
+  that (a new one corrects it). Once applied, a build without that migration file (for example an older branch)
+  refuses to start on that database (`migration_unknown_applied`). To keep the database out of work in progress, stop
+  the development server or run it with another `EDR_DATA_DIR` while the work is not accepted. This happened with
+  migration 0038 of TEAM-DISPLAY-01 (`docs/design/TEAM-DISPLAY-01/team-display-01-implementation-report.md`, section 9).
+- Other environment variables: `EDR_CONFIG` (alternative configuration file), `EDR_DATA_DIR`, `EDR_PORT`. The `dev:api` script
+  honors an explicit `EDR_CONFIG`; when unset it uses `config/dev.config.json`.
 
 ## 4. Host assumptions and credentials
 
@@ -71,7 +83,7 @@ precedence.
 
 - only on a single-user workstation, with `.env.local` at mode 0600;
 - a free-plan football-data.org token only; no subscription is purchased or upgraded;
-- the LIVE_DATA configuration (`EDR_CONFIG=config/live.config.json`) is enabled only when needed; otherwise the default
+- a LIVE_DATA configuration is enabled only when needed; otherwise the default
   configuration (DEMO_DATA and MANUAL_DATA) is used;
 - the request-budget controls of the provider adapter stay in place;
 - a new Product Owner decision is required before a paid plan is used, before the platform runs on a shared or
@@ -95,23 +107,68 @@ precedence.
 - The token is sent only in the `X-Auth-Token` header to `https://api.football-data.org`, from the server; it never
   reaches the browser, the database, the logs or an API response.
 
+**AI editorial copy with the OpenAI text API (PD-ARCH-01H, PD-30):**
+
+- `config/dev-full.config.json` configures the `openai-compatible` editorial writer (`providers.editorial`): the base
+  URL, the model, the reasoning effort (`reasoningEffort: medium`, sent as `reasoning_effort`), a 60-second deadline,
+  the output bound (`maxOutputTokens`, which includes the reasoning tokens), the prices copied from the provider's
+  published list with the date they were checked, and the PD-30 limits (30 generations a day, USD 5 a month). Every
+  other configuration keeps the free deterministic `stub` writer («Texto de prueba (sin IA)», no network request); a
+  test checks that only `dev-full` configures another writer. The slide commentary of the content stage (`providers.ai`) stays `stub`: only the editorial copy can call the
+  hosted writer, and only after the operator confirms the cost of each generation.
+- Put the key in `.env.local` as `EDR_AI_API_KEY=` followed by the key (mode 0600) and restart. The key is read at
+  call time, sent only in the `Authorization` header and removed from `process.env` at startup; it never reaches the
+  database, the logs or an API response. Without it the review shows that the writer is not ready.
+- Check the model and the prices against the provider's pricing page before the first run, and change them only in
+  the configuration.
+
+**AI design proposals with the OpenAI Image API (PD-ARCH-01G-B):**
+
+- `config/dev-images.config.json` is `config/dev.config.json` plus the `openai` image adapter (`providers.images`): the
+  base URL, the models, their qualities, the prices copied from the provider's published list with the date they were
+  checked, and the limits (images per request, references, images per day, monthly computed spend, concurrency). No
+  secret is in it. Every configuration except `dev-images` and `dev-full` keeps the adapter `disabled`. Start with
+  `EDR_CONFIG=config/dev-images.config.json npm run dev`.
+- `config/dev-full.config.json` is `config/dev-live.config.json` (football-data.org) plus the same `providers.images`
+  block, for a complete test with live sports data and AI proposals in one server. A test checks that it stays exactly
+  that union. Start with `EDR_CONFIG=config/dev-full.config.json npm run dev`.
+- Put the key in `.env.local` as `EDR_IMAGE_API_KEY=` followed by the key, with the file at mode 0600, and restart the
+  server. Check that it is present without printing it: `grep -c '^EDR_IMAGE_API_KEY=..*' .env.local`.
+- The key is read by the image adapter at call time, sent only in the `Authorization` header to the configured origin
+  (`https://api.openai.com`), and deleted from `process.env` at startup. It never reaches the browser, the database,
+  the logs or an API response.
+- Nothing is sent to OpenAI at startup, during tests, migrations or the build: only a confirmed generation in
+  Plantillas (with the explicit cost confirmation) and the "Comprobar acceso al modelo" button (a free metadata
+  request) reach it. Generations may be charged by OpenAI; your account may need the API Organization Verification
+  for GPT Image models.
+
 ## 5. Data modes
 
 | Mode | How to enable | External access |
 | ---- | ------------- | --------------- |
 | DEMO_DATA (synthetic fixtures) | default configuration | none |
 | MANUAL_DATA (JSON, CSV or form imports) | default configuration | none |
-| LIVE_DATA (football-data.org API v4) | `EDR_CONFIG=config/live.config.json` and `FOOTBALL_DATA_API_TOKEN` in `.env.local` | `https://api.football-data.org` only |
+| LIVE_DATA (football-data.org API v4), compiled app | `EDR_CONFIG=config/live.config.json` and `FOOTBALL_DATA_API_TOKEN` in `.env.local` | `https://api.football-data.org` only |
+| LIVE_DATA, Vite development | `EDR_CONFIG=config/dev-live.config.json` and `FOOTBALL_DATA_API_TOKEN` in `.env.local` | `https://api.football-data.org` only |
 
 LIVE_DATA setup, step by step:
 
 1. Confirm the PD-16 conditions of section 4 (single-user workstation, free-plan token).
 2. Create `.env.local` as shown in section 4 and put the token in `FOOTBALL_DATA_API_TOKEN=` with an editor.
 3. Check presence with `grep -c '^FOOTBALL_DATA_API_TOKEN=..*' .env.local` (prints a count, never the value).
-4. Start with the LIVE configuration: `npm run build`, then `EDR_CONFIG=config/live.config.json npm start`.
+4. For local development with hot reload, run `EDR_CONFIG=config/dev-live.config.json npm run dev`. This starts the API
+   separately on port 4300 and Vite on port 5173; Vite proxies `/api` to the API. The development configuration keeps
+   the exact local Host/Origin allowlist and uses the existing `data/` database, preserving access to locally managed
+   competitions. Set `EDR_DATA_DIR` if a separate test database is preferred.
+   Open **http://127.0.0.1:5173** to see React edits through Vite HMR. Port 4300 serves the last compiled frontend;
+   editing `apps/web/src/ui/Layout.tsx` will not change that page until `npm run build` runs again. Check the browser
+   address bar if an edit appears unchanged. The two processes still run separately under the root `dev` command.
+   To use the compiled single-server app instead, run `npm run build`, then
+   `EDR_CONFIG=config/live.config.json npm start`.
    With LIVE_DATA enabled and the token missing or empty, startup stops with an error that names the variable, never
    a value. Without LIVE_DATA the token is neither required nor read.
-5. When you are done, stop the server and return to the default configuration (start without `EDR_CONFIG`).
+5. When done, stop the processes. The normal `npm run dev` uses `config/dev.config.json` by default. `npm start` keeps
+   serving the compiled UI and API on port 4300.
 
 Facts retrieved from football-data.org alone stay unverified (awaiting independent verification) until an independent
 accepted source is configured, and LIVE_DATA content is not publication-approvable until the provider's written
@@ -126,7 +183,7 @@ Owner decision; its key goes in `EDR_AI_API_KEY` in `.env.local` under the same 
 | `npm run test:unit`, `npm run test:integration`, `npm run test:contract` | default suites |
 | `npm run test:e2e`, `npm run test:a11y` | browser journeys and accessibility checks on the built app (`127.0.0.1:4310`) |
 
-The default suites run on DEMO_DATA. Their shared setup removes `FOOTBALL_DATA_API_TOKEN`, `EDR_AI_API_KEY` and
+The default suites run on DEMO_DATA. Their shared setup removes `FOOTBALL_DATA_API_TOKEN`, `EDR_AI_API_KEY`, `EDR_IMAGE_API_KEY` and
 `EDR_LIVE_TESTS` from the environment and installs a network guard that fails any test that connects to a non-loopback
 address. Tests use synthetic credential values (`edr-test-marker-token-0000`, `edr-test-dummy-key-0000`), never real
 ones.

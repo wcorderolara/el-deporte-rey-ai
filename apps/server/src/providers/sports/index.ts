@@ -47,6 +47,7 @@ export function createSportsSources(config: SportsConfig, deps: SportsDeps, test
   return Object.freeze({
     descriptors: registry.descriptors,
     sourceIds: registry.sourceIds,
+    providerCatalog: registry.providerCatalog,
     get: registry.get,
     list: registry.list,
     validateStartup: registry.validateStartup,

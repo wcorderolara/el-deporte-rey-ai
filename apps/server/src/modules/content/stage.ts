@@ -5,8 +5,8 @@
  *   for a redraft), their effective statuses, the teams' known name forms, the standings availability recorded by
  *   research for that run, the project's selection labels and language, the brand and display settings of the
  *   configuration, the format of the run's configuration snapshot, and the operator's exclusions: the run parameter
- *   `excludedMatchKeys` when the run sets them (OD-43, a redraft started by `setExcludedMatches`), else those of the
- *   project's active draft, else none. Nothing else is read: no source reference, attribution, import metadata or
+ *   `excludedMatchKeys` when the run sets them (OD-43, a redraft started by the `setExcludedMatches` operation,
+ *   retired by UX-REVIEW-01), else those of the project's active draft, else none. Nothing else is read: no source reference, attribution, import metadata or
  *   data mode reaches the stage input (T11H-F16).
  * - `run` drafts with the configured AI provider (`draftContent`); no database write.
  * - `persist` supersedes the project's active draft (its current versions and the final approvals of its carousels)
@@ -60,6 +60,9 @@ export function buildContentInput(
     seasonLabel: labels.seasonLabel,
     stageLabel: labels.stageLabel,
     matchday: labels.matchday,
+    contentKind: labels.contentKind,
+    templateFields: labels.templated,
+    calendarRows: labels.calendarRows,
     brand: { name: config.brand.name, handle: config.brand.handle },
     utcOffsetMinutes: config.display.utcOffsetMinutes,
     maxSlidesPerCarousel: request.maxSlidesPerCarousel,

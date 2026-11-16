@@ -5,7 +5,10 @@ import { Link, useLocation, useParams } from 'react-router';
 import { featurePaths } from '../../app/routes';
 import { Badge, buttonClassName, Card, dataModeLabel, ErrorBanner, featureCopy, formatDateTime } from '../../ui';
 import { createCopy, detailCopy, languageLabel, runCopy } from './copy';
-import { isProjectId } from './paths';
+import { contentTypeLabel } from './dashboardModel';
+import { templateContentTypeLabel } from '../visual-templates/copy';
+import { pieceKindCopy } from './generationCopy';
+import { contentBatchPath, isProjectId } from './paths';
 import styles from './Projects.module.css';
 import { useProjectsDependencies } from './ProjectsContext';
 import { isRunActive, RunProgress, runSummary } from './RunProgress';
@@ -37,7 +40,7 @@ function SelectionSummary({ project }: { project: Project }) {
     >
       <div className="grid min-w-0 gap-1">
         <p className="m-0 text-caption font-bold tracking-label text-brand-gold uppercase">
-          Carrusel de Instagram · 4:5
+          {contentTypeLabel(project)} · Carrusel de Instagram 4:5
         </p>
         <p data-testid="project-summary" className="m-0 text-body-sm text-text-secondary">
           {project.competitionName} · {period}
@@ -51,7 +54,19 @@ function SelectionSummary({ project }: { project: Project }) {
       </h1>
       <div className="flex min-w-0 flex-wrap items-center gap-3">
         <ProjectStatus project={project} />
+        <span className="text-body-sm text-text-secondary">
+          Creado <time dateTime={project.createdAt}>{formatDateTime(project.createdAt)}</time>
+          {project.lastExportAt === null ? null : (
+            <>
+              {' · '}Última exportación{' '}
+              <time dateTime={project.lastExportAt}>{formatDateTime(project.lastExportAt)}</time>
+            </>
+          )}
+        </span>
       </div>
+      {project.sportsContext === null ? null : (
+        <SportsContext context={project.sportsContext} visualTemplates={project.visualTemplates} />
+      )}
       {project.demonstration || project.dataMode === 'DEMO_DATA' ? (
         <p role="note" className="m-0 border-l-2 border-demo px-3 py-1 text-caption text-demo">
           Datos sintéticos · no verificados ni publicables.
@@ -82,6 +97,78 @@ function SelectionSummary({ project }: { project: Project }) {
         ) : null}
       </details>
     </Card>
+  );
+}
+
+/**
+ * The local sports context of a project generated from a competition (PD-ARCH-01E-A), with the visual template
+ * version of each slide type it uses (PD-ARCH-01G-D, decision 01G-D-3; the other slides use the engine templates).
+ */
+function SportsContext({
+  context,
+  visualTemplates,
+}: {
+  context: NonNullable<Project['sportsContext']>;
+  visualTemplates: Project['visualTemplates'];
+}) {
+  return (
+    <section
+      aria-labelledby="project-sports-context-title"
+      className="grid gap-2 rounded-control border-hairline border-border-subtle bg-surface-subtle p-3"
+    >
+      <h2 id="project-sports-context-title" className="m-0 text-body-md font-bold">
+        Contexto deportivo
+      </h2>
+      <dl className="m-0 grid gap-2 text-body-sm text-text-secondary sm:grid-cols-2">
+        <div>
+          <dt className="font-bold">Competición</dt>
+          <dd className="m-0">
+            <Link className="text-text-link underline" to={`${featurePaths.competitions}/${context.competitionId}`}>
+              {context.competitionName}
+            </Link>
+          </dd>
+        </div>
+        <div>
+          <dt className="font-bold">Temporada</dt>
+          <dd className="m-0">{context.seasonLabel}</dd>
+        </div>
+        <div>
+          <dt className="font-bold">Fase y jornada</dt>
+          <dd className="m-0">
+            {context.stageName === null ? context.roundName : `${context.stageName} · ${context.roundName}`}
+          </dd>
+        </div>
+        <div>
+          <dt className="font-bold">Pieza</dt>
+          <dd className="m-0">
+            {pieceKindCopy[context.kind].label} · {context.matchIds.length}{' '}
+            {context.matchIds.length === 1 ? 'partido' : 'partidos'} ·{' '}
+            <Link className="text-text-link underline" to={contentBatchPath(context.batchId)}>
+              Ver generación
+            </Link>
+          </dd>
+        </div>
+        {visualTemplates.length === 0 ? (
+          <div>
+            <dt className="font-bold">Plantilla</dt>
+            <dd className="m-0">Plantillas del motor</dd>
+          </div>
+        ) : (
+          <div>
+            <dt className="font-bold">Plantillas visuales</dt>
+            <dd className="m-0">
+              <ul className="m-0 grid list-none gap-0.5 p-0">
+                {visualTemplates.map((usage) => (
+                  <li key={usage.contentType}>
+                    {templateContentTypeLabel[usage.contentType]}: {usage.name} · versión {usage.version}
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        )}
+      </dl>
+    </section>
   );
 }
 
@@ -333,7 +420,7 @@ function ProjectDetail({ projectId }: { projectId: string }) {
       <ProjectGeneratedContent project={project} />
       <ProjectSections project={project} />
       <details
-        open={project.activeDraftId === null ? true : undefined}
+        open={project.activeDraftId === null || project.latestRun?.status === 'failed' ? true : undefined}
         className="rounded-card border-hairline border-border-subtle bg-surface-raised p-4"
       >
         <summary className="focus-studio min-h-touch cursor-pointer content-center font-bold text-text-link underline decoration-border-strong underline-offset-4">

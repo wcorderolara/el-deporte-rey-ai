@@ -13,7 +13,7 @@ import type { CheckContext, TeamNameRule } from './checks.js';
 import { composeCaption, composeSlide } from './compose.js';
 import { type DraftContext, buildDraftRequest } from './request.js';
 import type { ContentInput, ContentOutput, DraftCarousel, DraftElement, ElementSubject, TeamAlias } from './schemas.js';
-import { CAPTION_KEY, type CarouselPlan, FactIndex, type SlidePlan, planDraft } from './structure.js';
+import { CAPTION_KEY, type CarouselPlan, type ContentKind, FactIndex, type SlidePlan, planDraft } from './structure.js';
 
 /** The labels and settings of the input as a draft context. */
 export function draftContextOf(input: ContentInput): DraftContext {
@@ -25,11 +25,21 @@ export function draftContextOf(input: ContentInput): DraftContext {
     stageLabel: input.stageLabel,
     matchday: input.matchday,
     brand: { name: input.brand.name, handle: input.brand.handle },
+    templateFields: input.templateFields === true,
+    calendarRows: input.calendarRows === true,
   };
 }
 
-/** The check context: every team with a usable name and every known alias of it. */
-export function checkContextOf(index: FactIndex, aliases: readonly TeamAlias[], brandHandle: string): CheckContext {
+/**
+ * The check context: every team with a usable name and every known alias of it, and whether the content describes
+ * matches not played yet (any content kind other than `results`, PD-ARCH-01E-B).
+ */
+export function checkContextOf(
+  index: FactIndex,
+  aliases: readonly TeamAlias[],
+  brandHandle: string,
+  contentKind: ContentKind = 'results',
+): CheckContext {
   const byTeam = new Map<string, string[]>();
   for (const alias of aliases) {
     const list = byTeam.get(alias.teamId) ?? [];
@@ -41,13 +51,20 @@ export function checkContextOf(index: FactIndex, aliases: readonly TeamAlias[], 
     officialName: team.name,
     aliases: byTeam.get(team.teamId) ?? [],
   }));
-  return { brandHandle, teams };
+  return contentKind === 'results' ? { brandHandle, teams } : { brandHandle, teams, unplayed: true };
 }
 
 /** The stored subject of a slide. */
 export function subjectOf(slide: SlidePlan | null): ElementSubject {
   if (slide?.type === 'match_result') {
     return { matchKey: slide.match.matchKey, matchIndex: slide.match.index, standingsPage: null, teamIds: [] };
+  }
+  if (slide?.type === 'fixture' || slide?.type === 'match_preview') {
+    return { matchKey: slide.fixture.matchKey, matchIndex: slide.fixture.index, standingsPage: null, teamIds: [] };
+  }
+  if (slide?.type === 'round_overview') {
+    // The page is rebuilt from the facts on regeneration, like the slide was planned.
+    return { matchKey: null, matchIndex: null, standingsPage: slide.page, teamIds: [] };
   }
   if (slide?.type === 'standings') {
     return {
@@ -120,13 +137,15 @@ export async function draftContent(
 ): Promise<ContentOutput> {
   const index = new FactIndex(input.facts);
   const plan = planDraft(index, {
+    contentKind: input.contentKind,
     standings: input.standings,
     excludedMatchKeys: input.excludedMatchKeys,
     maxSlidesPerCarousel: input.maxSlidesPerCarousel,
     standingsRowsPerSlide: input.standingsRowsPerSlide,
+    calendarRows: input.calendarRows === true,
   });
   const context = draftContextOf(input);
-  const checks = checkContextOf(index, input.teamAliases, input.brand.handle);
+  const checks = checkContextOf(index, input.teamAliases, input.brand.handle, input.contentKind);
   const carousels: DraftCarousel[] = [];
   for (const carousel of plan.carousels) {
     carousels.push(await draftCarousel(carousel, context, checks, ai, signal));

@@ -16,7 +16,6 @@ export function versionPath(versionId: string): string {
 }
 
 /** Address of the project creation form of the projects feature (R-276). */
-export const newProjectPath = `${featurePaths.projects}/new`;
 
 const UUID = contractRegExp('Uuid');
 

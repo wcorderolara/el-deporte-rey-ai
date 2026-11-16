@@ -1,0 +1,40 @@
+# UI-06.1 — accesibilidad final tras la corrección de E2E-F01 (npm run test:a11y: build y node e2e/run.mjs --grep @a11y), 2026-11-13.
+
+[e2e] Ensuring Chromium in .cache/ms-playwright (downloaded on first use only).
+[e2e] Configuration generated from fixtures/config/demo-manual.config.json in a temporary directory: sources demo-a, demo-b, manual, local, stub AI provider.
+[e2e] Starting the built server entry (apps/server/dist/src/main.js).
+[e2e] Server listening on http://127.0.0.1:4310.
+
+Running 28 tests using 1 worker
+
+  ✓   1 [chromium] › e2e/tests/a11y.spec.ts:184:3 › Accessibility @a11y › Inicio and Mis proyectos (709ms)
+  ✓   2 [chromium] › e2e/tests/a11y.spec.ts:194:3 › Accessibility @a11y › every step of Crear contenido and the generation result (3.0s)
+  ✓   3 [chromium] › e2e/tests/a11y.spec.ts:222:3 › Accessibility @a11y › project page with its run details, and its data and verification page (1.5s)
+  ✓   4 [chromium] › e2e/tests/a11y.spec.ts:234:3 › Accessibility @a11y › review workspace: warning, bulk approval, editorial copy and final approval dialog (6.0s)
+  ✓   5 [chromium] › e2e/tests/a11y.spec.ts:275:3 › Accessibility @a11y › review workspace with a valid final approval (543ms)
+  ✓   6 [chromium] › e2e/tests/a11y.spec.ts:281:3 › Accessibility @a11y › Exportaciones, an export and the trace of an exported slide (1.1s)
+  ✓   7 [chromium] › e2e/tests/a11y.spec.ts:293:3 › Accessibility @a11y › Competiciones: list, competition, teams with the badge form, season and round (1.7s)
+  ✓   8 [chromium] › e2e/tests/a11y.spec.ts:323:3 › Accessibility @a11y › Datos: file mode with a rejected import, applied import, form mode, import and version (2.4s)
+  ✓   9 [chromium] › e2e/tests/a11y.spec.ts:348:3 › Accessibility @a11y › Mi marca: resources with the upload dialog and a registered asset, and the visual identity (1.4s)
+  ✓  10 [chromium] › e2e/tests/a11y.spec.ts:374:3 › Accessibility @a11y › Plantillas: create a template and the engine templates (721ms)
+  ✓  11 [chromium] › e2e/tests/a11y.spec.ts:383:3 › Accessibility @a11y › not-found page (394ms)
+  ✓  12 [chromium] › e2e/tests/a11y.spec.ts:389:3 › Accessibility @a11y › positive control: the scan reports a seeded low-contrast text (238ms)
+  ✓  13 [chromium] › e2e/tests/a11y.spec.ts:400:3 › Accessibility of a failed run @a11y › project page after a failed run (3.7s)
+  ✓  14 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard projects 1440px @a11y (830ms)
+  ✓  15 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard empty 1440px @a11y (499ms)
+  ✓  16 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard loading 1440px @a11y (470ms)
+  ✓  17 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard error 1440px @a11y (495ms)
+  ✓  18 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard projects 768px @a11y (745ms)
+  ✓  19 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard empty 768px @a11y (456ms)
+  ✓  20 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard loading 768px @a11y (439ms)
+  ✓  21 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard error 768px @a11y (447ms)
+  ✓  22 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard projects 390px @a11y (727ms)
+  ✓  23 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard empty 390px @a11y (438ms)
+  ✓  24 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard loading 390px @a11y (438ms)
+  ✓  25 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard error 390px @a11y (449ms)
+  ✓  26 [chromium] › e2e/tests/shell-responsive.spec.ts:4:3 › shell navigation at 1440px @a11y (808ms)
+  ✓  27 [chromium] › e2e/tests/shell-responsive.spec.ts:4:3 › shell navigation at 768px @a11y (820ms)
+  ✓  28 [chromium] › e2e/tests/shell-responsive.spec.ts:4:3 › shell navigation at 390px @a11y (829ms)
+
+  28 passed (37.4s)
+[e2e] Server stopped and temporary directory removed.

@@ -20,6 +20,9 @@ import { join } from 'node:path';
 
 import type {
   Draft,
+  EditorialGenerationResult,
+  EditorialPackage,
+  EditorialVersion,
   Element,
   Export,
   ExportDetail,
@@ -32,12 +35,13 @@ import type {
 } from '@edr/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { TEST_MARKER_TOKEN } from '../../../../vitest.setup.js';
+import { TEST_DUMMY_API_KEY, TEST_MARKER_TOKEN } from '../../../../vitest.setup.js';
 import {
   FIXTURES_DIR,
   type Json,
   LIGA_DEMO_MD1,
   type ProjectSelection,
+  type ScriptedImageEgress,
   TOKEN_VARIABLE,
   type TestApp,
   expectNoNetworkViolations,
@@ -45,10 +49,14 @@ import {
   providerResponsesDirectory,
   readJson,
   replayTransport,
+  scriptedImageEgress,
   sourcesOf,
   startTestApp,
+  testImageProviderConfig,
   testLiveAdapter,
 } from '../support/index.js';
+
+import { designServiceOf } from '../../src/modules/design/index.js';
 
 import type { JsonValue } from './support/contract-document.js';
 import { providerValues, responseFindings, type ProviderValues } from './support/neutrality.js';
@@ -67,10 +75,13 @@ let demo: TestApp;
 let live: TestApp;
 let limited: TestApp;
 let warned: TestApp;
+let designer: TestApp;
+let images: ScriptedImageEgress;
 let d: ContractClient;
 let l: ContractClient;
 let r: ContractClient;
 let w: ContractClient;
+let g: ContractClient;
 let provider: ProviderValues;
 
 const MANUAL_DIR = join(FIXTURES_DIR, 'manual');
@@ -113,7 +124,27 @@ const MANUAL_SELECTION: ProjectSelection = {
 beforeAll(async () => {
   spec = await ContractSpec.load();
   provider = providerValues();
-  demo = await startTestApp({ base: 'demo-manual', scenario: 'default' });
+  demo = await startTestApp({
+    base: 'demo-manual',
+    scenario: 'default',
+    // The local competitions source of PD-ARCH-01E-A, so content batches can be created.
+    mutate: (document) => {
+      const sports = (document['providers'] as Json)['sports'] as Json;
+      (sports['sources'] as Json[]).push({
+        id: 'local',
+        name: 'Datos deportivos locales',
+        mode: 'MANUAL_DATA',
+        enabled: true,
+        role: 'primary',
+        accepted: false,
+        independenceGroup: 'local',
+        officialPublication: false,
+        publicationPermission: 'not_applicable',
+        adapter: 'local-competitions',
+        options: {},
+      });
+    },
+  });
   live = await startTestApp({
     base: 'live',
     egress: replayTransport(),
@@ -137,6 +168,16 @@ beforeAll(async () => {
       ai['options'] = { ...(ai['options'] as Json), scenario: 'translated-team-name' };
     },
   });
+  // PD-ARCH-01G-B: the openai image adapter over a scripted egress client (no connection, no credit used).
+  images = scriptedImageEgress();
+  designer = await startTestApp({
+    mutate: (document) => {
+      (document['providers'] as Json)['images'] = testImageProviderConfig() as Json;
+    },
+    imageEgress: images,
+    env: { EDR_IMAGE_API_KEY: TEST_DUMMY_API_KEY },
+  });
+  g = new ContractClient(designer, spec);
   d = new ContractClient(demo, spec);
   l = new ContractClient(live, spec);
   r = new ContractClient(limited, spec);
@@ -144,11 +185,208 @@ beforeAll(async () => {
   await d.call('listManagedCompetitions');
   const createdCompetition = await d.call('createCompetition', { json: { name: 'Competición de prueba' } });
   const managedCompetitionId = String((createdCompetition.body as { id: string }).id);
+  const providersResponse = await l.call('listSportsProviders');
+  const providerEntry = (providersResponse.body as { providers: { key: string }[] }).providers[0];
+  if (!providerEntry) throw new Error('The test live adapter must be listed.');
+  const externalList = await l.call('listExternalCompetitions', { params: { providerKey: providerEntry.key } });
+  if (externalList.status !== 200)
+    throw new Error(`External provider fixture failed (${externalList.status}): ${externalList.text}`);
+  const firstExternal = (externalList.body as { competitions: { externalCompetitionId: string }[] }).competitions[0];
+  const bindingCompetition = await l.call('createCompetition', { json: { name: 'Competición vinculada' } });
+  const bindingCompetitionId = String((bindingCompetition.body as { id: string }).id);
+  await l.call('listCompetitionImportApplications', { params: { competitionId: bindingCompetitionId } });
+  await l.call('getSportsFieldProvenance', {
+    params: { competitionId: bindingCompetitionId, entityType: 'season', entityId: bindingCompetitionId },
+  });
+  await l.call('getCompetitionProviderBinding', { params: { competitionId: bindingCompetitionId } });
+  if (!firstExternal) throw new Error('The live fixture must provide one external competition.');
+  await l.call('setCompetitionProviderBinding', {
+    params: { competitionId: bindingCompetitionId },
+    json: {
+      providerKey: providerEntry.key,
+      externalCompetitionId: firstExternal.externalCompetitionId,
+      mode: 'provider',
+    },
+  });
+  await l.call('getCompetitionProviderBinding', { params: { competitionId: bindingCompetitionId } });
+  const externalSeasons = await l.call('listCompetitionExternalSeasons', {
+    params: { competitionId: bindingCompetitionId },
+  });
+  const externalSeasonId = (externalSeasons.body as { seasons: { externalSeasonId: string }[] }).seasons[0]
+    ?.externalSeasonId;
+  if (!externalSeasonId) throw new Error('The live fixture must provide one external season.');
+  await l.call('getCompetitionImportCapabilities', {
+    params: { competitionId: bindingCompetitionId, externalSeasonId },
+  });
+  const importPreview = await l.call('createCompetitionImportPreview', {
+    params: { competitionId: bindingCompetitionId },
+    json: { externalSeasonId, resources: ['season'] },
+  });
+  const previewId = String((importPreview.body as { preview: { previewId: string } }).preview.previewId);
+  await l.call('getCompetitionImportPreview', {
+    params: { competitionId: bindingCompetitionId, previewId },
+  });
+  const startedOperation = await l.call('startCompetitionImportOperation', {
+    params: { competitionId: bindingCompetitionId },
+    json: { externalSeasonId, resources: ['season'] },
+  });
+  const operationId = String((startedOperation.body as { operation: { operationId: string } }).operation.operationId);
+  await l.call('getCompetitionImportOperation', { params: { competitionId: bindingCompetitionId, operationId } });
+  await l.call('streamCompetitionImportOperation', { params: { competitionId: bindingCompetitionId, operationId } });
+  await l.call('cancelCompetitionImportOperation', { params: { competitionId: bindingCompetitionId, operationId } });
+  const applicationPlan = await l.call('planCompetitionImportApplication', {
+    params: { competitionId: bindingCompetitionId, previewId },
+    json: { decisions: [] },
+  });
+  const planHash = String((applicationPlan.body as { plan: { planHash: string } }).plan.planHash);
+  const startedApplication = await l.call('startCompetitionImportApplication', {
+    params: { competitionId: bindingCompetitionId, previewId },
+    json: { decisions: [], planHash },
+  });
+  const applicationOperationId = String(
+    (startedApplication.body as { operation: { operationId: string } }).operation.operationId,
+  );
+  await l.call('streamCompetitionImportApplication', {
+    params: { competitionId: bindingCompetitionId, operationId: applicationOperationId },
+  });
+  await l.call('getCompetitionImportApplication', {
+    params: { competitionId: bindingCompetitionId, operationId: applicationOperationId },
+  });
+  await l.call('cancelCompetitionImportApplication', {
+    params: { competitionId: bindingCompetitionId, operationId: applicationOperationId },
+  });
+  await l.call('removeCompetitionProviderBinding', { params: { competitionId: bindingCompetitionId } });
   await d.call('getCompetition', { params: { competitionId: managedCompetitionId } });
+  await d.call('listManagedSeasons', { params: { competitionId: managedCompetitionId } });
+  const createdSeason = await d.call('createManagedSeason', {
+    params: { competitionId: managedCompetitionId },
+    json: { label: 'Temporada contractual' },
+  });
+  const managedSeasonId = String((createdSeason.body as { id: string }).id);
+  await d.call('getManagedSeason', {
+    params: { competitionId: managedCompetitionId, seasonId: managedSeasonId },
+  });
+  await d.call('updateManagedSeason', {
+    params: { competitionId: managedCompetitionId, seasonId: managedSeasonId },
+    json: { label: 'Temporada contractual actualizada' },
+  });
+  const createdTeam = await d.call('createManagedTeam', {
+    json: { name: 'Equipo contractual', region: 'Región de prueba' },
+  });
+  const managedTeamId = String((createdTeam.body as { id: string }).id);
+  await d.call('updateManagedTeam', {
+    params: { teamId: managedTeamId },
+    json: { name: 'Equipo contractual actualizado', region: 'Región de prueba' },
+  });
+  await d.call('listManagedTeams');
+  await d.call('getManagedTeam', { params: { teamId: managedTeamId } });
+  const participantParams = { competitionId: managedCompetitionId, seasonId: managedSeasonId };
+  await d.call('listCompetitionTeams', { params: { competitionId: managedCompetitionId } });
+  await d.call('addCompetitionTeam', {
+    params: { competitionId: managedCompetitionId },
+    json: { teamId: managedTeamId },
+  });
+  await d.call('listSeasonParticipants', { params: participantParams });
+  await d.call('addSeasonParticipant', { params: participantParams, json: { teamId: managedTeamId } });
+  await d.call('listSeasonParticipants', { params: participantParams });
+  const awayTeam = await d.call('createManagedTeam', { json: { name: 'Otro equipo contractual' } });
+  const awayTeamId = String((awayTeam.body as { id: string }).id);
+  await d.call('addCompetitionTeam', {
+    params: { competitionId: managedCompetitionId },
+    json: { teamId: awayTeamId },
+  });
+  await d.call('addSeasonParticipant', { params: participantParams, json: { teamId: awayTeamId } });
+  const phase = await d.call('createCompetitionStage', {
+    params: participantParams,
+    json: { name: 'Fase contractual' },
+  });
+  const stageId = String((phase.body as { id: string }).id);
+  await d.call('listCompetitionStages', { params: participantParams });
+  await d.call('getCompetitionStage', { params: { ...participantParams, stageId } });
+  await d.call('updateCompetitionStage', {
+    params: { ...participantParams, stageId },
+    json: { name: 'Fase contractual editada' },
+  });
+  const directRound = await d.call('createSeasonRound', {
+    params: participantParams,
+    json: { name: 'Jornada contractual' },
+  });
+  const directRoundId = String((directRound.body as { id: string }).id);
+  await d.call('listSeasonRounds', { params: participantParams });
+  await d.call('getSeasonRound', { params: { ...participantParams, roundId: directRoundId } });
+  await d.call('updateCompetitionRound', {
+    params: { ...participantParams, roundId: directRoundId },
+    json: { name: 'Jornada contractual editada' },
+  });
+  await d.call('deleteCompetitionRound', {
+    params: { ...participantParams, roundId: directRoundId },
+  });
+  const stageRound = await d.call('createStageRound', {
+    params: { ...participantParams, stageId },
+    json: { name: 'Ronda contractual' },
+  });
+  const stageRoundId = String((stageRound.body as { id: string }).id);
+  await d.call('listStageRounds', { params: { ...participantParams, stageId } });
+  const fixture = await d.call('createCompetitionMatch', {
+    params: participantParams,
+    json: { homeTeamId: managedTeamId, awayTeamId, stageId, roundId: stageRoundId },
+  });
+  const matchId = String((fixture.body as { id: string }).id);
+  await d.call('listCompetitionMatches', { params: participantParams });
+  await d.call('getCompetitionMatch', { params: { ...participantParams, matchId } });
+  await d.call('updateCompetitionMatchSchedule', {
+    params: { ...participantParams, matchId },
+    json: { kickoffAt: '2027-05-10T18:00:00Z' },
+  });
+  await d.call('updateCompetitionMatchResult', {
+    params: { ...participantParams, matchId },
+    json: { status: 'finished', homeScore: 2, awayScore: 1 },
+  });
+  await d.call('listCompetitionMatchResultHistory', { params: { ...participantParams, matchId } });
+  const batchSelection = {
+    competitionId: managedCompetitionId,
+    seasonId: participantParams.seasonId,
+    stageId,
+    roundId: stageRoundId,
+    matchIds: [matchId],
+    kinds: ['round_results', 'match_result'],
+  };
+  await d.call('previewContentBatch', { json: batchSelection });
+  const batch = await d.call('createContentBatch', {
+    json: { requestKey: '00000000-0000-4000-8000-0000000001e0', selection: batchSelection },
+  });
+  await d.call('getContentBatch', { params: { batchId: String((batch.body as { id: string }).id) } });
+  // PD-ARCH-01F: a project of its own is deleted, then deleted again (idempotent) and no longer found.
+  const doomed = await d.call('createProject', { json: LIGA_DEMO_MD1 });
+  const doomedId = String((doomed.body as { id: string }).id);
+  await d.call('deleteProject', { params: { projectId: doomedId } });
+  await d.call('deleteProject', { params: { projectId: doomedId } });
+  await d.call('getProject', { params: { projectId: doomedId } });
+  const unusedTeam = await d.call('createManagedTeam', { json: { name: 'Equipo sin partidos' } });
+  const unusedTeamId = String((unusedTeam.body as { id: string }).id);
+  await d.call('addSeasonParticipant', { params: participantParams, json: { teamId: unusedTeamId } });
+  await d.call('removeSeasonParticipant', {
+    params: { ...participantParams, teamId: unusedTeamId },
+  });
+  await d.call('removeCompetitionTeam', {
+    params: { competitionId: managedCompetitionId, teamId: unusedTeamId },
+  });
+  const batchTeams = await Promise.all([
+    d.call('createManagedTeam', { json: { name: 'Equipo lote uno' } }),
+    d.call('createManagedTeam', { json: { name: 'Equipo lote dos' } }),
+  ]);
+  const batchTeamIds = batchTeams.map((entry) => String((entry.body as { id: string }).id));
+  for (const teamId of batchTeamIds) {
+    await d.call('addCompetitionTeam', { params: { competitionId: managedCompetitionId }, json: { teamId } });
+  }
+  await d.call('addSeasonParticipantsBatch', { params: participantParams, json: { teamIds: batchTeamIds } });
+  for (const teamId of batchTeamIds) {
+    await d.call('removeSeasonParticipant', { params: { ...participantParams, teamId } });
+  }
 }, RUN_TIMEOUT);
 
 afterAll(async () => {
-  await Promise.all([demo?.close(), live?.close(), limited?.close(), warned?.close()]);
+  await Promise.all([demo?.close(), live?.close(), limited?.close(), warned?.close(), designer?.close()]);
 });
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -407,16 +645,55 @@ describe('DEMO_DATA and MANUAL_DATA operations on the running app', { timeout: R
     );
   });
 
-  it('sets excluded matches, which starts a redraft run (202)', async () => {
+  it('writes, edits and approves the editorial copy with the stub writer, without any outbound request (PD-ARCH-01H)', async () => {
     const project = required(state.project, 'project');
-    const facts = required(state.facts, 'facts');
-    const matchKey = facts.facts.find((fact) => fact.subject.matchKey !== undefined)?.subject.matchKey;
-    const run = await ok<Run>(d, 'setExcludedMatches', {
-      params: { projectId: project.id },
-      json: { excludedMatchKeys: [required(matchKey, 'match key')] },
+    const egress = demo.egress.requests.length;
+    const params = { projectId: project.id };
+    const before = await ok<EditorialPackage>(d, 'getEditorialPackage', { params });
+    expect(before.available).toBe(true);
+    expect(before.writer.kind).toBe('test');
+    expect(before.research.mode).toBe('local_context');
+    const requestKey = '00000000-0000-4000-8000-0000000e0001';
+    const generated = await ok<EditorialGenerationResult>(d, 'createEditorialGeneration', {
+      params,
+      json: { requestKey },
     });
-    expect(run.kind).toBe('redraft');
-    await settle(demo, run.id);
+    expect(generated.generation.promptVersion).toBe('edr-editorial-v1');
+    await problem(
+      d,
+      'createEditorialGeneration',
+      { params, json: { requestKey, deliverable: 'youtube' } },
+      409,
+      'REQUEST_KEY_REUSED',
+    );
+    const tiktok = required(
+      generated.package.deliverables.find((entry) => entry.deliverable === 'tiktok_reels')?.current ?? undefined,
+      'tiktok version',
+    );
+    const deliverableParams = { projectId: project.id, deliverable: 'tiktok_reels' };
+    const edited = await ok<EditorialVersion>(d, 'editEditorialDeliverable', {
+      params: deliverableParams,
+      json: {
+        baseVersionId: tiktok.id,
+        fields: [{ name: 'copy', text: 'Jornada con tela que cortar. ¿Tú qué opinas?' }],
+      },
+    });
+    expect(edited.origin).toBe('edited');
+    await problem(
+      d,
+      'approveEditorialDeliverable',
+      { params: deliverableParams, json: { versionId: tiktok.id } },
+      409,
+      'VERSION_CONFLICT',
+    );
+    const approved = await ok<EditorialVersion>(d, 'approveEditorialDeliverable', {
+      params: deliverableParams,
+      json: { versionId: edited.id },
+    });
+    expect(approved.state).toBe('approved');
+    const withdrawn = await ok<EditorialVersion>(d, 'withdrawEditorialApproval', { params: deliverableParams });
+    expect(withdrawn.state).toBe('ready');
+    expect(demo.egress.requests.length).toBe(egress);
   });
 
   it('applies JSON, CSV (BOM and CRLF, NFD file name) and form imports and serves them (T11H-F01, F11, V-49)', async () => {
@@ -470,7 +747,10 @@ describe('DEMO_DATA and MANUAL_DATA operations on the running app', { timeout: R
     expect(rejected.importErrors?.map((error) => error.problem)).toContain('duplicate_match');
 
     const imports = await ok<{ imports: ImportSummary[] }>(d, 'listImports');
-    expect(imports.imports).toHaveLength(3);
+    // The content batch of the setup froze its local selection as one more form import (PD-ARCH-01E-A).
+    const frozen = imports.imports.filter((entry) => entry.declaredSource === 'Selección local confirmada');
+    expect(frozen.map((entry) => entry.channel)).toEqual(['form']);
+    expect(imports.imports.filter((entry) => !frozen.includes(entry))).toHaveLength(3);
     const read = await ok<ImportSummary>(d, 'getImport', { params: { importId: csv.id } });
     expect(read.originalSha256).toBe(sha256(csvBytes));
     expect(read.channel).toBe('csv_file');
@@ -559,7 +839,7 @@ describe('DEMO_DATA and MANUAL_DATA operations on the running app', { timeout: R
     expect(['not_manual_data', 'verified', 'not_latest_run']).toContain(refused.refusalReason);
   });
 
-  it('registers, lists, updates and serves a brand asset; refuses a duplicate', async () => {
+  it('registers, lists, updates, describes, deletes and serves brand assets and the identity; refuses a duplicate', async () => {
     const image = syntheticPng(16, 8, 'served-operations');
     const asset = await ok<{ id: string; sha256: string; active: boolean }>(d, 'registerBrandAsset', {
       query: { kind: 'brand_logo', label: 'Logotipo sintético' },
@@ -585,6 +865,369 @@ describe('DEMO_DATA and MANUAL_DATA operations on the running app', { timeout: R
     expect(
       await ok<{ active: boolean }>(d, 'updateBrandAsset', { params: { assetId: asset.id }, json: { active: false } }),
     ).toMatchObject({ active: false });
+
+    // PD-ARCH-01G-A: detail with usage, metadata edits, identity and logical deletion.
+    expect(
+      await ok<{ asset: { id: string }; usage: { renderedVersions: number } }>(d, 'getBrandAsset', {
+        params: { assetId: asset.id },
+      }),
+    ).toMatchObject({ asset: { id: asset.id }, usage: { renderedVersions: 0 } });
+    expect(
+      await ok<{ label: string; official: boolean }>(d, 'updateBrandAsset', {
+        params: { assetId: asset.id },
+        json: { label: 'Logotipo horizontal', official: true, description: 'Variante horizontal.' },
+      }),
+    ).toMatchObject({ label: 'Logotipo horizontal', official: true });
+    const identity = await ok<{ palette: unknown[] }>(d, 'getBrandIdentity');
+    expect(identity.palette).toHaveLength(5);
+    expect(
+      await ok<{ description: string }>(d, 'updateBrandIdentity', {
+        json: { description: 'Identidad sintética.', colorUsage: { accent: 'Acentos.' } },
+      }),
+    ).toMatchObject({ description: 'Identidad sintética.' });
+    const extra = await ok<{ id: string }>(d, 'registerBrandAsset', {
+      query: { kind: 'style_reference', label: 'Referencia sintética' },
+      payload: syntheticPng(8, 8, 'served-operations-reference'),
+      contentType: 'image/png',
+    });
+    const deleted = await d.call('deleteBrandAsset', { params: { assetId: extra.id } });
+    expect(deleted.status, describeExchange(deleted)).toBe(204);
+    expect(deleted.violations).toEqual([]);
+    await problem(d, 'getBrandAsset', { params: { assetId: extra.id } }, 404, 'NOT_FOUND');
+  });
+
+  it('generates, streams, lists, describes, serves and reviews AI design proposals with a scripted provider', async () => {
+    const capabilities = await ok<{ status: string; models: { id: string }[] }>(g, 'getDesignCapabilities');
+    expect(capabilities.status).toBe('ready');
+    const access = await ok<{ access: string }>(g, 'checkDesignModelAccess', { json: { model: 'test-image-flex' } });
+    expect(access.access).toBe('available');
+    await problem(g, 'checkDesignModelAccess', { json: { model: 'not-configured' } }, 400, 'VALIDATION_FAILED');
+
+    const request = { contentType: 'fixture', format: '1:1', quality: 'low', count: 1, references: [] };
+    const estimate = await ok<{ requestSize: string }>(g, 'estimateDesignGeneration', { json: request });
+    expect(estimate.requestSize).toBe('1024x1024');
+    await problem(
+      g,
+      'estimateDesignGeneration',
+      {
+        json: {
+          ...request,
+          references: [{ assetId: '00000000-0000-4000-8000-000000000777', role: 'style_reference' }],
+        },
+      },
+      409,
+      'DESIGN_REFERENCE_REFUSED',
+    );
+    await problem(
+      g,
+      'estimateDesignGeneration',
+      { json: { ...request, parentProposalId: '00000000-0000-4000-8000-000000000778' } },
+      404,
+      'NOT_FOUND',
+    );
+    await problem(d, 'estimateDesignGeneration', { json: request }, 503, 'IMAGE_PROVIDER_UNAVAILABLE');
+
+    const requestKey = '00000000-0000-4000-8000-000000000779';
+    const started = await ok<{ generation: { id: string } }>(g, 'createDesignGeneration', {
+      json: { ...request, requestKey, confirmCost: true },
+    });
+    const generationId = started.generation.id;
+    await designServiceOf(designer.container).settled(generationId);
+    await problem(
+      g,
+      'createDesignGeneration',
+      { json: { ...request, count: 2, requestKey, confirmCost: true } },
+      409,
+      'REQUEST_KEY_REUSED',
+    );
+    const generation = await ok<{ status: string; proposalIds: string[] }>(g, 'getDesignGeneration', {
+      params: { generationId },
+    });
+    expect(generation.status).toBe('completed');
+    const stream = await g.call('streamDesignGenerationEvents', { params: { generationId } });
+    expect(stream.status, describeExchange(stream)).toBe(200);
+    expect(stream.text).toContain('event: generation.completed');
+    await problem(
+      g,
+      'getDesignGeneration',
+      { params: { generationId: '00000000-0000-4000-8000-000000000780' } },
+      404,
+      'NOT_FOUND',
+    );
+
+    const list = await ok<{ proposals: { id: string }[] }>(g, 'listDesignProposals');
+    const proposalId = required(list.proposals[0], 'proposal').id;
+    await ok(g, 'getDesignProposal', { params: { proposalId } });
+    const file = await g.call('getDesignProposalFile', { params: { proposalId } });
+    expect(file.status, describeExchange(file)).toBe(200);
+    expect(file.mediaType).toBe('image/png');
+    const reviewed = await ok<{ status: string }>(g, 'decideDesignProposal', {
+      params: { proposalId },
+      json: { decision: 'approved' },
+    });
+    expect(reviewed.status).toBe('approved');
+    await problem(
+      g,
+      'decideDesignProposal',
+      { params: { proposalId }, json: { decision: 'changes_requested' } },
+      400,
+      'VALIDATION_FAILED',
+    );
+    const background = await g.call('getDesignProposalBackground', { params: { proposalId } });
+    expect(background.status, describeExchange(background)).toBe(200);
+    const deleted = await g.call('deleteDesignProposal', { params: { proposalId } });
+    expect(deleted.status, describeExchange(deleted)).toBe(204);
+    await problem(g, 'getDesignProposal', { params: { proposalId } }, 404, 'NOT_FOUND');
+    await problem(g, 'deleteDesignProposal', { params: { proposalId } }, 404, 'NOT_FOUND');
+    expect(images.requests.filter((entry) => entry.url.includes('/images/'))).toHaveLength(1);
+  });
+
+  it('makes, edits, previews with local data, releases and versions a visual template without any image request (PD-ARCH-01G-C)', async () => {
+    const generationKey = '00000000-0000-4000-8000-000000000790';
+    const started = await ok<{ generation: { id: string } }>(g, 'createDesignGeneration', {
+      json: {
+        contentType: 'fixture',
+        format: '4:5',
+        quality: 'low',
+        count: 1,
+        references: [],
+        requestKey: generationKey,
+        confirmCost: true,
+      },
+    });
+    await designServiceOf(designer.container).settled(started.generation.id);
+    const generated = await ok<{ proposalIds: string[] }>(g, 'getDesignGeneration', {
+      params: { generationId: started.generation.id },
+    });
+    const proposalId = required(generated.proposalIds[0], 'proposal');
+    const create = { sourceProposalId: proposalId, name: 'Partido programado nocturno', category: 'Calendario' };
+    await problem(g, 'createVisualTemplate', { json: create }, 409, 'TEMPLATE_SOURCE_REFUSED');
+    await ok(g, 'decideDesignProposal', { params: { proposalId }, json: { decision: 'approved' } });
+    const imageRequests = images.requests.length;
+
+    // Local sports data of the preview.
+    const competition = await ok<{ id: string }>(g, 'createCompetition', { json: { name: 'Liga de plantillas' } });
+    const season = await ok<{ id: string }>(g, 'createManagedSeason', {
+      params: { competitionId: competition.id },
+      json: { label: '2026/27' },
+    });
+    const seasonParams = { competitionId: competition.id, seasonId: season.id };
+    const teamIds: string[] = [];
+    for (const name of ['Club Plantilla Local', 'Club Plantilla Visitante']) {
+      const team = await ok<{ id: string }>(g, 'createManagedTeam', { json: { name } });
+      await ok(g, 'addCompetitionTeam', { params: { competitionId: competition.id }, json: { teamId: team.id } });
+      await ok(g, 'addSeasonParticipant', { params: seasonParams, json: { teamId: team.id } });
+      teamIds.push(team.id);
+    }
+    const round = await ok<{ id: string }>(g, 'createSeasonRound', {
+      params: seasonParams,
+      json: { name: 'Jornada 9' },
+    });
+    const match = await ok<{ id: string }>(g, 'createCompetitionMatch', {
+      params: seasonParams,
+      json: { homeTeamId: teamIds[0], awayTeamId: teamIds[1], roundId: round.id, kickoffAt: '2027-05-10T18:00:00Z' },
+    });
+
+    // PD-ARCH-01G-D: a badge uploaded manually (PD-28), served, retired and uploaded again.
+    const badgeTeamId = required(teamIds[0], 'team');
+    const badgeImage = syntheticPng(24, 24, 'team-badge');
+    const withBadge = await ok<{ badge: { id: string; source: string } | null }>(g, 'uploadTeamBadge', {
+      params: { teamId: badgeTeamId },
+      query: { source: 'Sitio oficial del club', authorized: 'true' },
+      payload: badgeImage,
+      contentType: 'image/png',
+    });
+    expect(withBadge.badge?.source).toBe('Sitio oficial del club');
+    await problem(
+      g,
+      'uploadTeamBadge',
+      { params: { teamId: badgeTeamId }, query: { source: 'Club' }, payload: badgeImage, contentType: 'image/png' },
+      400,
+      'VALIDATION_FAILED',
+    );
+    const badgeFile = await g.call('getTeamBadgeFile', { params: { teamId: badgeTeamId } });
+    expect(badgeFile.status, describeExchange(badgeFile)).toBe(200);
+    expect(badgeFile.raw.equals(badgeImage)).toBe(true);
+    expectSandboxedFile(badgeFile);
+    expect((await ok<{ badge: unknown }>(g, 'deleteTeamBadge', { params: { teamId: badgeTeamId } })).badge).toBeNull();
+    await problem(g, 'deleteTeamBadge', { params: { teamId: badgeTeamId } }, 404, 'NOT_FOUND');
+    await problem(g, 'getTeamBadgeFile', { params: { teamId: badgeTeamId } }, 404, 'NOT_FOUND');
+    await ok(g, 'uploadTeamBadge', {
+      params: { teamId: badgeTeamId },
+      query: { source: 'Sitio oficial del club', authorized: 'true' },
+      payload: badgeImage,
+      contentType: 'image/png',
+    });
+
+    const created = await ok<{ template: { id: string; status: string; draftVersionId: string } }>(
+      g,
+      'createVisualTemplate',
+      {
+        json: create,
+      },
+    );
+    const templateId = created.template.id;
+    expect(created.template.status).toBe('draft');
+    const versionId = created.template.draftVersionId;
+    const listed = await ok<{ templates: { id: string }[] }>(g, 'listVisualTemplates');
+    expect(listed.templates.map((entry) => entry.id)).toContain(templateId);
+    await ok(g, 'getVisualTemplate', { params: { templateId } });
+    await ok(g, 'updateVisualTemplate', { params: { templateId }, json: { description: 'Estadio de noche.' } });
+    const draft = await ok<{
+      revision: number;
+      background: { source: 'design_proposal' | 'brand_asset'; id: string };
+      layers: { type: string; binding?: string }[];
+    }>(g, 'getVisualTemplateVersion', { params: { templateId, versionId } });
+    expect(draft.layers.map((layer) => layer.binding)).toEqual(['match.homeTeam.name', 'match.awayTeam.name']);
+    const title = {
+      id: 'title',
+      name: 'Título',
+      type: 'text',
+      text: 'PARTIDO',
+      x: 0.1,
+      y: 0.05,
+      width: 0.8,
+      height: 0.1,
+      visible: true,
+      style: {
+        fontRole: 'heading',
+        maxFontSize: 56,
+        minFontSize: 28,
+        maxLines: 1,
+        colorRole: 'accent',
+        align: 'center',
+        verticalAlign: 'middle',
+        overflow: 'shrink',
+      },
+    };
+    const save = {
+      revision: draft.revision,
+      background: { source: draft.background.source, id: draft.background.id },
+      layers: [
+        ...draft.layers,
+        title,
+        {
+          id: 'home-badge',
+          name: 'Escudo local',
+          type: 'team_badge',
+          binding: 'match.homeTeam.badge',
+          x: 0.1,
+          y: 0.25,
+          width: 0.2,
+          height: 0.12,
+          visible: true,
+        },
+        {
+          id: 'away-badge',
+          name: 'Escudo visitante',
+          type: 'team_badge',
+          binding: 'match.awayTeam.badge',
+          x: 0.7,
+          y: 0.25,
+          width: 0.2,
+          height: 0.12,
+          visible: true,
+        },
+      ],
+    };
+    const saved = await ok<{ revision: number; validation: { publishable: boolean } }>(g, 'saveVisualTemplateVersion', {
+      params: { templateId, versionId },
+      json: save,
+    });
+    expect(saved.revision).toBe(draft.revision + 1);
+    expect(saved.validation.publishable).toBe(true);
+    await problem(
+      g,
+      'saveVisualTemplateVersion',
+      { params: { templateId, versionId }, json: save },
+      409,
+      'VERSION_CONFLICT',
+    );
+    const background = await g.call('getVisualTemplateBackground', { params: { templateId, versionId } });
+    expect(background.status, describeExchange(background)).toBe(200);
+    expectSandboxedFile(background);
+
+    const preview = await ok<{
+      values: { binding: string; value: string | null }[];
+      badges: { binding: string; badgeId: string | null }[];
+      issues: { code: string; layerId: string | null }[];
+      imageUrl: string;
+    }>(g, 'previewVisualTemplate', {
+      params: { templateId, versionId },
+      json: { selection: { ...seasonParams, matchId: match.id } },
+    });
+    expect(preview.values).toEqual([
+      { binding: 'match.homeTeam.name', value: 'Club Plantilla Local' },
+      { binding: 'match.awayTeam.name', value: 'Club Plantilla Visitante' },
+    ]);
+    // The home team has a badge (by its internal identity); the away team has none: a warning, not an error.
+    expect(preview.badges.map((entry) => [entry.binding, entry.badgeId !== null])).toEqual([
+      ['match.homeTeam.badge', true],
+      ['match.awayTeam.badge', false],
+    ]);
+    expect(preview.issues).toContainEqual(expect.objectContaining({ code: 'VALUE_MISSING', layerId: 'away-badge' }));
+    await problem(
+      g,
+      'previewVisualTemplate',
+      { params: { templateId, versionId }, json: { selection: seasonParams } },
+      400,
+      'VALIDATION_FAILED',
+    );
+    const query = Object.fromEntries(new URL(preview.imageUrl, 'http://127.0.0.1').searchParams);
+    const png = await g.call('renderVisualTemplatePreview', { params: { templateId, versionId }, query });
+    expect(png.status, describeExchange(png)).toBe(200);
+    expect(png.mediaType).toBe('image/png');
+    await problem(
+      g,
+      'renderVisualTemplatePreview',
+      { params: { templateId, versionId }, query: { ...query, matchId: '00000000-0000-4000-8000-000000000791' } },
+      404,
+      'NOT_FOUND',
+    );
+
+    const released = await ok<{ status: string }>(g, 'releaseVisualTemplateVersion', {
+      params: { templateId, versionId },
+      json: { revision: saved.revision },
+    });
+    expect(released.status).toBe('published');
+    await problem(
+      g,
+      'saveVisualTemplateVersion',
+      { params: { templateId, versionId }, json: { ...save, revision: saved.revision } },
+      409,
+      'TEMPLATE_VERSION_PUBLISHED',
+    );
+    await problem(g, 'deleteDesignProposal', { params: { proposalId } }, 409, 'PROPOSAL_IN_USE');
+    await problem(g, 'deleteVisualTemplate', { params: { templateId } }, 409, 'TEMPLATE_IN_USE');
+    const next = await ok<{ id: string; version: number; status: string }>(g, 'createVisualTemplateVersion', {
+      params: { templateId },
+      json: {},
+    });
+    expect(next).toMatchObject({ version: 2, status: 'draft' });
+    await problem(g, 'createVisualTemplateVersion', { params: { templateId }, json: {} }, 409, 'VERSION_CONFLICT');
+    const discarded = await g.call('deleteVisualTemplateVersion', { params: { templateId, versionId: next.id } });
+    expect(discarded.status, describeExchange(discarded)).toBe(204);
+    expect(await ok<{ status: string }>(g, 'archiveVisualTemplate', { params: { templateId } })).toMatchObject({
+      status: 'archived',
+    });
+    await problem(
+      g,
+      'updateVisualTemplate',
+      { params: { templateId }, json: { name: 'Otro' } },
+      409,
+      'VERSION_CONFLICT',
+    );
+    expect(await ok<{ status: string }>(g, 'restoreVisualTemplate', { params: { templateId } })).toMatchObject({
+      status: 'published',
+    });
+
+    const unused = await ok<{ template: { id: string } }>(g, 'createVisualTemplate', {
+      json: { ...create, name: 'Borrador' },
+    });
+    const removed = await g.call('deleteVisualTemplate', { params: { templateId: unused.template.id } });
+    expect(removed.status, describeExchange(removed)).toBe(204);
+    await problem(g, 'getVisualTemplate', { params: { templateId: unused.template.id } }, 404, 'NOT_FOUND');
+    expect(images.requests).toHaveLength(imageRequests);
   });
 
   it('lists templates and renders previews in both languages; 404 for an unknown template', async () => {
@@ -720,7 +1363,7 @@ describe('LIVE_DATA operations over recorded provider responses (no network)', {
 // ---------------------------------------------------------------------------------------------------------------
 
 function allExchanges(): Exchange[] {
-  return [...d.exchanges, ...l.exchanges, ...r.exchanges, ...w.exchanges];
+  return [...d.exchanges, ...l.exchanges, ...r.exchanges, ...w.exchanges, ...g.exchanges];
 }
 
 describe.each(OPERATION_IDS)('operation %s on the running app', (operationId) => {

@@ -10,6 +10,10 @@
  *   br or deflate decompression of `fetch`) exceed `maxResponseBytes`; `Content-Length` is not trusted.
  * - TLS verification is never disabled: no custom dispatcher and no TLS option is used.
  * - Nothing is logged here; request and response bodies and the credential headers are never logged.
+ * - The bounds of a request (deadline, response cap, body size) belong to the client instance: the default client of
+ *   the sports and AI text adapters keeps the reviewed bounds below; the image generation client (PD-ARCH-01G-B) is a
+ *   separate instance with `IMAGE_EGRESS_LIMITS`, because a generated image arrives as base64 JSON and can take
+ *   minutes. Every other rule (allow-list, HTTPS, no redirects, streamed cap) is the same.
  */
 import type { EgressAllowList } from './allow-list.js';
 import { EgressError } from './errors.js';
@@ -25,13 +29,37 @@ export const MAX_TIMEOUT_MS = 120_000;
 /** Upper bound of a request body. */
 export const MAX_REQUEST_BODY_CHARACTERS = 2 * 1024 * 1024;
 
+/** Upper bounds a client instance accepts for each request. */
+export interface EgressLimits {
+  readonly maxResponseBytes: number;
+  readonly maxTimeoutMs: number;
+  readonly maxRequestBodyCharacters: number;
+}
+
+/** The reviewed bounds of the default client (sports data and AI text; T10-F07, T11H-F20). */
+export const DEFAULT_EGRESS_LIMITS: EgressLimits = Object.freeze({
+  maxResponseBytes: MAX_RESPONSE_BYTES_LIMIT,
+  maxTimeoutMs: MAX_TIMEOUT_MS,
+  maxRequestBodyCharacters: MAX_REQUEST_BODY_CHARACTERS,
+});
+
+/**
+ * Bounds of the image generation client (PD-ARCH-01G-B): one image per request as base64 JSON (a 4 MiB PNG is about
+ * 5.5 MiB of text), up to five minutes per image, and a request that carries a few base64 reference images.
+ */
+export const IMAGE_EGRESS_LIMITS: EgressLimits = Object.freeze({
+  maxResponseBytes: 24 * 1024 * 1024,
+  maxTimeoutMs: 300_000,
+  maxRequestBodyCharacters: 48 * 1024 * 1024,
+});
+
 export interface EgressRequestInit {
   readonly method: 'GET' | 'POST';
   readonly headers?: Readonly<Record<string, string>>;
   readonly body?: string;
-  /** Total deadline in milliseconds, covering the body read; 1 to 120000. */
+  /** Total deadline in milliseconds, covering the body read; 1 to 120000 (the client's `maxTimeoutMs`). */
   readonly timeoutMs: number;
-  /** Cap on the decoded response bytes; 1 to 2 MiB. */
+  /** Cap on the decoded response bytes; 1 to 2 MiB (the client's `maxResponseBytes`). */
   readonly maxResponseBytes: number;
   readonly signal?: AbortSignal;
 }
@@ -50,17 +78,17 @@ function isIntegerInRange(value: unknown, min: number, max: number): boolean {
   return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max;
 }
 
-function checkInit(init: EgressRequestInit): void {
+function checkInit(init: EgressRequestInit, limits: EgressLimits): void {
   if (init.method !== 'GET' && init.method !== 'POST') {
     throw new EgressError('invalid_request', 'egress refused: method must be GET or POST');
   }
-  if (!isIntegerInRange(init.timeoutMs, 1, MAX_TIMEOUT_MS)) {
+  if (!isIntegerInRange(init.timeoutMs, 1, limits.maxTimeoutMs)) {
     throw new EgressError('invalid_request', 'egress refused: timeoutMs is out of range');
   }
-  if (!isIntegerInRange(init.maxResponseBytes, 1, MAX_RESPONSE_BYTES_LIMIT)) {
+  if (!isIntegerInRange(init.maxResponseBytes, 1, limits.maxResponseBytes)) {
     throw new EgressError('invalid_request', 'egress refused: maxResponseBytes is out of range');
   }
-  if (init.body !== undefined && (init.method !== 'POST' || init.body.length > MAX_REQUEST_BODY_CHARACTERS)) {
+  if (init.body !== undefined && (init.method !== 'POST' || init.body.length > limits.maxRequestBodyCharacters)) {
     throw new EgressError('invalid_request', 'egress refused: a body is allowed only on POST and within its limit');
   }
 }
@@ -113,8 +141,13 @@ async function readCapped(response: Response, maxBytes: number, stop: AbortContr
   return new TextDecoder('utf-8').decode(bytes);
 }
 
-async function send(allowList: EgressAllowList, url: string, init: EgressRequestInit): Promise<EgressResponse> {
-  checkInit(init);
+async function send(
+  allowList: EgressAllowList,
+  limits: EgressLimits,
+  url: string,
+  init: EgressRequestInit,
+): Promise<EgressResponse> {
+  checkInit(init, limits);
   const target = allowList.check(url);
   if (init.signal?.aborted === true) {
     throw new EgressError('aborted', 'egress request was cancelled');
@@ -145,9 +178,15 @@ async function send(allowList: EgressAllowList, url: string, init: EgressRequest
   }
 }
 
-/** Creates the egress client over an allow-list (built from the configuration by `buildEgressAllowList`). */
-export function createEgressClient(allowList: EgressAllowList): EgressClient {
+/**
+ * Creates the egress client over an allow-list (built from the configuration by `buildEgressAllowList`), with the
+ * reviewed default bounds unless other limits are given (only the image generation client does).
+ */
+export function createEgressClient(
+  allowList: EgressAllowList,
+  limits: EgressLimits = DEFAULT_EGRESS_LIMITS,
+): EgressClient {
   return Object.freeze({
-    request: (url: string, init: EgressRequestInit): Promise<EgressResponse> => send(allowList, url, init),
+    request: (url: string, init: EgressRequestInit): Promise<EgressResponse> => send(allowList, limits, url, init),
   });
 }

@@ -11,7 +11,7 @@
  * - Text boxes are filled with `fitText`: the largest size that fits, else the smallest size with `overflow` set
  *   (visual QA then blocks the slide; nothing is cut silently).
  */
-import type { BrandAssetMime, SlideType, TextFieldName } from '@edr/contracts';
+import type { SlideType, TextFieldName } from '@edr/contracts';
 
 import { templateText } from '../../../platform/format/index.js';
 import { type FontRole, type FontSet } from '../fonts.js';
@@ -39,7 +39,8 @@ export const REFERENCE_HEIGHT = 1350;
 export interface AssetRef {
   readonly id: string;
   readonly sha256: string;
-  readonly mime: BrandAssetMime;
+  /** The renderer draws PNG and JPEG only (WebP style references never reach a template; PD-ARCH-01G-A). */
+  readonly mime: 'image/png' | 'image/jpeg';
 }
 
 /** Everything a template needs besides the slide content. */
@@ -61,6 +62,16 @@ export interface TemplateDefinition {
   readonly label: string;
   readonly imageSlots: readonly ImageSlot[];
   readonly badgeSlots: readonly BadgeSlot[];
+  /**
+   * True when the template fills its badge slots with the slide's badges (`SlideContent.badges`; PD-ARCH-01G-E.1,
+   * version 1.1.0 of the match templates). Absent or false: the slots stay empty and record no team.
+   */
+  readonly drawsBadges?: boolean;
+  /**
+   * The calendar rows a slide shows, each with the badge slots of `badgeSlots` (PD-ARCH-01G-E.2, version 2.0.0 of the
+   * round calendar template; `SlideContent.rowBadges`). Absent: the slide shows one match.
+   */
+  readonly rows?: number;
   build(content: SlideContent, ctx: TemplateContext): RenderModel;
 }
 
@@ -192,9 +203,65 @@ export class ModelBuilder {
     });
   }
 
-  /** A reserved badge slot: always empty (PD-03, R-050, R-231). */
+  /**
+   * A reserved badge slot. A template that draws badges records the slide's team and its snapshot badge
+   * (PD-ARCH-01G-E.1); otherwise, or without slide badges, the slot is empty and records no team (PD-03, R-231).
+   */
   badge(slot: BadgeSlot, x: number, y: number, width: number, height: number): void {
-    this.#elements.push({ kind: 'badge_slot', id: slot, slot, box: this.box(x, y, width, height), empty: true });
+    if (!this.#template.badgeSlots.includes(slot)) {
+      throw new TypeError('the template does not declare this badge slot');
+    }
+    const box = this.box(x, y, width, height);
+    const badges = this.#template.drawsBadges === true ? this.#content.badges : undefined;
+    if (badges === undefined) {
+      this.#elements.push({ kind: 'badge_slot', id: slot, slot, box, empty: true });
+      return;
+    }
+    const side = slot === 'team-badge-home' ? badges.home : badges.away;
+    const badge =
+      side.badge === null || side.teamId === null
+        ? null
+        : { assetId: side.badge.id, sha256: side.badge.sha256, mime: side.badge.mime };
+    this.#elements.push({
+      kind: 'badge_slot',
+      id: slot,
+      slot,
+      box,
+      empty: badge === null,
+      team: { teamId: side.teamId, badge },
+    });
+  }
+
+  /**
+   * The badge slot of one side of a calendar row (PD-ARCH-01G-E.2): the row's team and its snapshot badge
+   * (`SlideContent.rowBadges`), like `badge` for a match slide. A row without badges (the content has none for it)
+   * stays empty and records no team.
+   */
+  rowBadge(row: number, slot: BadgeSlot, x: number, y: number, width: number, height: number): void {
+    if (!this.#template.badgeSlots.includes(slot) || this.#template.rows === undefined || row > this.#template.rows) {
+      throw new TypeError('the template does not declare this row badge slot');
+    }
+    const id = `row-${String(row)}-${slot === 'team-badge-home' ? 'badge-home' : 'badge-away'}`;
+    const box = this.box(x, y, width, height);
+    const badges = this.#template.drawsBadges === true ? this.#content.rowBadges?.[row - 1] : undefined;
+    if (badges === undefined) {
+      this.#elements.push({ kind: 'badge_slot', id, slot, box, empty: true, row });
+      return;
+    }
+    const side = slot === 'team-badge-home' ? badges.home : badges.away;
+    const badge =
+      side.badge === null || side.teamId === null
+        ? null
+        : { assetId: side.badge.id, sha256: side.badge.sha256, mime: side.badge.mime };
+    this.#elements.push({
+      kind: 'badge_slot',
+      id,
+      slot,
+      box,
+      empty: badge === null,
+      row,
+      team: { teamId: side.teamId, badge },
+    });
   }
 
   /** Background, header band, brand logo slot and, on DEMO_DATA slides, the demonstration band. */

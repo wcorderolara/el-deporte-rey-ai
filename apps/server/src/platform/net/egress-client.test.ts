@@ -21,6 +21,7 @@ import {
   EgressError,
   type EgressClient,
   type EgressRequestInit,
+  IMAGE_EGRESS_LIMITS,
   MAX_RESPONSE_BYTES_LIMIT,
   createEgressClient,
 } from './index.js';
@@ -302,5 +303,40 @@ describe('TLS verification (T10-F07 item 5)', () => {
       const text = readFileSync(new URL(name, directory), 'utf8');
       expect(text).not.toMatch(/rejectUnauthorized|NODE_TLS_REJECT_UNAUTHORIZED|setGlobalDispatcher|dispatcher\s*:/);
     }
+  });
+});
+
+describe('bounds per client instance (PD-ARCH-01G-B)', () => {
+  const allowList = new EgressAllowList(['https://images.example.test']);
+
+  it('keeps the reviewed bounds on the default client', async () => {
+    const client = createEgressClient(allowList);
+    for (const init of [
+      { method: 'POST', timeoutMs: 120_001, maxResponseBytes: 1024 },
+      { method: 'POST', timeoutMs: 1000, maxResponseBytes: MAX_RESPONSE_BYTES_LIMIT + 1 },
+    ] as const) {
+      await expect(client.request('https://images.example.test/v1', init)).rejects.toMatchObject({
+        kind: 'invalid_request',
+      });
+    }
+  });
+
+  it('accepts the larger image bounds only on the image client, before any connection', async () => {
+    const client = createEgressClient(new EgressAllowList([]), IMAGE_EGRESS_LIMITS);
+    await expect(
+      client.request('https://images.example.test/v1', {
+        method: 'POST',
+        timeoutMs: IMAGE_EGRESS_LIMITS.maxTimeoutMs,
+        maxResponseBytes: IMAGE_EGRESS_LIMITS.maxResponseBytes,
+        body: '{}',
+      }),
+    ).rejects.toBeInstanceOf(EgressDenied);
+    await expect(
+      client.request('https://images.example.test/v1', {
+        method: 'POST',
+        timeoutMs: IMAGE_EGRESS_LIMITS.maxTimeoutMs + 1,
+        maxResponseBytes: 1024,
+      }),
+    ).rejects.toMatchObject({ kind: 'invalid_request' });
   });
 });

@@ -1,6 +1,6 @@
 /**
- * Contract schemas of drafts, review and visual QA (operations getActiveDraft, setExcludedMatches, regenerateElement,
- * approveElement, withdrawElementApproval, acknowledgeQaWarnings, approveCarousel): Draft, Carousel, Element,
+ * Contract schemas of drafts, review and visual QA (operations getActiveDraft, regenerateElement, approveElement,
+ * withdrawElementApproval, acknowledgeQaWarnings, approveCarousel): Draft, Carousel, Element,
  * ElementVersion, TextField, ContentFlag, QaResult (closed details per check, T10-F17), QaOutcome, QaMismatch,
  * VersionRef, FinalApproval.
  */
@@ -19,14 +19,25 @@ import {
 
 /**
  * Visual-QA check names. `capitalized_tokens` is the OD-26 warning check (capitalized tokens in AI-written text that
- * are not verified team or competition names, the language word list or the brand terms; T11H-F17).
+ * are not verified team or competition names, the language word list or the brand terms; T11H-F17). `team_badges` is
+ * the PD-ARCH-01G-E.1 warning check (decision DE-E4): a badge slot of an engine match template left empty because its
+ * team has no badge in the project's snapshot (PD-28 point 4); from PD-ARCH-01G-E.2 also the badge slots of the rows
+ * of an engine round calendar.
  */
-export const QA_CHECKS = ['data_match', 'team_names', 'text_fit', 'style_consistency', 'dimensions', 'capitalized_tokens'] as const;
+export const QA_CHECKS = [
+  'data_match',
+  'team_names',
+  'text_fit',
+  'style_consistency',
+  'dimensions',
+  'capitalized_tokens',
+  'team_badges',
+] as const;
 
 export const QaCheckSchema = z.enum(QA_CHECKS);
 
-/** Warning checks that the operator acknowledges through acknowledgeQaWarnings (OD-09, OD-26). */
-export const QA_WARNING_CHECKS = ['style_consistency', 'capitalized_tokens'] as const;
+/** Warning checks that the operator acknowledges through acknowledgeQaWarnings (OD-09, OD-26, DE-E4). */
+export const QA_WARNING_CHECKS = ['style_consistency', 'capitalized_tokens', 'team_badges'] as const;
 
 export const QaWarningCheckSchema = z.enum(QA_WARNING_CHECKS);
 
@@ -94,10 +105,35 @@ export const QaResultSchema = z.discriminatedUnion('check', [
     details: z.strictObject({ tokens: z.array(z.string().max(64)) }),
     acknowledgedAt: DateTimeSchema.nullable(),
   }),
+  z.strictObject({
+    check: z.literal('team_badges'),
+    outcome: QaOutcomeSchema,
+    severity: z.literal('warning'),
+    details: z.strictObject({
+      /** The badge slots of a match slide left empty (`team-badge-home`, `team-badge-away`). */
+      emptyBadgeSlots: z.array(z.enum(['team-badge-home', 'team-badge-away'])),
+      /**
+       * PD-ARCH-01G-E.2: the badge slots of a round calendar's rows left empty, each with its row (1 for the first
+       * match of the slide). Absent on a match slide.
+       */
+      emptyRowBadgeSlots: z
+        .array(z.strictObject({ row: z.int().min(1).max(64), slot: z.enum(['team-badge-home', 'team-badge-away']) }))
+        .max(128)
+        .optional(),
+    }),
+    acknowledgedAt: DateTimeSchema.nullable(),
+  }),
 ]);
 
 export const ContentFlagSchema = z.strictObject({
-  code: z.enum(['UNKNOWN_FACT_REFERENCE', 'UNVERIFIED_NUMBER', 'NON_OFFICIAL_TEAM_NAME', 'FORBIDDEN_CONTENT']),
+  /** `UNPLAYED_RESULT_CLAIM`: text that states or predicts a result of a match not played yet (PD-ARCH-01E-B). */
+  code: z.enum([
+    'UNKNOWN_FACT_REFERENCE',
+    'UNVERIFIED_NUMBER',
+    'NON_OFFICIAL_TEAM_NAME',
+    'FORBIDDEN_CONTENT',
+    'UNPLAYED_RESULT_CLAIM',
+  ]),
   field: z.string().max(40),
   excerpt: z.string().max(120),
 });
@@ -115,6 +151,15 @@ export const TextFieldNameSchema = z.enum([
   'standings',
   'footer',
   'demo_label',
+  'match_status',
+  'fixtures',
+  /**
+   * Values of the slides of a project that uses a visual template (PD-ARCH-01G-D): each team's goals and the kickoff
+   * time, as fact segments, so a template can draw them independently.
+   */
+  'score_home',
+  'score_away',
+  'kickoff_time',
 ]);
 
 export const SegmentProvenanceSchema = z.enum(['fact', 'commentary', 'template_text']);
@@ -153,7 +198,16 @@ export const ElementVersionSchema = z.strictObject({
 
 export const ElementKindSchema = z.enum(['slide', 'caption']);
 
-export const SlideTypeSchema = z.enum(['cover', 'match_result', 'standings', 'closing']);
+/** `round_overview`, `fixture` and `match_preview` describe matches not played yet (PD-ARCH-01E-B). */
+export const SlideTypeSchema = z.enum([
+  'cover',
+  'match_result',
+  'standings',
+  'closing',
+  'round_overview',
+  'fixture',
+  'match_preview',
+]);
 
 export const ElementSchema = z.strictObject({
   id: UuidSchema,

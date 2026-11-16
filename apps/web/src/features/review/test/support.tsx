@@ -11,19 +11,21 @@ import {
   type Draft,
   type Element,
   type ElementVersion,
-  type FactListResponse,
   type FactRef,
   type QaResult,
-  type Run,
   type TextField,
+  type EditorialPackage,
 } from '@edr/contracts';
-import { render } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { vi } from 'vitest';
 
 import { createApiClient, type FetchFunction } from '../../../api/client';
 import { appRoutes } from '../../../app/routes';
+import { HistoryApiContext } from '../../history/api';
 import { createReviewApi } from '../api';
+import { createEditorialApi } from '../editorial/api';
 import { ReviewProvider } from '../ReviewContext';
 
 export interface RecordedCall {
@@ -48,7 +50,108 @@ export function problem(body: Record<string, unknown>): Response {
 }
 
 /** Answers each request from `routes` (`"GET /api/v1/..."`); an unknown request fails as a network error. */
-export function fakeServer(routes: Record<string, Handler | Handler[]>) {
+/** The project of the review header (PD-ARCH-01F), answered unless a test overrides it. */
+export function reviewProject(): Record<string, unknown> {
+  return {
+    id: '11111111-1111-4111-8111-111111111111',
+    title: 'Liga de Prueba 2026 · Jornada 3',
+    competitionName: 'Liga de Prueba',
+    seasonLabel: '2026',
+    stageLabel: 'Fase regular',
+    matchday: 3,
+    sourceName: 'Fuente sintética',
+    dataMode: 'DEMO_DATA',
+    demonstration: true,
+    language: 'es',
+    createdAt: '2026-10-27T10:00:00Z',
+    approvalState: 'in_review',
+    lastExportAt: null,
+    latestRunStatus: 'completed',
+    sportsContext: null,
+    visualTemplates: [],
+    competitionId: 'liga-prueba',
+    sourceId: 'demo-a',
+    seasonId: '2026',
+    stageId: 'fase-regular',
+    latestRun: null,
+    activeDraftId: '22222222-2222-4222-8222-222222222222',
+  };
+}
+
+/**
+ * Requests every review page makes besides the draft (PD-ARCH-01F): the project of the header and the project's
+ * exports of the carousel download. A test route with the same key replaces them.
+ */
+const DEFAULT_ROUTES: Record<string, Handler> = {
+  'GET /api/v1/projects/11111111-1111-4111-8111-111111111111': () => json(reviewProject()),
+  'GET /api/v1/projects/11111111-1111-4111-8111-111111111111/exports': () => json({ exports: [] }),
+  // The editorial copy section of the review (PD-ARCH-01H): no copy yet, stub writer.
+  'GET /api/v1/projects/11111111-1111-4111-8111-111111111111/editorial': () => json(editorialPackage()),
+};
+
+/** An editorial package of the review project (PD-ARCH-01H); `overrides` replace top-level members. */
+export function editorialPackage(overrides: Partial<EditorialPackage> = {}): EditorialPackage {
+  return {
+    projectId: '11111111-1111-4111-8111-111111111111',
+    draftId: '22222222-2222-4222-8222-222222222222',
+    available: true,
+    unavailableReason: null,
+    context: {
+      competitionName: 'Liga de Prueba',
+      seasonLabel: '2026/27',
+      stageLabel: 'Fase regular · Jornada 3',
+      roundLabel: null,
+      contentKind: 'results',
+      language: 'es',
+      matchCount: 2,
+      confirmedMatchCount: 2,
+      standingsAvailable: false,
+      roundState: {
+        status: 'complete',
+        basis: 'selection',
+        total: 2,
+        finished: 2,
+        inProgress: 0,
+        pending: 0,
+        postponed: 0,
+        cancelled: 0,
+      },
+    },
+    research: {
+      mode: 'local_context',
+      retrievedAt: '2026-10-27T10:00:00Z',
+      keyEvents: [],
+      evidence: [],
+      unverified: [],
+      conflicts: [],
+    },
+    writer: {
+      adapter: 'stub',
+      kind: 'test',
+      model: null,
+      status: 'ready',
+      requiresCostConfirmation: false,
+      pricing: null,
+      maxGenerationsPerDay: 500,
+      generationsToday: 0,
+      monthlySpendLimit: null,
+      spentThisMonth: null,
+      estimate: { status: 'free', total: null },
+    },
+    deliverables: [
+      { deliverable: 'facebook_instagram', current: null, versionCount: 0, exportable: false },
+      { deliverable: 'tiktok_reels', current: null, versionCount: 0, exportable: false },
+      { deliverable: 'viral_headlines', current: null, versionCount: 0, exportable: false },
+      { deliverable: 'youtube', current: null, versionCount: 0, exportable: false },
+      { deliverable: 'debate_question', current: null, versionCount: 0, exportable: false },
+    ],
+    lastGeneration: null,
+    ...overrides,
+  };
+}
+
+export function fakeServer(overrides: Record<string, Handler | Handler[]>) {
+  const routes: Record<string, Handler | Handler[]> = { ...DEFAULT_ROUTES, ...overrides };
   const calls: RecordedCall[] = [];
   const unexpected: string[] = [];
   const counters = new Map<string, number>();
@@ -86,16 +189,43 @@ export function fakeServer(routes: Record<string, Handler | Handler[]>) {
 
 export type FakeServer = ReturnType<typeof fakeServer>;
 
-/** Mounts the application routes at `path` with the review API over the fake server. */
+/** Mounts the application routes at `path` with the review and export APIs over the fake server. */
 export function renderApp(path: string, server: FakeServer) {
-  const api = createReviewApi(createApiClient({ fetch: server.fetch }));
+  const client = createApiClient({ fetch: server.fetch });
+  const api = createReviewApi(client);
+  const editorial = createEditorialApi(client);
   const router = createMemoryRouter(appRoutes, { initialEntries: [path] });
   render(
-    <ReviewProvider value={{ api }}>
-      <RouterProvider router={router} />
+    <ReviewProvider value={{ api, editorial }}>
+      <HistoryApiContext.Provider value={client}>
+        <RouterProvider router={router} />
+      </HistoryApiContext.Provider>
     </ReviewProvider>,
   );
   return router;
+}
+
+function startsWith(name: string): RegExp {
+  return new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\/]/gu, '\\$&')}`, 'u');
+}
+
+/** Opens a review mode (UX-REVIEW-01): «Diseño visual» is shown first, «Copy editorial» is hidden until opened. */
+export async function openMode(name: 'Diseño visual' | 'Copy editorial'): Promise<void> {
+  const modes = await screen.findByRole('tablist', { name: 'Modo de revisión' });
+  await userEvent.click(within(modes).getByRole('tab', { name: startsWith(name) }));
+}
+
+/** Opens a tab of «Copy editorial» by the start of its name (a tab may carry a status badge). */
+export async function openCopyTab(name: string): Promise<void> {
+  const tabs = await screen.findByRole('tablist', { name: 'Entregables del copy editorial' });
+  await userEvent.click(within(tabs).getByRole('tab', { name: startsWith(name) }));
+}
+
+/** The carousel text (caption) in «Copy editorial»: opens the mode and the tab, returns its review. */
+export async function openCaption(): Promise<HTMLElement> {
+  await openMode('Copy editorial');
+  await openCopyTab('Texto del carrusel');
+  return screen.findByRole('article', { name: 'Texto de publicación y hashtags' });
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -106,7 +236,6 @@ export const PROJECT_ID = '11111111-1111-4111-8111-111111111111';
 export const DRAFT_ID = '22222222-2222-4222-8222-222222222222';
 export const RUN_ID = '33333333-3333-4333-8333-333333333333';
 export const FACTS_RUN_ID = '44444444-4444-4444-8444-444444444444';
-export const REDRAFT_RUN_ID = '55555555-5555-4555-8555-555555555555';
 export const CAROUSEL_ID = 'c0000000-0000-4000-8000-000000000001';
 export const CAROUSEL_2_ID = 'c0000000-0000-4000-8000-000000000002';
 
@@ -157,6 +286,14 @@ export const PASSING_QA: QaResult[] = [
     acknowledgedAt: null,
   },
   { check: 'capitalized_tokens', outcome: 'pass', severity: 'warning', details: { tokens: [] }, acknowledgedAt: null },
+  // PD-ARCH-01G-E.1: badge slots of the engine match templates.
+  {
+    check: 'team_badges',
+    outcome: 'pass',
+    severity: 'warning',
+    details: { emptyBadgeSlots: [] },
+    acknowledgedAt: null,
+  },
 ];
 
 export function commentary(text: string): TextField['segments'][number] {
@@ -321,56 +458,4 @@ export function draftResponse(value: Draft = draft()): Handler {
 
 export function modeDraft(mode: DataMode, overrides: Partial<Draft> = {}): Draft {
   return draft({ dataMode: mode, demonstration: mode === 'DEMO_DATA', ...overrides });
-}
-
-export function redraftRun(): Run {
-  return {
-    id: REDRAFT_RUN_ID,
-    projectId: PROJECT_ID,
-    runNumber: 2,
-    kind: 'redraft',
-    status: 'pending',
-    startedAt: '2026-10-27T13:00:00Z',
-    finishedAt: null,
-    failure: null,
-    stages: (['research', 'verification', 'content', 'rendering', 'visual_qa'] as const).map((stage) => ({
-      stage,
-      status: stage === 'research' || stage === 'verification' ? 'skipped' : 'pending',
-      startedAt: null,
-      finishedAt: null,
-      failure: null,
-    })),
-  };
-}
-
-function matchTeamsFact(n: number, matchKey: string, display: string): FactListResponse['facts'][number] {
-  return {
-    factId: factId(100 + n),
-    factKey: `${matchKey}:teams`,
-    kind: 'match_teams',
-    status: 'verified',
-    unverifiedReason: null,
-    reason: null,
-    display,
-    value: { homeTeamId: `equipo-${n}a`, awayTeamId: `equipo-${n}b` },
-    candidateValue: null,
-    subject: { matchKey },
-    evidence: [],
-    dispute: null,
-    manualApproval: null,
-  };
-}
-
-/** Facts of the draft's run: three matches, one of them left out as not finished. */
-export function matchFacts(): FactListResponse {
-  return {
-    dataMode: 'DEMO_DATA',
-    facts: [
-      matchTeamsFact(1, 'demo-m1', 'Atlético Demo - Club Ejemplo'),
-      matchTeamsFact(2, 'demo-m2', 'Deportivo Prueba - Unión Ficticia'),
-      matchTeamsFact(3, 'demo-m3', 'Real Muestra - Sporting Modelo'),
-    ],
-    leftOutMatches: [],
-    standings: { available: true, reason: null },
-  };
 }

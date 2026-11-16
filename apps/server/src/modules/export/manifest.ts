@@ -3,20 +3,31 @@
  * R-320, R-421). Pure functions over an export plan read from the database: no I/O, no clock, no network.
  *
  * - `01.png` to `NN.png`: the stored renders of the exported slide versions, byte for byte, in carousel order.
- * - `caption.txt`: UTF-8 caption, a blank line, the hashtags separated by spaces, and a final line feed.
+ * - `caption.txt`: UTF-8 caption, a blank line, the hashtags separated by spaces, and a final line feed. Present only
+ *   when the final approval covers the caption (an approved caption; PD-ARCH-01E-PD-02).
+ * - `copy-editorial.txt` (REVIEW-APPROVAL-01; PD-33 as amended, option A: independent approvals): the exportable
+ *   editorial copy of the carousel's draft (PD-ARCH-01H deliverables; `editorial/eligibility.ts`), one section per
+ *   deliverable in the contract's order, with the same paste-ready text as the review (`editorialDeliverableText`).
+ *   Present only when at least one deliverable is exportable when the export is planned; it is never required, and an
+ *   export without it is the same as before.
  * - `manifest.json`: project, carousel, final approval, data mode, `demonstration` flag, the project's source and
  *   every source of the used facts' evidence (IDs and names), and per file its position, element version ID, SHA-256
  *   and fact IDs; each used fact with its effective status. `operatorAttested: true` is present only when a used
  *   fact is MANUALLY_APPROVED; such a fact keeps the status `manually_approved` and is never stated as verified.
  *
- * File positions (`export_files.position`): slides 1 to N in carousel order (the position of the slide trace), the
- * caption N + 1 and the manifest N + 2, so position order is the listing order of AD-17.
+ * File positions (`export_files.position`): slides 1 to N in carousel order (the position of the slide trace), then
+ * the caption, then the editorial copy, each only when present, and the manifest last, so position order is the
+ * listing order of AD-17. The manifest lists the editorial copy apart (`editorial`): it is not an element of the
+ * carousel.
  */
 import { createHash } from 'node:crypto';
 
 import {
   DataModeSchema,
   DateTimeSchema,
+  type EditorialDeliverable,
+  EditorialDeliverableSchema,
+  type EditorialFieldName,
   FactKindSchema,
   FactStatusSchema,
   LanguageSchema,
@@ -24,14 +35,17 @@ import {
   SlideTypeSchema,
   SourceIdSchema,
   UuidSchema,
+  editorialDeliverableText,
 } from '@edr/contracts';
 import { z } from 'zod';
 
 import { type ElementText, fieldText } from '../content/index.js';
+import { stageDisplay } from '../../platform/format/index.js';
 
 /** Identifier of the manifest format. */
 export const MANIFEST_FORMAT = 'edr-export-manifest/1';
 export const CAPTION_FILE_NAME = 'caption.txt';
+export const EDITORIAL_FILE_NAME = 'copy-editorial.txt';
 export const MANIFEST_FILE_NAME = 'manifest.json';
 /** Largest number of slides a file name `NN.png` can hold (contract `ExportFile.fileName`). */
 export const MAX_EXPORTED_SLIDES = 99;
@@ -99,6 +113,27 @@ const ManifestFileSchema = z.strictObject({
   factIds: z.array(UuidSchema),
 });
 
+/** The approved editorial copy of an export (REVIEW-APPROVAL-01): its file and each deliverable's exact version. */
+const ManifestEditorialSchema = z.strictObject({
+  position: z.int().min(1),
+  fileName: z.literal('copy-editorial.txt'),
+  sha256: Sha256Schema,
+  deliverables: z
+    .array(
+      z.strictObject({
+        deliverable: EditorialDeliverableSchema,
+        editorialVersionId: UuidSchema,
+        versionNumber: z.int().min(1),
+        approvedAt: z.string().min(1).max(40),
+        /** SHA-256 of the deliverable's text in the file. */
+        textSha256: Sha256Schema,
+        factIds: z.array(UuidSchema),
+      }),
+    )
+    .min(1)
+    .max(5),
+});
+
 /** `manifest.json` of an export (format `edr-export-manifest/1`). */
 export const ManifestSchema = z.strictObject({
   format: z.literal(MANIFEST_FORMAT),
@@ -126,6 +161,8 @@ export const ManifestSchema = z.strictObject({
   /** The project's source and every source of the used facts' evidence, by ID. */
   sources: z.array(SourceEntrySchema),
   files: z.array(ManifestFileSchema),
+  /** Present only when the export carries approved editorial copy (REVIEW-APPROVAL-01). */
+  editorial: ManifestEditorialSchema.optional(),
   facts: z.array(ManifestFactSchema),
 });
 
@@ -158,6 +195,16 @@ export interface PlannedCaption {
   readonly factIds: readonly string[];
 }
 
+/** An approved editorial deliverable an export carries (REVIEW-APPROVAL-01). */
+export interface PlannedEditorialDeliverable {
+  readonly deliverable: EditorialDeliverable;
+  readonly editorialVersionId: string;
+  readonly versionNumber: number;
+  readonly approvedAt: string;
+  readonly fields: readonly { readonly name: EditorialFieldName; readonly text: string }[];
+  readonly factIds: readonly string[];
+}
+
 /** Everything an export writes, read from the final-approval row's version set. */
 export interface ExportPlan {
   readonly exportId: string;
@@ -170,7 +217,13 @@ export interface ExportPlan {
   readonly sources: readonly ManifestSource[];
   /** In carousel order. */
   readonly slides: readonly PlannedSlide[];
-  readonly caption: PlannedCaption;
+  /** Null when the final approval does not cover the caption (not approved yet). */
+  readonly caption: PlannedCaption | null;
+  /**
+   * The approved, publishable editorial deliverables of the carousel's draft, in deliverable order (REVIEW-APPROVAL-01);
+   * empty when none is approved.
+   */
+  readonly editorial: readonly PlannedEditorialDeliverable[];
   /** Every fact a version of the set references, by fact ID. */
   readonly facts: readonly ManifestFact[];
 }
@@ -179,18 +232,61 @@ export interface ExportPlan {
 export interface ExportFileContent {
   readonly position: number;
   readonly fileName: string;
-  readonly kind: 'slide_image' | 'caption_text' | 'manifest';
+  readonly kind: 'slide_image' | 'caption_text' | 'editorial_text' | 'manifest';
   readonly elementVersionId: string | null;
   readonly bytes: Uint8Array;
   readonly sha256: string;
 }
 
-/** The manifest of a plan whose slide and caption files are given. */
+/**
+ * The title of each deliverable in `copy-editorial.txt` (Product Owner, REVIEW-APPROVAL-01): the five deliverables of
+ * the editorial contract, in the contract's order.
+ */
+export const EDITORIAL_SECTION_TITLES: Readonly<Record<EditorialDeliverable, string>> = Object.freeze({
+  facebook_instagram: 'Facebook / Instagram',
+  tiktok_reels: 'TikTok / Reels',
+  viral_headlines: 'Titulares virales',
+  youtube: 'YouTube',
+  debate_question: 'Pregunta para generar debate',
+});
+
+/** The line around each section title. */
+const SECTION_RULE = '='.repeat(40);
+
+/** The paste-ready text of one exported deliverable: the text the review offers to copy and download. */
+function deliverableTextOf(entry: PlannedEditorialDeliverable): string {
+  return editorialDeliverableText(entry.deliverable, entry.fields);
+}
+
+/**
+ * The text of `copy-editorial.txt` (UTF-8, line feeds): a heading with the selection, then one section per exported
+ * deliverable in the contract's order, its title between two rules, a blank line and its paste-ready text, sections
+ * separated by a blank line, and a final line feed. Only the exported versions are written: no identifier, version,
+ * JSON, source or link, and no section for a deliverable that is not exported.
+ */
+export function editorialCopyText(plan: Pick<ExportPlan, 'project' | 'editorial'>): string {
+  const { project } = plan;
+  const sections = plan.editorial.map(
+    (entry) =>
+      `${SECTION_RULE}\n${EDITORIAL_SECTION_TITLES[entry.deliverable]}\n${SECTION_RULE}\n\n${deliverableTextOf(entry)}`,
+  );
+  // «competición · jornada o fase · temporada» (REVIEW-APPROVAL-01): the matchday of a matchday project, with its
+  // stage as the project title shows it; the stage alone otherwise. In Spanish, like the rest of the file (UI-06.3).
+  const selection = stageDisplay(project.stageLabel, project.matchday, 'es');
+  const heading = `COPY EDITORIAL APROBADO\n${project.competitionName} · ${selection} · ${project.seasonLabel}`;
+  return `${[heading, ...sections].join('\n\n')}\n`;
+}
+
+/** The manifest of a plan whose slide files and, when the plan has them, caption and editorial files are given. */
 export function buildManifest(plan: ExportPlan, files: readonly ExportFileContent[]): Manifest {
   const slides = files.filter((file) => file.kind === 'slide_image');
   const caption = files.find((file) => file.kind === 'caption_text');
-  if (slides.length !== plan.slides.length || caption === undefined) {
-    throw new Error('the manifest needs every slide file and the caption file');
+  const editorial = files.find((file) => file.kind === 'editorial_text');
+  if (slides.length !== plan.slides.length || (caption === undefined) !== (plan.caption === null)) {
+    throw new Error('the manifest needs every slide file and the caption file of a planned caption');
+  }
+  if ((editorial === undefined) !== (plan.editorial.length === 0)) {
+    throw new Error('the manifest needs the editorial file exactly when the plan has approved editorial copy');
   }
   const operatorAttested = plan.facts.some((fact) => fact.status === 'manually_approved');
   return ManifestSchema.parse({
@@ -222,27 +318,49 @@ export function buildManifest(plan: ExportPlan, files: readonly ExportFileConten
           factIds: [...slide.factIds],
         };
       }),
-      {
-        position: caption.position,
-        fileName: caption.fileName,
-        kind: 'caption_text',
-        elementId: plan.caption.elementId,
-        elementVersionId: plan.caption.elementVersionId,
-        versionNumber: plan.caption.versionNumber,
-        slideType: null,
-        width: null,
-        height: null,
-        sha256: caption.sha256,
-        factIds: [...plan.caption.factIds],
-      },
+      ...(caption === undefined || plan.caption === null
+        ? []
+        : [
+            {
+              position: caption.position,
+              fileName: caption.fileName,
+              kind: 'caption_text',
+              elementId: plan.caption.elementId,
+              elementVersionId: plan.caption.elementVersionId,
+              versionNumber: plan.caption.versionNumber,
+              slideType: null,
+              width: null,
+              height: null,
+              sha256: caption.sha256,
+              factIds: [...plan.caption.factIds],
+            },
+          ]),
     ],
+    ...(editorial === undefined
+      ? {}
+      : {
+          editorial: {
+            position: editorial.position,
+            fileName: EDITORIAL_FILE_NAME,
+            sha256: editorial.sha256,
+            deliverables: plan.editorial.map((entry) => ({
+              deliverable: entry.deliverable,
+              editorialVersionId: entry.editorialVersionId,
+              versionNumber: entry.versionNumber,
+              approvedAt: entry.approvedAt,
+              textSha256: sha256Of(Buffer.from(deliverableTextOf(entry), 'utf8')),
+              factIds: [...entry.factIds],
+            })),
+          },
+        }),
     facts: plan.facts,
   });
 }
 
 /**
- * The files of an export in writing order: the slides `01.png` to `NN.png` in carousel order, `caption.txt`, then
- * `manifest.json` (which lists the hashes of the others).
+ * The files of an export in writing order: the slides `01.png` to `NN.png` in carousel order, `caption.txt` (when
+ * the plan has a caption), `copy-editorial.txt` (when the plan has approved editorial copy), then `manifest.json`
+ * (which lists the hashes of the others).
  */
 export function exportFiles(plan: ExportPlan): ExportFileContent[] {
   if (plan.slides.length > MAX_EXPORTED_SLIDES) {
@@ -256,18 +374,31 @@ export function exportFiles(plan: ExportPlan): ExportFileContent[] {
     bytes: slide.png,
     sha256: sha256Of(slide.png),
   }));
-  const captionBytes = Buffer.from(captionText(plan.caption.text), 'utf8');
-  files.push({
-    position: plan.slides.length + 1,
-    fileName: CAPTION_FILE_NAME,
-    kind: 'caption_text',
-    elementVersionId: plan.caption.elementVersionId,
-    bytes: captionBytes,
-    sha256: sha256Of(captionBytes),
-  });
+  if (plan.caption !== null) {
+    const captionBytes = Buffer.from(captionText(plan.caption.text), 'utf8');
+    files.push({
+      position: plan.slides.length + 1,
+      fileName: CAPTION_FILE_NAME,
+      kind: 'caption_text',
+      elementVersionId: plan.caption.elementVersionId,
+      bytes: captionBytes,
+      sha256: sha256Of(captionBytes),
+    });
+  }
+  if (plan.editorial.length > 0) {
+    const editorialBytes = Buffer.from(editorialCopyText(plan), 'utf8');
+    files.push({
+      position: files.length + 1,
+      fileName: EDITORIAL_FILE_NAME,
+      kind: 'editorial_text',
+      elementVersionId: null,
+      bytes: editorialBytes,
+      sha256: sha256Of(editorialBytes),
+    });
+  }
   const manifestBytes = Buffer.from(`${JSON.stringify(buildManifest(plan, files), null, 2)}\n`, 'utf8');
   files.push({
-    position: plan.slides.length + 2,
+    position: files.length + 1,
     fileName: MANIFEST_FILE_NAME,
     kind: 'manifest',
     elementVersionId: null,

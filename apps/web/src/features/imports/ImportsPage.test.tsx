@@ -106,7 +106,7 @@ describe('ImportsPage: history and originals', () => {
     expect(screen.getByText(/Abra los originales descargados como texto/)).toBeTruthy();
   });
 
-  it('shows the versions of a selection and a link to create a project for the competition (R-276, R-278)', async () => {
+  it('shows the versions of a selection and leads content creation to the sports wizard (R-276, R-278)', async () => {
     const { gets } = renderPage();
     const table = await screen.findByRole('table', { name: 'Versiones de Apertura, jornada 1' });
     expect(within(table).getByRole('rowheader', { name: 'Versión 1' })).toBeTruthy();
@@ -114,8 +114,8 @@ describe('ImportsPage: history and originals', () => {
     expect(gets('/manual-data/selections')[0]?.url).toBe(
       '/api/v1/manual-data/selections?competitionId=liga-sintetica&seasonId=temporada-2026',
     );
-    expect(screen.getByRole('link', { name: 'Crear un proyecto con «Liga Sintética»' }).getAttribute('href')).toBe(
-      '/projects/new',
+    expect(screen.getAllByRole('link', { name: 'Crear contenido' }).at(-1)?.getAttribute('href')).toBe(
+      '/projects/generate',
     );
   });
 
@@ -197,9 +197,9 @@ describe('ImportsPage: file channel', () => {
     const result = heading.closest('section') as HTMLElement;
     expect(within(result).getByText('versión 1 (primera versión)', { exact: false })).toBeTruthy();
     expect(within(result).getByText(/no cuentan como verificación independiente/)).toBeTruthy();
-    expect(
-      within(result).getByRole('link', { name: 'Crear un proyecto con «Liga Sintética»' }).getAttribute('href'),
-    ).toBe('/projects/new');
+    expect(within(result).getByRole('link', { name: 'Crear contenido' }).getAttribute('href')).toBe(
+      '/projects/generate',
+    );
     await screen.findByRole('table', { name: 'Versiones de Apertura, jornada 1' });
     expect(gets('/imports')).toHaveLength(2);
     expect((within(fileForm()).getByLabelText('Archivo') as HTMLInputElement).files?.length ?? 0).toBe(0);

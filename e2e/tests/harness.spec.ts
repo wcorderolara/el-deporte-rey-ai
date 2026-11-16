@@ -2,12 +2,21 @@
  * Harness checks: the runner forwards no provider credential or live-test switch to the test processes (and so to the
  * browser) (T10-F11, AD-30, R-257, R-258), keeps browsers in the project-local cache (AD-16), serves the
  * application on a loopback address, and generates the DEMO_DATA plus MANUAL_DATA configuration (OD-44) whose
- * scenario overrides reach only DEMO_DATA fixture sources.
+ * scenario overrides reach only DEMO_DATA fixture sources. Since UI-06.1 the configuration also carries the locally
+ * managed competitions source of the committed default configuration, and every AI writer stays the free stub (no
+ * provider, no cost).
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { INCLUDED_MODES, baseConfigPath, serverConfigDocument } from '../support/harness.mjs';
+import {
+  INCLUDED_MODES,
+  LOCAL_ADAPTER,
+  baseConfigPath,
+  localSource,
+  runBaseDocument,
+  serverConfigDocument,
+} from '../support/harness.mjs';
 import { expect, test } from '../support/test.js';
 
 const PROJECT_ROOT = resolve(import.meta.dirname, '../..');
@@ -53,5 +62,36 @@ test.describe('End-to-end harness', () => {
     ]);
     expect(() => serverConfigDocument(base, 4999, { manual: 'default' })).toThrow(/No included DEMO_DATA source/);
     expect(() => serverConfigDocument(base, 4999, { 'demo-a': '../outside' })).toThrow(/must match/);
+  });
+
+  test('adds the locally managed competitions source and configures no paid AI provider (UI-06.1)', () => {
+    interface Source {
+      id: string;
+      mode: string;
+      adapter: string;
+    }
+    interface Providers {
+      sports: { sources: Source[] };
+      ai: { adapter: string };
+      editorial?: { adapter: string };
+      images?: { adapter: string };
+    }
+    const providersOf = (document: unknown) => (document as { providers: Providers }).providers;
+    const committed: unknown = JSON.parse(readFileSync(resolve(PROJECT_ROOT, 'config/app.config.json'), 'utf8'));
+    const expected = providersOf(committed).sports.sources.find((source) => source.adapter === LOCAL_ADAPTER);
+    expect(localSource(PROJECT_ROOT)).toEqual(expected);
+    const generated = providersOf(serverConfigDocument(runBaseDocument(PROJECT_ROOT), 4999));
+    expect(generated.sports.sources.map((source) => [source.id, source.mode])).toEqual([
+      ['demo-a', 'DEMO_DATA'],
+      ['demo-b', 'DEMO_DATA'],
+      ['manual', 'MANUAL_DATA'],
+      ['local', 'MANUAL_DATA'],
+    ]);
+    expect(generated.sports.sources.filter((source) => source.adapter === LOCAL_ADAPTER)).toHaveLength(1);
+    // The slide writer is the stub; the editorial writer and the image provider fall back to the free stub and to
+    // disabled (the configuration defaults, PD-27, PD-30).
+    expect(generated.ai.adapter).toBe('stub');
+    expect(generated.editorial?.adapter ?? 'stub').toBe('stub');
+    expect(generated.images?.adapter ?? 'disabled').toBe('disabled');
   });
 });

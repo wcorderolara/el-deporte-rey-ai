@@ -351,6 +351,13 @@ describe('data-mode startup rules (OD-20, R-266)', () => {
     expect(error.message).toContain("'manual'");
   });
 
+  it('accepts an operator-validated MANUAL_DATA source and stops on any other operator-validated source', () => {
+    const config = build(app([demo('demo-a'), manual('manual', { operatorValidated: true })]));
+    expect(config.providers.sports.sources.map((source) => source.operatorValidated)).toEqual([false, true]);
+    const error = configError(() => build(app([demo('demo-a', { operatorValidated: true }), manual('manual')])));
+    expect(settings(error)).toEqual(['providers.sports.sources[0].operatorValidated']);
+  });
+
   it('stops on a LIVE_DATA source without an https: base URL', () => {
     const invalid: unknown[] = [
       undefined,

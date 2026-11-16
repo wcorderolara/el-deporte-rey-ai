@@ -116,6 +116,15 @@ export function formatDate(iso: string, language: Language, utcOffsetMinutes: nu
   return `${String(shifted.getUTCDate())} ${month} ${String(shifted.getUTCFullYear())}`;
 }
 
+/**
+ * Time of day at the display offset, 24-hour `HH:MM`: `formatTime('2026-10-27T18:00:00Z', -360)` is `'12:00'`
+ * (PD-ARCH-01G-C, the kickoff time of a visual template).
+ */
+export function formatTime(iso: string, utcOffsetMinutes: number): string {
+  const shifted = displayFields(iso, utcOffsetMinutes);
+  return `${String(shifted.getUTCHours()).padStart(2, '0')}:${String(shifted.getUTCMinutes()).padStart(2, '0')}`;
+}
+
 /** A team name for display: the verified official name, exactly as given (R-052, R-426). */
 export function teamDisplayName(officialName: string): string {
   return officialName;

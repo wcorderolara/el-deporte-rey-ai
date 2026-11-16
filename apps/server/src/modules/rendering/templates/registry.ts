@@ -6,18 +6,37 @@
  */
 import type { SlideType, Template } from '@edr/contracts';
 
+import type { SlideContent } from '../slide-content.js';
+
 import type { TemplateDefinition } from './common.js';
 import { closingTemplate } from './closing.js';
 import { coverTemplate } from './cover.js';
-import { matchResultTemplate } from './match-result.js';
+import { fixtureTemplate, fixtureTemplateV1 } from './fixture.js';
+import { matchPreviewTemplate, matchPreviewTemplateV1 } from './match-preview.js';
+import { matchResultTemplate, matchResultTemplateV1 } from './match-result.js';
+import { roundOverviewTemplate, roundOverviewTemplateV1 } from './round-overview.js';
 import { standingsTemplate } from './standings.js';
 
-/** The built-in templates of this release. */
+/**
+ * The built-in templates of this release, every version kept (OD-13). The current version of a slide type is its last
+ * one: the match templates are at 1.1.0, which draw the team badges (PD-ARCH-01G-E.1), and the round calendar at
+ * 2.0.0, one row per match with both badges (PD-ARCH-01G-E.2).
+ */
 export const BUILT_IN_TEMPLATES: readonly TemplateDefinition[] = Object.freeze([
   coverTemplate,
-  matchResultTemplate,
+  matchResultTemplateV1,
   standingsTemplate,
   closingTemplate,
+  // PD-ARCH-01E-B: matches not played yet.
+  roundOverviewTemplateV1,
+  fixtureTemplateV1,
+  matchPreviewTemplateV1,
+  // PD-ARCH-01G-E.1: team badges in the badge slots.
+  matchResultTemplate,
+  fixtureTemplate,
+  matchPreviewTemplate,
+  // PD-ARCH-01G-E.2: round calendars as rows with the team badges.
+  roundOverviewTemplate,
 ]);
 
 export class TemplateRegistry {
@@ -57,6 +76,34 @@ export class TemplateRegistry {
     return template;
   }
 
+  /**
+   * The template that draws a slide of a project whose badges do not cover the engine templates (decision DE-E3 of
+   * PD-ARCH-01G-E): the last registered version of the slide type that leaves its badge slots empty, so the slides of
+   * those projects keep the version, the render model and the image they had (match templates 1.0.0, round calendar
+   * 1.0.0). The current version when every version of the type draws badges.
+   */
+  currentWithoutBadges(slideType: SlideType): TemplateDefinition {
+    const legacy = this.#all.findLast((template) => template.slideType === slideType && template.drawsBadges !== true);
+    return legacy ?? this.current(slideType);
+  }
+
+  /**
+   * The template that draws a slide (decision DE-E3): the last registered version of its type that either draws no
+   * badges or draws the badges the slide has. A match template that draws badges needs `SlideContent.badges`
+   * (PD-ARCH-01G-E.1); a calendar template with rows needs `SlideContent.rowBadges` (PD-ARCH-01G-E.2). So a project
+   * keeps the versions its badge snapshot covers: no snapshot or version 1, every 1.0.0; version 2, the match
+   * templates 1.1.0 and the calendar 1.0.0; version 3, the current versions.
+   */
+  forContent(content: Pick<SlideContent, 'slideType' | 'badges' | 'rowBadges'>): TemplateDefinition {
+    const drawable = this.#all.findLast(
+      (template) =>
+        template.slideType === content.slideType &&
+        (template.drawsBadges !== true ||
+          (template.rows === undefined ? content.badges !== undefined : content.rowBadges !== undefined)),
+    );
+    return drawable ?? this.current(content.slideType);
+  }
+
   /** The current version of a template ID, or undefined. */
   byId(templateId: string): TemplateDefinition | undefined {
     return this.list().find((template) => template.id === templateId);
@@ -75,7 +122,8 @@ export function toContractTemplate(template: TemplateDefinition): Template {
     version: template.version,
     slideType: template.slideType,
     label: template.label,
-    badgeSlots: template.badgeSlots.length,
+    // A calendar with rows has the badge slots of every row (PD-ARCH-01G-E.2).
+    badgeSlots: template.badgeSlots.length * (template.rows ?? 1),
     imageSlots: [...template.imageSlots],
   };
 }

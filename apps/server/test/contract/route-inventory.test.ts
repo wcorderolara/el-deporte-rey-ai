@@ -86,7 +86,7 @@ describe('server routes and contract operations (T43, AD-04)', () => {
       [...contract].filter((operation) => !served.includes(operation)).sort(),
       'contract operations not served',
     ).toEqual([]);
-    expect(served).toHaveLength(40);
+    expect(served).toHaveLength(contract.size);
   });
 
   it('finds every contract operation with the router', () => {

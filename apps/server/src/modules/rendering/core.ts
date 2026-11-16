@@ -3,9 +3,10 @@
  * embedded assets in, render models and PNGs out. No database access and no file writes; the tests call it with
  * synthetic inputs in isolation (R-104, R-225).
  *
- * Each slide is drawn with the current template of its slide type (R-211); the render model records the template ID
- * and version, the palette, the fonts and every element, then the renderer produces the PNG at the configured size
- * (OD-04, R-238).
+ * Each slide is drawn with the current template of its slide type (R-211; for a project whose badges do not cover the
+ * engine templates, its current version without badges, decision DE-E3 of PD-ARCH-01G-E); the render model records
+ * the template ID and version, the palette, the fonts and every element, then the renderer produces the PNG at the
+ * configured size (OD-04, R-238).
  */
 import type { BrandAssetLookup } from '../brand/index.js';
 import type { AppConfig } from '../../platform/config/index.js';
@@ -82,6 +83,11 @@ export interface RenderDeps {
   readonly fonts: FontSet;
   readonly settings: RenderSettings;
   readonly assets: readonly SlotAsset[];
+  /**
+   * The badge files of the project's snapshot with their verified bytes (PD-ARCH-01G-E.1); the slides name the badges
+   * they draw (`SlideContent.badges`). Empty or absent without badges.
+   */
+  readonly badgeFiles?: readonly EmbeddedAsset[];
   readonly signal?: AbortSignal;
 }
 
@@ -96,10 +102,14 @@ export interface SlideRender {
   readonly height: number;
 }
 
-/** Builds the render model of one slide with the current template of its type. */
+/**
+ * Builds the render model of one slide with the current template of its type that draws the badges the slide has
+ * (`TemplateRegistry.forContent`). A slide without badges (`SlideContent.badges` or `rowBadges` absent: the project's
+ * snapshot does not cover that engine template) uses the version that leaves the badge slots empty, so projects
+ * created before PD-ARCH-01G-E.1 and E.2 render as before (decision DE-E3).
+ */
 export function buildRenderModel(content: SlideContent, deps: Omit<RenderDeps, 'signal'>): RenderModel {
-  const template = deps.registry.current(content.slideType);
-  return template.build(content, templateContext(deps.settings, deps.fonts, deps.assets));
+  return deps.registry.forContent(content).build(content, templateContext(deps.settings, deps.fonts, deps.assets));
 }
 
 /** Renders one slide; stored text that cannot be drawn fails with `invalid` at the given path. */
@@ -113,7 +123,10 @@ export async function renderContent(content: SlideContent, deps: RenderDeps, pat
     }
     throw error;
   }
-  const assets = new Map(deps.assets.map((asset) => [asset.id, asset]));
+  const assets = new Map<string, EmbeddedAsset>(deps.assets.map((asset) => [asset.id, asset]));
+  for (const file of deps.badgeFiles ?? []) {
+    assets.set(file.id, file);
+  }
   const rendered = await renderSlide(model, { fonts: deps.fonts, assets }, deps.signal);
   return {
     templateId: model.templateId,

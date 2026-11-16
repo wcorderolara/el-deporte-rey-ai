@@ -84,6 +84,7 @@ export interface WorkflowRunnerOptions {
 }
 
 interface ActiveRun {
+  readonly projectId: string;
   readonly controller: AbortController;
   readonly done: Promise<void>;
 }
@@ -173,6 +174,30 @@ export class WorkflowRunner {
     }
   }
 
+  /**
+   * Cancels the runs of a project executing in this process (each fails with `interrupted`) and waits until they have
+   * stopped, at most `timeoutMs`. Resolves true when no run of the project is executing anymore, false when a run has
+   * not confirmed its stop within the time (the caller must not claim the cancellation).
+   */
+  async cancelProject(projectId: string, timeoutMs = 15_000): Promise<boolean> {
+    const runs = [...this.#active.values()].filter((run) => run.projectId === projectId);
+    for (const run of runs) {
+      run.controller.abort();
+    }
+    if (runs.length === 0) {
+      return true;
+    }
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<false>((resolve) => {
+      timer = setTimeout(() => resolve(false), timeoutMs);
+    });
+    try {
+      return await Promise.race([Promise.all(runs.map((run) => run.done)).then(() => true), timeout]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   /** Number of runs executing in this process. */
   get activeCount(): number {
     return this.#active.size;
@@ -196,7 +221,7 @@ export class WorkflowRunner {
       .finally(() => {
         this.#active.delete(runId);
       });
-    this.#active.set(runId, { controller, done });
+    this.#active.set(runId, { projectId, controller, done });
   }
 
   #now(): string {

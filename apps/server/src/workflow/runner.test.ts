@@ -345,3 +345,36 @@ describe('interrupted runs', () => {
     expect(() => runner.start(PROJECT_ID, 'full')).toThrow('shut down');
   });
 });
+
+describe('cancellation of a project run (PD-ARCH-01F)', () => {
+  it('confirms at once when the project has no run executing', async () => {
+    const runner = setup(allStages([]));
+    expect(await runner.cancelProject(PROJECT_ID)).toBe(true);
+  });
+
+  it('cancels a run that stops when aborted and confirms it once stopped', async () => {
+    const gate = deferred();
+    const calls: StageCall[] = [];
+    const runner = setup(allStages(calls, { research: fakeStage('research', calls, { gate: gate.promise }) }));
+    const run = runner.start(PROJECT_ID, 'full');
+    const cancelled = runner.cancelProject(PROJECT_ID, 1000);
+    gate.resolve();
+    expect(await cancelled).toBe(true);
+    expect(runner.runs.view(run.id)?.status).toBe('failed');
+    expect(runner.runs.view(run.id)?.failure?.code).toBe('interrupted');
+  });
+
+  it('does not confirm a run that has not stopped within the time limit', async () => {
+    const gate = deferred();
+    const calls: StageCall[] = [];
+    const runner = setup(allStages(calls, { research: fakeStage('research', calls, { gate: gate.promise }) }));
+    runner.start(PROJECT_ID, 'full');
+    // Wait until the stage is inside its run, which ignores the cancellation until the gate opens.
+    while (!calls.some((call) => call.stage === 'research' && call.step === 'run')) {
+      await new Promise((resolve) => setTimeout(resolve, 1));
+    }
+    expect(await runner.cancelProject(PROJECT_ID, 20)).toBe(false);
+    gate.resolve();
+    await runner.idle();
+  });
+});

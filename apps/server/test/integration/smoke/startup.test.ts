@@ -417,7 +417,19 @@ describe('injected environment and the provider token (AD-30, T11H-F03)', () => 
     expect(seenByModule).toEqual([undefined]);
     expect(JSON.stringify(server.container.config)).not.toContain(TEST_MARKER_TOKEN);
     expect(Object.keys(server.container).sort()).toEqual(
-      ['aiProvider', 'catalogue', 'clock', 'config', 'db', 'egress', 'logger', 'paths', 'sources'].sort(),
+      [
+        'aiProvider',
+        'catalogue',
+        'clock',
+        'config',
+        'db',
+        'editorialWriter',
+        'egress',
+        'imageProvider',
+        'logger',
+        'paths',
+        'sources',
+      ].sort(),
     );
   });
 

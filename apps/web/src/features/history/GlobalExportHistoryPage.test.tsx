@@ -36,6 +36,8 @@ function summaryOf(value = project()) {
     createdAt,
     approvalState,
     lastExportAt,
+    latestRunStatus,
+    sportsContext,
   } = value;
   return {
     id,
@@ -51,6 +53,8 @@ function summaryOf(value = project()) {
     createdAt,
     approvalState,
     lastExportAt,
+    latestRunStatus,
+    sportsContext,
   };
 }
 

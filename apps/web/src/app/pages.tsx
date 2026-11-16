@@ -1,6 +1,14 @@
-import { Link, useRouteError } from 'react-router';
+import { Link, useLocation, useRouteError } from 'react-router';
 
 import { appCopy, ErrorBanner, featureCopy, pageCopy } from '../ui';
+import { contentVariantOf } from './AppShell';
+
+/**
+ * A link on the studio surface: the studio link colour and focus ring, as the breadcrumb links of the shell (the plain
+ * link colour and ring are those of the light panel).
+ */
+const STUDIO_LINK =
+  'focus-studio text-text-link underline decoration-border-strong underline-offset-2 hover:text-text-primary';
 
 /** Shown for an address that matches no route. */
 export function NotFoundPage() {
@@ -15,15 +23,21 @@ export function NotFoundPage() {
   );
 }
 
-/** Error boundary of the feature routes, rendered inside the shell. The error's own message is never shown. */
+/**
+ * Error boundary of the feature routes, rendered inside the shell on the surface of the failed route. The error's own
+ * message is never shown. On the studio surface the link takes the studio colours (UI-06.3).
+ */
 export function RouteErrorPage() {
   const error = useRouteError();
+  const studio = contentVariantOf(useLocation().pathname) !== 'legacy';
   return (
     <section aria-labelledby="route-error-title">
       <h1 id="route-error-title">{pageCopy.routeErrorTitle}</h1>
       <ErrorBanner error={error} />
       <p>
-        <Link to="/">{pageCopy.backToProjects}</Link>
+        <Link className={studio ? STUDIO_LINK : undefined} to="/">
+          {pageCopy.backToProjects}
+        </Link>
       </p>
     </section>
   );
@@ -36,7 +50,10 @@ export function RootErrorPage() {
       <h1>{pageCopy.routeErrorTitle}</h1>
       <p>{pageCopy.routeErrorBody}</p>
       <p>
-        <a href="/">{pageCopy.backToProjects}</a>
+        {/* Outside the shell, on the studio canvas of the document: the studio link colour. */}
+        <a className="text-text-link" href="/">
+          {pageCopy.backToProjects}
+        </a>
       </p>
     </main>
   );

@@ -4,7 +4,8 @@
  * no database access and no file I/O, so the tests call it with synthetic inputs in isolation (R-225).
  *
  * Checks of a slide version (severity per OD-09; every check gives one result, `pass` or `fail`):
- * - `data_match` (blocking): every fact-bearing text element (score, kickoff, standings position and cells) equals the
+ * - `data_match` (blocking): every fact-bearing text element (score, each team's goals, kickoff date and time, status,
+ *   standings position and cells) equals the
  *   deterministic display form (`platform/format`) of its fact's verified value, or of its candidate value when the
  *   fact is unverified (T11G). Standings rows are compared as the content stage stores them (OD-49, T32 risk 3): the
  *   row's position and number cells against `standingRowCells` of the row fact, in column order. The match-result
@@ -26,6 +27,12 @@
  * - `capitalized_tokens` (warning; OD-26, OD-38): capitalized tokens of the AI-written (commentary) text that are not
  *   part of a verified team name, a selection label (competition, stage, season), a brand term or the language word
  *   list: possible person names (T11H-F17 residual).
+ * - `team_badges` (warning; PD-ARCH-01G-E.1, decision DE-E4; PD-28 point 4): the badge slots of an engine match
+ *   template that record their team but have no badge, because the team has none in the project's snapshot or could
+ *   not be identified. The slot stays empty and nothing is substituted; generation is never stopped. A slot that
+ *   records no team (models rendered before 01G-E.1, projects whose snapshot does not cover the engine templates,
+ *   decision DE-E3) is not examined, so those slides pass as before. The rows of an engine round calendar
+ *   (PD-ARCH-01G-E.2) are examined the same way, and each empty slot is reported with its row.
  *
  * The caption element has no image: its QA is the content checks (architecture.md section 10), plus
  * `capitalized_tokens` on its caption and hashtags (OD-26 applies to every AI draft).
@@ -35,6 +42,7 @@ import { type Language, QA_CHECKS, type QaCheck, type QaMismatch, type QaResult,
 import {
   formatDate,
   formatInt,
+  formatTime,
   formatScore,
   hashtagFor,
   resultRelation,
@@ -85,10 +93,33 @@ export const DETAIL_LIMITS = Object.freeze({
 /** Text elements that show a fact value compared by `data_match`. */
 const VALUE_SEMANTICS: ReadonlySet<TextElement['semantic']> = new Set([
   'score',
+  // PD-ARCH-01G-D: values a visual template draws on their own.
+  'score_home',
+  'score_away',
+  'kickoff_time',
   'kickoff',
+  'match_status',
   'standings_position',
   'standings_cell',
 ]);
+
+/**
+ * True for the render model of a structured visual template (PD-ARCH-01G-D, decision D9): it draws the values its
+ * design chooses, so data_match does not require every fact segment to be drawn nor the result title; every value it
+ * draws is still compared with its fact.
+ */
+function isVisualTemplate(model: RenderModel): boolean {
+  return model.templateId.startsWith('vt-');
+}
+
+/** Slide types of matches not played yet: they never draw a score (PD-ARCH-01E-B). */
+const UNPLAYED_SLIDE_TYPES: ReadonlySet<string> = new Set(['round_overview', 'fixture', 'match_preview']);
+
+/** Score elements: none on a match not played yet. */
+const SCORE_SEMANTICS: ReadonlySet<string> = new Set(['score', 'score_home', 'score_away']);
+
+/** Fields stored only for visual templates (PD-ARCH-01G-D); a built-in template never draws them. */
+const TEMPLATE_ONLY_FIELDS: ReadonlySet<string> = new Set(['score_home', 'score_away', 'kickoff_time']);
 
 /** The AI-written fields of a slide (content module `aiField`). */
 const SLIDE_AI_FIELDS = ['headline', 'description'] as const;
@@ -118,6 +149,8 @@ export interface QaContext {
   readonly settings: QaSettings;
   readonly facts: ReadonlyMap<string, ContentFact>;
   readonly teams: readonly TeamRule[];
+  /** TEAM-DISPLAY-01: the snapshot presentation name of team-name facts, by fact ID (images only). */
+  readonly teamDisplayNames: ReadonlyMap<string, string>;
   readonly fonts: FontSet;
   /** Folded tokens `capitalized_tokens` accepts: the word list, verified team names, labels and brand terms. */
   readonly allowedTokens: ReadonlySet<string>;
@@ -180,6 +213,7 @@ export function qaContext(input: VisualQaInput, fonts: FontSet): QaContext {
     settings: input.settings,
     facts: new Map(input.facts.map((fact) => [fact.id, fact])),
     teams,
+    teamDisplayNames: new Map(Object.entries(input.teamDisplayNames)),
     fonts,
     allowedTokens: allowedTokensOf(input.facts, input.labels, input.settings.brand),
     verifiedHashtags,
@@ -229,6 +263,20 @@ function segmentsOf(version: VersionToCheck, field: string): readonly Segment[] 
 }
 
 /** The AI-written text of a field with every substituted segment replaced by a space (as the content checks see it). */
+/**
+ * The AI text of a field as the image draws it (TEAM-DISPLAY-01): every fact segment of a team-name fact with a
+ * recorded presentation name takes that name; every other segment is drawn as stored.
+ */
+function presentedAiText(segments: readonly Segment[], displayNames: ReadonlyMap<string, string>): string {
+  return segments
+    .map((segment) =>
+      segment.provenance === 'fact' && segment.factId !== null
+        ? (displayNames.get(segment.factId) ?? segment.text)
+        : segment.text,
+    )
+    .join('');
+}
+
 function aiTextOf(segments: readonly Segment[]): string {
   return segments.map((segment) => (segment.provenance === 'commentary' ? segment.text : ' ')).join('');
 }
@@ -258,10 +306,26 @@ function sortedUnique(values: Iterable<string>): string[] {
 // ---------------------------------------------------------------------------------------------------------------
 
 /** Display form of a value element's fact for the element's semantic; null when the fact cannot give it. */
-function valueDisplay(semantic: 'score' | 'kickoff', fact: ContentFact | undefined, ctx: QaContext): string | null {
+function valueDisplay(
+  semantic: 'score' | 'score_home' | 'score_away' | 'kickoff' | 'kickoff_time' | 'match_status',
+  fact: ContentFact | undefined,
+  ctx: QaContext,
+): string | null {
   if (semantic === 'score') {
     const score = usableValue(fact, 'match_score');
     return score === null ? null : formatScore(score);
+  }
+  if (semantic === 'score_home' || semantic === 'score_away') {
+    const score = usableValue(fact, 'match_score');
+    return score === null ? null : formatInt(semantic === 'score_home' ? score.home : score.away);
+  }
+  if (semantic === 'kickoff_time') {
+    const kickoff = usableValue(fact, 'match_kickoff');
+    return kickoff === null ? null : formatTime(kickoff.kickoff, ctx.settings.utcOffsetMinutes);
+  }
+  if (semantic === 'match_status') {
+    const status = usableValue(fact, 'match_status');
+    return status === null ? null : templateText(ctx.language).matchStatus[status.matchStatus];
   }
   const kickoff = usableValue(fact, 'match_kickoff');
   return kickoff === null ? null : formatDate(kickoff.kickoff, ctx.language, ctx.settings.utcOffsetMinutes);
@@ -271,8 +335,13 @@ function valueDisplay(semantic: 'score' | 'kickoff', fact: ContentFact | undefin
 function segmentDisplays(fact: ContentFact | undefined, ctx: QaContext): string[] {
   switch (fact?.kind) {
     case 'match_score':
-    case 'match_kickoff': {
-      const display = valueDisplay(fact.kind === 'match_score' ? 'score' : 'kickoff', fact, ctx);
+    case 'match_kickoff':
+    case 'match_status': {
+      const display = valueDisplay(
+        fact.kind === 'match_score' ? 'score' : fact.kind === 'match_kickoff' ? 'kickoff' : 'match_status',
+        fact,
+        ctx,
+      );
       return display === null ? [] : [display];
     }
     case 'standing_row': {
@@ -345,20 +414,38 @@ export function dataMatch(version: VersionToCheck, model: RenderModel, ctx: QaCo
       rows.set(factId, [...(rows.get(factId) ?? []), element]);
       continue;
     }
-    const expected = valueDisplay(element.semantic === 'score' ? 'score' : 'kickoff', ctx.facts.get(factId), ctx);
+    const expected = valueDisplay(
+      element.semantic === 'score' ||
+        element.semantic === 'score_home' ||
+        element.semantic === 'score_away' ||
+        element.semantic === 'kickoff_time' ||
+        element.semantic === 'match_status'
+        ? element.semantic
+        : 'kickoff',
+      ctx.facts.get(factId),
+      ctx,
+    );
     if (expected === null || element.text !== expected) {
       mismatches.add(element.id, factId, expected ?? '', element.text);
     }
   }
   checkStandingsRows(rows, ctx, mismatches);
-  if (model.slideType === 'match_result') {
+  const structured = isVisualTemplate(model);
+  if (model.slideType === 'match_result' && !structured) {
     checkResultTitle(texts, ctx, mismatches);
   }
+  if (UNPLAYED_SLIDE_TYPES.has(model.slideType)) {
+    // A match not played yet never shows a score, whatever its stored text says.
+    for (const element of texts.filter((candidate) => SCORE_SEMANTICS.has(candidate.semantic))) {
+      mismatches.add(element.id, element.factIds[0] ?? null, '', element.text);
+    }
+  }
 
-  // Every fact segment of a template field is drawn by some text element.
+  // Every fact segment of a template field is drawn by some text element (built-in templates; the values stored only
+  // for visual templates are not required).
   const drawn = new Set(texts.flatMap((element) => element.factIds));
-  for (const field of version.text.fields) {
-    if ((SLIDE_AI_FIELDS as readonly string[]).includes(field.field)) {
+  for (const field of structured ? [] : version.text.fields) {
+    if ((SLIDE_AI_FIELDS as readonly string[]).includes(field.field) || TEMPLATE_ONLY_FIELDS.has(field.field)) {
       continue;
     }
     for (const segment of field.segments) {
@@ -368,11 +455,18 @@ export function dataMatch(version: VersionToCheck, model: RenderModel, ctx: QaCo
     }
   }
 
-  // AI fields: the drawn text is the stored text, and every substituted value is a display form of its fact.
+  // AI fields: the drawn text is the stored text, and every substituted value is a display form of its fact. From
+  // TEAM-DISPLAY-01 (PD-37) a team placeholder of the AI text is drawn with the presentation name the project recorded
+  // for that fact's team, so the drawn text is the stored text with exactly those segments replaced; nothing else may
+  // differ. The stored segments themselves still hold the official names (checked by team_names).
   for (const field of SLIDE_AI_FIELDS) {
     const segments = segmentsOf(version, field);
-    const stored = segments.map((segment) => segment.text).join('');
+    const stored = presentedAiText(segments, ctx.teamDisplayNames);
     const element = texts.find((candidate) => candidate.field === field);
+    if (structured && element === undefined) {
+      // A visual template does not draw the AI text (decision D9).
+      continue;
+    }
     if (stored.trim() !== '' && element?.text !== stored) {
       mismatches.add(element?.id ?? field, null, stored, element?.text ?? '');
     }
@@ -435,6 +529,12 @@ function nameVariants(
   return variants;
 }
 
+/**
+ * `team_names`: a team-name element of the image draws exactly one team-name fact, with its official name or, from
+ * TEAM-DISPLAY-01 (PD-37), the presentation name the project's snapshot recorded for that fact's team, and no other
+ * form. The stored AI text (headline, description) must hold the official names, as before; the image draws its team
+ * placeholders with the presentation name, which `data_match` compares.
+ */
 export function teamNames(version: VersionToCheck, model: RenderModel, ctx: QaContext): QaResult {
   const mismatches = new Mismatches();
   for (const element of textElements(model)) {
@@ -443,8 +543,9 @@ export function teamNames(version: VersionToCheck, model: RenderModel, ctx: QaCo
     }
     const [factId] = element.factIds;
     const expected = factId === undefined || element.factIds.length !== 1 ? null : officialName(ctx.facts.get(factId));
-    if (expected === null || element.text !== expected) {
-      mismatches.add(element.id, factId ?? null, expected ?? '', element.text);
+    const presented = factId === undefined || expected === null ? undefined : ctx.teamDisplayNames.get(factId);
+    if (expected === null || (element.text !== expected && element.text !== presented)) {
+      mismatches.add(element.id, factId ?? null, presented ?? expected ?? '', element.text);
     }
   }
   for (const field of SLIDE_AI_FIELDS) {
@@ -482,7 +583,9 @@ export function fitsBox(element: TextElement, canvas: RenderModel['canvas'], fon
   if (face === undefined) {
     return false; // not measurable with a bundled face: not shown to fit
   }
-  const layout = layoutText(element.text, face.font, element.fontSize, element.box.width, element.maxLines);
+  // Text shown in capital letters is measured as drawn (PD-29); the element keeps the stored text.
+  const shown = element.uppercase === true ? element.text.toUpperCase() : element.text;
+  const layout = layoutText(shown, face.font, element.fontSize, element.box.width, element.maxLines);
   if (
     layout.overflow ||
     layout.lines.length !== element.lines.length ||
@@ -614,6 +717,43 @@ export function capitalizedTokens(version: VersionToCheck, ctx: QaContext): QaRe
   return result('capitalized_tokens', tokens.length === 0, { tokens });
 }
 
+type BadgeSide = 'team-badge-home' | 'team-badge-away';
+
+/** The badge slots of a match slide that record a team without a badge (PD-ARCH-01G-E.1), in model order. */
+export function emptyBadgeSlotsOf(model: RenderModel): BadgeSide[] {
+  return model.elements.flatMap((element) =>
+    element.kind === 'badge_slot' &&
+    element.row === undefined &&
+    element.team !== undefined &&
+    element.team.badge === null
+      ? [element.slot]
+      : [],
+  );
+}
+
+/** The badge slots of calendar rows that record a team without a badge (PD-ARCH-01G-E.2), in model order. */
+export function emptyRowBadgeSlotsOf(model: RenderModel): { row: number; slot: BadgeSide }[] {
+  return model.elements.flatMap((element) =>
+    element.kind === 'badge_slot' &&
+    element.row !== undefined &&
+    element.team !== undefined &&
+    element.team.badge === null
+      ? [{ row: element.row, slot: element.slot }]
+      : [],
+  );
+}
+
+export function teamBadges(model: RenderModel): QaResult {
+  const emptyBadgeSlots = emptyBadgeSlotsOf(model);
+  const emptyRowBadgeSlots = emptyRowBadgeSlotsOf(model);
+  const rows = model.elements.some((element) => element.kind === 'badge_slot' && element.row !== undefined);
+  return result(
+    'team_badges',
+    emptyBadgeSlots.length === 0 && emptyRowBadgeSlots.length === 0,
+    rows ? { emptyBadgeSlots, emptyRowBadgeSlots } : { emptyBadgeSlots },
+  );
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // Results
 // ---------------------------------------------------------------------------------------------------------------
@@ -626,6 +766,7 @@ export const CHECK_SEVERITY: Readonly<Record<QaCheck, 'blocking' | 'warning'>> =
   style_consistency: 'warning',
   dimensions: 'blocking',
   capitalized_tokens: 'warning',
+  team_badges: 'warning',
 });
 
 /** A closed contract result (T10-F17): validated, never acknowledged when produced. */
@@ -669,6 +810,9 @@ export function checkVersion(
     run('dimensions', () => dimensions(version, ctx));
   }
   run('capitalized_tokens', () => capitalizedTokens(version, ctx));
+  if (version.kind === 'slide' && model !== null) {
+    run('team_badges', () => teamBadges(model));
+  }
   return { versionId: version.versionId, qaStatus: qaStatusOf(results), results };
 }
 

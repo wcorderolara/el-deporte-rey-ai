@@ -4,9 +4,9 @@
 // 1. installs Chromium (Chrome for Testing, run in new headless mode) on first use into `.cache/ms-playwright` under
 //    the project (never host-wide; the first run needs network access to the browser download host, which is tooling
 //    access). The headless shell is not used: axe's color-contrast rule never completes in it (Playwright 1.64);
-// 2. writes a configuration with the DEMO_DATA fixture sources, the MANUAL_DATA import source and the stub AI adapter
-//    (e2e/support/harness.mjs), bound to 127.0.0.1 on the verification port (4310, or `E2E_PORT`), into a temporary
-//    directory outside the repository, with a temporary data directory;
+// 2. writes a configuration with the DEMO_DATA fixture sources, the MANUAL_DATA import source, the locally managed
+//    competitions source and the stub AI adapter (e2e/support/harness.mjs), bound to 127.0.0.1 on the verification
+//    port (4310, or `E2E_PORT`), into a temporary directory outside the repository, with a temporary data directory;
 // 3. starts the built server on that configuration and waits for its health route;
 // 4. runs Playwright with the remaining arguments (e2e/playwright.config.ts);
 // 5. stops the server and removes the temporary directory, whatever the outcome.

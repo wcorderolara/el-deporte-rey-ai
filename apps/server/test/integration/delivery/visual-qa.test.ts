@@ -172,6 +172,7 @@ describe(
           'data_match',
           'dimensions',
           'style_consistency',
+          'team_badges',
           'team_names',
           'text_fit',
         ]);
@@ -206,7 +207,7 @@ describe(
 
       // A correct slide passes every check.
       const cover = slidesOfType(carousel, 'cover')[0] as Element;
-      expect(cover.currentVersion.qa).toHaveLength(6);
+      expect(cover.currentVersion.qa).toHaveLength(7);
       expect(cover.currentVersion.qa.every((result) => result.outcome === 'pass')).toBe(true);
       expect(cover.currentVersion.state).toBe('ready');
       expect(storedVersion(t, cover.currentVersion.id).qa_status).toBe('passed');
@@ -282,7 +283,15 @@ function expectCheckedWithoutBlockingFailure(draft: Draft): void {
     expect(checks, String(element.slideType)).toEqual(
       element.kind === 'caption'
         ? ['capitalized_tokens']
-        : ['capitalized_tokens', 'data_match', 'dimensions', 'style_consistency', 'team_names', 'text_fit'],
+        : [
+            'capitalized_tokens',
+            'data_match',
+            'dimensions',
+            'style_consistency',
+            'team_badges',
+            'team_names',
+            'text_fit',
+          ],
     );
     expect(
       element.currentVersion.qa.filter((result) => result.severity === 'blocking' && result.outcome === 'fail'),

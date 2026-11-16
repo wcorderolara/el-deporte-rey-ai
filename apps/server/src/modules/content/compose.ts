@@ -14,7 +14,7 @@
  */
 import type { ContentFlag } from '@edr/contracts';
 
-import { formatInt, formatScore, templateText } from '../../platform/format/index.js';
+import { formatInt, formatScore, formatTime, templateText } from '../../platform/format/index.js';
 
 import { type CheckContext, FlagList, checkHashtags, checkLength, checkText } from './checks.js';
 import {
@@ -26,6 +26,7 @@ import {
   relationPhrase,
   selectionStageDisplay,
   slideBindings,
+  statusDisplay,
 } from './request.js';
 import {
   ELEMENT_TEXT_VERSION,
@@ -173,6 +174,24 @@ function templateFields(
           segments: [factSegment(kickoffDisplay(match.kickoff, context), match.kickoffFactId)],
         });
       }
+      if (context.templateFields === true) {
+        // PD-ARCH-01G-D: the values a visual template draws on their own, from the same facts. A result slide
+        // exists only for a finished match (the status fact is verified as `finished`).
+        fields.push(
+          { field: 'score_home', segments: [factSegment(formatInt(match.score.home), match.scoreFactId)] },
+          { field: 'score_away', segments: [factSegment(formatInt(match.score.away), match.scoreFactId)] },
+          {
+            field: 'match_status',
+            segments: [factSegment(statusDisplay('finished', context.language), match.statusFactId)],
+          },
+        );
+        if (match.kickoff !== null && match.kickoffFactId !== null) {
+          fields.push({
+            field: 'kickoff_time',
+            segments: [factSegment(formatTime(match.kickoff, context.utcOffsetMinutes), match.kickoffFactId)],
+          });
+        }
+      }
       return fields;
     }
     case 'standings': {
@@ -193,6 +212,81 @@ function templateFields(
     }
     case 'closing':
       return [{ field: 'title', segments: [templateSegment(`${text.closingFollow} ${context.brand.handle}`)] }];
+    case 'round_overview': {
+      // One line per fixture: home, versus, away, kickoff; lines separated by template line feeds (like standings).
+      // A calendar with rows (PD-ARCH-01G-E.2, decision DE-E6) also stores the kickoff time and, for a match that is
+      // not scheduled, its status; the fact segments keep this order (rendering `fixtureRowsOf`).
+      const rows = context.calendarRows === true;
+      const segments: Segment[] = [];
+      slide.fixtures.forEach((fixture, index) => {
+        for (const factId of [fixture.teamsFactId, fixture.kickoffFactId, fixture.home.factId, fixture.away.factId]) {
+          refs.add(factId, 'template');
+        }
+        if (index > 0) {
+          segments.push(templateSegment('\n'));
+        }
+        segments.push(factSegment(fixture.home.name, fixture.home.factId));
+        segments.push(templateSegment(` ${text.versus} `));
+        segments.push(factSegment(fixture.away.name, fixture.away.factId));
+        segments.push(templateSegment(' · '));
+        segments.push(factSegment(kickoffDisplay(fixture.kickoff, context), fixture.kickoffFactId));
+        if (rows) {
+          segments.push(templateSegment(' · '));
+          segments.push(factSegment(formatTime(fixture.kickoff, context.utcOffsetMinutes), fixture.kickoffFactId));
+          if (fixture.status !== 'scheduled') {
+            refs.add(fixture.statusFactId, 'template');
+            segments.push(templateSegment(' · '));
+            segments.push(factSegment(statusDisplay(fixture.status, context.language), fixture.statusFactId));
+          }
+        }
+      });
+      return [
+        {
+          field: 'title',
+          segments: [templateSegment(`${text.calendarTitle} · ${selectionStageDisplay(context)}`)],
+        },
+        { field: 'fixtures', segments },
+      ];
+    }
+    case 'fixture':
+    case 'match_preview': {
+      const { fixture } = slide;
+      for (const factId of [
+        fixture.teamsFactId,
+        fixture.statusFactId,
+        fixture.kickoffFactId,
+        fixture.home.factId,
+        fixture.away.factId,
+      ]) {
+        refs.add(factId, 'template');
+      }
+      const title =
+        slide.type === 'fixture' ? text.fixtureTitle : `${text.previewTitle} · ${selectionStageDisplay(context)}`;
+      const fields: ElementTextField[] = [
+        { field: 'title', segments: [templateSegment(title)] },
+        {
+          field: 'match_status',
+          segments: [factSegment(statusDisplay(fixture.status, context.language), fixture.statusFactId)],
+        },
+        { field: 'team_home', segments: [factSegment(fixture.home.name, fixture.home.factId)] },
+        { field: 'team_away', segments: [factSegment(fixture.away.name, fixture.away.factId)] },
+        { field: 'kickoff', segments: [factSegment(kickoffDisplay(fixture.kickoff, context), fixture.kickoffFactId)] },
+      ];
+      if (context.templateFields === true) {
+        // PD-ARCH-01G-D: the kickoff time, drawn on its own by a visual template.
+        fields.push({
+          field: 'kickoff_time',
+          segments: [factSegment(formatTime(fixture.kickoff, context.utcOffsetMinutes), fixture.kickoffFactId)],
+        });
+      }
+      if (slide.type === 'match_preview') {
+        fields.push({
+          field: 'footer',
+          segments: [templateSegment(`${context.competitionName} · ${context.seasonLabel}`)],
+        });
+      }
+      return fields;
+    }
   }
 }
 

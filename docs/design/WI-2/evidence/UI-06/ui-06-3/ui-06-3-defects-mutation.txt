@@ -1,0 +1,23 @@
+# UI-06.3 — comprobación de que las pruebas de UI06.3-D03, D04 y D05 detectan los defectos, 2026-11-13.
+#
+# Se retiraron temporalmente las correcciones de apps/server/src/modules/competitions (git checkout de los cuatro
+# archivos), se ejecutaron las pruebas y se restauraron (git apply del parche guardado). Comando:
+#   npx vitest run --project integration apps/server/test/integration/verification/source-conflicts.test.ts \
+#     apps/server/test/integration/ingestion/import-recovery.test.ts
+
+Sin las correcciones:
+     × after the provider recovers, another preview of the same scope asks it again instead of reusing the incomplete one   (UI06.3-D05)
+     × records a manual reschedule of an imported match as a protected manual override                                       (UI06.3-D04)
+     × presents the conflict in the preview when the provider sends its kickoff without milliseconds                         (UI06.3-D03)
+      Tests  3 failed | 6 passed (9)
+
+Con las correcciones:
+      Tests  9 passed (9)
+
+# UI06.3-D07 (ZWJ), 2026-11-13: con el patrón anterior (`Note`) en EditorialEditFieldSchema, comando
+#   npx vitest run --project integration apps/server/test/integration/delivery/extreme-editorial-copy.test.ts
+     × Spanish texts at every limit are approved and exported byte for byte; one more is flagged; the contract refuses control and format characters
+     × writer emoji sequences reach the file intact; a writer text with a bidi mark or another script never does
+      Tests  2 failed | 1 passed (3)
+# Con el patrón `EditorialText`:
+      Tests  3 passed (3)

@@ -8,10 +8,12 @@ import type { AdapterRegistration } from '../ingestion/index.js';
 
 import { fixtureAdapter } from './fixture/index.js';
 import { footballDataAdapter } from './football-data/index.js';
+import { localCompetitionsAdapter } from './local-competitions/index.js';
 import { manualAdapter } from './manual/index.js';
 
 export const ADAPTER_REGISTRATIONS: readonly AdapterRegistration[] = Object.freeze([
   fixtureAdapter,
   footballDataAdapter,
+  localCompetitionsAdapter,
   manualAdapter,
 ]);

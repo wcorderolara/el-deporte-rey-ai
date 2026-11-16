@@ -1,0 +1,183 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 4300,
+    "allowedHosts": ["127.0.0.1:4300", "localhost:4300", "127.0.0.1:5173", "localhost:5173"],
+    "allowedOrigins": [
+      "http://127.0.0.1:4300",
+      "http://localhost:4300",
+      "http://127.0.0.1:5173",
+      "http://localhost:5173"
+    ]
+  },
+  "dataDir": "data",
+  "display": {
+    "utcOffsetMinutes": -360
+  },
+  "format": {
+    "width": 1080,
+    "height": 1350,
+    "maxSlidesPerCarousel": 20
+  },
+  "standingsRowsPerSlide": 12,
+  "publicationMode": "manual",
+  "providers": {
+    "sports": {
+      "sources": [
+        {
+          "id": "demo-a",
+          "name": "Synthetic source A",
+          "mode": "DEMO_DATA",
+          "enabled": true,
+          "role": "primary",
+          "accepted": true,
+          "independenceGroup": "demo-a",
+          "officialPublication": false,
+          "publicationPermission": "not_applicable",
+          "adapter": "fixture",
+          "options": {
+            "scenario": "default"
+          }
+        },
+        {
+          "id": "demo-b",
+          "name": "Synthetic source B",
+          "mode": "DEMO_DATA",
+          "enabled": true,
+          "role": "verification",
+          "accepted": true,
+          "independenceGroup": "demo-b",
+          "officialPublication": true,
+          "publicationPermission": "not_applicable",
+          "adapter": "fixture",
+          "options": {
+            "scenario": "default"
+          }
+        },
+        {
+          "id": "manual",
+          "name": "Operator import",
+          "mode": "MANUAL_DATA",
+          "enabled": true,
+          "role": "primary",
+          "accepted": false,
+          "independenceGroup": "manual",
+          "officialPublication": false,
+          "publicationPermission": "not_applicable",
+          "adapter": "manual",
+          "options": {}
+        },
+        {
+          "id": "local",
+          "name": "Datos deportivos locales",
+          "mode": "MANUAL_DATA",
+          "enabled": true,
+          "role": "primary",
+          "accepted": false,
+          "independenceGroup": "local",
+          "officialPublication": false,
+          "publicationPermission": "not_applicable",
+          "adapter": "local-competitions",
+          "operatorValidated": true,
+          "options": {}
+        }
+      ]
+    },
+    "ai": {
+      "adapter": "stub",
+      "options": {
+        "scenario": "default"
+      }
+    },
+    "images": {
+      "adapter": "openai",
+      "options": {
+        "baseUrl": "https://api.openai.com/v1",
+        "defaultModel": "gpt-image-2.5-flare",
+        "models": [
+          {
+            "id": "gpt-image-2.5-flare",
+            "label": "GPT Image 2.5 Flare",
+            "flexibleSizes": true,
+            "qualities": ["low", "medium", "high"],
+            "pricing": {
+              "currency": "USD",
+              "textInputPerMillionTokens": 5,
+              "imageInputPerMillionTokens": 8,
+              "imageOutputPerMillionTokens": 30,
+              "textOutputPerMillionTokens": null,
+              "source": "https://developers.openai.com/api/docs/pricing",
+              "checkedOn": "2026-11-05"
+            }
+          },
+          {
+            "id": "gpt-image-2.5-sunburst",
+            "label": "GPT Image 2.5 Sunburst",
+            "flexibleSizes": true,
+            "qualities": ["low", "medium", "high"],
+            "pricing": {
+              "currency": "USD",
+              "textInputPerMillionTokens": 5,
+              "imageInputPerMillionTokens": 8,
+              "imageOutputPerMillionTokens": 30,
+              "textOutputPerMillionTokens": null,
+              "source": "https://developers.openai.com/api/docs/pricing",
+              "checkedOn": "2026-11-05"
+            }
+          },
+          {
+            "id": "gpt-image-2",
+            "label": "GPT Image 2",
+            "flexibleSizes": true,
+            "qualities": ["low", "medium", "high"],
+            "pricing": {
+              "currency": "USD",
+              "textInputPerMillionTokens": 5,
+              "imageInputPerMillionTokens": 8,
+              "imageOutputPerMillionTokens": 30,
+              "textOutputPerMillionTokens": null,
+              "source": "https://developers.openai.com/api/docs/pricing",
+              "checkedOn": "2026-11-05"
+            },
+            "publishedImageCosts": {
+              "low": {
+                "square": 0.006,
+                "portrait": 0.005,
+                "landscape": 0.005
+              },
+              "medium": {
+                "square": 0.053,
+                "portrait": 0.041,
+                "landscape": 0.041
+              },
+              "high": {
+                "square": 0.211,
+                "portrait": 0.165,
+                "landscape": 0.165
+              }
+            }
+          }
+        ],
+        "outputFormat": "png",
+        "timeoutMs": 240000,
+        "limits": {
+          "maxImagesPerRequest": 4,
+          "maxReferences": 4,
+          "maxImagesPerDay": 20,
+          "monthlySpendLimit": 10,
+          "spendReservePerImage": { "low": 0.06, "medium": 0.12, "high": 0.25 },
+          "maxConcurrentRequests": 1
+        }
+      }
+    }
+  },
+  "verificationPolicy": {
+    "manuallyApprovedPublication": "allowed_without_accepted_source",
+    "livePublicationPermissionRule": "every_supporting_source"
+  },
+  "catalogue": {
+    "linksFile": "config/catalogue.json"
+  },
+  "languagesFile": "config/languages.json",
+  "brandFile": "config/brand.json"
+}

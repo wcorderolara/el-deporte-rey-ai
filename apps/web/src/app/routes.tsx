@@ -25,6 +25,7 @@ const facts = lazyFeature(() => import('../features/facts'));
 const review = lazyFeature(() => import('../features/review'));
 const history = lazyFeature(() => import('../features/history'));
 const brand = lazyFeature(() => import('../features/brand'));
+const templates = lazyFeature(() => import('../features/templates'));
 const imports = lazyFeature(() => import('../features/imports'));
 const competitions = lazyFeature(() => import('../features/competitions'));
 
@@ -38,6 +39,11 @@ export const featurePaths = {
   history: (projectId: string): string => `/projects/${encodeURIComponent(projectId)}/exports`,
   exportHistory: '/exports',
   brand: '/brand',
+  brandResources: '/brand/resources',
+  brandIdentity: '/brand/identity',
+  templates: '/templates',
+  templatesCreate: '/templates/create',
+  templatesEngine: '/templates/engine',
   imports: '/imports',
   competitions: '/competitions',
 } as const;
@@ -59,6 +65,7 @@ export const appRoutes: RouteObject[] = [
           { path: 'projects/:projectId/exports/*', lazy: history },
           { path: 'exports/*', lazy: history },
           { path: 'brand/*', lazy: brand },
+          { path: 'templates/*', lazy: templates },
           { path: 'imports/*', lazy: imports },
           { path: 'competitions/*', lazy: competitions },
           { path: '*', Component: NotFoundPage },

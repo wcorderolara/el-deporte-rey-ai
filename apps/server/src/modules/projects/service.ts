@@ -1,6 +1,6 @@
 /**
  * Projects service (architecture.md sections 6 and 15.2; contract operations createProject, listProjects,
- * getProject, updateProject, listRuns, startRun, getRun, setExcludedMatches).
+ * getProject, updateProject, listRuns, startRun, getRun).
  *
  * - Creation resolves the selection (competition, source, season, stage, matchday or whole stage) through the
  *   catalogue service and stores the source, the data mode, the opaque selection reference and the label snapshots
@@ -19,6 +19,8 @@ import { HttpProblem } from '../../platform/http/index.js';
 import { type RunKind, RunStartRefused, type WorkflowRunner } from '../../workflow/index.js';
 
 import { availabilityOf, catalogueOf, discoveryContext } from './catalog.js';
+import { ContentBatchRepository } from './content-batches/repository.js';
+import { projectSportsContext } from './content-batches/service.js';
 import { type ProjectRecord, ProjectRepository } from './repository.js';
 
 /** Longest project title (contract `ProjectSummaryFields.title`). */
@@ -56,12 +58,14 @@ export class ProjectsService {
   readonly #container: AppContainer;
   readonly #runner: WorkflowRunner;
   readonly #projects: ProjectRepository;
+  readonly #batches: ContentBatchRepository;
   readonly #newId: () => string;
 
   constructor(options: ProjectsServiceOptions) {
     this.#container = options.container;
     this.#runner = options.runner;
     this.#projects = new ProjectRepository(options.container.db);
+    this.#batches = new ContentBatchRepository(options.container.db);
     this.#newId = options.newId ?? randomUUID;
   }
 
@@ -81,11 +85,22 @@ export class ProjectsService {
     return language;
   }
 
+  /** The display title; a per-match piece of a content batch also names its match (PD-ARCH-01E-A). */
+  #title(project: ProjectRecord): string {
+    const title = projectTitle(project);
+    const piece = projectSportsContext(this.#batches, project.id);
+    if (piece === null || (piece.context.kind !== 'match_result' && piece.context.kind !== 'match_preview')) {
+      return title;
+    }
+    const full = `${title} · ${piece.title}`;
+    return full.length > MAX_TITLE_LENGTH ? full.slice(0, MAX_TITLE_LENGTH) : full;
+  }
+
   #summary(project: ProjectRecord): ProjectSummary {
     const state = this.#projects.draftState(project.id);
     return {
       id: project.id,
-      title: projectTitle(project),
+      title: this.#title(project),
       competitionName: project.competitionName,
       seasonLabel: project.seasonLabel,
       stageLabel: project.stageLabel,
@@ -97,6 +112,8 @@ export class ProjectsService {
       createdAt: project.createdAt,
       approvalState: state.approvalState,
       lastExportAt: state.lastExportAt,
+      latestRunStatus: this.#runner.runs.latestView(project.id)?.status ?? null,
+      sportsContext: projectSportsContext(this.#batches, project.id)?.context ?? null,
     };
   }
 
@@ -109,6 +126,7 @@ export class ProjectsService {
       stageId: project.stageId,
       latestRun: this.#runner.runs.latestView(project.id),
       activeDraftId: this.#projects.draftState(project.id).activeDraftId,
+      visualTemplates: this.#projects.visualTemplatesOf(project.id),
     };
   }
 
@@ -189,6 +207,35 @@ export class ProjectsService {
     return this.get(id);
   }
 
+  /**
+   * Deletes a project logically (PD-ARCH-01F; OD-08 keeps every row): its runs executing in this process are cancelled
+   * and must confirm their stop before the tombstone is written, so no stage writes on a deleted project; then every
+   * read of the application excludes it. A deleted project answers as deleted again (idempotent); an unknown ID is
+   * `NOT_FOUND`; a run that does not confirm its cancellation in time is `RUN_IN_PROGRESS` and nothing changes.
+   * Shared resources (competitions, seasons, teams, matches, results, templates, brand assets, other projects) and
+   * the project's own history and files are not touched.
+   */
+  async delete(projectId: string): Promise<void> {
+    const deletedAt = this.#projects.deletedAt(projectId);
+    if (deletedAt === undefined) {
+      throw projectNotFound();
+    }
+    if (deletedAt !== null) {
+      return;
+    }
+    if (!(await this.#runner.cancelProject(projectId))) {
+      throw new HttpProblem(409, 'RUN_IN_PROGRESS', 'The run of the project has not confirmed its cancellation yet.');
+    }
+    const at = this.#now();
+    this.#container.db.transaction(() => {
+      if (this.#runner.runs.activeRunId(projectId) !== null) {
+        throw runInProgress();
+      }
+      this.#projects.markDeleted(projectId, at);
+    });
+    this.#container.logger.info({ projectId }, 'project deleted');
+  }
+
   /** Changes the content language; the active draft is superseded (a redraft is needed). Refused during a run. */
   updateLanguage(projectId: string, requested: Language): Project {
     const language = this.#language(requested);
@@ -228,26 +275,11 @@ export class ProjectsService {
   }
 
   startRun(projectId: string, kind: RunKind): Run {
-    return this.#start(projectId, kind, null);
-  }
-
-  /** Sets the matches to leave out: supersedes the active draft and starts a redraft run with them (OD-03). */
-  setExcludedMatches(projectId: string, excludedMatchKeys: readonly string[]): Run {
-    return this.#start(projectId, 'redraft', [...excludedMatchKeys]);
-  }
-
-  #start(projectId: string, kind: RunKind, excludedMatchKeys: string[] | null): Run {
     try {
       return this.#runner.start(projectId, kind, {
-        parameters: { excludedMatchKeys },
         before: () => {
           if (!this.#projects.exists(projectId)) {
             throw projectNotFound();
-          }
-        },
-        afterGuards: () => {
-          if (excludedMatchKeys !== null) {
-            this.#projects.supersedeActiveDraft(projectId, this.#now());
           }
         },
       });

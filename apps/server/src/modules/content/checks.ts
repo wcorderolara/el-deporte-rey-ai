@@ -22,9 +22,11 @@
  *    known alias (source name forms, identity-map aliases, translations, abbreviations) that is not the official
  *    name. Short single-word aliases (four letters or fewer) match only in their own letter case, so that a
  *    three-letter abbreviation does not match an ordinary lower-case word.
+ * 6. `UNPLAYED_RESULT_CLAIM` (content about matches not played yet only, PD-ARCH-01E-B): a word that states or
+ *    predicts a result (won, beat, draw, favourite, odds, ... in Spanish or English; `words.ts`).
  * 5. `FORBIDDEN_CONTENT`: URLs and domain names, e-mail addresses, `@` mentions other than the configured brand
- *    handle, HTML or Markdown control sequences, and text over the field limit (`checkLength`, on the substituted
- *    text).
+ *    handle (in any letter case, and with the dots that close a sentence after it), HTML or Markdown control
+ *    sequences, and text over the field limit (`checkLength`, on the substituted text).
  *
  * Hashtags (architecture.md section 8.2): the exact hashtag-safe form of an official name (`hashtagFor`) is allowed;
  * every other hashtag must match `^#[\p{L}\p{N}_]{1,60}$` and pass the same checks.
@@ -35,7 +37,7 @@ import type { ContentFlag } from '@edr/contracts';
 
 import { hashtagFor } from '../../platform/format/index.js';
 
-import { findNumberWords, foldWord } from './words.js';
+import { findNumberWords, findResultClaims, foldWord } from './words.js';
 
 export type FlagCode = ContentFlag['code'];
 
@@ -70,6 +72,17 @@ export interface CheckContext {
   /** The configured brand handle, the only `@` mention allowed. */
   readonly brandHandle: string;
   readonly teams: readonly TeamNameRule[];
+  /**
+   * The content describes matches not played yet (calendar, upcoming matches, preview; PD-ARCH-01E-B): any result or
+   * prediction word is flagged `UNPLAYED_RESULT_CLAIM`. Absent for results carousels.
+   */
+  readonly unplayed?: boolean;
+  /**
+   * Folded number words that are not flagged (PD-ARCH-01H, editorial copy only): the Spanish indefinite articles and
+   * pronoun "un", "una", "uno" and the English "one" and "once", which a narrative text cannot avoid. Digits and every
+   * other number word are still flagged. Absent for slides and captions, whose rule is unchanged (T10-F06).
+   */
+  readonly numberWordExemptions?: ReadonlySet<string>;
 }
 
 const INVISIBLE = /[\p{Cc}\p{Cf}\p{Cs}\p{Co}]/u;
@@ -204,7 +217,12 @@ function preCheck(field: CheckedField, text: string, flags: FlagList): PreCheck 
 // 3. Numbers
 // ---------------------------------------------------------------------------------------------------------------
 
-function checkNumbers(field: CheckedField, text: string, flags: FlagList): void {
+function checkNumbers(
+  field: CheckedField,
+  text: string,
+  flags: FlagList,
+  exemptions: ReadonlySet<string> = NO_EXEMPTIONS,
+): void {
   for (const copy of [text, text.normalize('NFKC')]) {
     let index = 0;
     for (const character of copy) {
@@ -215,9 +233,13 @@ function checkNumbers(field: CheckedField, text: string, flags: FlagList): void 
     }
   }
   for (const word of findNumberWords(text)) {
-    flags.add('UNVERIFIED_NUMBER', field, word);
+    if (!exemptions.has(word)) {
+      flags.add('UNVERIFIED_NUMBER', field, word);
+    }
   }
 }
+
+const NO_EXEMPTIONS: ReadonlySet<string> = new Set();
 
 // ---------------------------------------------------------------------------------------------------------------
 // 4. Team names and scripts
@@ -334,8 +356,10 @@ function checkForbidden(field: CheckedField, text: string, brandHandle: string, 
   }
   const handle = brandHandle.toLowerCase();
   for (const mention of normalized.matchAll(MENTION)) {
-    if (mention[0].toLowerCase() !== handle) {
-      flags.add('FORBIDDEN_CONTENT', field, mention[0]);
+    // A handle never ends with a dot: the dots after it close the sentence («Síguenos en @ElDeporteReyGT.»).
+    const written = mention[0].replace(/\.+$/u, '');
+    if (written.toLowerCase() !== handle) {
+      flags.add('FORBIDDEN_CONTENT', field, written);
     }
   }
   const markup = MARKUP.exec(normalized);
@@ -372,9 +396,14 @@ export function checkText(
     flags.add('UNKNOWN_FACT_REFERENCE', field, wordAround(stripped, brace.index));
   }
 
-  checkNumbers(field, stripped, flags);
+  checkNumbers(field, stripped, flags, context.numberWordExemptions);
   checkTeamNames(field, stripped, context.teams, flags);
   checkForbidden(field, stripped, context.brandHandle, flags);
+  if (context.unplayed === true) {
+    for (const word of findResultClaims(stripped)) {
+      flags.add('UNPLAYED_RESULT_CLAIM', field, word);
+    }
+  }
   return flags.toArray();
 }
 

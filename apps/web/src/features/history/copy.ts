@@ -18,7 +18,8 @@ export const historyCopy = {
   backToExports: 'Volver a las exportaciones del proyecto',
   loadErrorTitle: 'No se pudieron cargar las exportaciones del proyecto',
   noPublication:
-    'La exportación solo escribe archivos en el equipo local (imágenes PNG, caption.txt y manifest.json). La ' +
+    'La exportación solo escribe archivos en el equipo local (imágenes PNG, caption.txt, copy-editorial.txt y ' +
+    'manifest.json). La ' +
     'aplicación no publica nada en ninguna red social.',
   projectTitle: 'Proyecto',
   dataMode: 'Modo de datos',
@@ -83,6 +84,7 @@ export const filesCopy = {
 export const exportFileKindLabel: Record<ExportFileKind, string> = {
   slide_image: 'Imagen de diapositiva (PNG)',
   caption_text: 'Texto de la publicación y etiquetas (caption.txt)',
+  editorial_text: 'Copy editorial aprobado (copy-editorial.txt)',
   manifest: 'Manifiesto (manifest.json)',
 };
 
@@ -98,6 +100,7 @@ export const detailCopy = {
   contentTitle: 'Contenido exportado',
   contentIntro: 'Diapositivas y texto de la publicación exactamente como se exportaron, en el orden del carrusel.',
   noElements: 'La exportación no tiene elementos.',
+  previewTitle: 'Vista previa del carrusel exportado',
   slide: (position: number): string => `Diapositiva ${position}`,
   caption: 'Texto de la publicación',
   version: (versionNumber: number): string => `versión ${versionNumber}`,
@@ -153,4 +156,9 @@ export const textFieldLabel: Record<TextFieldName, string> = {
   standings: 'Clasificación',
   footer: 'Pie',
   demo_label: 'Etiqueta de demostración',
+  match_status: 'Estado del partido',
+  fixtures: 'Partidos',
+  score_home: 'Goles local',
+  score_away: 'Goles visitante',
+  kickoff_time: 'Hora',
 };

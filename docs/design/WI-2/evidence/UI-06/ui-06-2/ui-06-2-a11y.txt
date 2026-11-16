@@ -1,0 +1,52 @@
+# UI-06.2 — accesibilidad, responsive y teclado del cierre, con O-1 y O-2 (node e2e/run.mjs --grep @a11y, sobre npm run build), 2026-11-13. Sin excepciones declaradas.
+
+[e2e] Ensuring Chromium in .cache/ms-playwright (downloaded on first use only).
+[e2e] Configuration generated from fixtures/config/demo-manual.config.json in a temporary directory: sources demo-a, demo-b, manual, local, stub AI provider.
+[e2e] Starting the built server entry (apps/server/dist/src/main.js).
+[e2e] Server listening on http://127.0.0.1:4310.
+
+Running 40 tests using 1 worker
+
+  ✓   1 [chromium] › e2e/tests/a11y.spec.ts:201:3 › Accessibility @a11y › Inicio and Mis proyectos (724ms)
+  ✓   2 [chromium] › e2e/tests/a11y.spec.ts:211:3 › Accessibility @a11y › every step of Crear contenido and the generation result (3.0s)
+  ✓   3 [chromium] › e2e/tests/a11y.spec.ts:239:3 › Accessibility @a11y › project page with its run details, and its data and verification page (1.4s)
+  ✓   4 [chromium] › e2e/tests/a11y.spec.ts:251:3 › Accessibility @a11y › review workspace: warning, bulk approval, editorial copy and final approval dialog (5.8s)
+  ✓   5 [chromium] › e2e/tests/a11y.spec.ts:292:3 › Accessibility @a11y › review workspace with a valid final approval (550ms)
+  ✓   6 [chromium] › e2e/tests/a11y.spec.ts:298:3 › Accessibility @a11y › Exportaciones, an export, the trace of an exported slide in its states and a demo run (4.1s)
+  ✓   7 [chromium] › e2e/tests/a11y.spec.ts:325:3 › Accessibility @a11y › Competiciones: list, competition, teams with the badge form, season and round (1.7s)
+  ✓   8 [chromium] › e2e/tests/a11y.spec.ts:355:3 › Accessibility @a11y › Datos: file mode with a rejected import, applied import, form mode, import and version (2.4s)
+  ✓   9 [chromium] › e2e/tests/a11y.spec.ts:380:3 › Accessibility @a11y › Mi marca: resources with the upload dialog and a registered asset, and the visual identity (1.4s)
+  ✓  10 [chromium] › e2e/tests/a11y.spec.ts:406:3 › Accessibility @a11y › Plantillas: create a template and the engine templates (742ms)
+  ✓  11 [chromium] › e2e/tests/a11y.spec.ts:415:3 › Accessibility @a11y › not-found page (387ms)
+  ✓  12 [chromium] › e2e/tests/a11y.spec.ts:421:3 › Accessibility @a11y › positive control: the scan reports a seeded low-contrast text (249ms)
+  ✓  13 [chromium] › e2e/tests/a11y.spec.ts:432:3 › Accessibility of a failed run @a11y › project page after a failed run (3.7s)
+  ✓  14 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard projects 1440px @a11y (785ms)
+  ✓  15 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard empty 1440px @a11y (465ms)
+  ✓  16 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard loading 1440px @a11y (486ms)
+  ✓  17 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard error 1440px @a11y (504ms)
+  ✓  18 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard projects 768px @a11y (734ms)
+  ✓  19 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard empty 768px @a11y (455ms)
+  ✓  20 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard loading 768px @a11y (453ms)
+  ✓  21 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard error 768px @a11y (448ms)
+  ✓  22 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard projects 390px @a11y (740ms)
+  ✓  23 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard empty 390px @a11y (442ms)
+  ✓  24 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard loading 390px @a11y (452ms)
+  ✓  25 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard error 390px @a11y (454ms)
+  ✓  26 [chromium] › e2e/tests/responsive.spec.ts:241:3 › Responsive layout and keyboard @a11y › Inicio, Mis proyectos, a project, every step of Crear contenido and the generation result (16.3s)
+  ✓  27 [chromium] › e2e/tests/responsive.spec.ts:313:3 › Responsive layout and keyboard @a11y › content review in both modes, before and after the final approval (6.4s)
+  ✓  28 [chromium] › e2e/tests/responsive.spec.ts:347:3 › Responsive layout and keyboard @a11y › R-03: at 1280 x 720 the review preview stays in its column, keeps its proportions and stays the protagonist (453ms)
+  ✓  29 [chromium] › e2e/tests/responsive.spec.ts:390:3 › Responsive layout and keyboard @a11y › Exportaciones, an export, the trace of an exported slide and Datos y verificación (4.3s)
+  ✓  30 [chromium] › e2e/tests/responsive.spec.ts:417:3 › Responsive layout and keyboard @a11y › Competiciones: list, competition, teams, season, participants, calendar and round with its matches (5.2s)
+  ✓  31 [chromium] › e2e/tests/responsive.spec.ts:455:3 › Responsive layout and keyboard @a11y › Datos, Mi marca, Plantillas, the template editor and the not-found page (11.1s)
+  ✓  32 [chromium] › e2e/tests/responsive.spec.ts:508:3 › Responsive layout and keyboard @a11y › R-02: the view tooltips stay inside the window on hover and keyboard focus, and Escape hides them (9.4s)
+  ✓  33 [chromium] › e2e/tests/responsive.spec.ts:563:3 › Responsive layout and keyboard @a11y › dialogs keep the focus inside, close with Escape and give the focus back, at 1280 and 390 px (5.0s)
+  ✓  34 [chromium] › e2e/tests/responsive.spec.ts:622:3 › Responsive layout and keyboard @a11y › tabs move with the arrow keys, the review menu closes with Escape, and the focus is always visible (27.4s)
+  ✓  35 [chromium] › e2e/tests/responsive.spec.ts:686:3 › Responsive layout and keyboard @a11y › text spacing (WCAG 1.4.12) and reduced motion keep the screens usable (610ms)
+  ✓  36 [chromium] › e2e/tests/shell-responsive.spec.ts:5:3 › shell navigation at 1440px @a11y (789ms)
+  ✓  37 [chromium] › e2e/tests/shell-responsive.spec.ts:5:3 › shell navigation at 1280px @a11y (779ms)
+  ✓  38 [chromium] › e2e/tests/shell-responsive.spec.ts:5:3 › shell navigation at 1024px @a11y (834ms)
+  ✓  39 [chromium] › e2e/tests/shell-responsive.spec.ts:5:3 › shell navigation at 768px @a11y (840ms)
+  ✓  40 [chromium] › e2e/tests/shell-responsive.spec.ts:5:3 › shell navigation at 390px @a11y (860ms)
+
+  40 passed (2.3m)
+[e2e] Server stopped and temporary directory removed.

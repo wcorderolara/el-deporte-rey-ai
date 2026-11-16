@@ -45,7 +45,7 @@ export function DesignSystemPreview() {
           <Card className="flex flex-wrap items-center gap-3">
             <Button leadingIcon={<span aria-hidden="true">＋</span>}>Crear contenido</Button>
             <Button variant="secondary">Revisar contenido</Button>
-            <Button variant="quiet">Cancelar</Button>
+            <Button variant="secondary">Cancelar</Button>
             <Button variant="danger">Retirar aprobación</Button>
             <Button isLoading loadingLabel="Generando contenido">
               Generar contenido

@@ -826,6 +826,10 @@ export function footballDataRegistration(seams: FootballDataSeams = {}): Adapter
   return Object.freeze({
     kind: FOOTBALL_DATA_ADAPTER_KIND,
     mode: 'LIVE_DATA' as const,
+    provider: Object.freeze({
+      name: 'football-data.org',
+      capabilities: Object.freeze({ competitionCatalogue: true, seasons: true, stages: true }),
+    }),
     create: (context: AdapterContext): IngestionSource => createFootballDataSource(context, seams),
   });
 }

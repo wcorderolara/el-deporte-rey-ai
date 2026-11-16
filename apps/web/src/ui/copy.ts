@@ -33,7 +33,8 @@ export const appCopy = {
 export const navCopy = {
   projects: 'Proyectos',
   imports: 'Importaciones manuales',
-  brand: 'Marca y plantillas',
+  brand: 'Mi marca',
+  templates: 'Plantillas',
 } as const;
 
 export const featureCopy = {
@@ -41,7 +42,8 @@ export const featureCopy = {
   facts: 'Datos y verificación',
   review: 'Revisión y aprobación',
   history: 'Exportaciones e historial',
-  brand: 'Marca y plantillas',
+  brand: 'Mi marca',
+  templates: 'Plantillas',
   imports: 'Importaciones manuales',
   pending: 'Esta sección todavía no está disponible.',
 } as const;
@@ -158,7 +160,40 @@ export const problemCodeMessage: Record<ProblemCode, string> = {
   EXPORT_FILES_MISSING: 'Los archivos de esta exportación ya no están disponibles.',
   EXPORT_FILES_CORRUPT: 'No se pudo verificar los archivos de esta exportación.',
   DUPLICATE_ASSET: 'Este archivo ya está registrado.',
+  DUPLICATE_SEASON: 'Ya existe una temporada con ese nombre en esta competición.',
+  DUPLICATE_TEAM: 'Ya existe un equipo con el mismo nombre y zona. Selecciónalo del catálogo local.',
+  DUPLICATE_PARTICIPANT: 'Este equipo ya participa en la temporada.',
+  DUPLICATE_COMPETITION_TEAM: 'Este equipo ya está asociado a la competición.',
+  COMPETITION_TEAM_IN_USE: 'No puedes quitar este equipo porque participa en una o más temporadas de la competición.',
+  TEAM_NOT_IN_COMPETITION: 'Asocia primero este equipo a la competición.',
+  DUPLICATE_STAGE: 'Ya existe una fase con ese nombre en esta temporada.',
+  DUPLICATE_ROUND: 'Ya existe una jornada o ronda con ese nombre en este contexto.',
+  DUPLICATE_MATCH: 'Ya existe ese encuentro en el mismo contexto y horario.',
+  ROUND_HAS_MATCHES: 'No se puede eliminar una jornada que tiene partidos o historial asociado.',
+  TEAM_IN_USE: 'No puedes desvincular este equipo mientras tenga partidos en el calendario de la temporada.',
   PROVIDER_FAILED: 'La fuente de datos no respondió correctamente.',
+  PROVIDER_BINDING_EXISTS: 'Esta competición ya tiene un proveedor vinculado. Confirma el reemplazo para continuar.',
+  PROVIDER_AMBIGUOUS: 'El proveedor tiene más de una configuración activa. Contacta al administrador.',
+  PROVIDER_UNAVAILABLE: 'El proveedor no está configurado en el servidor. Solicita su configuración al administrador.',
+  IMPORT_PREVIEW_EXPIRED: 'La vista previa expiró. Consulta nuevamente los datos del proveedor.',
+  CONTENT_BATCH_NOT_GENERATABLE:
+    'Ninguna pieza de la selección se puede generar con los datos locales. Revisa los partidos y los tipos elegidos.',
+  REQUEST_KEY_REUSED: 'Esta confirmación ya se usó para otra selección. Revisa la propuesta y confirma de nuevo.',
+  ASSET_IN_USE:
+    'El recurso aparece en diapositivas ya generadas o en plantillas visuales, así que no se puede eliminar. Puedes desactivarlo para que no se use en contenido nuevo.',
+  IMAGE_PROVIDER_UNAVAILABLE: 'La generación de imágenes no está disponible en el servidor.',
+  DESIGN_REFERENCE_REFUSED: 'Un recurso de marca seleccionado no se puede usar de esa forma.',
+  GENERATION_LIMIT_REACHED: 'Se alcanzó un límite de generación.',
+  TEMPLATE_SOURCE_REFUSED:
+    'No se puede usar ese origen para la plantilla: la propuesta debe estar aprobada y el fondo debe ser válido.',
+  TEMPLATE_VERSION_PUBLISHED: 'Esta versión ya está publicada y no se puede modificar. Crea una nueva versión.',
+  TEMPLATE_NOT_PUBLISHABLE: 'La versión tiene errores de validación. Corrígelos antes de publicar.',
+  TEMPLATE_IN_USE: 'La plantilla tiene versiones publicadas, así que no se puede eliminar. Puedes archivarla.',
+  PROPOSAL_IN_USE: 'Una plantilla visual usa esta propuesta, así que no se puede eliminar.',
+  EDITORIAL_NOT_GENERATABLE:
+    'No se puede generar el copy editorial con los datos deportivos confirmados de este proyecto.',
+  COST_CONFIRMATION_REQUIRED: 'Esta generación tiene costo: confírmalo antes de continuar.',
+  AI_PROVIDER_UNAVAILABLE: 'El proveedor de IA de texto no está listo. Revisa la configuración y la clave.',
   PROVIDER_RATE_LIMITED: 'Se alcanzó el límite de solicitudes de la fuente de datos.',
   SELECTION_UNAVAILABLE: 'La selección no está disponible en la fuente elegida.',
   IMPORT_REJECTED: 'La importación fue rechazada. No se guardó ningún dato.',

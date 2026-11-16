@@ -255,6 +255,20 @@ describe('links, mentions and markup (FORBIDDEN_CONTENT)', () => {
     expect(codes('Síguenos en \uFF20OtraCuenta', NONE, 'caption')).toEqual(['FORBIDDEN_CONTENT']);
   });
 
+  it('allows the brand handle at the end of a sentence, and still flags any other handle there', () => {
+    for (const text of [
+      'Síguenos en @SyntheticBrand.',
+      'Síguenos en @SyntheticBrand...',
+      'Síguenos en @SyntheticBrand, y comenta.',
+      'Más en @SyntheticBrand. ¡Comenta!',
+    ]) {
+      expect(codes(text, NONE, 'caption'), text).toEqual([]);
+    }
+    const flags = checkText('caption', 'Saludos a @OtraCuenta.', NONE, CONTEXT);
+    expect(flags).toEqual([{ code: 'FORBIDDEN_CONTENT', field: 'caption', excerpt: '@OtraCuenta' }]);
+    expect(codes('Síguenos en @SyntheticBrand.extra', NONE, 'caption')).toEqual(['FORBIDDEN_CONTENT']);
+  });
+
   it('flags text over the field limit', () => {
     expect(checkLength('headline', 'x'.repeat(80), 80)).toEqual([]);
     expect(checkLength('headline', 'x'.repeat(81), 80).map((flag) => flag.code)).toEqual(['FORBIDDEN_CONTENT']);
@@ -290,5 +304,42 @@ describe('flag excerpts', () => {
       expect(flag.excerpt.length).toBeLessThanOrEqual(120);
       expect(/[\p{Cc}\p{Cf}]/u.test(flag.excerpt)).toBe(false);
     }
+  });
+});
+
+describe('matches not played yet (UNPLAYED_RESULT_CLAIM, PD-ARCH-01E-B)', () => {
+  const UNPLAYED: CheckContext = { ...CONTEXT, unplayed: true };
+
+  function unplayedCodes(text: string): string[] {
+    return checkText('description', text, NONE, UNPLAYED).map((flag) => flag.code);
+  }
+
+  it('flags result and prediction words in Spanish and English, accented or not', () => {
+    for (const text of [
+      'Real Brisamar ganó el partido',
+      'Real Brisamar gano el partido',
+      'Un empate en casa',
+      'El favorito de la jornada',
+      'Pronóstico reservado',
+      'Real Brisamar won at home',
+      'The odds favour the visitors',
+      'A likely comeback',
+    ]) {
+      expect(unplayedCodes(text), text).toContain('UNPLAYED_RESULT_CLAIM');
+    }
+  });
+
+  it('reports each word once with its excerpt and accepts neutral commentary', () => {
+    const flags = checkText('description', 'Victoria y otra victoria', NONE, UNPLAYED).filter(
+      (flag) => flag.code === 'UNPLAYED_RESULT_CLAIM',
+    );
+    expect(flags.map((flag) => flag.excerpt)).toEqual(['Victoria', 'victoria']);
+    expect(unplayedCodes('Partido programado de la jornada. Real Brisamar recibe a Atlético Río Ébano')).toEqual([]);
+    expect(unplayedCodes('Match day ahead for Real Brisamar')).toEqual([]);
+  });
+
+  it('does not apply to results carousels', () => {
+    expect(codes('Real Brisamar ganó el partido')).toEqual([]);
+    expect(checkText('description', 'Real Brisamar won', NONE, { ...CONTEXT, unplayed: false })).toEqual([]);
   });
 });

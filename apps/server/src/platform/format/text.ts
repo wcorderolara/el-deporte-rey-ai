@@ -42,6 +42,25 @@ export interface TemplateText {
   readonly resultRelation: Readonly<{ homeWin: string; draw: string; awayWin: string }>;
   /** Closing-slide call to follow the brand handle. */
   readonly closingFollow: string;
+  /** Title of a fixture slide: a match not played yet (PD-ARCH-01E-B). */
+  readonly fixtureTitle: string;
+  /** Title of a match preview slide. */
+  readonly previewTitle: string;
+  /** Title of a round overview (calendar) slide. */
+  readonly calendarTitle: string;
+  /** Separator between the two teams of a fixture line. */
+  readonly versus: string;
+  /** Display label of each match status (no status is inferred from a date). */
+  readonly matchStatus: Readonly<{
+    scheduled: string;
+    in_play: string;
+    finished: string;
+    postponed: string;
+    suspended: string;
+    cancelled: string;
+    abandoned: string;
+    awarded: string;
+  }>;
   /** Month abbreviations used by `formatDate`, January first (no `Intl`). */
   readonly months: readonly string[];
 }
@@ -67,6 +86,20 @@ const SPANISH: TemplateText = {
   resultTitle: 'Resultado final',
   resultRelation: { homeWin: 'victoria local', draw: 'empate', awayWin: 'victoria visitante' },
   closingFollow: 'Síguenos en',
+  fixtureTitle: 'Partido programado',
+  previewTitle: 'Previa',
+  calendarTitle: 'Calendario',
+  versus: 'vs',
+  matchStatus: {
+    scheduled: 'Programado',
+    in_play: 'En juego',
+    finished: 'Finalizado',
+    postponed: 'Aplazado',
+    suspended: 'Suspendido',
+    cancelled: 'Cancelado',
+    abandoned: 'Abandonado',
+    awarded: 'Adjudicado',
+  },
   months: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
 };
 
@@ -91,6 +124,20 @@ const ENGLISH: TemplateText = {
   resultTitle: 'Full time',
   resultRelation: { homeWin: 'home win', draw: 'draw', awayWin: 'away win' },
   closingFollow: 'Follow us at',
+  fixtureTitle: 'Fixture',
+  previewTitle: 'Preview',
+  calendarTitle: 'Fixtures',
+  versus: 'vs',
+  matchStatus: {
+    scheduled: 'Scheduled',
+    in_play: 'In play',
+    finished: 'Finished',
+    postponed: 'Postponed',
+    suspended: 'Suspended',
+    cancelled: 'Cancelled',
+    abandoned: 'Abandoned',
+    awarded: 'Awarded',
+  },
   months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
 };
 

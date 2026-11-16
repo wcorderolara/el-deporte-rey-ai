@@ -31,7 +31,7 @@ import {
 import type { StoredQaStatus, VersionSet } from './state.js';
 
 const SQL = {
-  project: 'SELECT id, data_mode FROM projects WHERE id = ?',
+  project: 'SELECT id, data_mode FROM projects WHERE id = ? AND deleted_at IS NULL',
   activeDraft:
     'SELECT id, project_id, run_id, facts_run_id, language, standings_included, excluded_match_keys, ' +
     'left_out_matches, created_at FROM content_drafts WHERE project_id = ? AND superseded_at IS NULL ' +
@@ -40,7 +40,8 @@ const SQL = {
   carousel:
     'SELECT c.id AS id, c.sequence AS sequence, c.total AS total, c.draft_id AS draft_id, ' +
     'd.project_id AS project_id, d.superseded_at AS draft_superseded_at FROM carousels c ' +
-    'JOIN content_drafts d ON d.id = c.draft_id WHERE c.id = ?',
+    'JOIN content_drafts d ON d.id = c.draft_id JOIN projects p ON p.id = d.project_id AND p.deleted_at IS NULL ' +
+    'WHERE c.id = ?',
   carouselElements:
     'SELECT id, carousel_id, kind, position, slide_type, current_version_id FROM elements WHERE carousel_id = ? ' +
     'ORDER BY position',

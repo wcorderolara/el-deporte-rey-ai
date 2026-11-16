@@ -45,6 +45,7 @@ export {
   type ValidationErrorItem,
   problemBody,
 } from './problem.js';
+export { streamEvents } from './sse.js';
 export {
   type HttpServerOptions,
   SPA_INDEX,

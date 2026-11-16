@@ -8,7 +8,11 @@ import { FactSchema } from './facts.js';
 import { ContractPatterns, DataModeSchema, DateTimeSchema, Sha256Schema, UuidSchema } from './primitives.js';
 import { ElementKindSchema, ElementVersionSchema } from './review.js';
 
-export const ExportFileKindSchema = z.enum(['slide_image', 'caption_text', 'manifest']);
+/**
+ * The kinds of an exported file. `editorial_text` (REVIEW-APPROVAL-01) is the approved editorial copy of the
+ * carousel's draft, `copy-editorial.txt`, present only when at least one deliverable is approved.
+ */
+export const ExportFileKindSchema = z.enum(['slide_image', 'caption_text', 'manifest', 'editorial_text']);
 
 export const ExportFileSchema = z.strictObject({
   position: z.int(),

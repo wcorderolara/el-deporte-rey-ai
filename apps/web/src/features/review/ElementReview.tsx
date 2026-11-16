@@ -2,20 +2,18 @@ import type { Element, QaWarningCheck } from '@edr/contracts';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
 import { ApiError } from '../../api/client';
-import { Button, ErrorBanner, formatDateTime, StatusBadge } from '../../ui';
+import { Button, classNames, ErrorBanner, formatDateTime, Icon, StatusBadge } from '../../ui';
 import { BlockingFacts } from './BlockingFacts';
-import { approvalObstacleLabel, contentFlagLabel, elementCopy, textFieldLabel, versionStateLabel } from './copy';
-import { approvalObstacles, elementName, problemFacts } from './model';
-import { QaResults } from './QaResults';
-import { ReviewWorkspace } from './ReviewWorkspace';
+import { approvalObstacleLabel, elementCopy, slideTypeLabel, textFieldLabel } from './copy';
+import { copyText } from './editorial/download';
+import { approvalObstacles, elementName, elementStatus, problemFacts, statusBadgeTone } from './model';
+import type { SlidePagerProps } from './SlidePreview';
+import { SlidePanel, SlideWorkspace } from './SlideWorkspace';
 import styles from './Review.module.css';
 import { useReviewDependencies } from './ReviewContext';
-import { TextFields } from './TextFields';
+import { ValidationSummary } from './ValidationSummary';
 
-type Action =
-  | { kind: 'approve'; advance: boolean }
-  | { kind: 'withdraw' | 'regenerate' }
-  | { kind: 'acknowledge'; check: QaWarningCheck };
+type Action = { kind: 'approve' | 'withdraw' | 'regenerate' } | { kind: 'acknowledge'; check: QaWarningCheck };
 
 const errorTitle: Record<Action['kind'], string> = {
   approve: elementCopy.approveError,
@@ -30,26 +28,45 @@ export interface ElementReviewProps {
   onChanged: (element: Element) => void;
   /** Called after a refused operation, so the view shows the server's current state. */
   onRefused: () => void;
+  /** The slide list of the carousel, shown as the first column of a slide. */
   workspaceNavigation?: ReactNode;
-  workspaceControls?: ReactNode;
+  /** Position and previous/next of the selected slide. */
+  pager?: SlidePagerProps;
+  /** Called after a successful approval (the carousel moves to the next pending slide). */
   onApproved?: (element: Element) => void;
-  approveAndNext?: boolean;
+  /** The next slide that is not approved yet, offered as a shortcut. */
+  nextPending?: { name: string; onSelect: () => void } | null;
+  /** A collapsed slide list takes a narrow column. */
+  navigationCollapsed?: boolean;
+}
+
+function templateVersions(element: Element): string[] {
+  for (const result of element.currentVersion.qa) {
+    if (result.check === 'style_consistency') return result.details.templateVersions;
+  }
+  return [];
 }
 
 /**
- * One slide or the caption of a carousel (R-215, R-217, R-206, R-208, OD-09): image of the current version, text
- * with provenance labels, review state, blocked facts with their block reasons, content flags, QA results with the
- * acknowledgement of warnings, and the approve, withdraw and regenerate actions. Approval sends the exact version
- * shown (R-406). The server's answer is always shown; a refusal is announced with the facts it names.
+ * One slide or the caption of a carousel (R-215, R-217, R-206, R-208, OD-09; layout UX-REVIEW-01).
+ *
+ * - A slide is a workspace of three columns: the slide list, the preview (the protagonist) and the review inspector.
+ * - The caption is the text in a reading column and the same inspector beside it.
+ *
+ * The inspector holds the state, a single approve action (or withdraw for an approved version), regeneration, the
+ * validations (blocking facts, content flags, QA with the acknowledgement of warnings) and secondary details.
+ * Approval sends the exact version shown (R-406); what prevents it is explained next to the action; the server's
+ * answer is always shown, and a refusal is announced with the facts it names. No state is assumed before the answer.
  */
 export function ElementReview({
   element,
   onChanged,
   onRefused,
   workspaceNavigation,
-  workspaceControls,
+  pager,
   onApproved,
-  approveAndNext = false,
+  nextPending = null,
+  navigationCollapsed = false,
 }: ElementReviewProps) {
   const { api } = useReviewDependencies();
   const [action, setAction] = useState<Action | null>(null);
@@ -59,15 +76,17 @@ export function ElementReview({
   const titleId = `${baseId}-title`;
   const obstaclesId = `${baseId}-obstacles`;
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const technicalDetailsRef = useRef<HTMLDetailsElement>(null);
   const focusAfterRegeneration = useRef(false);
   const previousVersionId = useRef(element.currentVersion.id);
 
   const version = element.currentVersion;
   const name = elementName(element);
+  const isSlide = element.kind === 'slide';
   const obstacles = approvalObstacles(version);
   const warningCount = version.qa.filter((result) => result.severity === 'warning' && result.outcome === 'fail').length;
   const approved = version.state === 'approved';
+  // The state shown in the inspector is the one of the slide list (A11Y-02): a blocked version is never «ready».
+  const status = elementStatus(element);
   const busy = action !== null;
 
   useEffect(() => {
@@ -82,7 +101,6 @@ export function ElementReview({
 
   useEffect(() => {
     focusAfterRegeneration.current = false;
-    if (technicalDetailsRef.current !== null) technicalDetailsRef.current.open = false;
     setAction(null);
     setFailure(null);
     setMessage('');
@@ -95,14 +113,12 @@ export function ElementReview({
     setAction(next);
     setFailure(null);
     setMessage('');
-    let approved = false;
     try {
       let result: Element;
       switch (next.kind) {
         case 'approve':
           result = await api.approveElement(element.carouselId, element.id, version.id);
           setMessage(elementCopy.approved(result.currentVersion.versionNumber));
-          approved = true;
           break;
         case 'withdraw':
           result = await api.withdrawElementApproval(element.carouselId, element.id);
@@ -119,7 +135,7 @@ export function ElementReview({
           break;
       }
       onChanged(result);
-      if (approved && next.kind === 'approve' && next.advance) onApproved?.(result);
+      if (next.kind === 'approve') onApproved?.(result);
     } catch (error) {
       setFailure({ action: next, error });
       if (error instanceof ApiError && error.kind === 'problem') {
@@ -134,208 +150,247 @@ export function ElementReview({
     failure !== null && failure.error instanceof ApiError && failure.error.problem?.code === 'APPROVAL_BLOCKED'
       ? problemFacts(failure.error.problem)
       : [];
+  const templates = isSlide ? templateVersions(element) : [];
 
-  const approvalLabel = element.kind === 'caption' ? elementCopy.approveCaption : elementCopy.approveSlide;
-
-  return (
-    <ReviewWorkspace
-      navigation={workspaceNavigation}
-      labelledBy={titleId}
-      state={version.state}
-      blocked={version.blocked}
-      caption={element.kind === 'caption'}
+  const inspector = (
+    <SlidePanel
+      label={`${elementCopy.reviewPanel}: ${name}`}
+      eyebrow={isSlide ? elementCopy.slideEyebrow : elementCopy.captionEyebrow}
+      badges={<StatusBadge label={status.label} tone={statusBadgeTone(status)} symbol={status.symbol} />}
+      title={name}
+      titleId={titleId}
+      titleRef={headingRef}
     >
-      <section className={styles.elementPreview} aria-label={name}>
-        <header className={styles.elementHeader}>
-          <div>
-            <p className={styles.elementEyebrow}>
-              {element.kind === 'slide' ? elementCopy.slideEyebrow : elementCopy.captionEyebrow}
-            </p>
-            <h3 id={titleId} ref={headingRef} tabIndex={-1}>
-              {name}
-            </h3>
-          </div>
-        </header>
-
-        {element.kind === 'slide' ? (
-          version.imageUrl === null ? (
-            <div className={styles.imageUnavailable} role="status">
-              {elementCopy.noImage}
-            </div>
-          ) : (
-            <figure className={styles.figure}>
-              <img
-                className={styles.slideImage}
-                src={api.slideImageUrl(version.id)}
-                alt={elementCopy.imageAlt(name, version.versionNumber)}
-                width={version.width ?? undefined}
-                height={version.height ?? undefined}
-                loading="eager"
-              />
-              {version.width === null || version.height === null ? null : (
-                <figcaption className={styles.hint}>{elementCopy.dimensions(version.width, version.height)}</figcaption>
-              )}
-            </figure>
-          )
-        ) : (
-          <div className={styles.captionCopy} aria-label={elementCopy.captionReadable}>
-            {version.fields.length === 0 ? (
-              <p>{elementCopy.noText}</p>
-            ) : (
-              <dl>
-                {version.fields.map((field, index) => (
-                  <div key={`${field.field}-${index}`}>
-                    <dt>{textFieldLabel[field.field]}</dt>
-                    <dd>{field.segments.map((segment) => segment.text).join('')}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-          </div>
-        )}
-        {workspaceControls ? <div className={styles.workspaceControls}>{workspaceControls}</div> : null}
-      </section>
-
-      <section className={styles.reviewPanel} aria-label={`${elementCopy.reviewPanel}: ${name}`}>
-        <div className={styles.reviewStatus}>
-          <StatusBadge
-            label={versionStateLabel[version.state]}
-            tone={approved ? 'positive' : version.state === 'qa_failed' ? 'caution' : 'neutral'}
-            symbol={approved ? '✓' : version.state === 'qa_failed' ? '!' : '•'}
-          />
-          {version.blocked ? <StatusBadge label={elementCopy.blocked} tone="caution" symbol="⛔" /> : null}
-        </div>
-        <div className={obstacles.length > 0 ? styles.obstacles : styles.readiness} aria-live="polite">
-          <strong>
-            {approved
-              ? elementCopy.approvedStatus
-              : obstacles.length > 0
-                ? elementCopy.needsAttention
-                : elementCopy.noIssues}
-          </strong>
-          {obstacles.length > 0 ? (
-            <ul className={styles.detailList} id={obstaclesId}>
-              {obstacles.map((obstacle) => (
-                <li key={obstacle}>{approvalObstacleLabel[obstacle]}</li>
-              ))}
-            </ul>
-          ) : null}
-          {warningCount > 0 ? (
+      {/* What prevents the approval, next to it; nothing when the state badge and the validations already say it. */}
+      {obstacles.length === 0 ? null : (
+        <div
+          className={classNames(
+            'rounded-control border p-3 text-body-sm',
+            version.blocked
+              ? 'border-danger bg-danger-surface text-danger'
+              : 'border-warning bg-warning-surface text-warning',
+          )}
+          aria-live="polite"
+        >
+          <strong>{elementCopy.needsAttention}</strong>
+          <ul className={styles.detailList} id={obstaclesId}>
+            {obstacles.map((obstacle) => (
+              <li key={obstacle}>{approvalObstacleLabel[obstacle]}</li>
+            ))}
+          </ul>
+          {warningCount > 0 && !approved ? (
             <p className={styles.warningSummary}>{elementCopy.warningSummary(warningCount)}</p>
           ) : null}
         </div>
-        {version.blockingFacts.length === 0 ? null : (
-          <div className={styles.blockedPanel}>
-            <p className={styles.panelTitle}>{elementCopy.blockedTitle}</p>
-            <p>{elementCopy.blockedIntro}</p>
-          </div>
-        )}
-        <div className={styles.actions} role="group" aria-label={`${elementCopy.actionsTitle}: ${name}`}>
-          {approved ? (
-            <Button
-              variant="secondary"
-              isLoading={action?.kind === 'withdraw'}
-              loadingLabel={elementCopy.withdrawing}
-              disabled={busy}
-              onClick={() => void run({ kind: 'withdraw' })}
-            >
-              {elementCopy.withdraw}
-            </Button>
-          ) : (
-            <>
-              <Button
-                variant="secondary"
-                isLoading={action?.kind === 'approve' && !action.advance}
-                loadingLabel={elementCopy.approving}
-                disabled={busy || obstacles.length > 0}
-                aria-describedby={obstacles.length > 0 ? obstaclesId : undefined}
-                onClick={() => void run({ kind: 'approve', advance: false })}
-              >
-                {approvalLabel}
-              </Button>
-              {element.kind === 'slide' && approveAndNext ? (
-                <Button
-                  variant="primary"
-                  size="lg"
-                  isLoading={action?.kind === 'approve' && action.advance}
-                  loadingLabel={elementCopy.approving}
-                  disabled={busy || obstacles.length > 0}
-                  aria-describedby={obstacles.length > 0 ? obstaclesId : undefined}
-                  onClick={() => void run({ kind: 'approve', advance: true })}
-                >
-                  {elementCopy.approveAndNext}
-                </Button>
-              ) : null}
-            </>
-          )}
+      )}
+
+      <div className="grid gap-2" role="group" aria-label={`${elementCopy.actionsTitle}: ${name}`}>
+        {approved ? (
           <Button
             variant="secondary"
-            isLoading={action?.kind === 'regenerate'}
-            loadingLabel={elementCopy.regenerating}
-            disabled={busy || version.state === 'superseded'}
-            onClick={() => void run({ kind: 'regenerate' })}
+            className="w-full"
+            isLoading={action?.kind === 'withdraw'}
+            loadingLabel={elementCopy.withdrawing}
+            disabled={busy}
+            onClick={() => void run({ kind: 'withdraw' })}
           >
-            {elementCopy.regenerateLabel(element.kind)}
+            {elementCopy.withdraw}
+          </Button>
+        ) : (
+          <Button
+            variant="primary"
+            size="lg"
+            className="w-full"
+            isLoading={action?.kind === 'approve'}
+            loadingLabel={elementCopy.approving}
+            disabled={busy || obstacles.length > 0}
+            aria-describedby={obstacles.length > 0 ? obstaclesId : undefined}
+            leadingIcon={<Icon name="check" size={18} />}
+            onClick={() => void run({ kind: 'approve' })}
+          >
+            {isSlide ? elementCopy.approveSlide : elementCopy.approveCaption}
+          </Button>
+        )}
+        <Button
+          variant="secondary"
+          className="w-full"
+          isLoading={action?.kind === 'regenerate'}
+          loadingLabel={elementCopy.regenerating}
+          disabled={busy || version.state === 'superseded'}
+          onClick={() => void run({ kind: 'regenerate' })}
+        >
+          {elementCopy.regenerateLabel(element.kind)}
+        </Button>
+        <p className="m-0 text-caption text-text-secondary">
+          {isSlide && !approved && nextPending !== null ? `${elementCopy.approveAndNextHint} ` : ''}
+          {elementCopy.regenerateHint}
+        </p>
+      </div>
+
+      {failure === null ? null : (
+        <div className="grid gap-2">
+          <ErrorBanner
+            title={`${errorTitle[failure.action.kind]}: ${name}`}
+            error={failure.error}
+            onRetry={() => void run(failure.action)}
+          />
+          {refusedFacts.length === 0 ? null : (
+            <div className={styles.blockedPanel}>
+              <p>{elementCopy.refusedFacts}</p>
+              <BlockingFacts facts={refusedFacts} label={elementCopy.refusedFacts} />
+            </div>
+          )}
+        </div>
+      )}
+      <p role="status" aria-live="polite" className="m-0 text-body-sm font-bold text-text-primary">
+        {action?.kind === 'regenerate' ? elementCopy.regenerating : message}
+      </p>
+
+      <ValidationSummary
+        element={element}
+        onAcknowledge={busy ? null : (check) => void run({ kind: 'acknowledge', check })}
+        acknowledging={action?.kind === 'acknowledge' ? action.check : null}
+      />
+
+      {isSlide ? (
+        <details className="rounded-card border border-border-subtle bg-surface-subtle p-3">
+          <summary className="cursor-pointer text-caption font-bold tracking-label text-text-secondary uppercase">
+            {elementCopy.detailsTitle}
+          </summary>
+          <dl className="m-0 mt-3 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-3 gap-y-1 text-body-sm">
+            <dt className="text-text-secondary">{elementCopy.versionLabel}</dt>
+            <dd className="m-0">{version.versionNumber}</dd>
+            <dt className="text-text-secondary">{elementCopy.createdAt}</dt>
+            <dd className="m-0">
+              <time dateTime={version.createdAt}>{formatDateTime(version.createdAt)}</time>
+            </dd>
+            {version.width === null || version.height === null ? null : (
+              <>
+                <dt className="text-text-secondary">{elementCopy.sizeLabel}</dt>
+                <dd className="m-0">{elementCopy.dimensions(version.width, version.height)}</dd>
+              </>
+            )}
+            {templates.length === 0 ? null : (
+              <>
+                <dt className="text-text-secondary">{elementCopy.templateLabel}</dt>
+                <dd className="m-0 break-words">{templates.join(', ')}</dd>
+              </>
+            )}
+          </dl>
+          {version.fields.length === 0 ? null : (
+            <>
+              <p className="m-0 mt-3 text-caption font-bold text-text-secondary">{elementCopy.textTitle}</p>
+              <dl className="m-0 mt-1 grid gap-1 text-body-sm">
+                {version.fields.map((field, index) => (
+                  <div key={`${field.field}-${index}`}>
+                    <dt className="text-caption text-text-secondary">{textFieldLabel[field.field]}</dt>
+                    <dd className="m-0 break-words">{field.segments.map((segment) => segment.text).join('')}</dd>
+                  </div>
+                ))}
+              </dl>
+            </>
+          )}
+        </details>
+      ) : null}
+
+      {isSlide && nextPending !== null ? (
+        <button
+          type="button"
+          className="focus-studio m-0 flex w-full cursor-pointer items-center justify-between gap-3 rounded-card border border-border-subtle bg-surface-card p-3 text-left text-text-primary hover:border-border-strong"
+          onClick={nextPending.onSelect}
+        >
+          <span className="grid gap-0.5">
+            <span className="text-caption font-bold tracking-label text-text-secondary uppercase">
+              {elementCopy.nextPending}
+            </span>
+            <span className="font-sans text-body-sm font-bold">{nextPending.name}</span>
+          </span>
+          <Icon name="chevron-right" size={20} />
+        </button>
+      ) : null}
+    </SlidePanel>
+  );
+
+  if (!isSlide) {
+    return (
+      <article
+        className="grid min-w-0 gap-4 lg:h-full lg:min-h-0 md:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)] lg:grid-cols-[minmax(0,7fr)_minmax(18rem,3fr)]"
+        data-state={version.state}
+        data-blocked={version.blocked ? 'true' : 'false'}
+        aria-labelledby={titleId}
+      >
+        <CaptionText element={element} onCopied={setMessage} />
+        {inspector}
+      </article>
+    );
+  }
+
+  return (
+    <SlideWorkspace
+      height="parent"
+      navigation={workspaceNavigation}
+      navigationCollapsed={navigationCollapsed}
+      preview={{
+        name,
+        typeLabel: element.slideType === null ? null : slideTypeLabel[element.slideType],
+        version,
+        imageSource: version.imageUrl === null ? null : api.slideImageUrl(version.id),
+        ...(pager === undefined ? {} : { pager }),
+      }}
+      panel={inspector}
+      data-state={version.state}
+      data-blocked={version.blocked ? 'true' : 'false'}
+      aria-labelledby={titleId}
+    />
+  );
+}
+
+/** The caption in a comfortable reading column, with a copy action per field and for the whole text. */
+function CaptionText({ element, onCopied }: { element: Element; onCopied: (message: string) => void }) {
+  const fields = element.currentVersion.fields.map((field) => ({
+    field: field.field,
+    text: field.segments.map((segment) => segment.text).join(''),
+  }));
+  async function copy(text: string) {
+    onCopied((await copyText(text)) ? elementCopy.copied : elementCopy.copyFailed);
+  }
+  return (
+    <section
+      aria-label={elementCopy.captionReadable}
+      className="grid min-h-0 min-w-0 content-start gap-5 rounded-panel border border-border-subtle bg-surface-raised p-5 lg:overflow-y-auto"
+    >
+      <p className="m-0 max-w-reading text-body-sm text-text-secondary">{elementCopy.captionIntro}</p>
+      {fields.length === 0 ? (
+        <p className="m-0">{elementCopy.noText}</p>
+      ) : (
+        <dl className="m-0 grid max-w-reading gap-5">
+          {fields.map((field, index) => (
+            <div key={`${field.field}-${index}`} className="grid gap-2">
+              <dt className="flex items-center justify-between gap-2">
+                <span className="text-caption font-bold tracking-label text-text-secondary uppercase">
+                  {textFieldLabel[field.field]}
+                </span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  aria-label={elementCopy.copyField(textFieldLabel[field.field])}
+                  onClick={() => void copy(field.text)}
+                >
+                  {elementCopy.copy}
+                </Button>
+              </dt>
+              <dd className="m-0 text-body-lg whitespace-pre-wrap text-text-primary">{field.text}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {fields.length === 0 ? null : (
+        <div>
+          <Button variant="secondary" onClick={() => void copy(fields.map((field) => field.text).join('\n\n'))}>
+            {elementCopy.copyAll}
           </Button>
         </div>
-        {failure === null ? null : (
-          <div>
-            <ErrorBanner
-              title={`${errorTitle[failure.action.kind]}: ${name}`}
-              error={failure.error}
-              onRetry={() => void run(failure.action)}
-            />
-            {refusedFacts.length === 0 ? null : (
-              <div className={styles.blockedPanel}>
-                <p>{elementCopy.refusedFacts}</p>
-                <BlockingFacts facts={refusedFacts} label={elementCopy.refusedFacts} />
-              </div>
-            )}
-          </div>
-        )}
-        <p role="status" aria-live="polite" className={styles.status}>
-          {action?.kind === 'regenerate' ? elementCopy.regenerating : message}
-        </p>
-        <details ref={technicalDetailsRef} className={styles.technicalDetails}>
-          <summary>{elementCopy.technicalDetails}</summary>
-          <p className={styles.elementMeta}>
-            {elementCopy.version(version.versionNumber)}, {elementCopy.createdAt}{' '}
-            <time dateTime={version.createdAt}>{formatDateTime(version.createdAt)}</time>
-          </p>
-          <section className={styles.technicalFields} aria-label={`${elementCopy.textTitle}: ${name}`}>
-            <TextFields version={version} />
-          </section>
-          {version.blockingFacts.length === 0 ? null : (
-            <section aria-label={`${elementCopy.blockedTitle}: ${name}`}>
-              <BlockingFacts facts={version.blockingFacts} label={elementCopy.blockedTitle} />
-            </section>
-          )}
-          {version.contentFlags.length === 0 ? null : (
-            <section className={styles.flagPanel} aria-label={`${elementCopy.flagsTitle}: ${name}`}>
-              <p className={styles.panelTitle}>{elementCopy.flagsTitle}</p>
-              <ul className={styles.detailList}>
-                {version.contentFlags.map((flag, index) => (
-                  <li key={`${flag.code}-${index}`}>
-                    <strong>{contentFlagLabel[flag.code]}</strong>. {elementCopy.flagField}: {flag.field}.{' '}
-                    {elementCopy.flagExcerpt}: «{flag.excerpt}»
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-          {element.kind === 'slide' || version.qa.length > 0 ? (
-            <section aria-label={`${elementCopy.qaTitle}: ${name}`}>
-              <p className={styles.panelTitle}>{elementCopy.qaTitle}</p>
-              <QaResults
-                results={version.qa}
-                onAcknowledge={busy ? null : (check) => void run({ kind: 'acknowledge', check })}
-                acknowledging={action?.kind === 'acknowledge' ? action.check : null}
-              />
-            </section>
-          ) : null}
-          <p className={styles.hint}>{elementCopy.regenerateHint}</p>
-        </details>
-      </section>
-    </ReviewWorkspace>
+      )}
+    </section>
   );
 }

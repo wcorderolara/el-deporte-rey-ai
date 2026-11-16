@@ -461,44 +461,6 @@ describe('runs (R-203, AD-10)', () => {
   });
 });
 
-describe('PUT /projects/{projectId}/draft/exclusions (OD-03)', () => {
-  it('starts a redraft run with the exclusions and supersedes the active draft', async () => {
-    const app = await start();
-    const project = await createProject(app);
-    const fullId = await completedRun(app, project.id);
-    insertActiveDraft(app, project.id, fullId);
-
-    const response = await send(app, 'PUT', `/projects/${project.id}/draft/exclusions`, {
-      excludedMatchKeys: ['m1', 'liga-demo:m2'],
-    });
-    expect(response.statusCode).toBe(202);
-    const run = RunSchema.parse(response.json());
-    expect(run.kind).toBe('redraft');
-    expect(count(app, 'content_drafts')).toBe(0);
-    await app.module.runnerFor(app.container).settled(run.id);
-    expect(app.module.runnerFor(app.container).runs.parameters(run.id)).toEqual({
-      excludedMatchKeys: ['m1', 'liga-demo:m2'],
-    });
-  });
-
-  it('refuses without a verified run, with duplicate keys and for an unknown project', async () => {
-    const app = await start();
-    const project = await createProject(app);
-    const refused = await send(app, 'PUT', `/projects/${project.id}/draft/exclusions`, { excludedMatchKeys: [] });
-    expect(refused.statusCode).toBe(409);
-    expect(refused.json()).toMatchObject({ code: 'NO_VERIFIED_RUN' });
-    const duplicate = await send(app, 'PUT', `/projects/${project.id}/draft/exclusions`, {
-      excludedMatchKeys: ['m1', 'm1'],
-    });
-    expect(duplicate.statusCode).toBe(400);
-    const unknown = await send(app, 'PUT', '/projects/33333333-3333-4333-8333-333333333333/draft/exclusions', {
-      excludedMatchKeys: [],
-    });
-    expect(unknown.statusCode).toBe(404);
-    expect(count(app, 'workflow_runs')).toBe(0);
-  });
-});
-
 describe('startup hook (AD-10)', () => {
   it('fails runs left running with interrupted and keeps the sources table in step with the configuration', async () => {
     const app = await start();

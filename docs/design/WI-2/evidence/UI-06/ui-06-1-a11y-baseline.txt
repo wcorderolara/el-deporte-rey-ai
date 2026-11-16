@@ -1,0 +1,193 @@
+# UI-06.1 — línea base de accesibilidad en 9f5963f (node e2e/run.mjs --grep @a11y, tras el build de la línea base E2E), 2026-11-13.
+
+[e2e] Ensuring Chromium in .cache/ms-playwright (downloaded on first use only).
+[e2e] Configuration generated from fixtures/config/demo-manual.config.json in a temporary directory: sources demo-a, demo-b, manual, stub AI provider.
+[e2e] Starting the built server entry (apps/server/dist/src/main.js).
+[e2e] Server listening on http://127.0.0.1:4310.
+
+Running 33 tests using 1 worker
+
+  ✘   1 [chromium] › e2e/tests/a11y.spec.ts:142:3 › Accessibility @a11y › project list page has no serious or critical axe violation (0ms)
+  -   2 [chromium] › e2e/tests/a11y.spec.ts:149:3 › Accessibility @a11y › project creation page with a complete selection
+  -   3 [chromium] › e2e/tests/a11y.spec.ts:159:3 › Accessibility @a11y › project page after a completed run
+  -   4 [chromium] › e2e/tests/a11y.spec.ts:165:3 › Accessibility @a11y › facts page of a DEMO_DATA run
+  -   5 [chromium] › e2e/tests/a11y.spec.ts:171:3 › Accessibility @a11y › review page with every element approved and the final approval
+  -   6 [chromium] › e2e/tests/a11y.spec.ts:177:3 › Accessibility @a11y › exports and history page
+  -   7 [chromium] › e2e/tests/a11y.spec.ts:183:3 › Accessibility @a11y › export page
+  -   8 [chromium] › e2e/tests/a11y.spec.ts:189:3 › Accessibility @a11y › trace page of an exported slide
+  -   9 [chromium] › e2e/tests/a11y.spec.ts:196:3 › Accessibility @a11y › import page in file mode, with a rejected import and its errors
+  -  10 [chromium] › e2e/tests/a11y.spec.ts:205:3 › Accessibility @a11y › import page with an applied import
+  -  11 [chromium] › e2e/tests/a11y.spec.ts:212:3 › Accessibility @a11y › import page in form mode
+  -  12 [chromium] › e2e/tests/a11y.spec.ts:224:3 › Accessibility @a11y › import page and selection version page
+  -  13 [chromium] › e2e/tests/a11y.spec.ts:233:3 › Accessibility @a11y › facts page of a MANUAL_DATA run with the manual-approval confirmation open
+  -  14 [chromium] › e2e/tests/a11y.spec.ts:243:3 › Accessibility @a11y › project and review pages of a MANUAL_DATA project with blocked elements
+  -  15 [chromium] › e2e/tests/a11y.spec.ts:252:3 › Accessibility @a11y › brand page with a registered asset
+  -  16 [chromium] › e2e/tests/a11y.spec.ts:269:3 › Accessibility @a11y › not-found page
+  -  17 [chromium] › e2e/tests/a11y.spec.ts:275:3 › Accessibility @a11y › positive control: the scan reports a seeded low-contrast text
+  ✘  18 [chromium] › e2e/tests/a11y.spec.ts:287:3 › Accessibility of a failed run @a11y › project page after a failed run (2.0m)
+  ✘  19 [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard projects 1440px @a11y (5.3s)
+  ✓  20 [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard empty 1440px @a11y (586ms)
+  ✓  21 [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard loading 1440px @a11y (495ms)
+  ✓  22 [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard error 1440px @a11y (482ms)
+  ✘  23 [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard projects 768px @a11y (5.2s)
+  ✓  24 [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard empty 768px @a11y (533ms)
+  ✓  25 [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard loading 768px @a11y (489ms)
+  ✓  26 [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard error 768px @a11y (515ms)
+  ✘  27 [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard projects 390px @a11y (5.2s)
+  ✓  28 [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard empty 390px @a11y (510ms)
+  ✓  29 [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard loading 390px @a11y (498ms)
+  ✓  30 [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard error 390px @a11y (476ms)
+  ✓  31 [chromium] › e2e/tests/shell-responsive.spec.ts:4:3 › shell navigation at 1440px @a11y (697ms)
+  ✓  32 [chromium] › e2e/tests/shell-responsive.spec.ts:4:3 › shell navigation at 768px @a11y (778ms)
+  ✓  33 [chromium] › e2e/tests/shell-responsive.spec.ts:4:3 › shell navigation at 390px @a11y (789ms)
+
+
+  1) [chromium] › e2e/tests/a11y.spec.ts:142:3 › Accessibility @a11y › project list page has no serious or critical axe violation 
+
+    "beforeAll" hook timeout of 240000ms exceeded.
+
+      69 |
+      70 | test.describe('Accessibility @a11y', () => {
+    > 71 |   test.beforeAll(async ({ browser }) => {
+         |        ^
+      72 |     test.setTimeout(240_000);
+      73 |     const baseURL = process.env['E2E_BASE_URL'];
+      74 |     if (baseURL === undefined || baseURL === '') {
+        at e2e/tests/a11y.spec.ts:71:8
+
+    Error: locator.check: Test ended.
+    Call log:
+      - waiting for getByRole('radio', { name: /^Liga Demo/ })
+
+
+       at ../support/app.ts:47
+
+      45 |   const continueButton = page.getByRole('button', { name: 'Continuar' });
+      46 |   await expect(continueButton).toBeDisabled();
+    > 47 |   await page.getByRole('radio', { name: selection.competition }).check();
+         |                                                                  ^
+      48 |   await expect(continueButton).toBeDisabled();
+      49 |   const season = page.getByRole('combobox', { name: 'Temporada' });
+      50 |   await expect(season.locator('option').nth(1)).toBeAttached();
+        at fillProjectForm (e2e/support/app.ts:47:66)
+        at createProject (e2e/support/app.ts:82:3)
+        at e2e/tests/a11y.spec.ts:82:20
+
+    Error Context: .cache/e2e/test-results/a11y-Accessibility-a11y-pr-8813b-s-or-critical-axe-violation-chromium/error-context.md
+
+  2) [chromium] › e2e/tests/a11y.spec.ts:287:3 › Accessibility of a failed run @a11y › project page after a failed run 
+
+    Test timeout of 120000ms exceeded.
+
+    Error: locator.check: Test timeout of 120000ms exceeded.
+    Call log:
+      - waiting for getByRole('radio', { name: /^Liga Demo/ })
+
+
+       at ../support/app.ts:47
+
+      45 |   const continueButton = page.getByRole('button', { name: 'Continuar' });
+      46 |   await expect(continueButton).toBeDisabled();
+    > 47 |   await page.getByRole('radio', { name: selection.competition }).check();
+         |                                                                  ^
+      48 |   await expect(continueButton).toBeDisabled();
+      49 |   const season = page.getByRole('combobox', { name: 'Temporada' });
+      50 |   await expect(season.locator('option').nth(1)).toBeAttached();
+        at fillProjectForm (e2e/support/app.ts:47:66)
+        at createProject (e2e/support/app.ts:82:3)
+        at e2e/tests/a11y.spec.ts:290:5
+
+    Error Context: .cache/e2e/test-results/a11y-Accessibility-of-a-fa-f08e9-ect-page-after-a-failed-run-chromium/error-context.md
+
+  3) [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard projects 1440px @a11y ────────
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByRole('main').getByRole('article')
+    Expected: 4
+    Received: 0
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByRole('main').getByRole('article') with timeout 5000ms
+      - waiting for getByRole('main').getByRole('article')
+        14 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      21 |         await expect(main.getByRole('heading', { level: 1 })).toHaveText('Tu próximo contenido empieza aquí');
+      22 |         if (state === 'projects') {
+    > 23 |           await expect(main.getByRole('article')).toHaveCount(4);
+         |                                                   ^
+      24 |           for (const name of ['Continuar', 'Revisar contenido', 'Descargar contenido', 'Ver contenido']) {
+      25 |             await expect(main.getByRole('link', { name: new RegExp(`^${name}:`) })).toBeVisible();
+      26 |           }
+        at e2e/tests/dashboard.spec.ts:23:51
+
+    Error Context: .cache/e2e/test-results/dashboard-creator-dashboard-projects-1440px-a11y-chromium/error-context.md
+
+  4) [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard projects 768px @a11y ─────────
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByRole('main').getByRole('article')
+    Expected: 4
+    Received: 0
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByRole('main').getByRole('article') with timeout 5000ms
+      - waiting for getByRole('main').getByRole('article')
+        14 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      21 |         await expect(main.getByRole('heading', { level: 1 })).toHaveText('Tu próximo contenido empieza aquí');
+      22 |         if (state === 'projects') {
+    > 23 |           await expect(main.getByRole('article')).toHaveCount(4);
+         |                                                   ^
+      24 |           for (const name of ['Continuar', 'Revisar contenido', 'Descargar contenido', 'Ver contenido']) {
+      25 |             await expect(main.getByRole('link', { name: new RegExp(`^${name}:`) })).toBeVisible();
+      26 |           }
+        at e2e/tests/dashboard.spec.ts:23:51
+
+    Error Context: .cache/e2e/test-results/dashboard-creator-dashboard-projects-768px-a11y-chromium/error-context.md
+
+  5) [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard projects 390px @a11y ─────────
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByRole('main').getByRole('article')
+    Expected: 4
+    Received: 0
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByRole('main').getByRole('article') with timeout 5000ms
+      - waiting for getByRole('main').getByRole('article')
+        14 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      21 |         await expect(main.getByRole('heading', { level: 1 })).toHaveText('Tu próximo contenido empieza aquí');
+      22 |         if (state === 'projects') {
+    > 23 |           await expect(main.getByRole('article')).toHaveCount(4);
+         |                                                   ^
+      24 |           for (const name of ['Continuar', 'Revisar contenido', 'Descargar contenido', 'Ver contenido']) {
+      25 |             await expect(main.getByRole('link', { name: new RegExp(`^${name}:`) })).toBeVisible();
+      26 |           }
+        at e2e/tests/dashboard.spec.ts:23:51
+
+    Error Context: .cache/e2e/test-results/dashboard-creator-dashboard-projects-390px-a11y-chromium/error-context.md
+
+  5 failed
+    [chromium] › e2e/tests/a11y.spec.ts:142:3 › Accessibility @a11y › project list page has no serious or critical axe violation 
+    [chromium] › e2e/tests/a11y.spec.ts:287:3 › Accessibility of a failed run @a11y › project page after a failed run 
+    [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard projects 1440px @a11y ─────────
+    [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard projects 768px @a11y ──────────
+    [chromium] › e2e/tests/dashboard.spec.ts:7:5 › creator dashboard projects 390px @a11y ──────────
+  16 did not run
+  12 passed (6.4m)
+[e2e] Last server log lines (at most 200):
+[e2e] Server stopped and temporary directory removed.
+exit 1

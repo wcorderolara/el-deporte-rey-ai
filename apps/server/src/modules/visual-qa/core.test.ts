@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 
 import { formatDate } from '../../platform/format/index.js';
 import { commentary, fact, template } from '../rendering/test/support.js';
+import { presentedText } from '../visual-templates/project.js';
 
 import {
   CHECK_SEVERITY,
@@ -28,12 +29,17 @@ import {
   closingText,
   coverText,
   failedChecks,
+  fixtureFacts,
+  fixtureText,
   matchFacts,
   matchText,
   matchTextWith,
   qaInput,
   resultOf,
   SELECTION_A,
+  calendarRowsText,
+  calendarVersion,
+  overviewText,
   settings,
   slideVersion,
   slug,
@@ -327,6 +333,79 @@ describe('team_names (blocking; R-237)', () => {
     expect(failedChecks(result)).toEqual([]);
   });
 
+  describe('presentation names of the project snapshot (TEAM-DISPLAY-01, PD-37)', () => {
+    const NAMES = { [uuid(11)]: 'Ñandú', [uuid(12)]: 'Árbol' };
+    /**
+     * A version whose stored text is official and whose image is drawn as the rendering stage draws it with `names`
+     * (`presentedText`: the team fields and the team placeholders of the AI text), except that its team-name elements
+     * show `home` and `away`.
+     */
+    function drawnWith(home: string, away = MATCH_A.away, names: Record<string, string> = NAMES) {
+      const presented = presentedText(matchText(MATCH_A), names);
+      const fields = presented.fields.map((field) =>
+        field.field === 'team_home'
+          ? { ...field, segments: [fact(home, uuid(11))] }
+          : field.field === 'team_away'
+            ? { ...field, segments: [fact(away, uuid(12))] }
+            : field,
+      );
+      return { ...match(2, { ...presented, fields }), text: matchText(MATCH_A) };
+    }
+
+    it('accepts the snapshot name of each team, and still its official name', () => {
+      for (const version of [drawnWith('Ñandú', 'Árbol'), drawnWith(MATCH_A.home, 'Árbol'), drawnWith(MATCH_A.home)]) {
+        const result = check(version, qaInput([version], FACTS, { teamDisplayNames: NAMES }));
+        expect(failedChecks(result), JSON.stringify(resultOf(result, 'team_names').details)).toEqual([]);
+      }
+    });
+
+    it.each([
+      ['another team’s snapshot name', 'Árbol'],
+      ['an upper-cased snapshot name', 'ÑANDÚ'],
+      ['the snapshot name without its accents', 'Nandu'],
+      ['a part of the official name', 'Atlético Ñandú'],
+    ])('fails %s', (_case, written) => {
+      const version = drawnWith(written);
+      const result = check(version, qaInput([version], FACTS, { teamDisplayNames: NAMES }));
+      expect(failedChecks(result)).toEqual(['team_names']);
+      expect(resultOf(result, 'team_names').details).toEqual({
+        mismatches: [{ elementId: 'team-home', factId: uuid(11), expected: 'Ñandú', actual: written }],
+      });
+    });
+
+    it('fails a presentation name the snapshot did not record (an earlier project, or a team without one)', () => {
+      for (const names of [{}, { [uuid(12)]: 'Árbol' }]) {
+        const version = drawnWith('Ñandú', MATCH_A.away, names);
+        const result = check(version, qaInput([version], FACTS, { teamDisplayNames: names }));
+        expect(resultOf(result, 'team_names').details).toEqual({
+          mismatches: [{ elementId: 'team-home', factId: uuid(11), expected: MATCH_A.home, actual: 'Ñandú' }],
+        });
+      }
+    });
+
+    it('compares the drawn AI text with the stored text drawn with the recorded names, and nothing else', () => {
+      // The headline drawn with the presentation names passes; drawn with the official names while a name is recorded,
+      // or with a name the project did not record, it fails data_match.
+      const presented = drawnWith('Ñandú', 'Árbol');
+      expect(failedChecks(check(presented, qaInput([presented], FACTS, { teamDisplayNames: NAMES })))).toEqual([]);
+      const official = drawnWith('Ñandú', 'Árbol', {});
+      const stale = check(official, qaInput([official], FACTS, { teamDisplayNames: NAMES }));
+      expect(failedChecks(stale)).toEqual(['data_match']);
+      const other = drawnWith('Ñandú', 'Árbol', { [uuid(11)]: 'Otro Nombre', [uuid(12)]: 'Árbol' });
+      expect(failedChecks(check(other, qaInput([other], FACTS, { teamDisplayNames: NAMES })))).toEqual(['data_match']);
+    });
+
+    it('never accepts it in the AI text: a team name there stays the official name', () => {
+      const text = matchTextWith(MATCH_A, { headline: [fact('Ñandú', uuid(11)), commentary(' gana en casa')] });
+      const version = match(2, text);
+      const result = check(version, qaInput([version], FACTS, { teamDisplayNames: NAMES }));
+      expect(failedChecks(result)).toContain('team_names');
+      expect(resultOf(result, 'team_names').details).toEqual({
+        mismatches: [{ elementId: 'headline', factId: uuid(11), expected: MATCH_A.home, actual: 'Ñandú' }],
+      });
+    });
+  });
+
   it('uses the candidate name of an unverified team and fails any other form', () => {
     const facts = [teamFact(uuid(11), 'Club Atlético Ñandú B', 'candidate'), ...matchFacts(MATCH_A).slice(1)];
     const result = check(match(), qaInput([match()], facts));
@@ -585,6 +664,13 @@ describe('each seeded defect fails its check by name (R-214)', () => {
     }),
     dimensions: slideVersion(2, 'match_result', matchText(MATCH_A), { image: { width: 1080, height: 1920 } }),
     capitalized_tokens: match(2, matchTextWith(MATCH_A, { description: [commentary('Figura: Ezequiel')] })),
+    // PD-ARCH-01G-E.1: a badge slot that records its team without a badge.
+    team_badges: withModel(match(), (model) => {
+      const slot = model.elements.find((element) => element.id === 'team-badge-away');
+      if (slot?.kind === 'badge_slot') {
+        slot.team = { teamId: uuid(70), badge: null };
+      }
+    }),
   } as const;
 
   it.each(QA_CHECKS)('%s', (name) => {
@@ -596,6 +682,148 @@ describe('each seeded defect fails its check by name (R-214)', () => {
 
   it('the same slide without the defect passes all', () => {
     expect(failedChecks(check(match(), qaInput([match()], FACTS)))).toEqual([]);
+  });
+});
+
+describe('team_badges (warning; PD-ARCH-01G-E.1, decision DE-E4)', () => {
+  /** A match slide whose badge slots record their teams, with a badge or without (null). */
+  function withSlots(badges: { home: string | null; away: string | null }) {
+    return withModel(match(), (model) => {
+      for (const element of model.elements) {
+        if (element.kind === 'badge_slot') {
+          const badgeId = element.slot === 'team-badge-home' ? badges.home : badges.away;
+          element.empty = badgeId === null;
+          element.team = {
+            teamId: uuid(element.slot === 'team-badge-home' ? 71 : 72),
+            badge: badgeId === null ? null : { assetId: badgeId, sha256: 'a'.repeat(64), mime: 'image/png' },
+          };
+        }
+      }
+    });
+  }
+
+  it('passes when both teams have their badge, and on slides whose slots record no team (DE-E3)', () => {
+    const both = check(withSlots({ home: uuid(81), away: uuid(82) }), qaInput([match()], FACTS));
+    expect(resultOf(both, 'team_badges')).toMatchObject({ outcome: 'pass', details: { emptyBadgeSlots: [] } });
+    // A model rendered before 01G-E.1, or of a project whose badges do not cover the engine templates.
+    const legacy = check(match(), qaInput([match()], FACTS));
+    expect(resultOf(legacy, 'team_badges')).toMatchObject({ outcome: 'pass', details: { emptyBadgeSlots: [] } });
+    // Slides without badge slots pass too.
+    expect(resultOf(check(cover(), qaInput([cover()], FACTS)), 'team_badges').outcome).toBe('pass');
+  });
+
+  it('warns about one team without a badge, without blocking: the slide is ready once acknowledged', () => {
+    const result = check(withSlots({ home: uuid(81), away: null }), qaInput([match()], FACTS));
+    expect(failedChecks(result)).toEqual(['team_badges']);
+    expect(result.qaStatus).toBe('warnings');
+    const warning = resultOf(result, 'team_badges');
+    expect(warning).toEqual({
+      check: 'team_badges',
+      outcome: 'fail',
+      severity: 'warning',
+      details: { emptyBadgeSlots: ['team-badge-away'] },
+      acknowledgedAt: null,
+    });
+    expect(QaResultSchema.parse(warning)).toEqual(warning);
+  });
+
+  it('lists both slots when neither team has a badge', () => {
+    const result = check(withSlots({ home: null, away: null }), qaInput([match()], FACTS));
+    expect(failedChecks(result)).toEqual(['team_badges']);
+    expect(resultOf(result, 'team_badges').details).toEqual({
+      emptyBadgeSlots: ['team-badge-home', 'team-badge-away'],
+    });
+  });
+
+  it('is not run on a caption', () => {
+    const caption = runVisualQa(qaInput([captionVersion(5, 'Resumen')], FACTS), FONTS).versions[0];
+    expect(caption?.results.map((item) => item.check)).toEqual(['capitalized_tokens']);
+  });
+});
+
+describe('round calendars with rows (PD-ARCH-01G-E.2)', () => {
+  const MATCHES = [
+    MATCH_A,
+    { ...MATCH_A, home: 'Real Brisamar', away: 'Peñas Sur', factBase: 20, kickoff: '2026-10-25T18:00:00Z' },
+    { ...MATCH_A, home: 'Club Deportivo Ejemplo B', away: 'Club Deportivo Ejemplo', factBase: 30 },
+  ];
+  const ROW_FACTS = [
+    ...fixtureFacts(MATCHES[0] as typeof MATCH_A),
+    ...fixtureFacts(MATCHES[1] as typeof MATCH_A, 'postponed'),
+    ...fixtureFacts(MATCHES[2] as typeof MATCH_A),
+  ];
+  const TEXT = calendarRowsText(MATCHES, { 1: 'postponed' });
+  const ALL_BADGES: { home: string | null; away: string | null }[] = MATCHES.map((_, index) => ({
+    home: uuid(810 + index),
+    away: uuid(820 + index),
+  }));
+
+  function calendar(badges = ALL_BADGES) {
+    return calendarVersion(6, TEXT, badges);
+  }
+
+  it('passes every check when each row has its values and both badges', () => {
+    const result = check(calendar(), qaInput([calendar()], ROW_FACTS));
+    expect(failedChecks(result)).toEqual([]);
+    expect(resultOf(result, 'team_badges').details).toEqual({ emptyBadgeSlots: [], emptyRowBadgeSlots: [] });
+  });
+
+  it('warns about each empty badge slot with its row, without blocking', () => {
+    const badges = ALL_BADGES.map((row, index) =>
+      index === 0 ? { ...row, away: null } : index === 2 ? { home: null, away: null } : row,
+    );
+    const result = check(calendar(badges), qaInput([calendar(badges)], ROW_FACTS));
+    expect(failedChecks(result)).toEqual(['team_badges']);
+    expect(result.qaStatus).toBe('warnings');
+    const warning = resultOf(result, 'team_badges');
+    expect(warning.details).toEqual({
+      emptyBadgeSlots: [],
+      emptyRowBadgeSlots: [
+        { row: 1, slot: 'team-badge-away' },
+        { row: 3, slot: 'team-badge-home' },
+        { row: 3, slot: 'team-badge-away' },
+      ],
+    });
+    expect(QaResultSchema.parse(warning)).toEqual(warning);
+  });
+
+  it('compares every value of every row with its fact (data_match, team_names)', () => {
+    const seeded = withModel(calendar(), (model) => {
+      for (const [id, text] of [
+        ['row-2-time', '20:00'],
+        ['row-2-status', 'Aplazada'],
+        ['row-3-away', 'Club Deportivo Ejemplo B'],
+      ] as const) {
+        textElement(model, id).text = text;
+        textElement(model, id).lines = [...(id === 'row-3-away' ? ['Club Deportivo', 'Ejemplo B'] : [text])];
+      }
+    });
+    const result = check(seeded, qaInput([seeded], ROW_FACTS));
+    expect(failedChecks(result)).toEqual(['data_match', 'team_names']);
+    expect(resultOf(result, 'data_match').details).toEqual({
+      mismatches: [
+        { elementId: 'row-2-time', factId: uuid(24), expected: '12:00', actual: '20:00' },
+        { elementId: 'row-2-status', factId: uuid(25), expected: 'Aplazado', actual: 'Aplazada' },
+      ],
+    });
+    expect(resultOf(result, 'team_names').details).toEqual({
+      mismatches: [
+        {
+          elementId: 'row-3-away',
+          factId: uuid(32),
+          expected: 'Club Deportivo Ejemplo',
+          actual: 'Club Deportivo Ejemplo B',
+        },
+      ],
+    });
+  });
+
+  it('does not examine the badges of a calendar without rows (DE-E3)', () => {
+    const legacy = slideVersion(7, 'round_overview', overviewText(MATCHES));
+    expect(legacy.renderModel?.templateVersion).toBe('1.0.0');
+    const result = check(legacy, qaInput([legacy], ROW_FACTS));
+    expect(failedChecks(result)).toEqual([]);
+    expect(resultOf(result, 'team_badges').details).toEqual({ emptyBadgeSlots: [] });
   });
 });
 
@@ -625,5 +853,40 @@ describe('qa_status and limits', () => {
       mismatches: { actual: string }[];
     };
     expect(details.mismatches[0]?.actual).toHaveLength(200);
+  });
+});
+
+describe('matches not played yet (PD-ARCH-01E-B)', () => {
+  it('passes every check on a fixture, a postponed fixture and a preview', () => {
+    for (const [type, status] of [
+      ['fixture', 'scheduled'],
+      ['fixture', 'postponed'],
+      ['match_preview', 'scheduled'],
+    ] as const) {
+      const version = slideVersion(2, type, fixtureText(MATCH_A, type, status));
+      const result = check(version, qaInput([version], fixtureFacts(MATCH_A, status)));
+      expect(failedChecks(result), `${type} ${status}`).toEqual([]);
+    }
+  });
+
+  it('fails a status that differs from the local status of the match', () => {
+    const version = slideVersion(2, 'fixture', fixtureText(MATCH_A, 'fixture', 'scheduled'));
+    const result = check(version, qaInput([version], fixtureFacts(MATCH_A, 'postponed')));
+    expect(failedChecks(result)).toEqual(['data_match']);
+    expect(resultOf(result, 'data_match').details).toEqual({
+      mismatches: [{ elementId: 'match-status', factId: uuid(15), expected: 'Aplazado', actual: 'Programado' }],
+    });
+  });
+
+  it('fails any score drawn on a slide of a match not played yet', () => {
+    const version = withModel(slideVersion(2, 'fixture', fixtureText(MATCH_A)), (model) => {
+      const status = textElement(model, 'match-status');
+      model.elements.push({ ...status, id: 'score', field: 'score', semantic: 'score', text: '1-0', lines: ['1-0'] });
+    });
+    const result = check(version, qaInput([version], fixtureFacts(MATCH_A)));
+    expect(failedChecks(result)).toContain('data_match');
+    expect(resultOf(result, 'data_match').details).toMatchObject({
+      mismatches: expect.arrayContaining([{ elementId: 'score', factId: uuid(15), expected: '', actual: '1-0' }]),
+    });
   });
 });

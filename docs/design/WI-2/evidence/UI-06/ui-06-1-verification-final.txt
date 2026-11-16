@@ -1,0 +1,40 @@
+# UI-06.1 — verificaciones del cierre (corrección de E2E-F01), 2026-11-13. Un comando por gate; código de salida y totales.
+
+== typecheck
+exit 0
+== lint
+exit 0
+All matched files use Prettier code style!
+== unit
+exit 0
+ Test Files  145 passed (145)
+      Tests  2563 passed (2563)
+== integration
+exit 0
+ Test Files  58 passed (58)
+      Tests  697 passed (697)
+== contract
+exit 0
+ Test Files  7 passed (7)
+      Tests  2419 passed (2419)
+== build
+exit 0
+== e2e
+exit 0
+  22 passed (32.2s)
+== a11y
+exit 0
+  28 passed (37.4s)
+== audit
+exit 0
+13 moderate severity vulnerabilities
+== secret-scan
+exit 0
+secret-scan: findings: 0
+RESULT: PASS
+== contract-id
+file 9bf188ca5d2c2c905405e701ac3283f483cf0ba5e206a5289796ebc0d4ed22bc conf 9bf188ca5d2c2c905405e701ac3283f483cf0ba5e206a5289796ebc0d4ed22bc
+== git diff --check
+exit 0
+== árbol tras las suites
+solo los cambios de UI-06.1 (sin archivos nuevos ni modificados por las ejecuciones)

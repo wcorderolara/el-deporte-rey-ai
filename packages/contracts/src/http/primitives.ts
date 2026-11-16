@@ -15,14 +15,50 @@ export const ContractPatterns = {
   SourceId: '^[a-z0-9][a-z0-9-]{1,40}$',
   MatchKey: '^[a-z0-9][a-z0-9:_-]{0,127}$',
   Label: '^[^\\p{Cc}\\p{Cf}]{1,80}$',
+  /** Printable multi-line text: line feeds allowed, every other control or format character refused. */
+  Note: '^(?:[^\\p{Cc}\\p{Cf}]|\\n)+$',
+  /**
+   * An edited editorial text (UI-06.3): `Note` plus U+200D ZERO WIDTH JOINER, so that an emoji sequence the writer may
+   * produce can be saved again. The content checks still flag a joiner outside an emoji sequence (T10-A1-05); every
+   * other control or format character stays refused.
+   */
+  EditorialText: '^(?:[^\\p{Cc}\\p{Cf}]|\\n|\\u200D)+$',
   DisplayName: "^[\\p{L}\\p{M}\\p{N} .'&()/-]{1,80}$",
   StageName: "^[\\p{L}\\p{M}\\p{N} .'&()/_-]{1,80}$",
   TeamName: "^[\\p{L}\\p{M}\\p{N} .'&()-]{1,64}$",
+  /** A team's presentation name (TEAM-DISPLAY-01, PD-37): the `TeamName` characters, 1 to 32 of them. */
+  TeamDisplayName: "^[\\p{L}\\p{M}\\p{N} .'&()-]{1,32}$",
   FileName: '^[\\p{L}\\p{M}\\p{N} ._()-]{1,115}\\.(json|csv)$',
   Sha256: '^[0-9a-f]{64}$',
   ColorHex: '^#[0-9a-f]{6}$',
-  ExportFileName: '^([0-9]{2}\\.png|caption\\.txt|manifest\\.json)$',
+  ExportFileName: '^([0-9]{2}\\.png|caption\\.txt|copy-editorial\\.txt|manifest\\.json)$',
+  ExternalSeasonId: '^(?!\\.{1,2}$)[A-Za-z0-9._-]{1,120}$',
+  SportsEntityType: '^(season|team|stage|round|match|result)$',
   Base64: '^[A-Za-z0-9+/]*={0,2}$',
+  /** Prefix of the status/events URLs returned when an asynchronous operation starts. */
+  CompetitionOperationUrl: '^/api/v1/competitions/',
+  /** Configured image model identifier (PD-ARCH-01G-B). */
+  ImageModelId: '^[a-z0-9][a-z0-9._-]{0,99}$',
+  /** Image generation quality value of a configured model. */
+  ImageQuality: '^[a-z]{2,16}$',
+  /** Requested image size, `WIDTHxHEIGHT`. */
+  ImageSize: '^[1-9][0-9]{1,3}x[1-9][0-9]{1,3}$',
+  /** Prefix of the status/events URLs returned when a design generation starts. */
+  DesignGenerationUrl: '^/api/v1/design/generations/',
+  /** Layer identifier of a visual template version (PD-ARCH-01G-C). */
+  LayerId: '^[a-z0-9][a-z0-9-]{0,39}$',
+  /** Prefix of the preview image URL of a visual template version. */
+  VisualTemplateUrl: '^/api/v1/visual-templates/',
+  /** A revision number written in a query string. */
+  RevisionParam: '^[1-9][0-9]{0,8}$',
+  /** Evidence item of the editorial research panel (PD-ARCH-01H). */
+  EditorialEvidenceId: '^ev-[a-z0-9][a-z0-9-]{0,59}$',
+  /** Deterministic key event of the editorial context (PD-ARCH-01H). */
+  EditorialEventId: '^evt-[a-z0-9][a-z0-9-]{0,59}$',
+  /** Configured AI text model identifier (PD-ARCH-01H). */
+  AiModelId: '^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$',
+  /** Operator instruction for an editorial generation: one printable line. */
+  EditorialInstructions: '^[^\\p{Cc}\\p{Cf}]{1,500}$',
 } as const;
 
 export type ContractPatternName = keyof typeof ContractPatterns;
@@ -55,6 +91,11 @@ export const StageNameSchema = z.string().min(1).max(80).regex(contractRegExp('S
 
 /** Team name (T10-F06 rule). */
 export const TeamNameSchema = z.string().min(1).max(64).regex(contractRegExp('TeamName'));
+/**
+ * The optional presentation name of a local team (TEAM-DISPLAY-01, PD-37): set by the operator, drawn in the images of
+ * new projects instead of the official name; never used to identify or match a team.
+ */
+export const TeamDisplayNameSchema = z.string().min(1).max(32).regex(contractRegExp('TeamDisplayName'));
 
 /** Name of an imported file, without any path; NFD names with combining marks are accepted (T11H-F20). */
 export const FileNameSchema = z.string().min(6).max(120).regex(contractRegExp('FileName'));
@@ -101,6 +142,7 @@ export type Label = z.infer<typeof LabelSchema>;
 export type DisplayName = z.infer<typeof DisplayNameSchema>;
 export type StageName = z.infer<typeof StageNameSchema>;
 export type TeamName = z.infer<typeof TeamNameSchema>;
+export type TeamDisplayName = z.infer<typeof TeamDisplayNameSchema>;
 export type FileName = z.infer<typeof FileNameSchema>;
 export type DataMode = z.infer<typeof DataModeSchema>;
 export type MatchStatus = z.infer<typeof MatchStatusSchema>;

@@ -1,7 +1,5 @@
 import { useState } from 'react';
 
-import styles from './Brand.module.css';
-
 export interface PreviewImageProps {
   /** API URL of the image (asset file or template preview); never a value typed by the operator. */
   src: string;
@@ -22,7 +20,10 @@ export function PreviewImage({ src, alt, className, failedText, width, height }:
   const [failed, setFailed] = useState(false);
   if (failed) {
     return (
-      <p className={styles.previewFailed} role="note">
+      <p
+        className="m-0 rounded-lg border border-dashed border-warning bg-warning-surface p-3 text-center text-caption text-warning"
+        role="note"
+      >
         {failedText}
       </p>
     );

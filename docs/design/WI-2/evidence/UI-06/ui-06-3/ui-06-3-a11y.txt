@@ -1,0 +1,56 @@
+# UI-06.3 — accesibilidad, responsive y teclado del cierre, con D06 (node e2e/run.mjs --grep @a11y, sobre npm run build), 2026-11-13. Sin excepciones declaradas.
+
+[e2e] Ensuring Chromium in .cache/ms-playwright (downloaded on first use only).
+[e2e] Configuration generated from fixtures/config/demo-manual.config.json in a temporary directory: sources demo-a, demo-b, manual, local, stub AI provider.
+[e2e] Starting the built server entry (apps/server/dist/src/main.js).
+[e2e] Server listening on http://127.0.0.1:4310.
+
+Running 44 tests using 1 worker
+
+  ✓   1 [chromium] › e2e/tests/a11y.spec.ts:201:3 › Accessibility @a11y › Inicio and Mis proyectos (736ms)
+  ✓   2 [chromium] › e2e/tests/a11y.spec.ts:211:3 › Accessibility @a11y › every step of Crear contenido and the generation result (3.0s)
+  ✓   3 [chromium] › e2e/tests/a11y.spec.ts:239:3 › Accessibility @a11y › project page with its run details, and its data and verification page (1.5s)
+  ✓   4 [chromium] › e2e/tests/a11y.spec.ts:251:3 › Accessibility @a11y › review workspace: warning, bulk approval, editorial copy and final approval dialog (5.8s)
+  ✓   5 [chromium] › e2e/tests/a11y.spec.ts:292:3 › Accessibility @a11y › review workspace with a valid final approval (534ms)
+  ✓   6 [chromium] › e2e/tests/a11y.spec.ts:298:3 › Accessibility @a11y › Exportaciones, an export, the trace of an exported slide in its states and a demo run (4.3s)
+  ✓   7 [chromium] › e2e/tests/a11y.spec.ts:325:3 › Accessibility @a11y › Competiciones: list, competition, teams with the badge form, season and round (1.8s)
+  ✓   8 [chromium] › e2e/tests/a11y.spec.ts:355:3 › Accessibility @a11y › Datos: file mode with a rejected import, applied import, form mode, import and version (2.5s)
+  ✓   9 [chromium] › e2e/tests/a11y.spec.ts:380:3 › Accessibility @a11y › Mi marca: resources with the upload dialog and a registered asset, and the visual identity (1.4s)
+  ✓  10 [chromium] › e2e/tests/a11y.spec.ts:406:3 › Accessibility @a11y › Plantillas: create a template and the engine templates (755ms)
+  ✓  11 [chromium] › e2e/tests/a11y.spec.ts:415:3 › Accessibility @a11y › not-found page (408ms)
+  ✓  12 [chromium] › e2e/tests/a11y.spec.ts:421:3 › Accessibility @a11y › section error page inside a studio route: readable link, visible focus and the way back (UI-06.3) (740ms)
+  ✓  13 [chromium] › e2e/tests/a11y.spec.ts:460:3 › Accessibility @a11y › positive control: the scan reports a seeded low-contrast text (251ms)
+  ✓  14 [chromium] › e2e/tests/a11y.spec.ts:471:3 › Accessibility of a failed run @a11y › project page after a failed run (3.9s)
+  ✓  15 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard projects 1440px @a11y (787ms)
+  ✓  16 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard empty 1440px @a11y (509ms)
+  ✓  17 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard loading 1440px @a11y (504ms)
+  ✓  18 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard error 1440px @a11y (514ms)
+  ✓  19 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard projects 768px @a11y (742ms)
+  ✓  20 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard empty 768px @a11y (458ms)
+  ✓  21 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard loading 768px @a11y (489ms)
+  ✓  22 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard error 768px @a11y (464ms)
+  ✓  23 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard projects 390px @a11y (775ms)
+  ✓  24 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard empty 390px @a11y (446ms)
+  ✓  25 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard loading 390px @a11y (483ms)
+  ✓  26 [chromium] › e2e/tests/dashboard.spec.ts:13:5 › creator dashboard error 390px @a11y (432ms)
+  ✓  27 [chromium] › e2e/tests/responsive.spec.ts:241:3 › Responsive layout and keyboard @a11y › Inicio, Mis proyectos, a project, every step of Crear contenido and the generation result (16.1s)
+  ✓  28 [chromium] › e2e/tests/responsive.spec.ts:313:3 › Responsive layout and keyboard @a11y › content review in both modes, before and after the final approval (6.5s)
+  ✓  29 [chromium] › e2e/tests/responsive.spec.ts:347:3 › Responsive layout and keyboard @a11y › R-03: at 1280 x 720 the review preview stays in its column, keeps its proportions and stays the protagonist (469ms)
+  ✓  30 [chromium] › e2e/tests/responsive.spec.ts:390:3 › Responsive layout and keyboard @a11y › Exportaciones, an export, the trace of an exported slide and Datos y verificación (4.4s)
+  ✓  31 [chromium] › e2e/tests/responsive.spec.ts:417:3 › Responsive layout and keyboard @a11y › Competiciones: list, competition, teams, season, participants, calendar and round with its matches (5.3s)
+  ✓  32 [chromium] › e2e/tests/responsive.spec.ts:455:3 › Responsive layout and keyboard @a11y › Datos, Mi marca, Plantillas, the template editor and the not-found page (11.1s)
+  ✓  33 [chromium] › e2e/tests/responsive.spec.ts:508:3 › Responsive layout and keyboard @a11y › R-02: the view tooltips stay inside the window on hover and keyboard focus, and Escape hides them (9.5s)
+  ✓  34 [chromium] › e2e/tests/responsive.spec.ts:563:3 › Responsive layout and keyboard @a11y › dialogs keep the focus inside, close with Escape and give the focus back, at 1280 and 390 px (5.1s)
+  ✓  35 [chromium] › e2e/tests/responsive.spec.ts:622:3 › Responsive layout and keyboard @a11y › tabs move with the arrow keys, the review menu closes with Escape, and the focus is always visible (27.1s)
+  ✓  36 [chromium] › e2e/tests/responsive.spec.ts:686:3 › Responsive layout and keyboard @a11y › the editorial copy is chosen, edited and saved with the keyboard (UI-06.3) (587ms)
+  ✓  37 [chromium] › e2e/tests/responsive.spec.ts:715:3 › Responsive layout and keyboard @a11y › the template editor works with the keyboard: a layer is selected and moved with the arrows (UI-06.3) (291ms)
+  ✓  38 [chromium] › e2e/tests/responsive.spec.ts:746:3 › Responsive layout and keyboard @a11y › forced colours keep the selected tab, the current page and the selected layer distinguishable (UI-06.3) (370ms)
+  ✓  39 [chromium] › e2e/tests/responsive.spec.ts:789:3 › Responsive layout and keyboard @a11y › text spacing (WCAG 1.4.12) and reduced motion keep the screens usable (601ms)
+  ✓  40 [chromium] › e2e/tests/shell-responsive.spec.ts:5:3 › shell navigation at 1440px @a11y (836ms)
+  ✓  41 [chromium] › e2e/tests/shell-responsive.spec.ts:5:3 › shell navigation at 1280px @a11y (808ms)
+  ✓  42 [chromium] › e2e/tests/shell-responsive.spec.ts:5:3 › shell navigation at 1024px @a11y (844ms)
+  ✓  43 [chromium] › e2e/tests/shell-responsive.spec.ts:5:3 › shell navigation at 768px @a11y (841ms)
+  ✓  44 [chromium] › e2e/tests/shell-responsive.spec.ts:5:3 › shell navigation at 390px @a11y (853ms)
+
+  44 passed (2.3m)
+[e2e] Server stopped and temporary directory removed.

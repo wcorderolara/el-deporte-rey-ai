@@ -12,8 +12,20 @@
 import type { AppConfig, EnvironmentSource, PathsConfig } from './platform/config/index.js';
 import type { Db } from './platform/db/index.js';
 import { type Logger, createLogger } from './platform/http/index.js';
-import { type EgressClient, buildEgressAllowList, createEgressClient } from './platform/net/index.js';
-import { type AiTextProvider, createAiProvider } from './providers/ai/index.js';
+import {
+  type EgressClient,
+  IMAGE_EGRESS_LIMITS,
+  buildEgressAllowList,
+  buildImageEgressAllowList,
+  createEgressClient,
+} from './platform/net/index.js';
+import {
+  type AiEditorialWriter,
+  type AiTextProvider,
+  createAiProvider,
+  createEditorialWriter,
+} from './providers/ai/index.js';
+import { type ImageGenerationProvider, createImageProvider } from './providers/images/index.js';
 import { type SourceRegistry, createSportsSources } from './providers/sports/index.js';
 
 export interface Clock {
@@ -30,10 +42,21 @@ export type Env = EnvironmentSource;
 export type Paths = PathsConfig;
 
 /** Provider variables copied into the injected environment; nothing else from `process.env` is passed on. */
-export const PROVIDER_ENVIRONMENT_VARIABLES = ['FOOTBALL_DATA_API_TOKEN', 'EDR_AI_API_KEY'] as const;
+export const PROVIDER_ENVIRONMENT_VARIABLES = [
+  'FOOTBALL_DATA_API_TOKEN',
+  'EDR_AI_API_KEY',
+  'EDR_IMAGE_API_KEY',
+] as const;
 
-/** Variables deleted from `process.env` once the injected environment exists (T11H-F03). */
-export const DELETED_ENVIRONMENT_VARIABLES = ['FOOTBALL_DATA_API_TOKEN'] as const;
+/**
+ * Variables deleted from `process.env` once the injected environment exists (T11H-F03; the image provider key since
+ * PD-ARCH-01G-B; the AI text key since PD-ARCH-01H, when it may hold a billed hosted key).
+ */
+export const DELETED_ENVIRONMENT_VARIABLES = [
+  'FOOTBALL_DATA_API_TOKEN',
+  'EDR_IMAGE_API_KEY',
+  'EDR_AI_API_KEY',
+] as const;
 
 /**
  * Builds the injected environment: a frozen, null-prototype snapshot of `PROVIDER_ENVIRONMENT_VARIABLES` whose
@@ -80,14 +103,29 @@ export interface AiProviderDeps {
   readonly paths: Paths;
 }
 
+/** Dependencies of `createImageProvider` (PD-ARCH-01G-B): the image egress client and the injected environment. */
+export interface ImageProviderDeps {
+  readonly egress: EgressClient;
+  readonly env: Env;
+}
+
 /** The provider entry points the container calls. */
 export interface ProviderFactories {
   readonly createSportsSources: (config: AppConfig, deps: SportsSourcesDeps) => SourceRegistry;
   readonly createAiProvider: (config: AppConfig, deps: AiProviderDeps) => AiTextProvider;
+  /** Image generation (PD-ARCH-01G-B); the production factory when absent. */
+  readonly createImageProvider?: (config: AppConfig, deps: ImageProviderDeps) => ImageGenerationProvider;
+  /** Editorial copy writer (PD-ARCH-01H); the production factory when absent. */
+  readonly createEditorialWriter?: (config: AppConfig, deps: ImageProviderDeps) => AiEditorialWriter;
 }
 
-/** The production provider entry points (`providers/sports` and `providers/ai`). */
-export const DEFAULT_PROVIDER_FACTORIES: ProviderFactories = Object.freeze({ createSportsSources, createAiProvider });
+/** The production provider entry points (`providers/sports`, `providers/ai` and `providers/images`). */
+export const DEFAULT_PROVIDER_FACTORIES: ProviderFactories = Object.freeze({
+  createSportsSources,
+  createAiProvider,
+  createImageProvider,
+  createEditorialWriter,
+});
 
 /**
  * The catalogue service. It is the registry's `catalogue` member when the source registry exposes one
@@ -121,6 +159,10 @@ export interface AppContainer {
   readonly sources: SourceRegistry;
   readonly catalogue: CatalogueService;
   readonly aiProvider: AiTextProvider;
+  /** Image generation for design proposals (PD-ARCH-01G-B), with its own egress client and allow-list. */
+  readonly imageProvider: ImageGenerationProvider;
+  /** Editorial copy writer (PD-ARCH-01H); only the editorial module calls it, after the operator's confirmation. */
+  readonly editorialWriter: AiEditorialWriter;
   readonly paths: Paths;
 }
 
@@ -153,6 +195,9 @@ export function createContainer(options: ContainerOptions): AppContainer {
   const sources = providers.createSportsSources(config, { egress, env, clock, db, paths, logger });
   validateSourcesAtStartup(sources);
   const aiProvider = providers.createAiProvider(config, { egress, env, paths });
+  const imageEgress = createEgressClient(buildImageEgressAllowList(config), IMAGE_EGRESS_LIMITS);
+  const imageProvider = (providers.createImageProvider ?? createImageProvider)(config, { egress: imageEgress, env });
+  const editorialWriter = (providers.createEditorialWriter ?? createEditorialWriter)(config, { egress, env });
 
   return Object.freeze({
     config,
@@ -163,6 +208,8 @@ export function createContainer(options: ContainerOptions): AppContainer {
     sources,
     catalogue: catalogueOf(sources),
     aiProvider,
+    imageProvider,
+    editorialWriter,
     paths,
   });
 }

@@ -1,12 +1,11 @@
 /**
- * Project, run and exclusion routes (contract operations listProjects, createProject, getProject, updateProject,
- * listRuns, startRun, getRun, setExcludedMatches). Parameters and bodies are validated with the contract schemas
+ * Project and run routes (contract operations listProjects, createProject, getProject, deleteProject, updateProject,
+ * listRuns, startRun, getRun). Parameters and bodies are validated with the contract schemas
  * (400 `VALIDATION_FAILED` with closed pointers); responses are checked against their contract schemas. The platform
  * guards (Host, Sec-Fetch-Site, client header and Origin, media type, body limit) apply unchanged: no route raises
  * its body limit or declares a media-type exception. GET handlers only read.
  */
 import {
-  ExcludedMatchesUpdateSchema,
   ProjectCreateSchema,
   ProjectListResponseSchema,
   ProjectParamsSchema,
@@ -36,6 +35,12 @@ export function registerProjectRoutes(app: FastifyInstance, service: ProjectsSer
     return contractResponse(ProjectSchema, service.get(projectId));
   });
 
+  app.delete('/projects/:projectId', async (request, reply) => {
+    const { projectId } = ProjectParamsSchema.parse(request.params);
+    await service.delete(projectId);
+    return reply.code(204).send();
+  });
+
   app.patch('/projects/:projectId', async (request) => {
     const { projectId } = ProjectParamsSchema.parse(request.params);
     const body = ProjectUpdateSchema.parse(request.body);
@@ -56,12 +61,5 @@ export function registerProjectRoutes(app: FastifyInstance, service: ProjectsSer
   app.get('/projects/:projectId/runs/:runId', async (request) => {
     const { projectId, runId } = RunParamsSchema.parse(request.params);
     return contractResponse(RunSchema, service.getRun(projectId, runId));
-  });
-
-  app.put('/projects/:projectId/draft/exclusions', async (request, reply) => {
-    const { projectId } = ProjectParamsSchema.parse(request.params);
-    const body = ExcludedMatchesUpdateSchema.parse(request.body);
-    const run = service.setExcludedMatches(projectId, body.excludedMatchKeys);
-    return reply.code(202).send(contractResponse(RunSchema, run));
   });
 }

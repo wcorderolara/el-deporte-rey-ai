@@ -1,7 +1,7 @@
 /**
  * Review page (R-208, R-215, R-269, R-285, OD-03, OD-21, OD-28): loading and error states, the demonstration
  * banner, the preview of every slide in carousel order with caption and hashtags, provenance labels, numbered
- * carousels, left-out matches, a draft without standings, and the exclusions editor that starts a redraft.
+ * carousels and a draft without standings. The exclusions editor was removed (UX-REVIEW-01, PD-31).
  */
 import { cleanup, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -22,13 +22,11 @@ import {
   factId,
   factSegment,
   fakeServer,
-  FACTS_RUN_ID,
   json,
-  matchFacts,
   modeDraft,
+  openCaption,
   problem,
   PROJECT_ID,
-  redraftRun,
   renderApp,
   slide,
   standardCarousel,
@@ -43,9 +41,12 @@ const REVIEW = `/projects/${PROJECT_ID}/review`;
 
 async function waitForDraft() {
   await screen.findByRole('heading', { level: 1, name: 'Revisión del contenido' });
-  const details = await screen.findByText('Datos y trazabilidad del borrador');
-  if (details.closest('details')?.open !== true) await userEvent.click(details);
-  return screen.findByRole('heading', { level: 2, name: 'Borrador' });
+  return screen.findByRole('tablist', { name: 'Modo de revisión' });
+}
+
+/** The project context of the header, once the project is read. */
+function projectContext() {
+  return screen.findByTestId('review-project-context');
 }
 
 describe('Review page: loading and errors', () => {
@@ -109,29 +110,31 @@ describe('Review page: demonstration label and data mode (R-269, OD-21)', () => 
     const notice = screen.getByRole('note');
     expect(notice.textContent).toContain('no se consideran verificados ni listos para publicación');
     expect(screen.getAllByRole('note')).toHaveLength(1);
-    const summary = screen.getByRole('region', { name: 'Borrador' });
-    expect(summary.textContent).toContain('Datos de demostración');
+    // The draft details are not part of the review (Product Owner, 2026-11-10).
+    expect(screen.queryByText('Datos y trazabilidad del borrador')).toBeNull();
   });
 
-  it('shows no demonstration banner for a MANUAL_DATA draft and names its mode', async () => {
+  it('shows no demonstration banner for a MANUAL_DATA draft', async () => {
     const server = fakeServer({ [DRAFT_PATH]: draftResponse(modeDraft('MANUAL_DATA')) });
     renderApp(REVIEW, server);
     await waitForDraft();
+    await projectContext();
     expect(screen.queryByRole('note')).toBeNull();
-    expect(screen.getByRole('region', { name: 'Borrador' }).textContent).toContain('Datos manuales');
   });
 });
 
 describe('Review workspace navigation and hierarchy', () => {
-  it('keeps one primary title, functional breadcrumbs, and technical details collapsed by default', async () => {
+  it('keeps one primary title, a link back to the project, and no technical details section', async () => {
     const server = fakeServer({ [DRAFT_PATH]: draftResponse() });
     renderApp(REVIEW, server);
     await screen.findByRole('heading', { level: 1, name: 'Revisión del contenido' });
     await screen.findByRole('navigation', { name: 'Diapositivas del carrusel' });
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Volver al proyecto' }).getAttribute('href')).toBe(
+      `/projects/${PROJECT_ID}`,
+    );
     const slideCard = screen.getByRole('article', { name: 'Diapositiva 1: Portada' });
-    expect(within(slideCard).getByText('Detalles y verificaciones').closest('details')?.open).toBe(false);
+    expect(within(slideCard).queryByText('Detalles y verificaciones')).toBeNull();
   });
 
   it('shows a useful empty state when the draft has no carousels', async () => {
@@ -157,7 +160,8 @@ describe('Review workspace navigation and hierarchy', () => {
     });
     renderApp(REVIEW, server);
     const slideCard = await screen.findByRole('article', { name: 'Diapositiva 1: Portada' });
-    await userEvent.click(within(slideCard).getByRole('button', { name: 'Aprobar y siguiente' }));
+    // One approval action (UX-REVIEW-01): approving moves to the next pending slide, skipping approved ones.
+    await userEvent.click(within(slideCard).getByRole('button', { name: 'Aprobar diapositiva' }));
     expect(await screen.findByRole('heading', { level: 3, name: 'Diapositiva 3: Cierre' })).toBeTruthy();
     expect(server.callsTo('PUT', elementPath(CAROUSEL_ID, elementId(1), 'approval'))).toHaveLength(1);
   });
@@ -176,11 +180,11 @@ describe('Review workspace navigation and hierarchy', () => {
     });
     renderApp(REVIEW, server);
     const slideCard = await screen.findByRole('article', { name: 'Diapositiva 1: Portada' });
-    await userEvent.click(within(slideCard).getByRole('button', { name: 'Aprobar y siguiente' }));
-    await userEvent.click(screen.getByRole('button', { name: /Diapositiva 2: Resultado/ }));
+    await userEvent.click(within(slideCard).getByRole('button', { name: 'Aprobar diapositiva' }));
+    await userEvent.click(screen.getByRole('button', { name: /^Diapositiva 2: Resultado/ }));
     resolveApproval?.(json(approvedFirst));
     expect(await screen.findByRole('heading', { level: 3, name: 'Diapositiva 2: Resultado' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Diapositiva 2: Resultado/ }).getAttribute('aria-current')).toBe('true');
+    expect(screen.getByRole('button', { name: /^Diapositiva 2: Resultado/ }).getAttribute('aria-current')).toBe('true');
     expect(server.callsTo('PUT', elementPath(CAROUSEL_ID, first.id, 'approval'))).toHaveLength(1);
   });
 
@@ -209,9 +213,13 @@ describe('Review workspace navigation and hierarchy', () => {
     });
     renderApp(REVIEW, server);
     await screen.findByRole('heading', { level: 3, name: 'Diapositiva 1: Portada' });
-    await userEvent.click(screen.getByRole('button', { name: 'Aprobar todas' }));
+    // With slides ready it is the main action of the panel: the gold primary button.
+    const approveAll = screen.getByRole('button', { name: 'Aprobar todas (3)' });
+    expect(approveAll.className).toContain('bg-button-primary-bg');
+    await userEvent.click(approveAll);
     const dialog = await screen.findByRole('dialog', { name: 'Confirmar aprobación de diapositivas' });
     expect(dialog.textContent).toContain('3 listas para aprobar');
+    expect(dialog.textContent).toContain('No aprueba el copy editorial ni el texto del carrusel.');
     expect(dialog.textContent).toContain('0 ya aprobadas');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Aprobar 3 diapositivas' }));
     expect(await within(dialog).findByText('3 diapositivas aprobadas.')).toBeTruthy();
@@ -234,7 +242,14 @@ describe('Review workspace navigation and hierarchy', () => {
     const server = fakeServer({ [DRAFT_PATH]: draftResponse(draft({ carousels: [carousel(items)] })) });
     renderApp(REVIEW, server);
     await screen.findByRole('heading', { level: 3, name: 'Diapositiva 1: Portada' });
-    await userEvent.click(screen.getByRole('button', { name: 'Aprobar todas' }));
+    // «Aprobar todas» is offered only when a slide is eligible; otherwise the reasons stay one click away.
+    expect(screen.queryByRole('button', { name: /^Aprobar todas/ })).toBeNull();
+    expect(screen.getByRole('navigation', { name: 'Diapositivas del carrusel' }).textContent).toContain(
+      'Ninguna diapositiva está lista para la aprobación masiva.',
+    );
+    const reasons = screen.getByRole('button', { name: 'Ver motivos' });
+    expect(reasons.className).toContain('bg-button-secondary-bg');
+    await userEvent.click(reasons);
     const dialog = await screen.findByRole('dialog', { name: 'Confirmar aprobación de diapositivas' });
     expect(dialog.textContent).toContain('Advertencias sin confirmar');
     expect(dialog.textContent).toContain('Diapositiva 1: Portada');
@@ -270,7 +285,7 @@ describe('Review workspace navigation and hierarchy', () => {
     });
     renderApp(REVIEW, server);
     await screen.findByRole('heading', { level: 3, name: 'Diapositiva 1: Portada' });
-    await userEvent.click(screen.getByRole('button', { name: 'Aprobar todas' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Aprobar todas (2)' }));
     const dialog = await screen.findByRole('dialog', { name: 'Confirmar aprobación de diapositivas' });
     await userEvent.click(within(dialog).getByRole('button', { name: 'Aprobar 2 diapositivas' }));
     expect(await within(dialog).findByText(/1 aprobada; 1 requiere atención/)).toBeTruthy();
@@ -297,21 +312,22 @@ describe('Review page: preview in carousel order (R-215)', () => {
     const selectedSlide = screen.getByRole('article', { name: 'Diapositiva 1: Portada' });
     const image = within(selectedSlide).getByRole('img', { name: 'Imagen de Diapositiva 1: Portada, versión 1' });
     expect(image.getAttribute('src')).toBe(`${API}/element-versions/${versionId(1)}/image`);
-    await userEvent.click(within(selectedSlide).getByText('Detalles y verificaciones'));
-    expect(within(selectedSlide).getByText('Detalles y verificaciones').closest('details')?.open).toBe(true);
+    expect(within(selectedSlide).queryByText('Detalles y verificaciones')).toBeNull();
+    // The design mode holds the slides only; the publication text is reviewed in «Copy editorial».
+    expect(within(carouselRegion).queryByRole('article', { name: 'Texto de publicación y hashtags' })).toBeNull();
 
-    const captionCard = screen.getByRole('article', { name: 'Texto de publicación y hashtags' });
-    expect(captionCard.textContent).toContain('Texto de publicación de prueba con');
-    expect(captionCard.textContent).toContain('#JornadaDemo #FutbolDemo');
-    expect(within(captionCard).queryByRole('img')).toBeNull();
-    const secondSlide = within(carouselRegion).getByRole('button', { name: /Diapositiva 2:/ });
-    await userEvent.click(within(carouselRegion).getByRole('button', { name: /Diapositiva 1:/ }));
+    const secondSlide = within(carouselRegion).getByRole('button', { name: /^Diapositiva 2:/ });
+    await userEvent.click(within(carouselRegion).getByRole('button', { name: /^Diapositiva 1:/ }));
     await userEvent.keyboard('{ArrowRight}');
     expect(screen.getByRole('heading', { level: 3, name: 'Diapositiva 2: Resultado' })).toBeTruthy();
     expect(secondSlide.getAttribute('aria-current')).toBe('true');
     expect(document.activeElement).toBe(secondSlide);
-    const nextSlide = screen.getByRole('article', { name: 'Diapositiva 2: Resultado' });
-    expect(within(nextSlide).getByText('Detalles y verificaciones').closest('details')?.open).toBe(false);
+    expect(screen.getByRole('article', { name: 'Diapositiva 2: Resultado' })).toBeTruthy();
+
+    const captionCard = await openCaption();
+    expect(captionCard.textContent).toContain('Texto de publicación de prueba con');
+    expect(captionCard.textContent).toContain('#JornadaDemo #FutbolDemo');
+    expect(within(captionCard).queryByRole('img')).toBeNull();
   });
 
   it('shows numbered carousels in sequence order (OD-03)', async () => {
@@ -329,7 +345,6 @@ describe('Review page: preview in carousel order (R-215)', () => {
     expect(within(picker).getAllByRole('button')).toHaveLength(2);
     await userEvent.click(within(picker).getByRole('button', { name: /Carrusel 2 de 2/ }));
     expect(screen.getByRole('heading', { level: 2, name: 'Carrusel 2 de 2' })).toBeTruthy();
-    expect(screen.getByRole('region', { name: 'Borrador' }).textContent).toContain('2 carruseles');
   });
 
   it('says that a slide image is not available yet when the version has none', async () => {
@@ -350,8 +365,8 @@ describe('Review page: preview in carousel order (R-215)', () => {
   });
 });
 
-describe('Review page: provenance of every text segment (R-208, OD-01, R-071, OD-28)', () => {
-  it('labels verified facts, unverified facts with their reason, operator-attested facts, commentary and template text', async () => {
+describe('Review page: fact statuses (R-071, OD-28)', () => {
+  it('never calls a manually approved or unverified value verified', async () => {
     const element = slide(2, 1, 'match_result', {
       blocked: true,
       blockingFacts: [
@@ -378,220 +393,22 @@ describe('Review page: provenance of every text segment (R-208, OD-01, R-071, OD
     renderApp(REVIEW, server);
     await waitForDraft();
 
+    // The per-segment provenance is no longer listed in the review (PD-ARCH-01E-B review); the exported manifest and
+    // the trace keep it. The slide never calls an unverified or manually approved value verified.
     const slideCard = screen.getByRole('article', { name: 'Diapositiva 1: Resultado' });
-    await userEvent.click(within(slideCard).getByText('Detalles y verificaciones'));
-    const text = screen.getByRole('region', { name: 'Texto: Diapositiva 1: Resultado' });
-    const items = within(text).getAllByRole('listitem');
-    const labelOf = (fragment: string): string => {
-      const item = items.find((candidate) => candidate.textContent?.startsWith(fragment));
-      if (item === undefined) {
-        throw new Error(`missing segment ${fragment}`);
-      }
-      return item.textContent ?? '';
-    };
-    expect(labelOf('2-1')).toContain('Dato: verificado');
-    expect(labelOf('25 oct 2026')).toContain('Dato: sin verificar');
-    expect(labelOf('25 oct 2026')).toContain('pendiente de verificación independiente');
-    expect(labelOf('25 oct 2026')).not.toContain('Dato: verificado');
-    expect(labelOf('Atlético Demo')).toContain('Dato: aprobado manualmente');
-    expect(labelOf('Atlético Demo')).toContain('atestiguado por el operador');
-    expect(labelOf('Atlético Demo')).not.toContain('Dato: verificado');
-    expect(labelOf('Partido intenso')).toContain('Comentario');
-    expect(labelOf('Jornada')).toContain('Texto de plantilla');
-
-    // The draft uses a MANUALLY_APPROVED fact: the summary says so, never calling it verified (OD-28).
-    const summary = screen.getByRole('region', { name: 'Borrador' });
-    expect(summary.textContent).toContain('atestiguados por el operador');
-    expect(summary.textContent).toContain('No son datos verificados');
-  });
-
-  it('shows no operator-attested note when no fact is manually approved', async () => {
-    const server = fakeServer({ [DRAFT_PATH]: draftResponse() });
-    renderApp(REVIEW, server);
-    await waitForDraft();
-    expect(screen.getByRole('region', { name: 'Borrador' }).textContent).not.toContain('atestiguados');
+    expect(within(slideCard).queryByText('Detalles y verificaciones')).toBeNull();
+    expect(slideCard.textContent).not.toContain('Dato: verificado');
   });
 });
 
-describe('Review page: left-out matches and standings (R-255, R-285)', () => {
-  it('lists left-out matches with their status and reason', async () => {
-    const server = fakeServer({
-      [DRAFT_PATH]: draftResponse(
-        draft({
-          excludedMatchKeys: ['demo-m3'],
-          leftOutMatches: [
-            { matchKey: 'demo-m4', label: 'Equipo Norte - Equipo Sur', status: 'postponed', reason: 'not_finished' },
-            { matchKey: 'demo-m5', label: 'Equipo Este - Equipo Oeste', status: 'finished', reason: 'not_verified' },
-            {
-              matchKey: 'demo-m3',
-              label: 'Real Muestra - Sporting Modelo',
-              status: 'finished',
-              reason: 'excluded_by_operator',
-            },
-            { matchKey: 'demo-m6', label: 'Equipo Uno - Equipo Dos', status: null, reason: 'not_finished' },
-          ],
-        }),
-      ),
-    });
-    renderApp(REVIEW, server);
-    await waitForDraft();
-    const table = screen.getByRole('table', { name: 'Partidos fuera del borrador' });
-    const rows = within(table)
-      .getAllByRole('row')
-      .slice(1)
-      .map((row) => [...row.querySelectorAll('th, td')].map((cell) => cell.textContent));
-    expect(rows).toEqual([
-      ['Equipo Norte - Equipo Sur', 'Aplazado', 'El partido no ha finalizado.'],
-      ['Equipo Este - Equipo Oeste', 'Finalizado', 'Los datos del partido no tienen un valor utilizable.'],
-      ['Real Muestra - Sporting Modelo', 'Finalizado', 'Excluido por el operador.'],
-      ['Equipo Uno - Equipo Dos', 'Estado no informado', 'El partido no ha finalizado.'],
-    ]);
-  });
-
-  it('says that every match is in the draft when none is left out', async () => {
-    const server = fakeServer({ [DRAFT_PATH]: draftResponse() });
-    renderApp(REVIEW, server);
-    await waitForDraft();
-    expect(screen.getByText('Todos los partidos de la selección están en el borrador.')).toBeTruthy();
-  });
-
-  it('presents a carousel without standings as complete, with a note and no standings slide', async () => {
+describe('Review page: standings (R-285)', () => {
+  it('presents a carousel without standings as complete, with no standings slide', async () => {
     const server = fakeServer({ [DRAFT_PATH]: draftResponse(draft({ standingsIncluded: false })) });
     renderApp(REVIEW, server);
     await waitForDraft();
-    const summary = screen.getByRole('region', { name: 'Borrador' });
-    expect(summary.textContent).toContain('no incluye diapositivas de clasificación');
-    expect(summary.textContent).toContain('no se calcula a partir de los resultados');
     expect(screen.queryByRole('article', { name: /Clasificación/ })).toBeNull();
     const carouselRegion = screen.getByRole('region', { name: 'Carrusel' });
-    expect(within(carouselRegion).getAllByRole('article')).toHaveLength(2);
-  });
-});
-
-describe('Review page: exclusions editor (OD-03)', () => {
-  const FACTS = `GET ${API}/projects/${PROJECT_ID}/runs/${FACTS_RUN_ID}/facts`;
-  const EXCLUSIONS = `PUT ${API}/projects/${PROJECT_ID}/draft/exclusions`;
-
-  it('loads the matches only when opened, excludes one and starts a redraft', async () => {
-    const server = fakeServer({
-      [DRAFT_PATH]: draftResponse(
-        draft({
-          leftOutMatches: [
-            {
-              matchKey: 'demo-m3',
-              label: 'Real Muestra - Sporting Modelo',
-              status: 'postponed',
-              reason: 'not_finished',
-            },
-          ],
-        }),
-      ),
-      [FACTS]: () => json(matchFacts()),
-      [EXCLUSIONS]: () => json(redraftRun(), 202),
-    });
-    renderApp(REVIEW, server);
-    await waitForDraft();
-    expect(server.callsTo('GET', FACTS.slice(4))).toHaveLength(0);
-
-    const open = screen.getByRole('button', { name: 'Editar partidos excluidos' });
-    expect(open.getAttribute('aria-expanded')).toBe('false');
-    await userEvent.click(open);
-    expect(screen.getByRole('button', { name: 'Cerrar la edición de exclusiones' }).getAttribute('aria-expanded')).toBe(
-      'true',
-    );
-
-    const group = await screen.findByRole('group', { name: 'Partidos de la selección' });
-    const boxes = within(group).getAllByRole('checkbox');
-    // The match left out as not finished is not offered.
-    expect(boxes.map((box) => (box as HTMLInputElement).labels?.[0]?.textContent)).toEqual([
-      'Excluir Atlético Demo - Club Ejemplo',
-      'Excluir Deportivo Prueba - Unión Ficticia',
-    ]);
-    const submit = screen.getByRole('button', { name: 'Guardar exclusiones y crear un borrador nuevo' });
-    expect((submit as HTMLButtonElement).disabled).toBe(true);
-
-    await userEvent.click(within(group).getByRole('checkbox', { name: 'Excluir Deportivo Prueba - Unión Ficticia' }));
-    expect(group.textContent).toContain('1 partido excluido.');
-    expect((submit as HTMLButtonElement).disabled).toBe(false);
-    await userEvent.click(submit);
-
-    expect(await screen.findByText(/Se inició un borrador nuevo \(ejecución 2\)/)).toBeTruthy();
-    const [call] = server.callsTo('PUT', EXCLUSIONS.slice(4));
-    expect(call?.body).toEqual({ excludedMatchKeys: ['demo-m2'] });
-    expect(call?.headers['X-EDR-Client']).toBe('web');
-    expect(screen.getByRole('link', { name: 'Ver el progreso en la página del proyecto' }).getAttribute('href')).toBe(
-      `/projects/${PROJECT_ID}`,
-    );
-  });
-
-  it('offers an excluded match for inclusion again and sends the remaining exclusions', async () => {
-    const server = fakeServer({
-      [DRAFT_PATH]: draftResponse(
-        draft({
-          excludedMatchKeys: ['demo-m1', 'demo-m3'],
-          leftOutMatches: [
-            {
-              matchKey: 'demo-m1',
-              label: 'Atlético Demo - Club Ejemplo',
-              status: 'finished',
-              reason: 'excluded_by_operator',
-            },
-            {
-              matchKey: 'demo-m3',
-              label: 'Real Muestra - Sporting Modelo',
-              status: 'finished',
-              reason: 'excluded_by_operator',
-            },
-          ],
-        }),
-      ),
-      [FACTS]: () => json(matchFacts()),
-      [EXCLUSIONS]: () => json(redraftRun(), 202),
-    });
-    renderApp(REVIEW, server);
-    await waitForDraft();
-    await userEvent.click(screen.getByRole('button', { name: 'Editar partidos excluidos' }));
-    const group = await screen.findByRole('group', { name: 'Partidos de la selección' });
-    const first = within(group).getByRole('checkbox', { name: 'Excluir Atlético Demo - Club Ejemplo' });
-    expect((first as HTMLInputElement).checked).toBe(true);
-    await userEvent.click(first);
-    await userEvent.click(screen.getByRole('button', { name: 'Guardar exclusiones y crear un borrador nuevo' }));
-    await screen.findByText(/Se inició un borrador nuevo/);
-    expect(server.callsTo('PUT', EXCLUSIONS.slice(4))[0]?.body).toEqual({ excludedMatchKeys: ['demo-m3'] });
-  });
-
-  it('announces a refused redraft (run in progress) and keeps the choices', async () => {
-    const server = fakeServer({
-      [DRAFT_PATH]: draftResponse(),
-      [FACTS]: () => json(matchFacts()),
-      [EXCLUSIONS]: () => problem({ status: 409, code: 'RUN_IN_PROGRESS' }),
-    });
-    renderApp(REVIEW, server);
-    await waitForDraft();
-    await userEvent.click(screen.getByRole('button', { name: 'Editar partidos excluidos' }));
-    const group = await screen.findByRole('group', { name: 'Partidos de la selección' });
-    await userEvent.click(within(group).getByRole('checkbox', { name: 'Excluir Atlético Demo - Club Ejemplo' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Guardar exclusiones y crear un borrador nuevo' }));
-    const alert = await screen.findByRole('alert');
-    expect(alert.textContent).toContain('No se pudieron guardar las exclusiones');
-    expect(alert.textContent).toContain('Ya hay una ejecución en curso');
-    expect(
-      (within(group).getByRole('checkbox', { name: 'Excluir Atlético Demo - Club Ejemplo' }) as HTMLInputElement)
-        .checked,
-    ).toBe(true);
-  });
-
-  it('announces a failure to load the matches, with a retry', async () => {
-    const server = fakeServer({
-      [DRAFT_PATH]: draftResponse(),
-      [FACTS]: [() => problem({ status: 500, code: 'INTERNAL' }), () => json(matchFacts())],
-    });
-    renderApp(REVIEW, server);
-    await waitForDraft();
-    await userEvent.click(screen.getByRole('button', { name: 'Editar partidos excluidos' }));
-    const alert = await screen.findByRole('alert');
-    expect(alert.textContent).toContain('No se pudieron cargar los partidos');
-    await userEvent.click(within(alert).getByRole('button', { name: 'Reintentar' }));
-    expect(await screen.findByRole('group', { name: 'Partidos de la selección' })).toBeTruthy();
+    expect(within(carouselRegion).getAllByRole('article')).toHaveLength(1);
+    expect(within(carouselRegion).getAllByRole('button', { name: /^Diapositiva/ })).toHaveLength(3);
   });
 });
