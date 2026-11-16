@@ -5,8 +5,8 @@
 - El Product Owner lo autorizó el 2026-11-13 para implementarse en una sola entrega en `work/TEAM-DISPLAY-01`, desde
   `b6579fd`.
 - Está registrado como **PD-37**, que enmienda BR-05 y PD-06 solo para las imágenes y conserva las reglas originales.
-- **Estado: CLOSED — PRODUCT OWNER ACCEPTED (2026-11-16).** Cerrado en `work/TEAM-DISPLAY-01` sobre `b6579fd`
-  (informe, sección 10). Incluye los ajustes de revisión pedidos durante la validación (informe, sección 12).
+- **Estado: CLOSED — PRODUCT OWNER ACCEPTED (2026-11-16).** Cerrado en `538da27` (`538da273985a1794ab063a93bba621f44aa706ee`), en
+  `work/TEAM-DISPLAY-01` sobre `b6579fd`. Incluye los ajustes de revisión pedidos durante la validación (informe, sección 12).
 
 ## Documentos
 

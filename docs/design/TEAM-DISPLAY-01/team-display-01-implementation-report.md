@@ -6,7 +6,7 @@
   entrega»). Sustituye a la instrucción anterior, que solo cubría TD-01A.
 - **Rama:** `work/TEAM-DISPLAY-01`, creada desde `b6579fd`, el cierre de UI-06.3.
 - **Estado: CLOSED — PRODUCT OWNER ACCEPTED (2026-11-16).** El Product Owner validó la iniciativa funcionalmente y la
-  aprobó. Está cerrada en el commit de cierre de la sección 10, en `work/TEAM-DISPLAY-01` sobre `b6579fd`. No hay
+  aprobó. Está cerrada en `538da27` (`538da273985a1794ab063a93bba621f44aa706ee`), en `work/TEAM-DISPLAY-01` sobre `b6579fd`. No hay
   merge, push ni deploy. CLOUD-ARCH-01 no ha empezado.
 - **Incluye** los ajustes de la sección 11 y los ajustes de revisión pedidos durante la validación (sección 12).
 - **Decisión registrada:** PD-37 en `.orchestrate/source-of-truth.md`. Es la excepción a BR-05 y PD-06, solo para las
@@ -283,9 +283,9 @@ El entorno de desarrollo en modo watch aplica las migraciones automáticamente. 
 
 ## 10. Estado de Git y resultados
 
-El cierre está en un commit de `work/TEAM-DISPLAY-01` sobre `b6579fd`, con solo los cambios de esta iniciativa y de los
-ajustes de la sección 12. El hash se registra en un commit de documentación posterior, en la fuente de verdad (fila
-TEAM-DISPLAY-01) y en el registro de decisiones. No hay merge, push ni deploy. La migración 0038 y todos los snapshots
+El cierre está en `538da27` (`538da273985a1794ab063a93bba621f44aa706ee`), en `work/TEAM-DISPLAY-01` sobre `b6579fd`, con solo los cambios de esta iniciativa
+y de los ajustes de la sección 12. El hash se registra también en la fuente de verdad (fila TEAM-DISPLAY-01) y en el
+registro de decisiones. No hay merge, push ni deploy. La migración 0038 y todos los snapshots
 históricos se conservan. Los resultados están en la sección 7.
 
 ## 11. Ajustes finales antes del cierre (2026-11-13)
