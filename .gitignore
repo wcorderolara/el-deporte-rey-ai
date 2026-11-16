@@ -20,3 +20,12 @@ blob-report/
 # Logs and OS files
 *.log
 .DS_Store
+Thumbs.db
+
+# Local editor and agent state (CLAUDE.md and .orchestrate/ stay tracked)
+.claude/worktrees/
+.claude/settings.local.json
+.claude/scheduled_tasks.*
+.idea/
+.vscode/
+*.swp
