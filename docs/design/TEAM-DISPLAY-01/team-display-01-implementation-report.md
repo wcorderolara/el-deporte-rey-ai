@@ -6,8 +6,10 @@
   entrega»). Sustituye a la instrucción anterior, que solo cubría TD-01A.
 - **Rama:** `work/TEAM-DISPLAY-01`, creada desde `b6579fd`, el cierre de UI-06.3.
 - **Estado: CLOSED — PRODUCT OWNER ACCEPTED (2026-11-16).** El Product Owner validó la iniciativa funcionalmente y la
-  aprobó. Está cerrada en `538da27` (`538da273985a1794ab063a93bba621f44aa706ee`), en `work/TEAM-DISPLAY-01` sobre `b6579fd`. No hay
-  merge, push ni deploy. CLOUD-ARCH-01 no ha empezado.
+  aprobó. Está cerrada en `538da27` (`538da273985a1794ab063a93bba621f44aa706ee`), en `work/TEAM-DISPLAY-01` sobre `b6579fd`.
+- **Integración (2026-11-16):** por instrucción del Product Owner, el cierre se integró en `main` con el merge `c7014d4`
+  y se publicó en `origin/main`. No hay deploy. CLOUD-ARCH-01 se completó como assessment, con la migración a la nube
+  diferida (PD-38).
 - **Incluye** los ajustes de la sección 11 y los ajustes de revisión pedidos durante la validación (sección 12).
 - **Decisión registrada:** PD-37 en `.orchestrate/source-of-truth.md`. Es la excepción a BR-05 y PD-06, solo para las
   imágenes; las dos reglas originales se mantienen (sección 4).
@@ -275,8 +277,9 @@ Base local del Product Owner (copia del WAL, solo lectura): versión 38, 53 equi
 - **Efecto:** solo se añadió una columna que puede ser nula. Los equipos y el resto de los datos no cambiaron, y todos
   los equipos tienen NULL.
 - **Lo que no se hizo:** no se tocó la base ni se revirtió nada. La migración 0038 queda congelada y no debe editarse.
-- **Consecuencia:** un servidor compilado desde una rama sin la migración 0038, como `main`, se niega a arrancar con
-  esta base (`migration_unknown_applied`). El Product Owner decide cómo proceder.
+- **Consecuencia:** un servidor compilado desde una rama sin la migración 0038 se niega a arrancar con esta base
+  (`migration_unknown_applied`). Era el caso de `main` hasta el merge `c7014d4` del 2026-11-16; desde entonces `main`
+  incluye la migración 0038.
 
 El entorno de desarrollo en modo watch aplica las migraciones automáticamente. Queda registrado en
 `docs/local-setup.md`, sección 3.
@@ -285,8 +288,9 @@ El entorno de desarrollo en modo watch aplica las migraciones automáticamente. 
 
 El cierre está en `538da27` (`538da273985a1794ab063a93bba621f44aa706ee`), en `work/TEAM-DISPLAY-01` sobre `b6579fd`, con solo los cambios de esta iniciativa
 y de los ajustes de la sección 12. El hash se registra también en la fuente de verdad (fila TEAM-DISPLAY-01) y en el
-registro de decisiones. No hay merge, push ni deploy. La migración 0038 y todos los snapshots
-históricos se conservan. Los resultados están en la sección 7.
+registro de decisiones. El 2026-11-16, por instrucción del Product Owner, se integró en `main` con el merge `c7014d4` y
+se publicó en `origin/main`; no hay deploy. La migración 0038 y todos los snapshots históricos se conservan. Los
+resultados están en la sección 7.
 
 ## 11. Ajustes finales antes del cierre (2026-11-13)
 
