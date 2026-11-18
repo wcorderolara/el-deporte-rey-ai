@@ -1,0 +1,1111 @@
+{
+  "format": "edr-export-manifest/1",
+  "exportId": "72a916bb-894e-4052-82c3-9899af2511f5",
+  "exportedAt": "2026-11-10T19:02:31.873Z",
+  "project": {
+    "id": "2be643ce-438f-4495-bb86-5d1723a20a75",
+    "competitionId": "local-d5d3e830-90ff-43a1-b0b8-8ea5b4b69ae2",
+    "competitionName": "La Liga",
+    "seasonId": "a0df5f8f-52cd-4ce7-bb5c-f2ea26dd84de",
+    "seasonLabel": "2026/27",
+    "stageId": "55dc23d2-aa38-4eda-8ef7-84a04f9770e3",
+    "stageLabel": "REGULAR SEASON - Jornada 12",
+    "matchday": null,
+    "language": "es"
+  },
+  "carousel": {
+    "id": "71bf9889-5af9-4663-a329-ee35c64bd3c1",
+    "sequence": 1,
+    "total": 1
+  },
+  "finalApproval": {
+    "id": "42dadcb3-e822-4df9-a8af-1cc3dab64366",
+    "approvedAt": "2026-11-10T19:01:42.663Z",
+    "versionSetSha256": "dac692a4bb3b683d3fcb83db923386824435c5d9e1c96f42e6a546889a8ddf69"
+  },
+  "dataMode": "MANUAL_DATA",
+  "demonstration": false,
+  "operatorAttested": true,
+  "source": {
+    "id": "local",
+    "name": "Datos deportivos locales",
+    "dataMode": "MANUAL_DATA"
+  },
+  "sources": [
+    {
+      "id": "local",
+      "name": "Datos deportivos locales",
+      "dataMode": "MANUAL_DATA"
+    }
+  ],
+  "files": [
+    {
+      "position": 1,
+      "fileName": "01.png",
+      "kind": "slide_image",
+      "elementId": "3c441ede-3ac7-413d-b134-97f2b8901f25",
+      "elementVersionId": "3d955ee9-4d6c-4a6b-afaf-47c4651e6a1a",
+      "versionNumber": 1,
+      "slideType": "cover",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "3196db6f2da7bb0757a37c7b4dcc57b94ade7c17a4d0f378e755ab4f32ae26a9",
+      "factIds": []
+    },
+    {
+      "position": 2,
+      "fileName": "02.png",
+      "kind": "slide_image",
+      "elementId": "610d8088-5953-4f39-9d2a-c32d6fc93522",
+      "elementVersionId": "cfdab278-ed1e-4add-8df2-76c46307afe5",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "d9e969578d21ec16e8cad0431cb0ac9afc0703d075175616ac84ab52123f9d79",
+      "factIds": [
+        "991efece-7392-44cb-8247-1a14145b7cde",
+        "99d44590-43f7-45ce-9797-f8afae677219",
+        "c98d6a7b-5722-44c0-bf96-5f4a49dae285",
+        "de1c5d9d-432d-48b1-af39-15d4694058a8",
+        "f695ba0b-2ba1-4bed-af71-a89e797f0087",
+        "f6cf7fe1-c7da-4021-956c-1d203cce762b"
+      ]
+    },
+    {
+      "position": 3,
+      "fileName": "03.png",
+      "kind": "slide_image",
+      "elementId": "a44f60c8-ad0f-43cc-aa10-0ac4a07fdd43",
+      "elementVersionId": "e09d4d34-a27d-4140-9119-52b067681ddc",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "eb1f5d30b0df19b992b36380eaa86aae294ca156f77d4a8936bc6cb204b23c3f",
+      "factIds": [
+        "00608fd2-400e-43c6-a79b-f43616c1ab0f",
+        "25f8e9f4-52c8-4a68-b8e5-51836d5214e7",
+        "47c0e003-a39e-45c3-8a09-92d773fcdf6b",
+        "6483eeb5-aaf1-4e7e-95c2-975fc36d6b4c",
+        "930932eb-1462-4410-8069-27ee3e8124f6",
+        "a11ab997-00c8-4850-949c-bdb69e16aa2e"
+      ]
+    },
+    {
+      "position": 4,
+      "fileName": "04.png",
+      "kind": "slide_image",
+      "elementId": "b68700eb-3630-4e1d-854d-a517a321da1b",
+      "elementVersionId": "76d1163a-5c21-4c81-b693-8a0c9d830a44",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "098a970d9fd3ea9217e8b12bfc0e8c82cbc3d1e507edf6e18174e81d828b3d9b",
+      "factIds": [
+        "106533f9-906d-408e-bec1-5e911c1c43e0",
+        "2feca93a-3c06-408e-be00-35c0229407cd",
+        "5b5d159d-368d-4e45-b7a4-a89e101f93f8",
+        "b39c1874-de2f-464e-b328-c26c7fd2fac5",
+        "d073ba67-f058-4a14-b25e-5f5ed40e2655",
+        "edcc760c-2052-4b17-8096-42706d0468a2"
+      ]
+    },
+    {
+      "position": 5,
+      "fileName": "05.png",
+      "kind": "slide_image",
+      "elementId": "4d2e2318-7893-4c58-856f-2542213a2334",
+      "elementVersionId": "d353f432-68aa-4015-9abc-e0f5cd579e69",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "8283214d65f72020540e3eaeb66522bdc302661d61d2f837c1220dc8a62c620d",
+      "factIds": [
+        "056f0577-6853-452b-8fff-82b9b057734d",
+        "319fcc68-f820-4c2d-be80-a76c7ccd2fa8",
+        "79580e8c-9d03-410c-841e-6d8dccfaab67",
+        "861e6234-7d2c-4f2a-8807-e026471504dc",
+        "b92a2463-5c82-49db-91ba-6461acfa0994",
+        "ecbc1e87-a2cc-4606-b6c8-c644aae7e170"
+      ]
+    },
+    {
+      "position": 6,
+      "fileName": "06.png",
+      "kind": "slide_image",
+      "elementId": "9d0e13f3-97ea-4154-b228-3ada1c17e686",
+      "elementVersionId": "cbfe81f7-88aa-4d19-a4df-512e710ca7ad",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "556cb2eee86bdd0fba7b7d02132f0a9dd74d71b7f681e654228a897602275db4",
+      "factIds": [
+        "14655cdb-60f8-4267-8393-491cfc6be18c",
+        "199de5f3-8102-42cb-abde-4d3ff79c30a3",
+        "2c60a826-6826-464e-b6d3-2d41c5848bef",
+        "38e36ebd-af98-48db-97bf-9fb8c0550a94",
+        "8a50bf86-7dda-4ade-850d-0ab569b65cc0",
+        "9c987f93-69bc-415b-86fb-811139607c91"
+      ]
+    },
+    {
+      "position": 7,
+      "fileName": "07.png",
+      "kind": "slide_image",
+      "elementId": "db70810f-7289-45ff-a718-72ee1c663eca",
+      "elementVersionId": "68d4ab07-e2ce-4bf2-aedf-304a80bd1b4d",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "3fb4ac982074d5352aded29a322c1839f2a46575136e5576a909a6983ec40939",
+      "factIds": [
+        "63814e3e-56f7-4bed-895e-967d987e7098",
+        "7ca6c084-e48b-4437-aefd-fbc47c18c334",
+        "8643b998-b2b8-47ef-a3ab-9da511f92352",
+        "8758a5f6-e0d2-4765-8228-f8c11181f2a3",
+        "b7dc0f80-b288-481d-98d5-d4df57a976a7",
+        "df0183f1-c590-4021-91bf-3dc6aab220eb"
+      ]
+    },
+    {
+      "position": 8,
+      "fileName": "08.png",
+      "kind": "slide_image",
+      "elementId": "a8e3ff56-e70f-44ea-be57-11fa2fde26b8",
+      "elementVersionId": "8a2197e1-dfcd-4623-be4d-4c5a297c544b",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "576c1d8d83b5ddab8e9d9a2256af3b6f565dcccb342bf58baa5864cf61863f5e",
+      "factIds": [
+        "2b3bd496-7618-46b5-8d08-a23c2307714a",
+        "3f8acd19-a1a7-4c46-9b9f-e56dc46090a6",
+        "58454d2f-ce75-4407-8c47-66bcaec5cb44",
+        "65723496-14f7-4aee-a0cd-9bd14633bd82",
+        "b19a2e02-ad19-4628-bd92-69254f6184fb",
+        "f07a9f51-4333-45a7-8e77-c3351d129270"
+      ]
+    },
+    {
+      "position": 9,
+      "fileName": "09.png",
+      "kind": "slide_image",
+      "elementId": "cf3f03dc-8ec1-49c6-b952-1b619f8a6afb",
+      "elementVersionId": "f3eb0af2-524a-47a0-ac39-8b05a636cf0b",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "3ba95e3b2b7cf5dec85a915b8b9ce394fc763bfd2fc8a0707fea7bf4a9cbf78f",
+      "factIds": [
+        "86f73a8b-cf3a-4aed-9601-33c7a571da65",
+        "bff0242d-27f7-485a-ae6a-b29b894ba285",
+        "c4414b6f-76f3-4e87-9a53-57e7be0ab79e",
+        "da2791e8-47b5-4264-800f-892d905b8690",
+        "e3828223-daea-4065-825c-9505d4022d3b",
+        "fbc52665-e469-4c2d-8764-79160e1b91dd"
+      ]
+    },
+    {
+      "position": 10,
+      "fileName": "10.png",
+      "kind": "slide_image",
+      "elementId": "c1664a9c-341e-46f7-affc-ae62268b7027",
+      "elementVersionId": "a6b7bde2-d177-48b3-9a4b-743eb7aa4f00",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "b087454feb33130e2fe59a37a5f479961fad3dea9d9f9d7f0dea12aee6488a23",
+      "factIds": [
+        "0e9db54e-9b7a-490c-bda8-be48cb696ddd",
+        "1d250db5-5fbe-4a94-8fb5-12189a7eb04a",
+        "5a696c06-eabf-41ac-a414-0525c569778f",
+        "8f0c5eae-7406-4da7-bee7-289f0de7c160",
+        "ab8f748a-75d6-4618-acfc-6b634da89625",
+        "eb55d38f-fe66-4901-9e46-553c5d69a88c"
+      ]
+    },
+    {
+      "position": 11,
+      "fileName": "11.png",
+      "kind": "slide_image",
+      "elementId": "123c20c6-084f-4ce3-a7bb-93910ac5bbf6",
+      "elementVersionId": "52931925-2746-4f83-a1af-e01152953708",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "928609e41d253d3da0c836cbbb53767f006700530f2df36ca8c97275ce2b81ee",
+      "factIds": [
+        "28cd250d-e2f2-4316-a1ec-25fe8d8eb664",
+        "36875cea-ce04-4821-bade-461ac587bb72",
+        "5bd012ba-a10e-4114-9384-30d73d22e595",
+        "76195631-7296-4c40-af32-33a780fcad89",
+        "9947c686-78fc-4b4d-9d48-23df84675ffa",
+        "b1701d40-8d96-4931-a49e-1f2f023e03cd"
+      ]
+    },
+    {
+      "position": 12,
+      "fileName": "12.png",
+      "kind": "slide_image",
+      "elementId": "5738f4df-683f-4bd9-9b1d-5c65df111f9f",
+      "elementVersionId": "c9c3da65-d4ab-473c-a7ac-df4c8e62588a",
+      "versionNumber": 1,
+      "slideType": "closing",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "eed0771438c68bfae22f4ed7faf3ec97741705aead54ece65a66d269decb5810",
+      "factIds": []
+    }
+  ],
+  "facts": [
+    {
+      "factId": "00608fd2-400e-43c6-a79b-f43616c1ab0f",
+      "factKey": "match:malaga-cf-0f39c9c74c82_racing-de-santander-c56fb5c48755:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "056f0577-6853-452b-8fff-82b9b057734d",
+      "factKey": "match:athletic-club-367d8eba28e4_ca-osasuna-68ab7004e10a:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "0e9db54e-9b7a-490c-bda8-be48cb696ddd",
+      "factKey": "match:getafe-cf-17931eb68f44_villarreal-cf-93fc65200d65:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "106533f9-906d-408e-bec1-5e911c1c43e0",
+      "factKey": "match:deportivo-la-coruna-469789e44a1c_rcd-espanyol-4a738400623d:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "14655cdb-60f8-4267-8393-491cfc6be18c",
+      "factKey": "match:real-madrid-cf-df2acd0d14f1_valencia-cf-04b0b67a6266:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "199de5f3-8102-42cb-abde-4d3ff79c30a3",
+      "factKey": "team:real-madrid-cf-df2acd0d14f1:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "1d250db5-5fbe-4a94-8fb5-12189a7eb04a",
+      "factKey": "team:villarreal-cf-93fc65200d65:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "25f8e9f4-52c8-4a68-b8e5-51836d5214e7",
+      "factKey": "match:malaga-cf-0f39c9c74c82_racing-de-santander-c56fb5c48755:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "28cd250d-e2f2-4316-a1ec-25fe8d8eb664",
+      "factKey": "match:club-atletico-de-madrid-6970a70f8881_fc-barcelona-be58e986eb7b:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "2b3bd496-7618-46b5-8d08-a23c2307714a",
+      "factKey": "match:rayo-vallecano-de-madrid-d27163b11993_real-sociedad-1f6dc1a2f2af:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "2c60a826-6826-464e-b6d3-2d41c5848bef",
+      "factKey": "match:real-madrid-cf-df2acd0d14f1_valencia-cf-04b0b67a6266:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "2feca93a-3c06-408e-be00-35c0229407cd",
+      "factKey": "match:deportivo-la-coruna-469789e44a1c_rcd-espanyol-4a738400623d:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "319fcc68-f820-4c2d-be80-a76c7ccd2fa8",
+      "factKey": "team:athletic-club-367d8eba28e4:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "36875cea-ce04-4821-bade-461ac587bb72",
+      "factKey": "team:fc-barcelona-be58e986eb7b:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "38e36ebd-af98-48db-97bf-9fb8c0550a94",
+      "factKey": "match:real-madrid-cf-df2acd0d14f1_valencia-cf-04b0b67a6266:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "3f8acd19-a1a7-4c46-9b9f-e56dc46090a6",
+      "factKey": "match:rayo-vallecano-de-madrid-d27163b11993_real-sociedad-1f6dc1a2f2af:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "47c0e003-a39e-45c3-8a09-92d773fcdf6b",
+      "factKey": "team:malaga-cf-0f39c9c74c82:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "58454d2f-ce75-4407-8c47-66bcaec5cb44",
+      "factKey": "match:rayo-vallecano-de-madrid-d27163b11993_real-sociedad-1f6dc1a2f2af:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "5a696c06-eabf-41ac-a414-0525c569778f",
+      "factKey": "team:getafe-cf-17931eb68f44:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "5b5d159d-368d-4e45-b7a4-a89e101f93f8",
+      "factKey": "match:deportivo-la-coruna-469789e44a1c_rcd-espanyol-4a738400623d:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "5bd012ba-a10e-4114-9384-30d73d22e595",
+      "factKey": "match:club-atletico-de-madrid-6970a70f8881_fc-barcelona-be58e986eb7b:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "63814e3e-56f7-4bed-895e-967d987e7098",
+      "factKey": "match:elche-cf-26c5904f2770_real-betis-0fb00f51be46:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "6483eeb5-aaf1-4e7e-95c2-975fc36d6b4c",
+      "factKey": "match:malaga-cf-0f39c9c74c82_racing-de-santander-c56fb5c48755:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "65723496-14f7-4aee-a0cd-9bd14633bd82",
+      "factKey": "team:real-sociedad-1f6dc1a2f2af:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "76195631-7296-4c40-af32-33a780fcad89",
+      "factKey": "match:club-atletico-de-madrid-6970a70f8881_fc-barcelona-be58e986eb7b:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "79580e8c-9d03-410c-841e-6d8dccfaab67",
+      "factKey": "match:athletic-club-367d8eba28e4_ca-osasuna-68ab7004e10a:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "7ca6c084-e48b-4437-aefd-fbc47c18c334",
+      "factKey": "match:elche-cf-26c5904f2770_real-betis-0fb00f51be46:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "861e6234-7d2c-4f2a-8807-e026471504dc",
+      "factKey": "match:athletic-club-367d8eba28e4_ca-osasuna-68ab7004e10a:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "8643b998-b2b8-47ef-a3ab-9da511f92352",
+      "factKey": "match:elche-cf-26c5904f2770_real-betis-0fb00f51be46:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "86f73a8b-cf3a-4aed-9601-33c7a571da65",
+      "factKey": "match:levante-ud-695c868fe825_rc-celta-de-vigo-acd1643dcff3:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "8758a5f6-e0d2-4765-8228-f8c11181f2a3",
+      "factKey": "team:real-betis-0fb00f51be46:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "8a50bf86-7dda-4ade-850d-0ab569b65cc0",
+      "factKey": "match:real-madrid-cf-df2acd0d14f1_valencia-cf-04b0b67a6266:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "8f0c5eae-7406-4da7-bee7-289f0de7c160",
+      "factKey": "match:getafe-cf-17931eb68f44_villarreal-cf-93fc65200d65:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "930932eb-1462-4410-8069-27ee3e8124f6",
+      "factKey": "team:racing-de-santander-c56fb5c48755:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "991efece-7392-44cb-8247-1a14145b7cde",
+      "factKey": "match:deportivo-alaves-dfffd4d6b79e_sevilla-fc-bf6b83f0efbe:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "9947c686-78fc-4b4d-9d48-23df84675ffa",
+      "factKey": "team:club-atletico-de-madrid-6970a70f8881:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "99d44590-43f7-45ce-9797-f8afae677219",
+      "factKey": "match:deportivo-alaves-dfffd4d6b79e_sevilla-fc-bf6b83f0efbe:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "9c987f93-69bc-415b-86fb-811139607c91",
+      "factKey": "team:valencia-cf-04b0b67a6266:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "a11ab997-00c8-4850-949c-bdb69e16aa2e",
+      "factKey": "match:malaga-cf-0f39c9c74c82_racing-de-santander-c56fb5c48755:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "ab8f748a-75d6-4618-acfc-6b634da89625",
+      "factKey": "match:getafe-cf-17931eb68f44_villarreal-cf-93fc65200d65:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "b1701d40-8d96-4931-a49e-1f2f023e03cd",
+      "factKey": "match:club-atletico-de-madrid-6970a70f8881_fc-barcelona-be58e986eb7b:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "b19a2e02-ad19-4628-bd92-69254f6184fb",
+      "factKey": "match:rayo-vallecano-de-madrid-d27163b11993_real-sociedad-1f6dc1a2f2af:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "b39c1874-de2f-464e-b328-c26c7fd2fac5",
+      "factKey": "match:deportivo-la-coruna-469789e44a1c_rcd-espanyol-4a738400623d:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "b7dc0f80-b288-481d-98d5-d4df57a976a7",
+      "factKey": "match:elche-cf-26c5904f2770_real-betis-0fb00f51be46:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "b92a2463-5c82-49db-91ba-6461acfa0994",
+      "factKey": "team:ca-osasuna-68ab7004e10a:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "bff0242d-27f7-485a-ae6a-b29b894ba285",
+      "factKey": "team:rc-celta-de-vigo-acd1643dcff3:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "c4414b6f-76f3-4e87-9a53-57e7be0ab79e",
+      "factKey": "team:levante-ud-695c868fe825:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "c98d6a7b-5722-44c0-bf96-5f4a49dae285",
+      "factKey": "match:deportivo-alaves-dfffd4d6b79e_sevilla-fc-bf6b83f0efbe:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "d073ba67-f058-4a14-b25e-5f5ed40e2655",
+      "factKey": "team:rcd-espanyol-4a738400623d:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "da2791e8-47b5-4264-800f-892d905b8690",
+      "factKey": "match:levante-ud-695c868fe825_rc-celta-de-vigo-acd1643dcff3:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "de1c5d9d-432d-48b1-af39-15d4694058a8",
+      "factKey": "team:deportivo-alaves-dfffd4d6b79e:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "df0183f1-c590-4021-91bf-3dc6aab220eb",
+      "factKey": "team:elche-cf-26c5904f2770:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "e3828223-daea-4065-825c-9505d4022d3b",
+      "factKey": "match:levante-ud-695c868fe825_rc-celta-de-vigo-acd1643dcff3:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "eb55d38f-fe66-4901-9e46-553c5d69a88c",
+      "factKey": "match:getafe-cf-17931eb68f44_villarreal-cf-93fc65200d65:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "ecbc1e87-a2cc-4606-b6c8-c644aae7e170",
+      "factKey": "match:athletic-club-367d8eba28e4_ca-osasuna-68ab7004e10a:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "edcc760c-2052-4b17-8096-42706d0468a2",
+      "factKey": "team:deportivo-la-coruna-469789e44a1c:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "f07a9f51-4333-45a7-8e77-c3351d129270",
+      "factKey": "team:rayo-vallecano-de-madrid-d27163b11993:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "f695ba0b-2ba1-4bed-af71-a89e797f0087",
+      "factKey": "team:sevilla-fc-bf6b83f0efbe:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "f6cf7fe1-c7da-4021-956c-1d203cce762b",
+      "factKey": "match:deportivo-alaves-dfffd4d6b79e_sevilla-fc-bf6b83f0efbe:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    },
+    {
+      "factId": "fbc52665-e469-4c2d-8764-79160e1b91dd",
+      "factKey": "match:levante-ud-695c868fe825_rc-celta-de-vigo-acd1643dcff3:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "d4630853-88a3-42f0-9e82-7c0f3d08623f"
+        }
+      ]
+    }
+  ]
+}

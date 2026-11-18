@@ -1,0 +1,733 @@
+{
+  "format": "edr-export-manifest/1",
+  "exportId": "4402fe54-ede7-44f3-bc0d-db367cf3d35b",
+  "exportedAt": "2026-11-05T17:44:13.744Z",
+  "project": {
+    "id": "97eb6685-08d3-47ab-b905-93b624b64126",
+    "competitionId": "local-f60f5457-d8c4-4a1f-b336-caa96cec55c9",
+    "competitionName": "Liga Nacional de Guatemala",
+    "seasonId": "49c02a25-7c7f-4d55-a7c4-591f38daad3e",
+    "seasonLabel": "Apertura 2026",
+    "stageId": "114975e3-5479-4e9e-bc09-d3c7f7b34eef",
+    "stageLabel": "Fase Regular - Jornada 18 - Apertura 2026",
+    "matchday": null,
+    "language": "es"
+  },
+  "carousel": {
+    "id": "3959d02a-7a2e-441c-ba4f-77a7a9948c9b",
+    "sequence": 1,
+    "total": 1
+  },
+  "finalApproval": {
+    "id": "217e2835-4f17-4871-ba7b-fd97ed76fdde",
+    "approvedAt": "2026-11-05T17:43:45.086Z",
+    "versionSetSha256": "6187369ceadbaf996e2168116d7c65537273001c737c5b34a3faa8141d7f9f89"
+  },
+  "dataMode": "MANUAL_DATA",
+  "demonstration": false,
+  "operatorAttested": true,
+  "source": {
+    "id": "local",
+    "name": "Datos deportivos locales",
+    "dataMode": "MANUAL_DATA"
+  },
+  "sources": [
+    {
+      "id": "local",
+      "name": "Datos deportivos locales",
+      "dataMode": "MANUAL_DATA"
+    }
+  ],
+  "files": [
+    {
+      "position": 1,
+      "fileName": "01.png",
+      "kind": "slide_image",
+      "elementId": "84ae40c4-7915-47c2-a793-4daf751ad644",
+      "elementVersionId": "a2cd2892-ebf6-4a03-8711-61ae904c00f1",
+      "versionNumber": 1,
+      "slideType": "cover",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "24e893bd43fde3d9230448b0575e2ff7f27af9d82bcbefdeaf9282a13a82b9f0",
+      "factIds": []
+    },
+    {
+      "position": 2,
+      "fileName": "02.png",
+      "kind": "slide_image",
+      "elementId": "f6ef5a9f-1560-4231-8e31-67faebc1af13",
+      "elementVersionId": "6707ac51-a799-497c-a56b-eb2bb587753e",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "8d0318079b58b56ec3be555a7116175415fc472be6d0b01a69270f0554cbcbde",
+      "factIds": [
+        "102ac980-a595-4274-8a3c-47c86c5077d7",
+        "761bfad6-2fc8-4c1b-b361-a3aaeae10cf7",
+        "7b585dc7-d23c-49a2-ac2d-1d6b3c3fee9f",
+        "7f46d3c9-43d2-46d7-8230-8b03e0025fb2",
+        "89e18937-de28-448d-a7cd-15c6dfac34b9",
+        "f20a5886-703f-4633-866a-7c08acc31415"
+      ]
+    },
+    {
+      "position": 3,
+      "fileName": "03.png",
+      "kind": "slide_image",
+      "elementId": "93232342-e97c-4137-9422-b1eb52a6cd7f",
+      "elementVersionId": "c978cb16-c3a7-4f01-9763-e45abb0cf164",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "64eabbc460abca82281e0709665e03d2eca792dfd75033db60a03289f14a9b70",
+      "factIds": [
+        "1a9336d5-4b0b-4426-b133-5bef8648a6c3",
+        "7dda2331-740a-416f-a198-00acadb2b734",
+        "962f96fc-853d-4b95-a8ae-981efbda3b0f",
+        "a9aa451d-80eb-4464-bfe1-5ac14ccfa0a5",
+        "be3c3b13-bd03-4750-848b-ae9c601f2d3b",
+        "e9e3d369-56d1-4211-a0c7-65907eecc600"
+      ]
+    },
+    {
+      "position": 4,
+      "fileName": "04.png",
+      "kind": "slide_image",
+      "elementId": "0870e417-47e6-468e-a90c-3fb67bb66ef2",
+      "elementVersionId": "8ca58483-9623-4b2d-a430-2346cfc5091d",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "2af15e761312f113c13eb94f19f9fabc563067432d919beeca64d9fb862aabc4",
+      "factIds": [
+        "09088870-e5cf-4453-ae91-b1cded5f4065",
+        "572c81c3-8402-46fa-9655-e9e7898f30c2",
+        "768e48a5-5c1d-4e1f-8050-d0929dbd73c9",
+        "eedafdee-db8d-463a-87c8-586f08f69030",
+        "f8cd8eb0-af36-4031-bade-057c32e64890",
+        "fcb5259a-e2bc-4d91-9030-d472edfb6289"
+      ]
+    },
+    {
+      "position": 5,
+      "fileName": "05.png",
+      "kind": "slide_image",
+      "elementId": "a64eceee-9170-45fe-8ac7-2cd84cbd1f50",
+      "elementVersionId": "1b18248c-e3e8-4266-9eae-8816a8d42c6f",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "d45c94500217a12910059bca3b313a9b6ccdd4e8efbb980d2863d035e13ec336",
+      "factIds": [
+        "170bbbdb-13d7-4684-8c6d-19b19ed80c68",
+        "1c43f626-2eb2-4639-a2fe-32c77d39699c",
+        "424a075f-fa27-4039-915a-57032ee639b5",
+        "7a75de3b-ea50-4ca9-89ed-abc77141d8e0",
+        "9e28a5a3-6f70-418d-bf0b-e6941813884a",
+        "d5afe71f-5b56-45cc-a159-f08998ad39bf"
+      ]
+    },
+    {
+      "position": 6,
+      "fileName": "06.png",
+      "kind": "slide_image",
+      "elementId": "7098d528-3c91-44e7-b21e-a8d5389b51d4",
+      "elementVersionId": "617b3dab-3701-49ae-b750-b1e5be5df23c",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "29da2b7d18119ab28de89597f54bcb5cbc34234ba3bd82f1c530754b9a5799f1",
+      "factIds": [
+        "374ce8ec-b3ef-498f-859e-796d077ced44",
+        "4372bd94-bc75-4d8b-8de5-0abd70bb2488",
+        "74419a87-313a-46da-8f1e-fc163f3fc12c",
+        "845ba955-8991-42b4-94ff-91ebcaf864cd",
+        "934e9793-cc0e-4335-b58b-72032c9419c1",
+        "f6294888-edad-49fa-bcaf-606d191a025c"
+      ]
+    },
+    {
+      "position": 7,
+      "fileName": "07.png",
+      "kind": "slide_image",
+      "elementId": "a3f3b518-a1b5-4c25-9cf6-f281e1a82f50",
+      "elementVersionId": "b3d25072-2693-475d-b899-1bc99e2b4fc3",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "4077bcb9c8bc83769eec7e81708b5701ccdfea56471772866f252d703de26ee4",
+      "factIds": [
+        "297bc36a-6338-47c2-a52a-db9259ec739c",
+        "345b5a23-af14-4442-b3a5-218833dfb936",
+        "3f1a304e-8a43-406d-bdce-093527ca7d1d",
+        "c98046f2-6efc-453b-b56d-7376734af5df",
+        "e9bbeea2-431a-475a-a292-c4a22b47d0fe",
+        "f4c92fc2-eec8-4251-9dbc-893f4017896a"
+      ]
+    },
+    {
+      "position": 8,
+      "fileName": "08.png",
+      "kind": "slide_image",
+      "elementId": "9365a84d-991a-4e48-9261-d39bc22d4a9b",
+      "elementVersionId": "6298853d-12b8-4afb-9b66-4ec2fe7f716c",
+      "versionNumber": 1,
+      "slideType": "closing",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "ac211378a6e77f932c520d0a9b7fab96b815fa9eb1ba739d24e09aceb6fccfd0",
+      "factIds": []
+    },
+    {
+      "position": 9,
+      "fileName": "caption.txt",
+      "kind": "caption_text",
+      "elementId": "053aaf3e-1229-4c4e-a67c-c733844b1f40",
+      "elementVersionId": "d090f4be-c2d5-4b56-a503-136dba57e5d5",
+      "versionNumber": 1,
+      "slideType": null,
+      "width": null,
+      "height": null,
+      "sha256": "6a5a56d97e3b5d91c40d29d4aa9ebdf1a20ededc64456c529b0d5454404f3b36",
+      "factIds": [
+        "09088870-e5cf-4453-ae91-b1cded5f4065",
+        "102ac980-a595-4274-8a3c-47c86c5077d7",
+        "170bbbdb-13d7-4684-8c6d-19b19ed80c68",
+        "1a9336d5-4b0b-4426-b133-5bef8648a6c3",
+        "1c43f626-2eb2-4639-a2fe-32c77d39699c",
+        "345b5a23-af14-4442-b3a5-218833dfb936",
+        "374ce8ec-b3ef-498f-859e-796d077ced44",
+        "424a075f-fa27-4039-915a-57032ee639b5",
+        "74419a87-313a-46da-8f1e-fc163f3fc12c",
+        "761bfad6-2fc8-4c1b-b361-a3aaeae10cf7",
+        "7b585dc7-d23c-49a2-ac2d-1d6b3c3fee9f",
+        "7dda2331-740a-416f-a198-00acadb2b734",
+        "845ba955-8991-42b4-94ff-91ebcaf864cd",
+        "89e18937-de28-448d-a7cd-15c6dfac34b9",
+        "934e9793-cc0e-4335-b58b-72032c9419c1",
+        "9e28a5a3-6f70-418d-bf0b-e6941813884a",
+        "a9aa451d-80eb-4464-bfe1-5ac14ccfa0a5",
+        "c98046f2-6efc-453b-b56d-7376734af5df",
+        "e9bbeea2-431a-475a-a292-c4a22b47d0fe",
+        "e9e3d369-56d1-4211-a0c7-65907eecc600",
+        "eedafdee-db8d-463a-87c8-586f08f69030",
+        "f4c92fc2-eec8-4251-9dbc-893f4017896a",
+        "f8cd8eb0-af36-4031-bade-057c32e64890",
+        "fcb5259a-e2bc-4d91-9030-d472edfb6289"
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "factId": "09088870-e5cf-4453-ae91-b1cded5f4065",
+      "factKey": "team:guastatoya-45ec6d120930:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "102ac980-a595-4274-8a3c-47c86c5077d7",
+      "factKey": "match:antigua-gfc-191fc055f5de_aurora-f-c-f9bf7bdfa02b:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "170bbbdb-13d7-4684-8c6d-19b19ed80c68",
+      "factKey": "match:comunicaciones-f4bfa12ba36c_deportivo-mixco-3f34d04fba69:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "1a9336d5-4b0b-4426-b133-5bef8648a6c3",
+      "factKey": "match:municipal-8248e10bd809_san-pedro-852dbd31b0d0:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "1c43f626-2eb2-4639-a2fe-32c77d39699c",
+      "factKey": "team:comunicaciones-f4bfa12ba36c:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "297bc36a-6338-47c2-a52a-db9259ec739c",
+      "factKey": "match:marquense-dbcc1dc42812_xelaju-m-c-341409e37748:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "345b5a23-af14-4442-b3a5-218833dfb936",
+      "factKey": "match:marquense-dbcc1dc42812_xelaju-m-c-341409e37748:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "374ce8ec-b3ef-498f-859e-796d077ced44",
+      "factKey": "match:csd-suchitepequez-cdab97f5de3c_malacateco-da14063ffa10:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "3f1a304e-8a43-406d-bdce-093527ca7d1d",
+      "factKey": "match:marquense-dbcc1dc42812_xelaju-m-c-341409e37748:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "424a075f-fa27-4039-915a-57032ee639b5",
+      "factKey": "team:deportivo-mixco-3f34d04fba69:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "4372bd94-bc75-4d8b-8de5-0abd70bb2488",
+      "factKey": "match:csd-suchitepequez-cdab97f5de3c_malacateco-da14063ffa10:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "572c81c3-8402-46fa-9655-e9e7898f30c2",
+      "factKey": "match:coban-imperial-99b89bfa7f5a_guastatoya-45ec6d120930:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "74419a87-313a-46da-8f1e-fc163f3fc12c",
+      "factKey": "team:csd-suchitepequez-cdab97f5de3c:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "761bfad6-2fc8-4c1b-b361-a3aaeae10cf7",
+      "factKey": "team:aurora-f-c-f9bf7bdfa02b:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "768e48a5-5c1d-4e1f-8050-d0929dbd73c9",
+      "factKey": "match:coban-imperial-99b89bfa7f5a_guastatoya-45ec6d120930:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "7a75de3b-ea50-4ca9-89ed-abc77141d8e0",
+      "factKey": "match:comunicaciones-f4bfa12ba36c_deportivo-mixco-3f34d04fba69:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "7b585dc7-d23c-49a2-ac2d-1d6b3c3fee9f",
+      "factKey": "match:antigua-gfc-191fc055f5de_aurora-f-c-f9bf7bdfa02b:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "7dda2331-740a-416f-a198-00acadb2b734",
+      "factKey": "match:municipal-8248e10bd809_san-pedro-852dbd31b0d0:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "7f46d3c9-43d2-46d7-8230-8b03e0025fb2",
+      "factKey": "match:antigua-gfc-191fc055f5de_aurora-f-c-f9bf7bdfa02b:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "845ba955-8991-42b4-94ff-91ebcaf864cd",
+      "factKey": "team:malacateco-da14063ffa10:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "89e18937-de28-448d-a7cd-15c6dfac34b9",
+      "factKey": "team:antigua-gfc-191fc055f5de:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "934e9793-cc0e-4335-b58b-72032c9419c1",
+      "factKey": "match:csd-suchitepequez-cdab97f5de3c_malacateco-da14063ffa10:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "962f96fc-853d-4b95-a8ae-981efbda3b0f",
+      "factKey": "match:municipal-8248e10bd809_san-pedro-852dbd31b0d0:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "9e28a5a3-6f70-418d-bf0b-e6941813884a",
+      "factKey": "match:comunicaciones-f4bfa12ba36c_deportivo-mixco-3f34d04fba69:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "a9aa451d-80eb-4464-bfe1-5ac14ccfa0a5",
+      "factKey": "team:municipal-8248e10bd809:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "be3c3b13-bd03-4750-848b-ae9c601f2d3b",
+      "factKey": "match:municipal-8248e10bd809_san-pedro-852dbd31b0d0:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "c98046f2-6efc-453b-b56d-7376734af5df",
+      "factKey": "team:xelaju-m-c-341409e37748:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "d5afe71f-5b56-45cc-a159-f08998ad39bf",
+      "factKey": "match:comunicaciones-f4bfa12ba36c_deportivo-mixco-3f34d04fba69:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "e9bbeea2-431a-475a-a292-c4a22b47d0fe",
+      "factKey": "team:marquense-dbcc1dc42812:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "e9e3d369-56d1-4211-a0c7-65907eecc600",
+      "factKey": "team:san-pedro-852dbd31b0d0:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "eedafdee-db8d-463a-87c8-586f08f69030",
+      "factKey": "team:coban-imperial-99b89bfa7f5a:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "f20a5886-703f-4633-866a-7c08acc31415",
+      "factKey": "match:antigua-gfc-191fc055f5de_aurora-f-c-f9bf7bdfa02b:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "f4c92fc2-eec8-4251-9dbc-893f4017896a",
+      "factKey": "match:marquense-dbcc1dc42812_xelaju-m-c-341409e37748:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "f6294888-edad-49fa-bcaf-606d191a025c",
+      "factKey": "match:csd-suchitepequez-cdab97f5de3c_malacateco-da14063ffa10:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "f8cd8eb0-af36-4031-bade-057c32e64890",
+      "factKey": "match:coban-imperial-99b89bfa7f5a_guastatoya-45ec6d120930:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    },
+    {
+      "factId": "fcb5259a-e2bc-4d91-9030-d472edfb6289",
+      "factKey": "match:coban-imperial-99b89bfa7f5a_guastatoya-45ec6d120930:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "f159ff1f-9808-4a82-b37a-f9ed6797f889"
+        }
+      ]
+    }
+  ]
+}

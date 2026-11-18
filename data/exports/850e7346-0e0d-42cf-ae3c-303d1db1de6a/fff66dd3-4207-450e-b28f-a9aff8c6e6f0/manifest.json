@@ -1,0 +1,409 @@
+{
+  "format": "edr-export-manifest/1",
+  "exportId": "fff66dd3-4207-450e-b28f-a9aff8c6e6f0",
+  "exportedAt": "2026-11-09T21:33:30.151Z",
+  "project": {
+    "id": "850e7346-0e0d-42cf-ae3c-303d1db1de6a",
+    "competitionId": "local-d5d3e830-90ff-43a1-b0b8-8ea5b4b69ae2",
+    "competitionName": "La Liga",
+    "seasonId": "a0df5f8f-52cd-4ce7-bb5c-f2ea26dd84de",
+    "seasonLabel": "2026/27",
+    "stageId": "55dc23d2-aa38-4eda-8ef7-84a04f9770e3",
+    "stageLabel": "REGULAR SEASON - Jornada 12",
+    "matchday": null,
+    "language": "es"
+  },
+  "carousel": {
+    "id": "1ebedf8b-81dc-4364-9bed-b6018e6b04a7",
+    "sequence": 1,
+    "total": 1
+  },
+  "finalApproval": {
+    "id": "1177c071-808c-4d81-8d1f-88ec1985495a",
+    "approvedAt": "2026-11-09T21:33:26.943Z",
+    "versionSetSha256": "273e264faf5b350be51db19bd9a8004b5271e4850144ee297e438d1163930d59"
+  },
+  "dataMode": "MANUAL_DATA",
+  "demonstration": false,
+  "operatorAttested": true,
+  "source": {
+    "id": "local",
+    "name": "Datos deportivos locales",
+    "dataMode": "MANUAL_DATA"
+  },
+  "sources": [
+    {
+      "id": "local",
+      "name": "Datos deportivos locales",
+      "dataMode": "MANUAL_DATA"
+    }
+  ],
+  "files": [
+    {
+      "position": 1,
+      "fileName": "01.png",
+      "kind": "slide_image",
+      "elementId": "bfff4467-f6bb-4143-95c2-c81d12fafd9f",
+      "elementVersionId": "32f5a90b-c23a-467a-a571-37abc07c3ab6",
+      "versionNumber": 1,
+      "slideType": "cover",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "3196db6f2da7bb0757a37c7b4dcc57b94ade7c17a4d0f378e755ab4f32ae26a9",
+      "factIds": []
+    },
+    {
+      "position": 2,
+      "fileName": "02.png",
+      "kind": "slide_image",
+      "elementId": "015ffc37-dec2-45bf-a0e5-f9a22bd7cfc1",
+      "elementVersionId": "ff3dc1e8-5fa3-4f1a-9a79-eac78c493b28",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "25fd1f61926006dfd2e47940eecc1de304fd8aaa2aa51c69b95c9ae03dcc0f20",
+      "factIds": [
+        "52fac7f9-b1f2-44d8-bc35-a164501ae13b",
+        "7fdae48b-d391-4aa6-accd-a1cc14306ef9",
+        "8033c688-6de0-4138-8b46-f2c5e08d445e",
+        "821a0f74-603d-4c9f-96a6-ea2de58899da",
+        "bd476bd2-d15e-4bcd-b9c3-c538b0eb5ef7",
+        "c91c79f5-768f-445c-b6b0-753197dcb704"
+      ]
+    },
+    {
+      "position": 3,
+      "fileName": "03.png",
+      "kind": "slide_image",
+      "elementId": "06b46f55-60f2-4342-99e7-50b700327718",
+      "elementVersionId": "34726526-2bbe-4bd7-b8ca-8ab5ef12f919",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "f8c53e10ac330c660f7ef9a8519bb068ca57408f1d9572ab70e2432435d1228b",
+      "factIds": [
+        "62f8f7d6-ae95-44d3-ae77-8fdbb5e78761",
+        "65d38bba-2c40-4011-8285-1bd82dc32bbe",
+        "6c23150c-820e-4848-be97-f1fe3b4a3e61",
+        "6f7222f4-dcfe-40b9-b84e-79378485ba65",
+        "77aeeaec-6ad5-4a44-a6e8-d9a528d978a0",
+        "9c79d7cb-6a01-4329-b2bb-7c83cee7ce0d"
+      ]
+    },
+    {
+      "position": 4,
+      "fileName": "04.png",
+      "kind": "slide_image",
+      "elementId": "376907aa-4585-4026-97d9-947d35eb5c07",
+      "elementVersionId": "c6d851f6-2fe4-4189-b3c8-7050dd6a5e32",
+      "versionNumber": 1,
+      "slideType": "match_result",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "928609e41d253d3da0c836cbbb53767f006700530f2df36ca8c97275ce2b81ee",
+      "factIds": [
+        "2cda41a1-40e7-45f4-9551-f35db3097968",
+        "4730d0ff-c63b-42e2-9ce4-e49b1810418d",
+        "4a67cda3-b589-4fac-88f5-19de3143a835",
+        "8e8f52b5-1189-4bd7-9616-64dd2da61335",
+        "92a2e422-1146-403e-a5a8-617dc8eec6bc",
+        "b292e1a0-e60d-48ac-9000-414eef9ee58f"
+      ]
+    },
+    {
+      "position": 5,
+      "fileName": "05.png",
+      "kind": "slide_image",
+      "elementId": "7c8aaf52-67a1-4d40-bc9d-dbb54316e8bb",
+      "elementVersionId": "7dd836f7-727d-4a2d-b99d-e3132be6b040",
+      "versionNumber": 1,
+      "slideType": "closing",
+      "width": 1080,
+      "height": 1350,
+      "sha256": "eed0771438c68bfae22f4ed7faf3ec97741705aead54ece65a66d269decb5810",
+      "factIds": []
+    },
+    {
+      "position": 6,
+      "fileName": "caption.txt",
+      "kind": "caption_text",
+      "elementId": "2c749357-5ad2-42ca-8a49-44f8b809f0d8",
+      "elementVersionId": "6d2cf8f3-a3e2-4713-a25d-e12bf6e1c55c",
+      "versionNumber": 2,
+      "slideType": null,
+      "width": null,
+      "height": null,
+      "sha256": "42d0291ed80e420e84ced7bedd33ab8006cb418426115a2f95b2b8bbc9bc100c",
+      "factIds": [
+        "4730d0ff-c63b-42e2-9ce4-e49b1810418d",
+        "4a67cda3-b589-4fac-88f5-19de3143a835",
+        "65d38bba-2c40-4011-8285-1bd82dc32bbe",
+        "6c23150c-820e-4848-be97-f1fe3b4a3e61",
+        "6f7222f4-dcfe-40b9-b84e-79378485ba65",
+        "7fdae48b-d391-4aa6-accd-a1cc14306ef9",
+        "8033c688-6de0-4138-8b46-f2c5e08d445e",
+        "821a0f74-603d-4c9f-96a6-ea2de58899da",
+        "8e8f52b5-1189-4bd7-9616-64dd2da61335",
+        "92a2e422-1146-403e-a5a8-617dc8eec6bc",
+        "9c79d7cb-6a01-4329-b2bb-7c83cee7ce0d",
+        "c91c79f5-768f-445c-b6b0-753197dcb704"
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "factId": "2cda41a1-40e7-45f4-9551-f35db3097968",
+      "factKey": "match:club-atletico-de-madrid-6970a70f8881_fc-barcelona-be58e986eb7b:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "4730d0ff-c63b-42e2-9ce4-e49b1810418d",
+      "factKey": "team:fc-barcelona-be58e986eb7b:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "4a67cda3-b589-4fac-88f5-19de3143a835",
+      "factKey": "match:club-atletico-de-madrid-6970a70f8881_fc-barcelona-be58e986eb7b:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "52fac7f9-b1f2-44d8-bc35-a164501ae13b",
+      "factKey": "match:real-madrid-cf-df2acd0d14f1_valencia-cf-04b0b67a6266:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "62f8f7d6-ae95-44d3-ae77-8fdbb5e78761",
+      "factKey": "match:levante-ud-695c868fe825_rc-celta-de-vigo-acd1643dcff3:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "65d38bba-2c40-4011-8285-1bd82dc32bbe",
+      "factKey": "team:levante-ud-695c868fe825:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "6c23150c-820e-4848-be97-f1fe3b4a3e61",
+      "factKey": "match:levante-ud-695c868fe825_rc-celta-de-vigo-acd1643dcff3:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "6f7222f4-dcfe-40b9-b84e-79378485ba65",
+      "factKey": "match:levante-ud-695c868fe825_rc-celta-de-vigo-acd1643dcff3:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "77aeeaec-6ad5-4a44-a6e8-d9a528d978a0",
+      "factKey": "match:levante-ud-695c868fe825_rc-celta-de-vigo-acd1643dcff3:status",
+      "kind": "match_status",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "7fdae48b-d391-4aa6-accd-a1cc14306ef9",
+      "factKey": "team:valencia-cf-04b0b67a6266:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "8033c688-6de0-4138-8b46-f2c5e08d445e",
+      "factKey": "match:real-madrid-cf-df2acd0d14f1_valencia-cf-04b0b67a6266:score",
+      "kind": "match_score",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "821a0f74-603d-4c9f-96a6-ea2de58899da",
+      "factKey": "match:real-madrid-cf-df2acd0d14f1_valencia-cf-04b0b67a6266:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "8e8f52b5-1189-4bd7-9616-64dd2da61335",
+      "factKey": "team:club-atletico-de-madrid-6970a70f8881:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "92a2e422-1146-403e-a5a8-617dc8eec6bc",
+      "factKey": "match:club-atletico-de-madrid-6970a70f8881_fc-barcelona-be58e986eb7b:kickoff",
+      "kind": "match_kickoff",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "9c79d7cb-6a01-4329-b2bb-7c83cee7ce0d",
+      "factKey": "team:rc-celta-de-vigo-acd1643dcff3:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "b292e1a0-e60d-48ac-9000-414eef9ee58f",
+      "factKey": "match:club-atletico-de-madrid-6970a70f8881_fc-barcelona-be58e986eb7b:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "bd476bd2-d15e-4bcd-b9c3-c538b0eb5ef7",
+      "factKey": "match:real-madrid-cf-df2acd0d14f1_valencia-cf-04b0b67a6266:teams",
+      "kind": "match_teams",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    },
+    {
+      "factId": "c91c79f5-768f-445c-b6b0-753197dcb704",
+      "factKey": "team:real-madrid-cf-df2acd0d14f1:name",
+      "kind": "team_official_name",
+      "status": "manually_approved",
+      "evidence": [
+        {
+          "sourceId": "local",
+          "dataMode": "MANUAL_DATA",
+          "relation": "consulted",
+          "importVersionId": "84e7bc75-822f-49c0-98b1-22149ff6be9c"
+        }
+      ]
+    }
+  ]
+}
